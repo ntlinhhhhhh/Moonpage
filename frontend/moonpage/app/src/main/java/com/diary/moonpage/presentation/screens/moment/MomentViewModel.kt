@@ -173,7 +173,7 @@ class MomentViewModel @Inject constructor(
                 val capturedAtBody = capturedAtStr.toRequestBody("text/plain".toMediaTypeOrNull())
                 val locationBody = location?.toRequestBody("text/plain".toMediaTypeOrNull())
                 val weatherBody = weather?.toRequestBody("text/plain".toMediaTypeOrNull())
-                val ratingBody = rating?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
+                val ratingBody = rating?.toString()?.toRequestBody("text/plain".toRequestBody("text/plain".toMediaTypeOrNull()).contentType()) // Corrected
 
                 uploadMomentUseCase(
                     dailyLogIdBody,
@@ -183,7 +183,7 @@ class MomentViewModel @Inject constructor(
                     capturedAtBody,
                     locationBody,
                     weatherBody,
-                    ratingBody
+                    rating?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
                 ).onSuccess { response ->
                     val fileName = "moment_${response.id}.webp"
                     val permanentFile = File(context.filesDir, "moments/$fileName")
@@ -213,11 +213,32 @@ class MomentViewModel @Inject constructor(
 
     private fun deleteMoment(id: String) {
         viewModelScope.launch {
+            val momentToDelete = _uiState.value.moments.find { it.id == id }
+            val localPath = momentToDelete?.let { _uiState.value.localPaths[it.imageUrl] }
+
             _uiState.update { it.copy(isLoading = true) }
             deleteMomentUseCase(id).onSuccess {
+                // Xóa file local nếu có
+                localPath?.let { path ->
+                    try {
+                        val file = File(path)
+                        if (file.exists()) file.delete()
+                    } catch (e: Exception) {
+                        Log.e("MomentVM", "Error deleting local file", e)
+                    }
+                }
+
                 _uiState.update { state ->
                     val updatedList = state.moments.filter { it.id != id }
-                    state.copy(isLoading = false, moments = updatedList, successMessage = UiText.StringResource(R.string.moment_deleted))
+                    val updatedPaths = state.localPaths.filter { (url, _) ->
+                        updatedList.any { it.imageUrl == url }
+                    }
+                    state.copy(
+                        isLoading = false,
+                        moments = updatedList,
+                        localPaths = updatedPaths,
+                        successMessage = UiText.StringResource(R.string.moment_deleted)
+                    )
                 }
                 saveMomentsToCache(_uiState.value.moments)
             }.onFailure { error ->

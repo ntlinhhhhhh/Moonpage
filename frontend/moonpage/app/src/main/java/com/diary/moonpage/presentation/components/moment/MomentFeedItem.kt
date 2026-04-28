@@ -1,11 +1,6 @@
 package com.diary.moonpage.presentation.components.moment
 
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -19,9 +14,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,8 +25,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import coil.compose.AsyncImage
 import coil.request.CachePolicy
 import coil.request.ImageRequest
@@ -58,14 +49,15 @@ fun MomentFeedItem(moment: Moment, localPath: String? = null) {
 
     val isLocalFile = imageData is File
 
+    // Tối ưu ImageRequest cho chất lượng cao và tốc độ load
     val imageRequest = remember(imageData) {
         ImageRequest.Builder(context)
             .data(imageData)
-            .size(Size(1080, 1080))
+            .size(Size.ORIGINAL) // Giữ chất lượng gốc cho feed full screen
             .scale(Scale.FILL)
             .precision(Precision.INEXACT)
-            .crossfade(200)
-            .memoryCacheKey(imageData.toString())
+            .crossfade(300) // Tăng nhẹ crossfade cho mượt
+            .memoryCacheKey("feed_${imageData}")
             .diskCachePolicy(if (isLocalFile) CachePolicy.DISABLED else CachePolicy.ENABLED)
             .memoryCachePolicy(CachePolicy.ENABLED)
             .build()

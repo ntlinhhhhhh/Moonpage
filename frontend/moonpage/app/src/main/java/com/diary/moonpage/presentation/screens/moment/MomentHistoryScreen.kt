@@ -20,8 +20,9 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.imageLoader
+import coil.request.CachePolicy
 import coil.request.ImageRequest
-import com.diary.moonpage.core.theme.MoonPageTheme
+import com.diary.moonpage.presentation.theme.MoonPageTheme
 import com.diary.moonpage.domain.model.Moment
 import com.diary.moonpage.presentation.components.moment.MomentFeedItem
 import com.diary.moonpage.presentation.components.moment.CaptureButton
@@ -70,16 +71,25 @@ fun MomentHistoryScreen(
     val context = LocalContext.current
     var showMenu by remember { mutableStateOf(false) }
 
-    // Pre-fetch images
-    LaunchedEffect(sortedMoments) {
-        sortedMoments.take(5).forEach { moment ->
-            if (localPaths[moment.imageUrl] == null) {
-                val request = ImageRequest.Builder(context)
-                    .data(moment.imageUrl)
-                    .diskCacheKey(moment.imageUrl)
-                    .memoryCacheKey(moment.imageUrl)
-                    .build()
-                context.imageLoader.enqueue(request)
+    // Thông minh hơn trong việc pre-fetch: Load ảnh trước và sau trang hiện tại
+    LaunchedEffect(feedPagerState.currentPage, sortedMoments) {
+        if (sortedMoments.isNotEmpty()) {
+            val currentPage = feedPagerState.currentPage
+            // Load trang hiện tại, 2 trang trước và 2 trang sau
+            val range = (currentPage - 2)..(currentPage + 2)
+            range.forEach { index ->
+                if (index in sortedMoments.indices) {
+                    val moment = sortedMoments[index]
+                    val localPath = localPaths[moment.imageUrl]
+                    val imageData = if (localPath != null && java.io.File(localPath).exists()) java.io.File(localPath) else moment.imageUrl
+                    
+                    val request = ImageRequest.Builder(context)
+                        .data(imageData)
+                        .memoryCacheKey("feed_${imageData}")
+                        .diskCachePolicy(if (imageData is java.io.File) CachePolicy.DISABLED else CachePolicy.ENABLED)
+                        .build()
+                    context.imageLoader.enqueue(request)
+                }
             }
         }
     }
@@ -97,7 +107,7 @@ fun MomentHistoryScreen(
             VerticalPager(
                 state = feedPagerState,
                 modifier = Modifier.fillMaxSize(),
-                beyondViewportPageCount = 1
+                beyondViewportPageCount = 2 // Giữ nhiều trang hơn trong bộ nhớ để scroll mượt
             ) { index ->
                 val moment = sortedMoments[index]
                 MomentFeedItem(
