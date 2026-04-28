@@ -51,7 +51,6 @@ fun CalendarTopBar(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Left leaf icon + dropdown
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.clickable { onFilterClick() }
@@ -77,7 +76,6 @@ fun CalendarTopBar(
             )
         }
 
-        // Right icons
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -138,16 +136,14 @@ fun DayItem(
 ) {
     val colorScheme = MaterialTheme.colorScheme
 
-    // Empty offset cell – just blank space, no circle
     if (day == null) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 2.dp, vertical = 4.dp)
         ) {
-            // Invisible placeholder có cùng chiều cao để grid thẳng hàng
             Box(modifier = Modifier.size(42.dp).align(Alignment.Center))
-            Spacer(modifier = Modifier.height(2.dp + 14.dp)) // circle + number area
+            Spacer(modifier = Modifier.height(2.dp + 14.dp))
         }
         return
     }
@@ -176,12 +172,11 @@ fun DayItem(
             ) { onClick() }
             .padding(horizontal = 2.dp, vertical = 4.dp)
     ) {
-        // ── Circle cố định 42dp ──────────────────────────────────────────────
         Box(
             modifier = Modifier
                 .size(42.dp)
                 .clip(CircleShape)
-                .clickable { onClick() }
+                .background(animatedBg)
                 .then(
                     when {
                         isSelected && moodColor == null ->
@@ -190,8 +185,7 @@ fun DayItem(
                             Modifier.border(2.dp, colorScheme.primary, CircleShape)
                         else -> Modifier
                     }
-                )
-                .background(animatedBg),
+                ),
             contentAlignment = Alignment.Center
         ) {
             if (moodDrawable != null) {
@@ -210,31 +204,20 @@ fun DayItem(
                     modifier = Modifier.fillMaxSize(0.52f)
                 )
             }
-
-            // Small catch-up indicator (e.g. clock or history icon)
-
         }
 
-        // ── Số ngày bên dưới ─────────────────────────────────────────────────
         Spacer(modifier = Modifier.height(2.dp))
 
         Text(
             text = day.toString(),
             style = MaterialTheme.typography.labelSmall,
-            fontWeight = when {
-                isToday    -> FontWeight.ExtraBold
-                isSelected -> FontWeight.Bold
-                else       -> FontWeight.Normal
-            },
-            color = when {
-                isSelected && moodColor == null -> colorScheme.primary
-                isToday                         -> colorScheme.primary
-                else                            -> colorScheme.onSurface.copy(alpha = 0.6f)
-            }
+            fontWeight = if (isToday || isSelected) FontWeight.Bold else FontWeight.Normal,
+            color = if (isSelected || isToday) colorScheme.primary else colorScheme.onSurface.copy(alpha = 0.6f)
         )
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DayDetailArea(
     date: LocalDate,
@@ -247,136 +230,113 @@ fun DayDetailArea(
     modifier: Modifier = Modifier
 ) {
     val cs = MaterialTheme.colorScheme
-    Column(
+    
+    Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = 12.dp, vertical = 20.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        // ── Mood + Date Header ──────────────────────────────────────────
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
-                .background(moodColor.copy(alpha = 0.10f))
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        // --- Left: Mood and Date (Thu gọn width xuống 60dp) ---
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.width(60.dp)
         ) {
             Box(
                 modifier = Modifier
-                    .size(60.dp)
-                    .background(moodColor.copy(alpha = 0.22f), CircleShape),
+                    .size(52.dp)
+                    .background(moodColor, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 if (moodDrawable != null) {
                     Image(
                         painter = painterResource(id = moodDrawable),
                         contentDescription = null,
-                        modifier = Modifier.size(38.dp)
+                        modifier = Modifier.size(34.dp)
                     )
                 } else if (moodIcon != null) {
                     Icon(
                         imageVector = moodIcon,
                         contentDescription = null,
-                        tint = moodColor,
-                        modifier = Modifier.size(36.dp)
+                        tint = Color.White,
+                        modifier = Modifier.size(30.dp)
                     )
                 }
             }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column {
+            
+            Spacer(modifier = Modifier.height(10.dp))
+            
+            Surface(
+                color = cs.onSurface.copy(alpha = 0.08f),
+                shape = RoundedCornerShape(8.dp)
+            ) {
                 Text(
-                    text = moodLabel,
-                    style = MaterialTheme.typography.titleMedium,
+                    text = "${date.dayOfMonth} ${date.dayOfWeek.name.take(3).lowercase().replaceFirstChar { it.uppercase() }}",
+                    style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
-                    color = cs.onSurface
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "${date.dayOfWeek.name.take(3).lowercase().replaceFirstChar { it.uppercase() }}, ${date.dayOfMonth} ${date.month.name.take(3).lowercase().replaceFirstChar { it.uppercase() }} ${date.year}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = cs.onSurface.copy(alpha = 0.55f)
+                    color = cs.onSurface.copy(alpha = 0.6f),
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
+                    textAlign = TextAlign.Center,
+                    fontSize = 10.sp
                 )
             }
         }
 
-        // ── Activities ──────────────────────────────────────────────────
-        if (activityNames.isNotEmpty()) {
-            Column {
-                Text(
-                    "Activities",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = cs.onSurface.copy(alpha = 0.6f),
-                    modifier = Modifier.padding(bottom = 10.dp)
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+        // --- Divider dọc dài hơn ---
+        Spacer(modifier = Modifier.width(10.dp))
+        Box(
+            modifier = Modifier
+                .width(1.dp)
+                .height(120.dp)
+                .background(cs.onSurface.copy(alpha = 0.05f))
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+
+        // --- Right: Activities (4 icon mỗi dòng) ---
+        Column(modifier = Modifier.weight(1f)) {
+            if (activityNames.isNotEmpty()) {
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    maxItemsInEachRow = 4
                 ) {
                     activityNames.forEach { name ->
                         val icon = com.diary.moonpage.core.util.MoonIcons.getIconForActivity(name)
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = cs.surfaceVariant.copy(alpha = 0.5f),
-                            border = BorderStroke(1.dp, icon.color.copy(alpha = 0.2f))
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(icon.color.copy(alpha = 0.12f), CircleShape),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                if (icon.drawableRes != null) {
-                                    Image(
-                                        painter = painterResource(id = icon.drawableRes),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                } else if (icon.vector != null) {
-                                    Icon(
-                                        imageVector = icon.vector,
-                                        contentDescription = null,
-                                        tint = icon.color,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                                Text(
-                                    text = name,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    fontWeight = FontWeight.Medium,
-                                    color = cs.onSurface
+                            if (icon.drawableRes != null) {
+                                Image(
+                                    painter = painterResource(id = icon.drawableRes),
+                                    contentDescription = name,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            } else if (icon.vector != null) {
+                                Icon(
+                                    imageVector = icon.vector,
+                                    contentDescription = name,
+                                    tint = icon.color,
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                         }
                     }
                 }
             }
-        }
 
-        // ── Note ─────────────────────────────────────────────────────────
-        if (!noteSnippet.isNullOrBlank()) {
-            Column {
+            if (!noteSnippet.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    "Note",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = cs.onSurface.copy(alpha = 0.6f),
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    text = noteSnippet,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = cs.onSurface.copy(alpha = 0.5f),
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    color = cs.surfaceVariant.copy(alpha = 0.5f)
-                ) {
-                    Text(
-                        text = noteSnippet,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = cs.onSurface.copy(alpha = 0.85f),
-                        modifier = Modifier.padding(14.dp)
-                    )
-                }
             }
         }
     }
@@ -446,10 +406,6 @@ fun DiaryEntryPreview(
     }
 }
 
-/**
- * Bottom sheet showing a diary "post card" for the selected day.
- * Shows: mood icon, date, full note, recorded activities, and Edit/Delete/Share actions.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DayDetailBottomSheet(
@@ -480,151 +436,30 @@ fun DayDetailBottomSheet(
             )
         }
     ) {
-        androidx.compose.foundation.lazy.LazyColumn(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
                 .padding(top = 8.dp, bottom = 40.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // ── Header: mood + date ──────────────────────────────────────────
             item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(moodColor.copy(alpha = 0.10f))
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .background(moodColor.copy(alpha = 0.22f), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (moodDrawable != null) {
-                            Image(
-                                painter = painterResource(id = moodDrawable),
-                                contentDescription = null,
-                                modifier = Modifier.size(42.dp)
-                            )
-                        } else if (moodIcon != null) {
-                            Icon(
-                                imageVector = moodIcon,
-                                contentDescription = null,
-                                tint = moodColor,
-                                modifier = Modifier.size(40.dp)
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text(
-                            text = moodLabel,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = cs.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "${date.dayOfWeek.name.take(3).lowercase().replaceFirstChar { it.uppercase() }}, ${date.dayOfMonth} ${date.month.name.take(3).lowercase().replaceFirstChar { it.uppercase() }} ${date.year}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = cs.onSurface.copy(alpha = 0.55f)
-                        )
-                    }
-                }
+                DayDetailArea(
+                    date = date,
+                    moodIcon = moodIcon,
+                    moodDrawable = moodDrawable,
+                    moodColor = moodColor,
+                    moodLabel = moodLabel,
+                    noteSnippet = noteSnippet,
+                    activityNames = activityNames
+                )
             }
 
-            // ── Activities ──────────────────────────────────────────────────
-            if (activityNames.isNotEmpty()) {
-                item {
-                    Column {
-                        Text(
-                            "Activities",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = cs.onSurface.copy(alpha = 0.6f),
-                            modifier = Modifier.padding(bottom = 10.dp)
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            activityNames.forEach { name ->
-                                val icon = com.diary.moonpage.core.util.MoonIcons.getIconForActivity(name)
-                                Surface(
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = cs.surfaceVariant.copy(alpha = 0.5f),
-                                    border = BorderStroke(1.dp, icon.color.copy(alpha = 0.2f))
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        if (icon.drawableRes != null) {
-                                            Image(
-                                                painter = painterResource(id = icon.drawableRes),
-                                                contentDescription = null,
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                        } else if (icon.vector != null) {
-                                            Icon(
-                                                imageVector = icon.vector,
-                                                contentDescription = null,
-                                                tint = icon.color,
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                        }
-                                        Text(
-                                            text = name,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            fontWeight = FontWeight.Medium,
-                                            color = cs.onSurface
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // ── Note ─────────────────────────────────────────────────────────
-            if (!noteSnippet.isNullOrBlank()) {
-                item {
-                    Column {
-                        Text(
-                            "Note",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = cs.onSurface.copy(alpha = 0.6f),
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            color = cs.surfaceVariant.copy(alpha = 0.5f)
-                        ) {
-                            Text(
-                                text = noteSnippet,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = cs.onSurface.copy(alpha = 0.85f),
-                                modifier = Modifier.padding(14.dp)
-                            )
-                        }
-                    }
-                }
-            }
-
-            // ── Action buttons ───────────────────────────────────────────────
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    // Share
                     OutlinedButton(
                         onClick = onShare,
                         modifier = Modifier.weight(1f),
@@ -635,7 +470,6 @@ fun DayDetailBottomSheet(
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("Share", fontSize = 13.sp)
                     }
-                    // Edit
                     Button(
                         onClick = onEdit,
                         modifier = Modifier.weight(1f),
@@ -646,13 +480,12 @@ fun DayDetailBottomSheet(
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("Edit", color = cs.onPrimary, fontSize = 13.sp)
                     }
-                    // Delete
                     OutlinedButton(
                         onClick = onDelete,
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = cs.error),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, cs.error.copy(alpha = 0.5f))
+                        border = BorderStroke(1.dp, cs.error.copy(alpha = 0.5f))
                     ) {
                         Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
@@ -716,7 +549,6 @@ fun MonthYearPickerBottomSheet(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Month Picker
                 Box(modifier = Modifier.weight(1f)) {
                     WheelPicker(
                         items = months,
@@ -728,7 +560,6 @@ fun MonthYearPickerBottomSheet(
                     )
                 }
                 
-                // Year Picker
                 Box(modifier = Modifier.weight(1f)) {
                     WheelPicker(
                         items = years,
@@ -782,7 +613,6 @@ private fun WheelPicker(
             .fillMaxWidth(),
         contentAlignment = Alignment.Center
     ) {
-        // Selection highlight
         Surface(
             modifier = Modifier
                 .fillMaxWidth()

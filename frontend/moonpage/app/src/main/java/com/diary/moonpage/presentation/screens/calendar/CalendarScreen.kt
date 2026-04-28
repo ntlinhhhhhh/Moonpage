@@ -180,7 +180,6 @@ fun CalendarScreen(
                 onDismiss = { onEvent(CalendarUiEvent.OnFilterDismiss) },
                 onSeeResults = {
                     onEvent(CalendarUiEvent.OnFilterDismiss)
-                    // TODO: Apply filter logic
                 }
             )
         }
@@ -343,17 +342,19 @@ fun CalendarSelectedLogDetail(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 8.dp),
+                .padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Mầm lá (Eco icon) đã được thêm lại
             Icon(
-                Icons.Rounded.Eco,
+                imageVector = Icons.Rounded.Eco,
                 contentDescription = null,
                 tint = Color(0xFF81C784),
                 modifier = Modifier.size(28.dp)
             )
-            Row(verticalAlignment = Alignment.CenterVertically) {
+
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 IconButton(onClick = onShareClick) {
                     Icon(Icons.Rounded.IosShare, contentDescription = "Share", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp))
                 }
@@ -437,7 +438,6 @@ fun CalendarSnackbarHost(snackbarHostState: SnackbarHostState) {
     }
 }
 
-// Mood helper data
 private data class MoodVisual(val color: Color, val icon: androidx.compose.ui.graphics.vector.ImageVector? = null, val drawableRes: Int? = null, val label: String)
 
 private fun moodVisualFor(baseMoodId: Int?): MoodVisual {
