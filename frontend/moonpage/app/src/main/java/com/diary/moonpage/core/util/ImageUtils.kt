@@ -105,6 +105,20 @@ object ImageUtils {
         }
     }
 
+    suspend fun saveAvatarLocally(context: Context, sourceFile: File): String? = withContext(Dispatchers.IO) {
+        try {
+            val avatarDir = File(context.filesDir, "avatars")
+            if (!avatarDir.exists()) avatarDir.mkdirs()
+            
+            val localFile = File(avatarDir, "current_avatar.webp")
+            sourceFile.copyTo(localFile, overwrite = true)
+            localFile.absolutePath
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
     private fun getRotation(context: Context, uri: Uri): Int {
         return try {
             context.contentResolver.openInputStream(uri)?.use { inputStream ->

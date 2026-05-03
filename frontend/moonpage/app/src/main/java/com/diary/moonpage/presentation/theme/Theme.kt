@@ -14,49 +14,37 @@ import androidx.compose.ui.platform.LocalContext
 private val DarkColorScheme = darkColorScheme(
     primary = MoonActionDark,
     onPrimary = MoonTextDark,
-
     background = MoonBgDark,
     onBackground = MoonTextLight,
-
     surface = MoonSurfaceDark,
     onSurface = MoonTextLight,
-
     surfaceVariant = MoonInputBgDark,
     tertiary = MoonLinkDark,
-    
     error = MoonErrorDark
 )
 
 private val LightColorScheme = lightColorScheme(
     primary = MoonActionLight,
     onPrimary = Color.White,
-
     background = MoonBgLight,
     onBackground = MoonTextDark,
-
     surface = Color.White,
     onSurface = MoonTextDark,
-
     surfaceVariant = MoonInputBgLight,
     tertiary = MoonLinkLight,
-
     error = MoonErrorLight
 )
 
 private val GreenColorScheme = lightColorScheme(
     primary = MoonGreenPrimary,
     onPrimary = Color.White,
-
     background = MoonGreenBg,
     onBackground = MoonGreenTextPrimary,
-
     surface = Color.White,
     onSurface = MoonGreenTextPrimary,
-
     surfaceVariant = MoonGreenSurface,
     secondary = MoonGreenSecondary,
     tertiary = MoonGreenTertiary,
-    
     outline = MoonGreenTextSecondary,
     error = MoonErrorLight
 )
@@ -88,9 +76,6 @@ fun MoonPageTheme(
     )
 }
 
-/**
- * Legacy support for the old boolean parameter
- */
 @Composable
 fun MoonPageTheme(
     darkTheme: Boolean,

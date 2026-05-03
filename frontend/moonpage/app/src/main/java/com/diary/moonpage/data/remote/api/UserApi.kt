@@ -3,6 +3,7 @@ package com.diary.moonpage.data.remote.api
 import com.diary.moonpage.data.remote.dto.auth.UpdateProfileRequestDto
 import com.diary.moonpage.data.remote.dto.auth.UserResponseDto
 import com.diary.moonpage.data.remote.dto.theme.ThemeResponseDTO
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -22,4 +23,10 @@ interface UserApi {
     suspend fun deleteUser(
         @Path("id") id: String
     ): Response<Unit>
+
+    @Multipart
+    @PUT("api/users/me/avatar")
+    suspend fun updateAvatar(
+        @Part image: MultipartBody.Part
+    ): Response<UserResponseDto>
 }

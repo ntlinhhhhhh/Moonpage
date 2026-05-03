@@ -20,7 +20,9 @@ import coil.compose.AsyncImage
 fun AccountAvatar(
     onEditClick: () -> Unit,
     modifier: Modifier = Modifier,
-    avatarUrl: String? = null
+    avatarUrl: String? = null,
+    localAvatarPath: String? = null,
+    tempAvatarPath: String? = null
 ) {
     val colorScheme = MaterialTheme.colorScheme
     
@@ -34,9 +36,11 @@ fun AccountAvatar(
                 .background(colorScheme.surfaceVariant, CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            if (avatarUrl != null) {
+            val displayImage = tempAvatarPath ?: localAvatarPath ?: avatarUrl
+            
+            if (displayImage != null) {
                 AsyncImage(
-                    model = avatarUrl,
+                    model = displayImage,
                     contentDescription = "Avatar",
                     modifier = Modifier
                         .size(110.dp)

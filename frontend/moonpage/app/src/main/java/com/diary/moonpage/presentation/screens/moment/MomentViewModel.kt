@@ -11,6 +11,9 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import coil.imageLoader
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import com.diary.moonpage.R
 import com.diary.moonpage.core.util.ImageUtils
 import com.diary.moonpage.core.util.UiText
@@ -52,6 +55,7 @@ class MomentViewModel @Inject constructor(
     val uiEvent = _uiEvent.receiveAsFlow()
 
     private val MOMENT_LIST_KEY = stringPreferencesKey("cached_moments")
+    private val LOCAL_PATHS_KEY = stringPreferencesKey("local_paths")
 
     val allTags = listOf(
         MomentTag("text", null, "Message"),
@@ -99,7 +103,14 @@ class MomentViewModel @Inject constructor(
                 if (!json.isNullOrEmpty()) {
                     val type = object : TypeToken<List<Moment>>() {}.type
                     val cachedList: List<Moment> = gson.fromJson(json, type)
-                    _uiState.update { it.copy(moments = cachedList) }
+                    
+                    val pathsJson = preferences[LOCAL_PATHS_KEY]
+                    val localPaths: Map<String, String> = if (!pathsJson.isNullOrEmpty()) {
+                        val pathType = object : TypeToken<Map<String, String>>() {}.type
+                        gson.fromJson(pathsJson, pathType)
+                    } else emptyMap()
+
+                    _uiState.update { it.copy(moments = cachedList, localPaths = localPaths) }
                 }
             } catch (e: Exception) {
                 Log.e("MomentVM", "Error loading cache", e)
@@ -111,8 +122,10 @@ class MomentViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val json = gson.toJson(list)
+                val pathsJson = gson.toJson(_uiState.value.localPaths)
                 context.momentDataStore.edit { prefs ->
                     prefs[MOMENT_LIST_KEY] = json
+                    prefs[LOCAL_PATHS_KEY] = pathsJson
                 }
             } catch (e: Exception) {
                 Log.e("MomentVM", "Error saving cache", e)
@@ -173,7 +186,7 @@ class MomentViewModel @Inject constructor(
                 val capturedAtBody = capturedAtStr.toRequestBody("text/plain".toMediaTypeOrNull())
                 val locationBody = location?.toRequestBody("text/plain".toMediaTypeOrNull())
                 val weatherBody = weather?.toRequestBody("text/plain".toMediaTypeOrNull())
-                val ratingBody = rating?.toString()?.toRequestBody("text/plain".toRequestBody("text/plain".toMediaTypeOrNull()).contentType()) // Corrected
+                val ratingBody = rating?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
 
                 uploadMomentUseCase(
                     dailyLogIdBody,
@@ -183,7 +196,7 @@ class MomentViewModel @Inject constructor(
                     capturedAtBody,
                     locationBody,
                     weatherBody,
-                    rating?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
+                    ratingBody
                 ).onSuccess { response ->
                     val fileName = "moment_${response.id}.webp"
                     val permanentFile = File(context.filesDir, "moments/$fileName")
@@ -200,6 +213,15 @@ class MomentViewModel @Inject constructor(
                             successMessage = UiText.StringResource(R.string.moment_upload_success)
                         )
                     }
+                    
+                    // Pre-warm Coil cache for the remote URL
+                    val preWarmRequest = ImageRequest.Builder(context)
+                        .data(response.imageUrl)
+                        .memoryCacheKey("feed_${response.imageUrl}")
+                        .diskCachePolicy(CachePolicy.ENABLED)
+                        .build()
+                    context.imageLoader.enqueue(preWarmRequest)
+
                     saveMomentsToCache(_uiState.value.moments)
                     onSuccess()
                 }.onFailure { error ->

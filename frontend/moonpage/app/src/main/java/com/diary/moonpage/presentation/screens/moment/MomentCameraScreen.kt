@@ -53,8 +53,10 @@ import java.util.Locale
 fun MomentCameraRoute(
     onNavigateToGallery: () -> Unit,
     onNavigateToHistory: () -> Unit,
-    viewModel: MomentViewModel = hiltViewModel()
+    viewModel: MomentViewModel = hiltViewModel(),
+    profileViewModel: com.diary.moonpage.presentation.screens.profile.ProfileViewModel = hiltViewModel()
 ) {
+    val profileState by profileViewModel.uiState.collectAsState()
     val cameraPermissionState = rememberMultiplePermissionsState(
         permissions = listOf(Manifest.permission.CAMERA)
     )
@@ -80,7 +82,9 @@ fun MomentCameraRoute(
             locationPermissionState = locationPermissionState,
             onEvent = viewModel::onEvent,
             onNavigateToGallery = onNavigateToGallery,
-            onNavigateToHistory = onNavigateToHistory
+            onNavigateToHistory = onNavigateToHistory,
+            avatarUrl = profileState.user?.avatarUrl,
+            localAvatarPath = profileState.localAvatarPath ?: profileState.tempAvatarPath
         )
     } else {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -98,7 +102,9 @@ fun MomentCameraScreen(
     locationPermissionState: com.google.accompanist.permissions.MultiplePermissionsState,
     onEvent: (MomentUiEvent) -> Unit,
     onNavigateToGallery: () -> Unit,
-    onNavigateToHistory: () -> Unit
+    onNavigateToHistory: () -> Unit,
+    avatarUrl: String? = null,
+    localAvatarPath: String? = null
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -215,7 +221,8 @@ fun MomentCameraScreen(
                         onImageCaptured = { uri, lensFacing ->
                             capturedImageUri = uri
                             capturedLensFacing = lensFacing
-                        }
+                        },
+                        avatarUrl = avatarUrl
                     )
                 } else {
                     MomentHistoryScreen(
@@ -225,7 +232,9 @@ fun MomentCameraScreen(
                         onBackToCamera = { scope.launch { verticalPagerState.animateScrollToPage(0) } },
                         onShare = { onEvent(MomentUiEvent.ShareMoment(it.imageUrl)) },
                         onDownload = { onEvent(MomentUiEvent.DownloadMoment(it.imageUrl)) },
-                        onDelete = { onEvent(MomentUiEvent.DeleteMoment(it.id)) }
+                        onDelete = { onEvent(MomentUiEvent.DeleteMoment(it.id)) },
+                        avatarUrl = avatarUrl,
+                        localAvatarPath = localAvatarPath
                     )
                 }
             }

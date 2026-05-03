@@ -5,6 +5,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
@@ -20,6 +21,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AddPhotoAlternate
+import androidx.compose.material.icons.rounded.FlashAuto
+import androidx.compose.material.icons.rounded.FlashOff
+import androidx.compose.material.icons.rounded.FlashOn
 import androidx.compose.material.icons.rounded.FlipCameraIos
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material3.Icon
@@ -31,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
@@ -49,7 +54,7 @@ fun CameraMainUI(
     onSelectFromGallery: () -> Unit,
     onNavigateToHistory: () -> Unit,
     onImageCaptured: (Uri, Int) -> Unit,
-    userRepository: UserRepository? = null,
+    avatarUrl: String? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -57,16 +62,11 @@ fun CameraMainUI(
     val mainExecutor = remember(context) { ContextCompat.getMainExecutor(context) }
     
     var lensFacing by remember { mutableIntStateOf(CameraSelector.LENS_FACING_BACK) }
+    var flashMode by remember { mutableIntStateOf(ImageCapture.FLASH_MODE_OFF) }
     val imageCapture = remember { ImageCapture.Builder().build() }
     val previewView = remember { PreviewView(context) }
     var camera by remember { mutableStateOf<Camera?>(null) }
     var currentZoomRatio by remember { mutableFloatStateOf(1f) }
-
-    val currentUser by if (userRepository != null) {
-        userRepository.currentUser.collectAsState()
-    } else {
-        remember { mutableStateOf<UserResponseDto?>(null) }
-    }
 
     LaunchedEffect(lensFacing, lifecycleOwner) {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
@@ -127,10 +127,37 @@ fun CameraMainUI(
                     .align(Alignment.CenterStart)
             ) {
                 AsyncImage(
-                    model = currentUser?.avatarUrl,
+                    model = avatarUrl,
                     contentDescription = "Profile",
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
                 )
+            }
+
+            // Flash Toggle (Only for Back Camera)
+            if (lensFacing == CameraSelector.LENS_FACING_BACK) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .align(Alignment.CenterEnd)
+                        .clickable {
+                            flashMode = when (flashMode) {
+                                ImageCapture.FLASH_MODE_OFF -> ImageCapture.FLASH_MODE_ON
+                                ImageCapture.FLASH_MODE_ON -> ImageCapture.FLASH_MODE_AUTO
+                                else -> ImageCapture.FLASH_MODE_OFF
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    val flashIcon = when (flashMode) {
+                        ImageCapture.FLASH_MODE_ON -> Icons.Rounded.FlashOn
+                        ImageCapture.FLASH_MODE_AUTO -> Icons.Rounded.FlashAuto
+                        else -> Icons.Rounded.FlashOff
+                    }
+                    Icon(flashIcon, "Flash", tint = MaterialTheme.colorScheme.primary)
+                }
             }
         }
 
@@ -151,10 +178,18 @@ fun CameraMainUI(
                 .background(Color.Black)
                 .transformable(state = zoomTransformState)
                 .pointerInput(Unit) {
-                    detectTapGestures(onDoubleTap = {
-                        currentZoomRatio = 1f
-                        camera?.cameraControl?.setZoomRatio(1f)
-                    })
+                    detectTapGestures(
+                        onTap = { offset ->
+                            val factory = previewView.meteringPointFactory
+                            val point = factory.createPoint(offset.x, offset.y)
+                            val action = FocusMeteringAction.Builder(point).build()
+                            camera?.cameraControl?.startFocusAndMetering(action)
+                        },
+                        onDoubleTap = {
+                            currentZoomRatio = 1f
+                            camera?.cameraControl?.setZoomRatio(1f)
+                        }
+                    )
                 },
             contentAlignment = Alignment.Center
         ) {
@@ -191,6 +226,7 @@ fun CameraMainUI(
                 takePhoto(
                     context = context,
                     imageCapture = imageCapture,
+                    flashMode = flashMode,
                     executor = mainExecutor,
                     onImageCaptured = { uri -> onImageCaptured(uri, lensFacing) },
                     onError = { Log.e("CameraMainUI", "Capture failed", it) }
@@ -237,10 +273,12 @@ fun CameraMainUI(
 private fun takePhoto(
     context: Context,
     imageCapture: ImageCapture,
+    flashMode: Int,
     executor: Executor,
     onImageCaptured: (Uri) -> Unit,
     onError: (ImageCaptureException) -> Unit
 ) {
+    imageCapture.flashMode = flashMode
     val file = File(context.cacheDir, "${System.currentTimeMillis()}.jpg")
     val outputOptions = ImageCapture.OutputFileOptions.Builder(file).build()
     imageCapture.takePicture(outputOptions, executor, object : ImageCapture.OnImageSavedCallback {

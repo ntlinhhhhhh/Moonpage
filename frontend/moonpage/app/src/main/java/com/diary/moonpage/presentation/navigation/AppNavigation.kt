@@ -30,6 +30,7 @@ import com.diary.moonpage.presentation.screens.calendar.FilterScreen
 import com.diary.moonpage.presentation.screens.calendar.calendarScreen
 import com.diary.moonpage.presentation.screens.moment.MomentCameraRoute
 import com.diary.moonpage.presentation.screens.profile.*
+import com.diary.moonpage.presentation.screens.stats.StatisticsRoute
 import com.diary.moonpage.presentation.screens.store.StoreScreen
 import com.diary.moonpage.presentation.screens.store.StoreViewModel
 import com.diary.moonpage.presentation.screens.store.ThemeDetailScreen
@@ -59,7 +60,7 @@ fun AppNavigation() {
                 MoonBottomNavBar(
                     selectedRoute = currentRoute ?: Screen.Calendar.route,
                     onItemSelected = { route ->
-                        if (currentRoute != route) {
+                        if (currentRoute != route || route == Screen.Camera.route) {
                             navController.navigate(route) {
                                 popUpTo(navController.graph.startDestinationId) {
                                     saveState = true
@@ -212,15 +213,7 @@ fun AppNavigation() {
 
             composable(Screen.Stats.route) {
                 ScreenWrapper(Screen.Stats.route) {
-                    ProfileScreen(
-                        onNavigateToAccount = { navController.navigate(Screen.Account.route) },
-                        onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                        onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
-                        onNavigateToPhotos = { navController.navigate(Screen.Gallery.route) },
-                        onNavigateToThemeCalendar = { navController.navigate(Screen.ThemeCalendar.route) },
-                        onNavigateToWidgets = { navController.navigate(Screen.Widgets.route) },
-                        onNavigateToInviteFriend = { navController.navigate(Screen.InviteFriend.route) }
-                    )
+                    StatisticsRoute()
                 }
             }
 

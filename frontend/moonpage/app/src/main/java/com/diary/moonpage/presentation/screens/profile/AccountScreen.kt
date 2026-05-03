@@ -1,5 +1,6 @@
 package com.diary.moonpage.presentation.screens.profile
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -27,7 +28,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.diary.moonpage.R
 import com.diary.moonpage.presentation.components.profile.*
 import com.diary.moonpage.presentation.theme.MoonPageTheme
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.AnnotatedString
@@ -59,6 +63,15 @@ fun AccountScreen(
     var showLogoutDialog by remember { mutableStateOf(false) }
 
     val user = uiState.user
+    val context = LocalContext.current
+
+    val avatarLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            viewModel.updateAvatar(context, it)
+        }
+    }
 
     // Fetch latest profile data when screen is launched
     LaunchedEffect(Unit) {
@@ -113,13 +126,27 @@ fun AccountScreen(
                 userIdFull = user?.id ?: "",
                 email = user?.email ?: "",
                 avatarUrl = user?.avatarUrl,
+                localAvatarPath = uiState.localAvatarPath,
+                tempAvatarPath = uiState.tempAvatarPath,
                 onNavigateBack = onNavigateBack,
                 onLogoutClick = { showLogoutDialog = true },
                 onBirthdayClick = { currentBottomSheet = BottomSheetType.BIRTHDAY },
                 onGenderClick = { currentBottomSheet = BottomSheetType.GENDER },
-                onAvatarEditClick = onNavigateToChangeAvatar,
+                onAvatarEditClick = { avatarLauncher.launch("image/*") },
                 onUsernameEditClick = { currentBottomSheet = BottomSheetType.USERNAME }
             )
+            
+            if (uiState.isUpdating) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.3f))
+                        .clickable(enabled = false) {},
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                }
+            }
         }
     }
 
@@ -311,7 +338,9 @@ fun AccountScreenContent(
     birthday: String,
     userIdFull: String,
     email: String,
-    avatarUrl: String?,
+    avatarUrl: String? = null,
+    localAvatarPath: String? = null,
+    tempAvatarPath: String? = null,
     onNavigateBack: () -> Unit,
     onLogoutClick: () -> Unit,
     onBirthdayClick: () -> Unit,
@@ -364,7 +393,9 @@ fun AccountScreenContent(
 
             AccountAvatar(
                 onEditClick = onAvatarEditClick,
-                avatarUrl = avatarUrl
+                avatarUrl = avatarUrl,
+                localAvatarPath = localAvatarPath,
+                tempAvatarPath = tempAvatarPath
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -485,6 +516,7 @@ fun AccountScreenPreview() {
             userIdFull = "01KJPADDQZ5DSB2GYGFGX384RF",
             email = "demo@gmail.com",
             avatarUrl = null,
+            localAvatarPath = null,
             onNavigateBack = {},
             onLogoutClick = {},
             onBirthdayClick = {},

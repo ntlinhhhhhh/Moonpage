@@ -20,10 +20,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.diary.moonpage.MainViewModel
 import com.diary.moonpage.presentation.theme.MoonPageTheme
+import com.diary.moonpage.presentation.theme.MoonThemeType
 
 // ---- Data model for theme packs ----
 
@@ -63,51 +65,29 @@ private val beanThemes = listOf(
             Color(0xFFF48FB1), Color(0xFFEC407A), Color(0xFFE91E63),
             Color(0xFFAD1457), Color(0xFF880E4F)
         )
-    ),
-    BeanThemePack(
-        id = "puppy",
-        name = "Puppy Bean",
-        description = "Adorable puppy faces for every mood of the day.",
-        accentColor = Color(0xFFFF9800),
-        secondaryColor = Color(0xFFFFF3E0),
-        icon = Icons.Rounded.Pets,
-        isLocked = true,
-        previewMoods = listOf(
-            Color(0xFFFFCC80), Color(0xFFFFB74D), Color(0xFFFF9800),
-            Color(0xFFF57C00), Color(0xFFE65100)
-        )
-    ),
-    BeanThemePack(
-        id = "matcha",
-        name = "Daily Matcha Set",
-        description = "Earthy green tones for your mindful journaling ritual.",
-        accentColor = Color(0xFF8BC34A),
-        secondaryColor = Color(0xFFF1F8E9),
-        icon = Icons.Rounded.SportsBar,
-        isLocked = true,
-        previewMoods = listOf(
-            Color(0xFFDCEDC8), Color(0xFFAED581), Color(0xFF8BC34A),
-            Color(0xFF558B2F), Color(0xFF33691E)
-        )
     )
 )
 
-// ---- Screen ----
-
 @Composable
 fun ThemeCalendarScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    mainViewModel: MainViewModel = hiltViewModel()
 ) {
-    var selectedThemeId by remember { mutableStateOf("basic") }
+    val currentAppTheme by mainViewModel.themeType.collectAsState()
+    var selectedBeanThemeId by remember { mutableStateOf("basic") }
 
     ThemePickerContent(
-        themes = beanThemes,
-        selectedThemeId = selectedThemeId,
-        onThemeSelected = { selectedThemeId = it },
-        onApply = {
-            // TODO: persist theme choice via ViewModel / DataStore
-            onNavigateBack()
-        },
+        appThemes = listOf(
+            Triple(MoonThemeType.LIGHT, "Light Mode", Icons.Rounded.LightMode),
+            Triple(MoonThemeType.DARK, "Dark Mode", Icons.Rounded.DarkMode),
+            Triple(MoonThemeType.GREEN, "Green Mode", Icons.Rounded.Eco)
+        ),
+        currentAppTheme = currentAppTheme,
+        onAppThemeSelected = { mainViewModel.setTheme(it) },
+        beanThemes = beanThemes,
+        selectedBeanThemeId = selectedBeanThemeId,
+        onBeanThemeSelected = { selectedBeanThemeId = it },
+        onApply = { onNavigateBack() },
         onNavigateBack = onNavigateBack
     )
 }
@@ -115,33 +95,25 @@ fun ThemeCalendarScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThemePickerContent(
-    themes: List<BeanThemePack>,
-    selectedThemeId: String,
-    onThemeSelected: (String) -> Unit,
+    appThemes: List<Triple<MoonThemeType, String, ImageVector>>,
+    currentAppTheme: MoonThemeType,
+    onAppThemeSelected: (MoonThemeType) -> Unit,
+    beanThemes: List<BeanThemePack>,
+    selectedBeanThemeId: String,
+    onBeanThemeSelected: (String) -> Unit,
     onApply: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
-    val selectedTheme = themes.find { it.id == selectedThemeId } ?: themes.first()
-
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    Text(
-                        "Bean Themes",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
+                    Text("Themes & Styles", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -150,101 +122,103 @@ fun ThemePickerContent(
             )
         },
         bottomBar = {
-            Surface(
-                color = MaterialTheme.colorScheme.background,
-                shadowElevation = 12.dp
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    // Currently selected theme preview row
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(selectedTheme.secondaryColor)
-                            .padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .background(selectedTheme.accentColor.copy(alpha = 0.2f), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = selectedTheme.icon,
-                                contentDescription = null,
-                                tint = selectedTheme.accentColor,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = selectedTheme.name,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                            Text(
-                                text = "Selected",
-                                color = selectedTheme.accentColor,
-                                fontSize = 12.sp
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Button(
-                        onClick = onApply,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = selectedTheme.accentColor
-                        )
-                    ) {
-                        Icon(Icons.Rounded.Check, contentDescription = null, tint = Color.White)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "Apply Theme",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
-                    }
+            Surface(color = MaterialTheme.colorScheme.background, shadowElevation = 12.dp) {
+                Button(
+                    onClick = onApply,
+                    modifier = Modifier.fillMaxWidth().padding(16.dp).height(52.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Text("Done", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             }
         }
     ) { padding ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
             contentPadding = PaddingValues(vertical = 16.dp)
         ) {
+            // Section 1: App Theme (Light, Dark, Green)
             item {
                 Text(
-                    text = "Choose your bean style",
+                    "App Appearance",
                     style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-                    modifier = Modifier.padding(bottom = 4.dp)
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    appThemes.forEach { (type, name, icon) ->
+                        val isSelected = currentAppTheme == type
+                        AppThemeItem(
+                            name = name,
+                            icon = icon,
+                            isSelected = isSelected,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onAppThemeSelected(type) }
+                        )
+                    }
+                }
+            }
+
+            // Section 2: Bean Style
+            item {
+                Text(
+                    "Bean Style",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                 )
             }
 
-            items(themes) { theme ->
+            items(beanThemes) { theme ->
                 BeanThemeCard(
                     theme = theme,
-                    isSelected = theme.id == selectedThemeId,
-                    onClick = {
-                        if (!theme.isLocked) onThemeSelected(theme.id)
-                    }
+                    isSelected = theme.id == selectedBeanThemeId,
+                    onClick = { onBeanThemeSelected(theme.id) }
                 )
             }
         }
+    }
+}
+
+@Composable
+fun AppThemeItem(
+    name: String,
+    icon: ImageVector,
+    isSelected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(if (isSelected) colorScheme.primary.copy(alpha = 0.1f) else colorScheme.surfaceVariant.copy(alpha = 0.3f))
+            .border(
+                width = if (isSelected) 2.dp else 0.dp,
+                color = if (isSelected) colorScheme.primary else Color.Transparent,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .clickable { onClick() }
+            .padding(vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = if (isSelected) colorScheme.primary else colorScheme.onSurface.copy(alpha = 0.5f),
+            modifier = Modifier.size(28.dp)
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = name,
+            fontSize = 12.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+            color = if (isSelected) colorScheme.primary else colorScheme.onSurface.copy(alpha = 0.7f)
+        )
     }
 }
 
@@ -254,162 +228,28 @@ fun BeanThemeCard(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val borderColor = if (isSelected) theme.accentColor else Color.Transparent
-    val borderWidth = if (isSelected) 2.dp else 0.dp
-
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(borderWidth, borderColor, RoundedCornerShape(20.dp))
-            .clip(RoundedCornerShape(20.dp))
-            .clickable { onClick() },
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isSelected)
-                theme.secondaryColor
-            else
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isSelected) 4.dp else 0.dp)
+            containerColor = if (isSelected) theme.secondaryColor else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+        )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier.size(48.dp).background(theme.accentColor.copy(alpha = 0.2f), CircleShape),
+                contentAlignment = Alignment.Center
             ) {
-                // Theme icon in a colored circle
-                Box(
-                    modifier = Modifier
-                        .size(52.dp)
-                        .background(
-                            brush = Brush.radialGradient(
-                                colors = listOf(theme.accentColor.copy(alpha = 0.3f), theme.accentColor.copy(alpha = 0.1f))
-                            ),
-                            shape = CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = theme.icon,
-                        contentDescription = null,
-                        tint = theme.accentColor,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = theme.name,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        if (theme.isLocked) {
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Icon(
-                                imageVector = Icons.Rounded.Lock,
-                                contentDescription = "Locked",
-                                tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    }
-                    Text(
-                        text = theme.description,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 12.sp
-                    )
-                }
-
-                // Selected indicator
-                if (isSelected) {
-                    Box(
-                        modifier = Modifier
-                            .size(24.dp)
-                            .background(theme.accentColor, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.Rounded.Check,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(14.dp)
-                        )
-                    }
-                }
+                Icon(theme.icon, null, tint = theme.accentColor, modifier = Modifier.size(24.dp))
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Mood color preview row (5 beans)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                val moodLabels = listOf("😄", "🙂", "😐", "😔", "😴")
-                theme.previewMoods.forEachIndexed { index, color ->
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .then(
-                                    if (isSelected)
-                                        Modifier.border(1.5.dp, theme.accentColor.copy(alpha = 0.4f), CircleShape)
-                                    else Modifier
-                                )
-                                .background(color, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = moodLabels.getOrElse(index) { "•" },
-                                fontSize = 14.sp
-                            )
-                        }
-                    }
-                }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(theme.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
+                Text(theme.description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             }
-
-            if (theme.isLocked) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(theme.accentColor.copy(alpha = 0.1f))
-                        .padding(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        Icons.Rounded.Lock,
-                        contentDescription = null,
-                        tint = theme.accentColor,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Visit the Store to unlock",
-                        color = theme.accentColor,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+            if (isSelected) {
+                Icon(Icons.Rounded.CheckCircle, null, tint = theme.accentColor)
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun ThemeCalendarPreview() {
-    MoonPageTheme {
-        ThemeCalendarScreen { }
     }
 }

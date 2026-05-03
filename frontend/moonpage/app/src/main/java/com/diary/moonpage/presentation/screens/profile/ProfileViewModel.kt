@@ -14,10 +14,18 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import android.content.Context
+import android.net.Uri
+import com.diary.moonpage.core.util.ImageUtils
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import javax.inject.Inject
 
 data class ProfileUiState(
     val user: UserResponseDto? = null,
+    val localAvatarPath: String? = null,
+    val tempAvatarPath: String? = null,
     val myThemes: List<Theme> = emptyList(),
     val isLoading: Boolean = false,
     val isUpdating: Boolean = false,
@@ -45,6 +53,12 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             userRepository.currentUser.collectLatest { user ->
                 _uiState.update { it.copy(user = user) }
+            }
+        }
+
+        viewModelScope.launch {
+            userRepository.localAvatarPath.collectLatest { path ->
+                _uiState.update { it.copy(localAvatarPath = path, tempAvatarPath = null) }
             }
         }
         
@@ -82,8 +96,14 @@ class ProfileViewModel @Inject constructor(
 
     fun updateProfile(name: String, gender: String?, birthday: String?) {
         viewModelScope.launch {
+            val currentAvatarUrl = _uiState.value.user?.avatarUrl
             _uiState.update { it.copy(isUpdating = true) }
-            val request = UpdateProfileRequestDto(name = name, gender = gender, birthday = birthday)
+            val request = UpdateProfileRequestDto(
+                name = name, 
+                avatarUrl = currentAvatarUrl,
+                gender = gender, 
+                birthday = birthday
+            )
             userRepository.updateProfile(request)
                 .onSuccess { updatedUser ->
                     _uiEvent.emit(ProfileUiEvent.UpdateSuccess)
@@ -94,6 +114,41 @@ class ProfileViewModel @Inject constructor(
                     _uiState.update { it.copy(isUpdating = false) }
                     _uiEvent.emit(ProfileUiEvent.ShowSnackBar(e.message ?: "Update failed"))
                 }
+        }
+    }
+
+    fun updateAvatar(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isUpdating = true) }
+            try {
+                val compressedFile = ImageUtils.compressAndCropSquare(context, uri)
+                if (compressedFile != null) {
+                    // Optimistic update: show picked image immediately
+                    _uiState.update { it.copy(tempAvatarPath = compressedFile.absolutePath) }
+                    
+                    val imagePart = MultipartBody.Part.createFormData(
+                        "imageFile",
+                        compressedFile.name,
+                        compressedFile.asRequestBody("image/webp".toMediaTypeOrNull())
+                    )
+                    userRepository.updateAvatar(imagePart, compressedFile)
+                        .onSuccess {
+                            _uiEvent.emit(ProfileUiEvent.UpdateSuccess)
+                            _uiEvent.emit(ProfileUiEvent.ShowSnackBar("Avatar updated successfully"))
+                            _uiState.update { it.copy(isUpdating = false) }
+                        }
+                        .onFailure { e ->
+                            _uiState.update { it.copy(isUpdating = false) }
+                            _uiEvent.emit(ProfileUiEvent.ShowSnackBar(e.message ?: "Avatar update failed"))
+                        }
+                } else {
+                    _uiState.update { it.copy(isUpdating = false) }
+                    _uiEvent.emit(ProfileUiEvent.ShowSnackBar("Failed to process image"))
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isUpdating = false) }
+                _uiEvent.emit(ProfileUiEvent.ShowSnackBar(e.message ?: "An error occurred"))
+            }
         }
     }
 

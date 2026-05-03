@@ -148,7 +148,7 @@ fun GalleryItem(
             .size(Size(600, 600))
             .scale(Scale.FILL)
             .crossfade(200)
-            .memoryCacheKey(imageData.toString())
+            .memoryCacheKey("feed_${imageData}")
             .diskCachePolicy(if (isLocalFile) CachePolicy.DISABLED else CachePolicy.ENABLED)
             .memoryCachePolicy(CachePolicy.ENABLED)
             .build()

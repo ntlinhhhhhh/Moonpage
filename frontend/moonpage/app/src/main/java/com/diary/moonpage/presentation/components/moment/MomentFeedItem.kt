@@ -39,7 +39,12 @@ import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun MomentFeedItem(moment: Moment, localPath: String? = null) {
+fun MomentFeedItem(
+    moment: Moment, 
+    localPath: String? = null,
+    avatarUrl: String? = null,
+    localAvatarPath: String? = null
+) {
     val onBgColor = MaterialTheme.colorScheme.onBackground
     val context = LocalContext.current
     
@@ -200,8 +205,16 @@ fun MomentFeedItem(moment: Moment, localPath: String? = null) {
                 modifier = Modifier
                     .size(32.dp)
                     .clip(CircleShape)
-                    .background(onBgColor.copy(alpha = 0.25f))
-            )
+                    .background(onBgColor.copy(alpha = 0.25f)),
+                contentAlignment = Alignment.Center
+            ) {
+                AsyncImage(
+                    model = localAvatarPath ?: avatarUrl,
+                    contentDescription = "Avatar",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = "Me",

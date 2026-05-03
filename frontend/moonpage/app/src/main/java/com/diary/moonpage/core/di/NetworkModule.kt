@@ -2,12 +2,7 @@ package com.diary.moonpage.di
 
 import android.content.Context
 import com.diary.moonpage.core.network.AuthInterceptor
-import com.diary.moonpage.data.remote.api.AuthApi
-import com.diary.moonpage.data.remote.api.MomentApi
-import com.diary.moonpage.data.remote.api.ThemeApi
-import com.diary.moonpage.data.remote.api.UserApi
-import com.diary.moonpage.data.remote.api.DailyLogApi
-import com.diary.moonpage.data.remote.api.ActivityApi
+import com.diary.moonpage.data.remote.api.*
 import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
@@ -108,5 +103,11 @@ object NetworkModule {
     @Singleton
     fun provideActivityApi(retrofit: Retrofit): ActivityApi {
         return retrofit.create(ActivityApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideStatisticsApi(retrofit: Retrofit): StatisticsApi {
+        return retrofit.create(StatisticsApi::class.java)
     }
 }

@@ -23,6 +23,7 @@ class UserManager @Inject constructor(
 ) {
     companion object {
         private val USER_DATA_KEY = stringPreferencesKey("user_data")
+        private val LOCAL_AVATAR_PATH_KEY = stringPreferencesKey("local_avatar_path")
     }
 
     suspend fun saveUser(user: UserResponseDto) {
@@ -43,9 +44,26 @@ class UserManager @Inject constructor(
         }
     }
 
+    suspend fun saveLocalAvatarPath(path: String?) {
+        context.userDataStore.edit { preferences ->
+            if (path == null) {
+                preferences.remove(LOCAL_AVATAR_PATH_KEY)
+            } else {
+                preferences[LOCAL_AVATAR_PATH_KEY] = path
+            }
+        }
+    }
+
+    fun getLocalAvatarPath(): Flow<String?> {
+        return context.userDataStore.data.map { preferences ->
+            preferences[LOCAL_AVATAR_PATH_KEY]
+        }
+    }
+
     suspend fun clearUser() {
         context.userDataStore.edit { preferences ->
             preferences.remove(USER_DATA_KEY)
+            preferences.remove(LOCAL_AVATAR_PATH_KEY)
         }
     }
 }

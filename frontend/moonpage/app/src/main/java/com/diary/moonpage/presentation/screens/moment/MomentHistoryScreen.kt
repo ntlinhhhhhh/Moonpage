@@ -22,6 +22,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.imageLoader
 import coil.request.CachePolicy
 import coil.request.ImageRequest
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
 import com.diary.moonpage.presentation.theme.MoonPageTheme
 import com.diary.moonpage.domain.model.Moment
 import com.diary.moonpage.presentation.components.moment.MomentFeedItem
@@ -32,9 +34,11 @@ fun MomentHistoryRoute(
     onBackToCamera: () -> Unit,
     onNavigateToGallery: () -> Unit,
     onNavigateToDetail: (String) -> Unit,
-    viewModel: MomentViewModel = hiltViewModel()
+    viewModel: MomentViewModel = hiltViewModel(),
+    profileViewModel: com.diary.moonpage.presentation.screens.profile.ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
 
     MomentHistoryScreen(
         moments = uiState.moments,
@@ -43,7 +47,9 @@ fun MomentHistoryRoute(
         onBackToCamera = onBackToCamera,
         onShare = { moment -> viewModel.onEvent(MomentUiEvent.ShareMoment(moment.imageUrl)) },
         onDownload = { moment -> viewModel.onEvent(MomentUiEvent.DownloadMoment(moment.imageUrl)) },
-        onDelete = { moment -> viewModel.onEvent(MomentUiEvent.DeleteMoment(moment.id)) }
+        onDelete = { moment -> viewModel.onEvent(MomentUiEvent.DeleteMoment(moment.id)) },
+        avatarUrl = profileState.user?.avatarUrl,
+        localAvatarPath = profileState.localAvatarPath ?: profileState.tempAvatarPath
     )
 }
 
@@ -57,6 +63,8 @@ fun MomentHistoryScreen(
     onShare: (Moment) -> Unit = {},
     onDownload: (Moment) -> Unit = {},
     onDelete: (Moment) -> Unit = {},
+    avatarUrl: String? = null,
+    localAvatarPath: String? = null,
     modifier: Modifier = Modifier
 ) {
     val sortedMoments = remember(moments) { moments.sortedByDescending { it.capturedAt } }
@@ -112,7 +120,9 @@ fun MomentHistoryScreen(
                 val moment = sortedMoments[index]
                 MomentFeedItem(
                     moment = moment, 
-                    localPath = localPaths[moment.imageUrl]
+                    localPath = localPaths[moment.imageUrl],
+                    avatarUrl = avatarUrl,
+                    localAvatarPath = localAvatarPath
                 )
             }
         }
@@ -130,8 +140,16 @@ fun MomentHistoryScreen(
                     .size(48.dp)
                     .clip(CircleShape)
                     .background(onBgColor.copy(alpha = 0.15f))
-                    .align(Alignment.CenterStart)
-            )
+                    .align(Alignment.CenterStart),
+                contentAlignment = Alignment.Center
+            ) {
+                AsyncImage(
+                    model = localAvatarPath ?: avatarUrl,
+                    contentDescription = "Avatar",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
         }
 
         // Bottom Bar
