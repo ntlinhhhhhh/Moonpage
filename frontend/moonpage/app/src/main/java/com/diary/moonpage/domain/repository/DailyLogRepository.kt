@@ -1,6 +1,7 @@
 package com.diary.moonpage.domain.repository
 
-import com.diary.moonpage.data.remote.api.DailyLogResponse
+import com.diary.moonpage.data.remote.dto.calendar.DailyLogResponseDto
+import kotlinx.coroutines.flow.Flow
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 
@@ -17,9 +18,9 @@ interface DailyLogRepository {
         dailyPhotos: List<MultipartBody.Part>?
     ): Result<Unit>
 
-    suspend fun getDailyLogByDate(date: String): Result<DailyLogResponse>
+    suspend fun getDailyLogByDate(date: String): Result<DailyLogResponseDto>
     
     suspend fun deleteDailyLog(date: String): Result<Unit>
     
-    fun getDailyLogsByMonth(yearMonth: String): kotlinx.coroutines.flow.Flow<List<DailyLogResponse>>
+    fun getDailyLogsByMonth(yearMonth: String): Flow<List<DailyLogResponseDto>>
 }

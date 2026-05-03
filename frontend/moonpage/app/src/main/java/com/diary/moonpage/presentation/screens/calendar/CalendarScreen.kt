@@ -29,8 +29,11 @@ import com.diary.moonpage.presentation.components.calendar.*
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
+/**
+ * Stateful Component
+ */
 @Composable
-fun CalendarRoute(
+fun CalendarScreen(
     createdLogDate: String? = null,
     onLogDateHandled: () -> Unit = {},
     logSavedMessage: String? = null,
@@ -57,7 +60,7 @@ fun CalendarRoute(
         }
     }
 
-    CalendarScreen(
+    CalendarScreenContent(
         uiState = uiState,
         onEvent = viewModel::onEvent,
         onNavigateToSettings = onNavigateToSettings,
@@ -67,8 +70,11 @@ fun CalendarRoute(
     )
 }
 
+/**
+ * Stateless Component
+ */
 @Composable
-fun CalendarScreen(
+fun CalendarScreenContent(
     uiState: CalendarUiState,
     onEvent: (CalendarUiEvent) -> Unit,
     onNavigateToSettings: () -> Unit,
@@ -232,7 +238,7 @@ fun CalendarMonthHeader(
 fun CalendarPager(
     currentYearMonth: java.time.YearMonth,
     selectedDate: LocalDate,
-    dailyLogs: Map<LocalDate, com.diary.moonpage.data.remote.api.DailyLogResponse>,
+    dailyLogs: Map<LocalDate, com.diary.moonpage.data.remote.dto.calendar.DailyLogResponseDto>,
     onDateSelected: (LocalDate) -> Unit,
     onMonthChanged: (java.time.YearMonth) -> Unit
 ) {
@@ -326,7 +332,7 @@ fun CalendarPager(
 @Composable
 fun CalendarSelectedLogDetail(
     selectedDate: LocalDate,
-    dailyLogs: Map<LocalDate, com.diary.moonpage.data.remote.api.DailyLogResponse>,
+    dailyLogs: Map<LocalDate, com.diary.moonpage.data.remote.dto.calendar.DailyLogResponseDto>,
     dynamicActivities: List<com.diary.moonpage.domain.model.Activity>,
     onEditLog: (LocalDate) -> Unit,
     onDeleteLog: (LocalDate) -> Unit,
@@ -346,7 +352,6 @@ fun CalendarSelectedLogDetail(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Mầm lá (Eco icon) đã được thêm lại
             Icon(
                 imageVector = Icons.Rounded.Eco,
                 contentDescription = null,

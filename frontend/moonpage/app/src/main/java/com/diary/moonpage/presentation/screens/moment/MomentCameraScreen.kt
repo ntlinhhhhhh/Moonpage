@@ -8,7 +8,6 @@ import android.location.Location
 import android.location.LocationManager
 import android.net.Uri
 import android.provider.Settings
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -32,7 +31,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.diary.moonpage.domain.model.Moment
 import com.diary.moonpage.presentation.components.moment.CameraMainUI
 import com.diary.moonpage.presentation.components.moment.MomentTag
 import com.diary.moonpage.presentation.components.moment.TagChip
@@ -48,9 +46,12 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.Locale
 
+/**
+ * Stateful Component
+ */
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun MomentCameraRoute(
+fun MomentCameraScreen(
     onNavigateToGallery: () -> Unit,
     onNavigateToHistory: () -> Unit,
     viewModel: MomentViewModel = hiltViewModel(),
@@ -76,7 +77,7 @@ fun MomentCameraRoute(
 
     val cameraPermission = cameraPermissionState.permissions.find { it.permission == Manifest.permission.CAMERA }
     if (cameraPermission?.status?.isGranted == true) {
-        MomentCameraScreen(
+        MomentCameraScreenContent(
             uiState = uiState,
             allTags = viewModel.allTags,
             locationPermissionState = locationPermissionState,
@@ -93,10 +94,13 @@ fun MomentCameraRoute(
     }
 }
 
+/**
+ * Stateless Component
+ */
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
-fun MomentCameraScreen(
+fun MomentCameraScreenContent(
     uiState: MomentUiState,
     allTags: List<MomentTag>,
     locationPermissionState: com.google.accompanist.permissions.MultiplePermissionsState,
@@ -225,7 +229,7 @@ fun MomentCameraScreen(
                         avatarUrl = avatarUrl
                     )
                 } else {
-                    MomentHistoryScreen(
+                    MomentHistoryScreenContent(
                         moments = uiState.moments,
                         localPaths = uiState.localPaths,
                         onNavigateToGallery = onNavigateToGallery,
@@ -278,7 +282,7 @@ fun MomentCameraScreen(
                         onSuccess = { isSuccess = true }
                     ))
                 },
-                onShowTagSheet = { showTagSheet = true }
+                onShowTagSheet = { showTagSheet = false }
             )
 
             if (isSuccess) {

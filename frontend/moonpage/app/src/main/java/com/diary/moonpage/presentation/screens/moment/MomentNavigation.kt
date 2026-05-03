@@ -25,7 +25,7 @@ fun NavGraphBuilder.momentScreen(
 ) {
     composable(Screen.Camera.route) {
         screenWrapper(Screen.Camera.route) {
-            MomentCameraRoute(
+            MomentCameraScreen(
                 onNavigateToGallery = { navController.navigate(Screen.Gallery.route) },
                 onNavigateToHistory = { navController.navigateToMomentHistory() }
             )
@@ -34,7 +34,7 @@ fun NavGraphBuilder.momentScreen(
 
     composable("moment_history") {
         screenWrapper("moment_history") {
-            MomentHistoryRoute(
+            MomentHistoryScreen(
                 onBackToCamera = { navController.popBackStack() },
                 onNavigateToGallery = { navController.navigate(Screen.Gallery.route) },
                 onNavigateToDetail = { id -> navController.navigateToMomentDetail(id) }
@@ -45,7 +45,7 @@ fun NavGraphBuilder.momentScreen(
     composable("moment_detail/{momentId}") { backStackEntry ->
         val momentId = backStackEntry.arguments?.getString("momentId") ?: return@composable
         screenWrapper("moment_detail") {
-            MomentDetailRoute(
+            MomentDetailScreen(
                 momentId = momentId,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToGallery = { navController.navigate(Screen.Gallery.route) }

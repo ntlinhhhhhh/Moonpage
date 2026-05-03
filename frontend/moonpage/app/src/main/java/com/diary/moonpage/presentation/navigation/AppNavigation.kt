@@ -3,7 +3,6 @@ package com.diary.moonpage.presentation.navigation
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.Box
-import com.diary.moonpage.presentation.screens.moment.MomentDetailRoute
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.padding
@@ -25,12 +24,13 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.diary.moonpage.presentation.components.core.navigation.MoonBottomNavBar
 import com.diary.moonpage.presentation.screens.auth.*
-import com.diary.moonpage.presentation.screens.calendar.DailyLogRoute
+import com.diary.moonpage.presentation.screens.calendar.DailyLogScreen
 import com.diary.moonpage.presentation.screens.calendar.FilterScreen
 import com.diary.moonpage.presentation.screens.calendar.calendarScreen
-import com.diary.moonpage.presentation.screens.moment.MomentCameraRoute
+import com.diary.moonpage.presentation.screens.moment.MomentCameraScreen
+import com.diary.moonpage.presentation.screens.moment.MomentDetailScreen
 import com.diary.moonpage.presentation.screens.profile.*
-import com.diary.moonpage.presentation.screens.stats.StatisticsRoute
+import com.diary.moonpage.presentation.screens.stats.StatisticsScreen
 import com.diary.moonpage.presentation.screens.store.StoreScreen
 import com.diary.moonpage.presentation.screens.store.StoreViewModel
 import com.diary.moonpage.presentation.screens.store.ThemeDetailScreen
@@ -197,7 +197,7 @@ fun AppNavigation() {
             composable(Screen.DailyLog.route) { backStackEntry ->
                 val dateStr = backStackEntry.arguments?.getString("date") ?: ""
                 ScreenWrapper(Screen.DailyLog.route) {
-                    DailyLogRoute(
+                    DailyLogScreen(
                         dateString = dateStr,
                         onNavigateBack = { navController.popBackStack() },
                         onDone = { message ->
@@ -213,13 +213,13 @@ fun AppNavigation() {
 
             composable(Screen.Stats.route) {
                 ScreenWrapper(Screen.Stats.route) {
-                    StatisticsRoute()
+                    StatisticsScreen()
                 }
             }
 
             composable(Screen.Camera.route) {
                 ScreenWrapper(Screen.Camera.route) {
-                    MomentCameraRoute(
+                    MomentCameraScreen(
                         onNavigateToGallery = { navController.navigate(Screen.Gallery.route) },
                         onNavigateToHistory = { /* TODO */ }
                     )
@@ -303,7 +303,7 @@ fun AppNavigation() {
             composable(Screen.MomentDetail.route) { backStackEntry ->
                 val momentId = backStackEntry.arguments?.getString("momentId") ?: ""
                 ScreenWrapper(Screen.MomentDetail.route) {
-                    MomentDetailRoute(
+                    MomentDetailScreen(
                         momentId = momentId,
                         onNavigateBack = { navController.popBackStack() },
                         onNavigateToGallery = { navController.popBackStack() }

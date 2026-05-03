@@ -22,7 +22,7 @@ fun NavGraphBuilder.calendarScreen(
         val createdLogDate by savedStateHandle.getStateFlow<String?>("created_log_date", null).collectAsState()
         val logSavedMessage by savedStateHandle.getStateFlow<String?>("logSavedMessage", null).collectAsState()
 
-        CalendarRoute(
+        CalendarScreen(
             createdLogDate = createdLogDate,
             onLogDateHandled = { savedStateHandle.set("created_log_date", null) },
             logSavedMessage = logSavedMessage,

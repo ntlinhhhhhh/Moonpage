@@ -29,8 +29,11 @@ import com.diary.moonpage.domain.model.Moment
 import com.diary.moonpage.presentation.components.moment.MomentFeedItem
 import com.diary.moonpage.presentation.components.moment.CaptureButton
 
+/**
+ * Stateful Component
+ */
 @Composable
-fun MomentHistoryRoute(
+fun MomentHistoryScreen(
     onBackToCamera: () -> Unit,
     onNavigateToGallery: () -> Unit,
     onNavigateToDetail: (String) -> Unit,
@@ -40,7 +43,7 @@ fun MomentHistoryRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
 
-    MomentHistoryScreen(
+    MomentHistoryScreenContent(
         moments = uiState.moments,
         localPaths = uiState.localPaths,
         onNavigateToGallery = onNavigateToGallery,
@@ -53,8 +56,11 @@ fun MomentHistoryRoute(
     )
 }
 
+/**
+ * Stateless Component
+ */
 @Composable
-fun MomentHistoryScreen(
+fun MomentHistoryScreenContent(
     moments: List<Moment>,
     localPaths: Map<String, String>,
     onNavigateToGallery: () -> Unit,
@@ -79,11 +85,9 @@ fun MomentHistoryScreen(
     val context = LocalContext.current
     var showMenu by remember { mutableStateOf(false) }
 
-    // Thông minh hơn trong việc pre-fetch: Load ảnh trước và sau trang hiện tại
     LaunchedEffect(feedPagerState.currentPage, sortedMoments) {
         if (sortedMoments.isNotEmpty()) {
             val currentPage = feedPagerState.currentPage
-            // Load trang hiện tại, 2 trang trước và 2 trang sau
             val range = (currentPage - 2)..(currentPage + 2)
             range.forEach { index ->
                 if (index in sortedMoments.indices) {
@@ -115,7 +119,7 @@ fun MomentHistoryScreen(
             VerticalPager(
                 state = feedPagerState,
                 modifier = Modifier.fillMaxSize(),
-                beyondViewportPageCount = 2 // Giữ nhiều trang hơn trong bộ nhớ để scroll mượt
+                beyondViewportPageCount = 2 
             ) { index ->
                 val moment = sortedMoments[index]
                 MomentFeedItem(
@@ -263,28 +267,5 @@ fun MomentHistoryScreen(
                 }
             }
         }
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true, name = "History With Content")
-@Composable
-fun MomentHistoryScreenPreview() {
-    val sampleMoments = listOf(
-        Moment(
-            id = "1",
-            imageUrl = "https://picsum.photos/1000",
-            caption = "Chuyến đi Đà Lạt tuyệt vời! 🌲✨",
-            capturedAt = "2024-04-26T10:00:00.000Z",
-            isPublic = true
-        )
-    )
-
-    MoonPageTheme {
-        MomentHistoryScreen(
-            moments = sampleMoments,
-            localPaths = emptyMap(),
-            onNavigateToGallery = {},
-            onBackToCamera = {}
-        )
     }
 }

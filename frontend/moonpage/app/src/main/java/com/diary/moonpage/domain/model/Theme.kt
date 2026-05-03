@@ -16,7 +16,3 @@ data class Theme(
     val primaryColor: String? = null,
     val decoration: String = "NONE" // "NONE", "KITTY", "SPROUT", "BLUSHING"
 )
-
-enum class ThemeType {
-    THEME, ICON_PACK
-}

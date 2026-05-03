@@ -13,5 +13,4 @@ sealed interface CalendarUiEvent {
     object OnFilterClick : CalendarUiEvent
     object OnFilterDismiss : CalendarUiEvent
     object DismissMessage : CalendarUiEvent
-    // Add other events as needed
 }

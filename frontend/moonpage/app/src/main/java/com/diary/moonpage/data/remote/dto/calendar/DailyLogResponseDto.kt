@@ -1,8 +1,8 @@
-package com.diary.moonpage.data.remote.api
+package com.diary.moonpage.data.remote.dto.calendar
 
 import com.google.gson.annotations.SerializedName
 
-data class DailyLogResponse(
+data class DailyLogResponseDto(
     @SerializedName("id") val id: String,
     @SerializedName("baseMoodId") val baseMoodId: Int,
     @SerializedName("date") val date: String,
@@ -13,5 +13,3 @@ data class DailyLogResponse(
     @SerializedName("dailyPhotos") val dailyPhotos: List<String>?,
     @SerializedName("activityIds") val activityIds: List<String>?
 )
-
-// Use RequestBody and Multipart parts for the POST request

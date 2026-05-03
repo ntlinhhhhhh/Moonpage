@@ -42,12 +42,14 @@ import com.diary.moonpage.core.util.MoonIcons
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
-import java.time.format.TextStyle
 import java.util.*
 import kotlinx.coroutines.launch
 
+/**
+ * Stateful Component
+ */
 @Composable
-fun DailyLogRoute(
+fun DailyLogScreen(
     dateString: String,
     onNavigateBack: () -> Unit,
     onDone: (String) -> Unit,
@@ -63,7 +65,7 @@ fun DailyLogRoute(
         viewModel.setOnSaveSuccess(onDone)
     }
 
-    DailyLogScreen(
+    DailyLogScreenContent(
         uiState = uiState,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
@@ -72,8 +74,11 @@ fun DailyLogRoute(
     )
 }
 
+/**
+ * Stateless Component
+ */
 @Composable
-fun DailyLogScreen(
+fun DailyLogScreenContent(
     uiState: DailyLogUiState,
     onEvent: (DailyLogUiEvent) -> Unit,
     onNavigateBack: () -> Unit,
@@ -112,7 +117,7 @@ fun DailyLogScreen(
         containerColor = colorScheme.background,
         snackbarHost = { CalendarSnackbarHost(snackbarHostState = snackbarHostState) }
     ) { paddingValues ->
-        DailyLogContent(
+        DailyLogMainContent(
             modifier = Modifier.padding(paddingValues),
             uiState = uiState,
             onEvent = onEvent
@@ -219,7 +224,7 @@ private fun DailyLogBottomBar(
 }
 
 @Composable
-private fun DailyLogContent(
+private fun DailyLogMainContent(
     modifier: Modifier = Modifier,
     uiState: DailyLogUiState,
     onEvent: (DailyLogUiEvent) -> Unit
@@ -665,7 +670,7 @@ fun DailyLogDatePickerDialog(
             color = colorScheme.surface,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp) // Margin from screen edges
+                .padding(horizontal = 12.dp)
         ) {
             Column(
                 modifier = Modifier.padding(20.dp), 
@@ -691,7 +696,7 @@ fun DailyLogDatePickerDialog(
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = colorScheme.onSurface,
-                        modifier = Modifier.padding(start = 20.dp) // Adjusted for balance
+                        modifier = Modifier.padding(start = 20.dp)
                     )
                     Row(modifier = Modifier.padding(end = 4.dp)) {
                         IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } }) {

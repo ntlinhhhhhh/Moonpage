@@ -31,23 +31,29 @@ import com.diary.moonpage.presentation.theme.*
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
+/**
+ * Stateful Component
+ */
 @Composable
-fun StatisticsRoute(
+fun StatisticsScreen(
     viewModel: StatisticsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    StatisticsScreen(
+    
+    StatisticsScreenContent(
         uiState = uiState,
         onMonthChange = viewModel::onMonthSelected,
         onTabChange = viewModel::setMonthly
     )
 }
 
+/**
+ * Stateless Component
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StatisticsScreen(
+fun StatisticsScreenContent(
     uiState: StatisticsUiState,
     onMonthChange: (Int, Int) -> Unit,
     onTabChange: (Boolean) -> Unit
@@ -58,7 +64,6 @@ fun StatisticsScreen(
 
     val stats = uiState.stats
     
-    // Process and sort activities from API
     val frequentlyRecorded = stats?.bestActivities?.sortedByDescending { it.occurrence }?.take(3) ?: emptyList()
     val bestActivities = stats?.bestActivities?.sortedByDescending { it.averageMoodScore }?.take(3) ?: emptyList()
     val worstActivities = stats?.bestActivities?.sortedBy { it.averageMoodScore }?.take(3) ?: emptyList()
@@ -293,7 +298,6 @@ fun MoodFlowChart(moodFlow: List<MoodFlowDto>, year: Int, month: Int) {
             val startX = 60.dp.toPx()
             val endX = width - 20.dp.toPx()
             
-            // Draw horizontal grid lines
             for (i in 0 until moodLevels) {
                 val y = paddingY + (height - 2 * paddingY) * i / (moodLevels - 1)
                 drawLine(
@@ -308,7 +312,6 @@ fun MoodFlowChart(moodFlow: List<MoodFlowDto>, year: Int, month: Int) {
                 val dx = (endX - startX) / (daysInMonth - 1).coerceAtLeast(1)
                 val path = Path()
                 
-                // Map of day to moodId - handle potential multiple logs per day by taking average or last
                 val flowMap = moodFlow.associate { 
                     try {
                         val cleanDate = if (it.date.contains("T")) it.date.split("T")[0] else it.date
@@ -323,7 +326,6 @@ fun MoodFlowChart(moodFlow: List<MoodFlowDto>, year: Int, month: Int) {
                     val moodId = flowMap[day]
                     if (moodId != null && moodId in 1..5) {
                         val x = startX + (day - 1) * dx
-                        // 1: Happy (Top), 5: Angry (Bottom)
                         val y = paddingY + (height - 2 * paddingY) * (moodId - 1) / (moodLevels - 1)
                         
                         if (firstPoint) {
@@ -348,7 +350,6 @@ fun MoodFlowChart(moodFlow: List<MoodFlowDto>, year: Int, month: Int) {
             }
         }
         
-        // Left mood icons
         Column(
             modifier = Modifier.fillMaxHeight().width(50.dp).padding(vertical = 10.dp),
             verticalArrangement = Arrangement.SpaceBetween,
@@ -369,15 +370,19 @@ fun MoodFlowChart(moodFlow: List<MoodFlowDto>, year: Int, month: Int) {
             }
         }
         
-        // X-axis labels
         Row(
             modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(start = 60.dp, end = 20.dp, bottom = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             val labelDays = listOf(1, 6, 11, 16, 21, 26, daysInMonth)
             labelDays.forEach { day ->
+                val monthLabel = if (day == daysInMonth) {
+                    if (month == 12) 1 else month + 1
+                } else month
+                val dayLabel = if (day == daysInMonth) 1 else day
+                
                 Text(
-                    text = if (day == daysInMonth) "${if(month == 12) 1 else month+1}/1" else "$month/$day",
+                    text = "$monthLabel/$dayLabel",
                     fontSize = 10.sp,
                     color = Color.Gray,
                     textAlign = TextAlign.Center
@@ -404,7 +409,6 @@ fun MoodDistributionView(distribution: List<MoodDistributionDto>) {
             verticalAlignment = Alignment.Bottom
         ) {
             moods.forEach { mood ->
-                // Map API labels to internal mood names
                 val dist = distribution.find { 
                     it.label.equals(mood.name, ignoreCase = true) ||
                     (mood.name == "Happy" && it.label.equals("Rad", ignoreCase = true)) ||
@@ -445,7 +449,6 @@ fun MoodDistributionView(distribution: List<MoodDistributionDto>) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Horizontal distribution bar
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -457,7 +460,9 @@ fun MoodDistributionView(distribution: List<MoodDistributionDto>) {
                 val dist = distribution.find { 
                     it.label.equals(mood.name, ignoreCase = true) ||
                     (mood.name == "Happy" && it.label.equals("Rad", ignoreCase = true)) ||
-                    (mood.name == "Neutral" && it.label.equals("Meh", ignoreCase = true))
+                    (mood.name == "Neutral" && it.label.equals("Meh", ignoreCase = true)) ||
+                    (mood.name == "Sad" && it.label.equals("Low", ignoreCase = true)) ||
+                    (mood.name == "Angry" && it.label.equals("Bad", ignoreCase = true))
                 }
                 val weight = dist?.percentage?.toFloat() ?: 0f
                 if (weight > 0) {

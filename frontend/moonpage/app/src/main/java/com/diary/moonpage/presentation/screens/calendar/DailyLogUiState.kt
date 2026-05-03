@@ -1,13 +1,13 @@
 package com.diary.moonpage.presentation.screens.calendar
 
-import com.diary.moonpage.data.remote.api.DailyLogResponse
+import com.diary.moonpage.data.remote.dto.calendar.DailyLogResponseDto
 import com.diary.moonpage.domain.model.Activity
 import java.time.LocalDate
 
 data class DailyLogUiState(
     val date: LocalDate = LocalDate.now(),
     val isLoading: Boolean = false,
-    val existingLog: DailyLogResponse? = null,
+    val existingLog: DailyLogResponseDto? = null,
     val selectedMood: Int? = null,
     val selectedActivities: List<String> = emptyList(),
     val noteText: String = "",

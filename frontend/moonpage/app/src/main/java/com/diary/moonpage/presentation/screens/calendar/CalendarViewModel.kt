@@ -2,7 +2,6 @@ package com.diary.moonpage.presentation.screens.calendar
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.diary.moonpage.data.remote.api.DailyLogResponse
 import com.diary.moonpage.domain.repository.DailyLogRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +14,6 @@ import java.time.YearMonth
 import javax.inject.Inject
 
 import com.diary.moonpage.core.util.ActivityPreferencesManager
-import com.diary.moonpage.domain.model.Activity
 
 @HiltViewModel
 class CalendarViewModel @Inject constructor(

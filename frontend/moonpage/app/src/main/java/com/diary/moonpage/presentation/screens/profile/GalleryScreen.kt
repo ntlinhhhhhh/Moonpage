@@ -31,16 +31,37 @@ import coil.size.Scale
 import coil.size.Size
 import com.diary.moonpage.presentation.screens.moment.MomentViewModel
 import com.diary.moonpage.domain.model.Moment
+import com.diary.moonpage.presentation.screens.moment.MomentUiState
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Stateful Component
+ */
 @Composable
 fun GalleryScreen(
     onNavigateBack: () -> Unit,
     onNavigateToMomentDetail: (String) -> Unit = {},
     viewModel: MomentViewModel = hiltViewModel()
 ) {
-    val colorScheme = MaterialTheme.colorScheme
     val uiState by viewModel.uiState.collectAsState()
+
+    GalleryScreenContent(
+        uiState = uiState,
+        onNavigateBack = onNavigateBack,
+        onNavigateToMomentDetail = onNavigateToMomentDetail
+    )
+}
+
+/**
+ * Stateless Component
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun GalleryScreenContent(
+    uiState: MomentUiState,
+    onNavigateBack: () -> Unit,
+    onNavigateToMomentDetail: (String) -> Unit
+) {
+    val colorScheme = MaterialTheme.colorScheme
     val moments = uiState.moments
     val isLoading = uiState.isLoading
 
@@ -135,7 +156,6 @@ fun GalleryItem(
 ) {
     val context = LocalContext.current
 
-    // remember to avoid File.exists() running on every recomposition
     val imageData = remember(localPath, url) {
         if (localPath != null && java.io.File(localPath).exists()) java.io.File(localPath) else url
     }

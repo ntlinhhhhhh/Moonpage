@@ -2,7 +2,7 @@ package com.diary.moonpage.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.diary.moonpage.data.remote.api.DailyLogResponse
+import com.diary.moonpage.data.remote.dto.calendar.DailyLogResponseDto
 
 @Entity(tableName = "daily_logs")
 data class DailyLogEntity(
@@ -16,9 +16,8 @@ data class DailyLogEntity(
     val dailyPhotosJson: String?, // Serialized List<String>
     val activityIdsJson: String?   // Serialized List<String>
 ) {
-    fun toResponse(): DailyLogResponse {
-        // Simple manual conversion or use Gson
-        return DailyLogResponse(
+    fun toResponse(): DailyLogResponseDto {
+        return DailyLogResponseDto(
             id = id,
             baseMoodId = baseMoodId,
             date = date,
@@ -32,7 +31,7 @@ data class DailyLogEntity(
     }
 
     companion object {
-        fun fromResponse(response: DailyLogResponse): DailyLogEntity {
+        fun fromResponse(response: DailyLogResponseDto): DailyLogEntity {
             return DailyLogEntity(
                 id = response.id,
                 baseMoodId = response.baseMoodId,

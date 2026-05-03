@@ -1,7 +1,7 @@
 package com.diary.moonpage.data.repository
 
 import com.diary.moonpage.data.remote.api.DailyLogApi
-import com.diary.moonpage.data.remote.api.DailyLogResponse
+import com.diary.moonpage.data.remote.dto.calendar.DailyLogResponseDto
 import com.diary.moonpage.domain.repository.DailyLogRepository
 import com.diary.moonpage.data.local.dao.DailyLogDao
 import com.diary.moonpage.data.local.entity.DailyLogEntity
@@ -34,7 +34,6 @@ class DailyLogRepositoryImpl @Inject constructor(
                 baseMoodId, date, note, sleepHours, isMenstruation, menstruationPhase, activityIds, dailyPhotos
             )
             if (response.isSuccessful) {
-                // Fetch the newly created log to update the local cache immediately
                 val getResponse = api.getDailyLogByDate(dateStr)
                 if (getResponse.isSuccessful && getResponse.body() != null) {
                     val log = getResponse.body()!!
@@ -49,9 +48,8 @@ class DailyLogRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getDailyLogByDate(date: String): Result<DailyLogResponse> {
+    override suspend fun getDailyLogByDate(date: String): Result<DailyLogResponseDto> {
         return try {
-            // Check local first for instant access
             val cached = dao.getLogByDate(date)
             
             val response = api.getDailyLogByDate(date)
@@ -83,12 +81,10 @@ class DailyLogRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getDailyLogsByMonth(yearMonth: String): Flow<List<DailyLogResponse>> = flow {
-        // 1. Emit cached logs immediately
+    override fun getDailyLogsByMonth(yearMonth: String): Flow<List<DailyLogResponseDto>> = flow {
         val cachedLogs = dao.getLogsByMonth(yearMonth).map { it.toResponse() }
         emit(cachedLogs)
         
-        // 2. Fetch from network and emit if successful
         try {
             val response = api.getDailyLogsByMonth(yearMonth)
             if (response.isSuccessful && response.body() != null) {
@@ -98,7 +94,6 @@ class DailyLogRepositoryImpl @Inject constructor(
                 emit(networkLogs)
             }
         } catch (e: Exception) {
-            // Keep current emitted cache on error
         }
     }.flowOn(Dispatchers.IO)
 }

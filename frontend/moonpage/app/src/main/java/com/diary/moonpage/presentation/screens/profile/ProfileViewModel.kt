@@ -3,8 +3,6 @@ package com.diary.moonpage.presentation.screens.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.data.remote.dto.auth.UpdateProfileRequestDto
-import com.diary.moonpage.data.remote.dto.auth.UserResponseDto
-import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -21,21 +19,6 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import javax.inject.Inject
-
-data class ProfileUiState(
-    val user: UserResponseDto? = null,
-    val localAvatarPath: String? = null,
-    val tempAvatarPath: String? = null,
-    val myThemes: List<Theme> = emptyList(),
-    val isLoading: Boolean = false,
-    val isUpdating: Boolean = false,
-    val error: String? = null
-)
-
-sealed class ProfileUiEvent {
-    data class ShowSnackBar(val message: String) : ProfileUiEvent()
-    object UpdateSuccess : ProfileUiEvent()
-}
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
@@ -105,7 +88,7 @@ class ProfileViewModel @Inject constructor(
                 birthday = birthday
             )
             userRepository.updateProfile(request)
-                .onSuccess { updatedUser ->
+                .onSuccess {
                     _uiEvent.emit(ProfileUiEvent.UpdateSuccess)
                     _uiEvent.emit(ProfileUiEvent.ShowSnackBar("Profile updated successfully"))
                     _uiState.update { it.copy(isUpdating = false) }
