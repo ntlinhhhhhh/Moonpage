@@ -100,9 +100,9 @@ fun LoginScreen(
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    
+
     val googleWebClientId = stringResource(R.string.google_web_client_id)
-    
+
     val screenBgColor = MaterialTheme.colorScheme.background
     val backIconColor = MaterialTheme.colorScheme.onSurface
     val cardBgColor = MaterialTheme.colorScheme.surface
@@ -127,7 +127,7 @@ fun LoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .imePadding() 
+                .imePadding()
         ) {
             Column(
                 modifier = Modifier
@@ -239,7 +239,7 @@ fun LoginScreen(
                                 scope.launch {
                                     try {
                                         val credentialManager = CredentialManager.create(context)
-                                        
+
                                         val googleIdOption = GetGoogleIdOption.Builder()
                                             .setFilterByAuthorizedAccounts(false)
                                             .setServerClientId(googleWebClientId)
@@ -251,7 +251,7 @@ fun LoginScreen(
                                             .build()
 
                                         val result = credentialManager.getCredential(context, request)
-                                        
+
                                         val credential = result.credential
                                         if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
                                             val googleIdToken = GoogleIdTokenCredential.createFrom(credential.data)
@@ -277,7 +277,7 @@ fun LoginScreen(
                         )
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(36.dp))
             }
 

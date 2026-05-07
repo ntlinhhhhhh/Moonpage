@@ -1,10 +1,15 @@
 package com.diary.moonpage.presentation.screens.auth
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.MailOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,48 +21,63 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.R
 import com.diary.moonpage.presentation.components.auth.AuthFooter
 import com.diary.moonpage.presentation.components.auth.AuthHeader
 import com.diary.moonpage.presentation.components.core.buttons.MoonPrimaryButton
-import com.diary.moonpage.presentation.components.core.inputs.MoonOtpField
+import com.diary.moonpage.presentation.components.core.inputs.MoonTextField
 import com.diary.moonpage.presentation.components.core.navigation.TopCircularIcon
 import com.diary.moonpage.presentation.theme.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.launch
 
 @Composable
-fun VerifyOtpScreen(
+fun VerifyOtpCodeScreen(
+    email: String,
     viewModel: AuthViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
     onNavigateToResetPassword: (String, String) -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    VerifyOtpScreenContent(
+    LaunchedEffect(Unit) {
+        viewModel.uiEvent.collect { event ->
+            when (event) {
+                is AuthUiEvent.NavigateToResetPassword -> {
+                    onNavigateToResetPassword(event.email, event.token)
+                }
+                else -> Unit
+            }
+        }
+    }
+
+    VerifyOtpCodeScreenContent(
         uiState = uiState,
         uiEvent = viewModel.uiEvent,
         onOtpCodeChange = viewModel::onOtpCodeChange,
-        onVerifySubmit = viewModel::verifyOtp,
+        onVerifyClick = viewModel::verifyOtp,
         onNavigateBack = onNavigateBack,
-        onNavigateToResetPassword = onNavigateToResetPassword,
-        onResendClick = viewModel::forgotPassword
+        onResendOtpClick = { viewModel.forgotPassword() }
     )
 }
 
 @Composable
-fun VerifyOtpScreenContent(
+fun VerifyOtpCodeScreenContent(
     uiState: AuthUiState,
     uiEvent: Flow<AuthUiEvent>,
     onOtpCodeChange: (String) -> Unit,
-    onVerifySubmit: () -> Unit,
+    onVerifyClick: () -> Unit,
     onNavigateBack: () -> Unit,
-    onNavigateToResetPassword: (String, String) -> Unit,
-    onResendClick: () -> Unit,
+    onResendOtpClick: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     val snackBarHostState = remember { SnackbarHostState() }
@@ -66,19 +86,17 @@ fun VerifyOtpScreenContent(
     val context = LocalContext.current
 
     val screenBgColor = MaterialTheme.colorScheme.background
+    val textColor = MaterialTheme.colorScheme.onBackground
     val cardBgColor = MaterialTheme.colorScheme.surface
     val iconColor = MaterialTheme.colorScheme.onBackground
 
     LaunchedEffect(Unit) {
         uiEvent.collect { event ->
-            when (event) {
-                is AuthUiEvent.NavigateToResetPassword -> {
-                    onNavigateToResetPassword(event.email, event.token)
-                }
-                is AuthUiEvent.ShowSnackBar -> {
+            if (event is AuthUiEvent.ShowSnackBar) {
+                launch {
+                    snackBarHostState.currentSnackbarData?.dismiss()
                     snackBarHostState.showSnackbar(event.message.asString(context))
                 }
-                else -> Unit
             }
         }
     }
@@ -100,7 +118,7 @@ fun VerifyOtpScreenContent(
                 },
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
             Box(
                 modifier = Modifier.fillMaxWidth(),
@@ -118,15 +136,13 @@ fun VerifyOtpScreenContent(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
             TopCircularIcon()
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             AuthHeader(
-                title = "Verify Account",
-                subtitle = "Please enter the 6-digit code we sent\nto your email address."
+                title = "Verify Code",
+                subtitle = "We've sent a code to\n${uiState.savedEmailForOtp.takeIf { it.isNotBlank() } ?: "your email"}"
             )
 
             Card(
@@ -144,21 +160,33 @@ fun VerifyOtpScreenContent(
                     modifier = Modifier.padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-
-                    MoonOtpField(
+                    MoonTextField(
+                        value = uiState.otpCodeInput,
+                        onValueChange = onOtpCodeChange,
                         label = "Verification Code",
-                        otpText = uiState.otpCodeInput,
-                        onOtpTextChange = onOtpCodeChange
+                        placeholderText = "6-digit code",
+                        iconVector = Icons.Outlined.MailOutline,
+                        errorText = uiState.otpCodeError,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                keyboardController?.hide()
+                                onVerifyClick()
+                            }
+                        )
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     MoonPrimaryButton(
-                        text = "Verify",
+                        text = "Verify & Continue",
                         enabled = !uiState.isLoading,
                         onClick = {
                             keyboardController?.hide()
-                            onVerifySubmit()
+                            onVerifyClick()
                         },
                     )
                 }
@@ -167,34 +195,21 @@ fun VerifyOtpScreenContent(
             Spacer(modifier = Modifier.height(32.dp))
 
             AuthFooter(
-                questionText = "Didn't receive a code? ",
-                actionText = "Resend",
-                onActionClick = onResendClick
+                questionText = "Didn't receive code? ",
+                actionText = "Resend Now",
+                onActionClick = onResendOtpClick
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(48.dp))
         }
 
         if (uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+            Box(
+                modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun VerifyOtpPreview() {
-    MoonPageTheme {
-        VerifyOtpScreenContent(
-            uiState = AuthUiState(),
-            uiEvent = MutableSharedFlow<AuthUiEvent>().asSharedFlow(),
-            onOtpCodeChange = {},
-            onVerifySubmit = {},
-            onNavigateBack = {},
-            onNavigateToResetPassword = { _, _ -> },
-            onResendClick = {},
-        )
     }
 }

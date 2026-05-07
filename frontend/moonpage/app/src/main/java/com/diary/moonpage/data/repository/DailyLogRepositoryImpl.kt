@@ -1,7 +1,7 @@
 package com.diary.moonpage.data.repository
 
 import com.diary.moonpage.data.remote.api.DailyLogApi
-import com.diary.moonpage.data.remote.dto.calendar.DailyLogResponseDto
+import com.diary.moonpage.domain.model.DailyLog
 import com.diary.moonpage.domain.repository.DailyLogRepository
 import com.diary.moonpage.data.local.dao.DailyLogDao
 import com.diary.moonpage.data.local.entity.DailyLogEntity
@@ -9,8 +9,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.File
 import javax.inject.Inject
 
 class DailyLogRepositoryImpl @Inject constructor(
@@ -19,25 +22,41 @@ class DailyLogRepositoryImpl @Inject constructor(
 ) : DailyLogRepository {
 
     override suspend fun createDailyLog(
-        dateStr: String,
-        baseMoodId: RequestBody,
-        date: RequestBody,
-        note: RequestBody?,
-        sleepHours: RequestBody?,
-        isMenstruation: RequestBody?,
-        menstruationPhase: RequestBody?,
-        activityIds: List<MultipartBody.Part>?,
-        dailyPhotos: List<MultipartBody.Part>?
+        baseMoodId: Int,
+        date: String,
+        note: String?,
+        sleepHours: Double?,
+        isMenstruation: Boolean,
+        menstruationPhase: String?,
+        activityIds: List<String>?,
+        dailyPhotos: List<File>?
     ): Result<Unit> {
         return try {
+            val baseMoodIdBody = baseMoodId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+            val dateBody = date.toRequestBody("text/plain".toMediaTypeOrNull())
+            val noteBody = note?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val sleepHoursBody = sleepHours?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val isMenstruationBody = isMenstruation.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+            val menstruationPhaseBody = menstruationPhase?.toRequestBody("text/plain".toMediaTypeOrNull())
+
+            val activityParts = activityIds?.map { id ->
+                MultipartBody.Part.createFormData("ActivityIds", id)
+            }
+
+            val photoParts = dailyPhotos?.map { file ->
+                val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
+                MultipartBody.Part.createFormData("DailyPhotos", file.name, requestFile)
+            }
+
             val response = api.createDailyLog(
-                baseMoodId, date, note, sleepHours, isMenstruation, menstruationPhase, activityIds, dailyPhotos
+                baseMoodIdBody, dateBody, noteBody, sleepHoursBody, isMenstruationBody, menstruationPhaseBody, activityParts, photoParts
             )
+            
             if (response.isSuccessful) {
-                val getResponse = api.getDailyLogByDate(dateStr)
+                // Refresh local cache for this date
+                val getResponse = api.getDailyLogByDate(date)
                 if (getResponse.isSuccessful && getResponse.body() != null) {
-                    val log = getResponse.body()!!
-                    dao.insertLog(DailyLogEntity.fromResponse(log))
+                    dao.insertLog(DailyLogEntity.fromResponse(getResponse.body()!!))
                 }
                 Result.success(Unit)
             } else {
@@ -48,22 +67,22 @@ class DailyLogRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getDailyLogByDate(date: String): Result<DailyLogResponseDto> {
+    override suspend fun getDailyLogByDate(date: String): Result<DailyLog> {
         return try {
             val cached = dao.getLogByDate(date)
             
             val response = api.getDailyLogByDate(date)
             if (response.isSuccessful && response.body() != null) {
-                val log = response.body()!!
-                dao.insertLog(DailyLogEntity.fromResponse(log))
-                Result.success(log)
+                val logDto = response.body()!!
+                dao.insertLog(DailyLogEntity.fromResponse(logDto))
+                Result.success(logDto.toDomain())
             } else {
-                cached?.let { Result.success(it.toResponse()) } 
+                cached?.let { Result.success(it.toDomain()) } 
                     ?: Result.failure(Exception("Failed to get DailyLog for date $date: ${response.code()}"))
             }
         } catch (e: Exception) {
             val cached = dao.getLogByDate(date)
-            cached?.let { Result.success(it.toResponse()) } ?: Result.failure(e)
+            cached?.let { Result.success(it.toDomain()) } ?: Result.failure(e)
         }
     }
 
@@ -81,8 +100,8 @@ class DailyLogRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getDailyLogsByMonth(yearMonth: String): Flow<List<DailyLogResponseDto>> = flow {
-        val cachedLogs = dao.getLogsByMonth(yearMonth).map { it.toResponse() }
+    override fun getDailyLogsByMonth(yearMonth: String): Flow<List<DailyLog>> = flow {
+        val cachedLogs = dao.getLogsByMonth(yearMonth).map { it.toDomain() }
         emit(cachedLogs)
         
         try {
@@ -91,9 +110,10 @@ class DailyLogRepositoryImpl @Inject constructor(
                 val networkLogs = response.body()!!
                 dao.deleteLogsByMonth(yearMonth)
                 dao.insertLogs(networkLogs.map { DailyLogEntity.fromResponse(it) })
-                emit(networkLogs)
+                emit(networkLogs.map { it.toDomain() })
             }
         } catch (e: Exception) {
+            // Error handled by the flow consumer (if needed)
         }
     }.flowOn(Dispatchers.IO)
 }

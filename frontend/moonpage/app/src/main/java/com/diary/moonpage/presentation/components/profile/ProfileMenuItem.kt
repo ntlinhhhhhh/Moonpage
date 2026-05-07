@@ -22,11 +22,12 @@ fun ProfileMenuItem(
     title: String,
     icon: ImageVector,
     modifier: Modifier = Modifier,
+    tint: Color? = null,
     onClick: () -> Unit
 ) {
     val cardBg = MaterialTheme.colorScheme.surface
-    val textColor = MaterialTheme.colorScheme.onSurface
-    val iconColor = MaterialTheme.colorScheme.primary
+    val textColor = tint ?: MaterialTheme.colorScheme.onSurface
+    val iconColor = tint ?: MaterialTheme.colorScheme.primary
     val shape = RoundedCornerShape(20.dp)
 
     Card(

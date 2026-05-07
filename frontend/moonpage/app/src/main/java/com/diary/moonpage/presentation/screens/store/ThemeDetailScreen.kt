@@ -33,6 +33,7 @@ import com.diary.moonpage.presentation.screens.store.components.*
 import com.diary.moonpage.presentation.theme.*
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,7 +42,7 @@ fun ThemeDetailScreen(
     viewModel: StoreViewModel,
     onNavigateBack: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val theme = uiState.selectedThemeDetail
 
     if (theme == null) {
@@ -193,7 +194,7 @@ fun ThemeDetailScreen(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
-            
+
             Spacer(modifier = Modifier.height(32.dp))
         }
 
@@ -245,19 +246,19 @@ fun ThemeCalendarPreview(theme: Theme) {
                 modifier = Modifier.size(20.dp)
             )
         }
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
         // Days of week
         val days = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
         Row(
-            modifier = Modifier.fillMaxWidth(), 
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             days.forEach { day ->
                 Text(
-                    text = day, 
-                    style = MaterialTheme.typography.labelSmall, 
+                    text = day,
+                    style = MaterialTheme.typography.labelSmall,
                     color = onSurface.copy(alpha = 0.4f),
                     modifier = Modifier.width(44.dp),
                     textAlign = TextAlign.Center
@@ -282,7 +283,7 @@ fun ThemeCalendarPreview(theme: Theme) {
                 ) {
                     repeat(7) { colIndex ->
                         val iconIndex = (rowIndex + colIndex) % 5
-                        
+
                         CuteBeanIcon(
                             modifier = Modifier.size(40.dp),
                             emotion = theme.icons.getOrElse(iconIndex) { "NEUTRAL" },

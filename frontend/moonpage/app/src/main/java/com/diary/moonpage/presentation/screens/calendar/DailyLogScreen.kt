@@ -62,7 +62,11 @@ fun DailyLogScreen(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.setOnSaveSuccess(onDone)
+        viewModel.uiEffect.collect { effect ->
+            if (effect is DailyLogUiEffect.SaveSuccess) {
+                onDone(effect.message)
+            }
+        }
     }
 
     DailyLogScreenContent(
@@ -144,7 +148,7 @@ fun DailyLogScreenContent(
             onDateSelected = { date ->
                 onEvent(DailyLogUiEvent.OnDatePickerDismiss)
                 if (date.isAfter(LocalDate.now())) {
-                    onEvent(DailyLogUiEvent.DismissMessage)
+                    // Logic already handled in DatePicker
                 } else {
                     checkLogExists(date) { exists ->
                         if (exists) {
@@ -571,7 +575,7 @@ fun DailyActivitySection(
                 modifier = Modifier.rotate(rotation)
             )
         }
-        
+
         AnimatedVisibility(
             visible = !isCollapsed,
             enter = fadeIn() + expandVertically(),
@@ -593,7 +597,7 @@ fun DailyLogGrid(
     onItemClick: (String) -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    FlowRow(
+    androidx.compose.foundation.layout.FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -660,7 +664,7 @@ fun DailyLogDatePickerDialog(
     )
     var selectedDateInPicker by remember { mutableStateOf(initialDate) }
     val scope = rememberCoroutineScope()
-    
+
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -673,7 +677,7 @@ fun DailyLogDatePickerDialog(
                 .padding(horizontal = 12.dp)
         ) {
             Column(
-                modifier = Modifier.padding(20.dp), 
+                modifier = Modifier.padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
@@ -729,7 +733,7 @@ fun DailyLogDatePickerDialog(
                     val daysInMonth = (1..pageYearMonth.lengthOfMonth()).toList()
                     val firstDayOfMonth = pageYearMonth.atDay(1)
                     val firstDayOffset = if (firstDayOfMonth.dayOfWeek == java.time.DayOfWeek.SUNDAY) 0 else firstDayOfMonth.dayOfWeek.value
-                    
+
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(7),
                         modifier = Modifier.fillMaxSize(),
@@ -743,7 +747,7 @@ fun DailyLogDatePickerDialog(
                             val isFuture = date.isAfter(LocalDate.now())
                             val isSelected = date == selectedDateInPicker
                             val isToday = date == LocalDate.now()
-                            
+
                             Box(
                                 modifier = Modifier
                                     .aspectRatio(1f)

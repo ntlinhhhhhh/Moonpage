@@ -40,7 +40,7 @@ fun StatCard(title: String, value: String, modifier: Modifier = Modifier) {
                 ),
                 maxLines = 1
             )
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -58,9 +58,9 @@ fun StatCard(title: String, value: String, modifier: Modifier = Modifier) {
                         modifier = Modifier.size(24.dp)
                     )
                 }
-                
+
                 Spacer(modifier = Modifier.width(18.dp))
-                
+
                 Text(
                     text = value,
                     style = MaterialTheme.typography.headlineMedium.copy(

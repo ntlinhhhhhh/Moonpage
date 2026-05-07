@@ -65,6 +65,7 @@ class CalendarViewModel @Inject constructor(
             CalendarUiEvent.DismissMessage -> {
                 _uiState.update { it.copy(snackbarMessage = null) }
             }
+            else -> {}
         }
     }
 
@@ -76,12 +77,12 @@ class CalendarViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val yearMonthStr = "${yearMonth.year}-${yearMonth.monthValue.toString().padStart(2, '0')}"
-            
+
             repository.getDailyLogsByMonth(yearMonthStr).collect { logs ->
                 val logsMap = logs.associateBy { LocalDate.parse(it.date) }
                 _uiState.update { currentState ->
                     val currentMap = currentState.dailyLogs.toMutableMap()
-                    currentMap.keys.removeAll { YearMonth.from(it) == yearMonth }
+                    // Re-calculate to avoid duplicates if collecting multiple times
                     currentMap.putAll(logsMap)
                     currentState.copy(dailyLogs = currentMap, isLoading = false)
                 }

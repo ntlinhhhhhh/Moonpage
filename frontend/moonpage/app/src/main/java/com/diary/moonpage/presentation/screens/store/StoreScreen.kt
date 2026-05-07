@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.domain.model.ThemeType
 import com.diary.moonpage.presentation.screens.store.components.*
@@ -33,7 +34,7 @@ fun StoreScreen(
     onNavigateToDetail: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -69,7 +70,7 @@ fun StoreScreen(
             when (targetIndex) {
                 0 -> HomeTabContent(
                     themes = uiState.themes,
-                    onThemeClick = { 
+                    onThemeClick = {
                         viewModel.selectTheme(it)
                         onNavigateToDetail()
                     },
@@ -77,7 +78,7 @@ fun StoreScreen(
                 )
                 1 -> MyThemeTabContent(
                     ownedThemes = uiState.ownedThemes,
-                    onThemeClick = { 
+                    onThemeClick = {
                         viewModel.selectTheme(it)
                         onNavigateToDetail()
                     },
@@ -124,7 +125,7 @@ fun StoreTabs(
 @Composable
 fun TabItem(text: String, isSelected: Boolean, onClick: () -> Unit) {
     val color = if (isSelected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
-    
+
     Column(
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))

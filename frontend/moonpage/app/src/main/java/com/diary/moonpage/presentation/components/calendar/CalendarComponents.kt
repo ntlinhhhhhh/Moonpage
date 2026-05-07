@@ -230,14 +230,14 @@ fun DayDetailArea(
     modifier: Modifier = Modifier
 ) {
     val cs = MaterialTheme.colorScheme
-    
+
     Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 20.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // --- Left: Mood and Date (Thu gọn width xuống 60dp) ---
+        // --- Left: Mood and Date ---
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.width(60.dp)
@@ -263,9 +263,9 @@ fun DayDetailArea(
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(10.dp))
-            
+
             Surface(
                 color = cs.onSurface.copy(alpha = 0.08f),
                 shape = RoundedCornerShape(8.dp)
@@ -282,7 +282,7 @@ fun DayDetailArea(
             }
         }
 
-        // --- Divider dọc dài hơn ---
+        // --- Divider ---
         Spacer(modifier = Modifier.width(10.dp))
         Box(
             modifier = Modifier
@@ -292,7 +292,7 @@ fun DayDetailArea(
         )
         Spacer(modifier = Modifier.width(12.dp))
 
-        // --- Right: Activities (4 icon mỗi dòng) ---
+        // --- Right: Activities ---
         Column(modifier = Modifier.weight(1f)) {
             if (activityNames.isNotEmpty()) {
                 FlowRow(
@@ -505,10 +505,10 @@ fun MonthYearPickerBottomSheet(
     onDismiss: () -> Unit
 ) {
     val years = remember { (2000..2100).map { it.toString() } }
-    val months = remember { (1..12).map { 
-        java.time.Month.of(it).getDisplayName(TextStyle.FULL, Locale.getDefault()) 
+    val months = remember { (1..12).map {
+        java.time.Month.of(it).getDisplayName(TextStyle.FULL, Locale.getDefault())
     } }
-    
+
     var tempYear by remember { mutableIntStateOf(currentYearMonth.year) }
     var tempMonth by remember { mutableIntStateOf(currentYearMonth.monthValue) }
 
@@ -559,7 +559,7 @@ fun MonthYearPickerBottomSheet(
                         }
                     )
                 }
-                
+
                 Box(modifier = Modifier.weight(1f)) {
                     WheelPicker(
                         items = years,
@@ -599,7 +599,7 @@ private fun WheelPicker(
     val startIndex = items.indexOf(initialValue).coerceAtLeast(0)
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = startIndex)
     val snapFlingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
-    
+
     LaunchedEffect(listState.firstVisibleItemIndex) {
         val centerIndex = listState.firstVisibleItemIndex
         if (centerIndex in items.indices) {
@@ -620,7 +620,7 @@ private fun WheelPicker(
             color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
             shape = RoundedCornerShape(12.dp)
         ) {}
-        
+
         LazyColumn(
             state = listState,
             flingBehavior = snapFlingBehavior,

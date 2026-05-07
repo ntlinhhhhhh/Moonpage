@@ -5,15 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.core.util.ActivityPreferencesManager
 import com.diary.moonpage.domain.repository.DailyLogRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.RequestBody.Companion.toRequestBody
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlinx.coroutines.channels.Channel
 
 @HiltViewModel
 class DailyLogViewModel @Inject constructor(
@@ -23,6 +19,9 @@ class DailyLogViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(DailyLogUiState())
     val uiState: StateFlow<DailyLogUiState> = _uiState.asStateFlow()
+
+    private val _uiEffect = Channel<DailyLogUiEffect>()
+    val uiEffect = _uiEffect.receiveAsFlow()
 
     init {
         viewModelScope.launch {
@@ -136,44 +135,31 @@ class DailyLogViewModel @Inject constructor(
         _uiState.update { it.copy(pendingDate = date, showOverwriteDialog = true) }
     }
 
-    private var _onSaveSuccess: ((String) -> Unit)? = null
-    fun setOnSaveSuccess(callback: (String) -> Unit) {
-        _onSaveSuccess = callback
-    }
-
     private fun saveDailyLog() {
         val state = _uiState.value
         if (state.selectedMood == null) {
-            _uiState.update { it.copy(snackbarMessage = "Please select a mood first!") }
+            viewModelScope.launch { _uiEffect.send(DailyLogUiEffect.ShowSnackBar("Please select a mood first!")) }
             return
         }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            val baseMoodIdBody = state.selectedMood.toString().toRequestBody("text/plain".toMediaTypeOrNull())
-            val dateBody = state.date.toString().toRequestBody("text/plain".toMediaTypeOrNull())
-            val noteBody = state.noteText.takeIf { it.isNotBlank() }?.toRequestBody("text/plain".toMediaTypeOrNull())
-            val sleepHoursBody = state.sleepHours.toString().toRequestBody("text/plain".toMediaTypeOrNull())
-            val isMenstruationBody = "false".toRequestBody("text/plain".toMediaTypeOrNull())
-            val activityParts = state.selectedActivities.map { id ->
-                okhttp3.MultipartBody.Part.createFormData("ActivityIds", id)
-            }
-
+            
             repository.createDailyLog(
-                state.date.toString(),
-                baseMoodIdBody,
-                dateBody,
-                noteBody,
-                sleepHoursBody,
-                isMenstruationBody,
-                null,
-                activityParts,
-                null
+                baseMoodId = state.selectedMood,
+                date = state.date.toString(),
+                note = state.noteText.takeIf { it.isNotBlank() },
+                sleepHours = state.sleepHours.toDouble(),
+                isMenstruation = false,
+                menstruationPhase = null,
+                activityIds = state.selectedActivities,
+                dailyPhotos = null
             ).onSuccess {
                 val msg = if (state.existingLog != null) "Record updated successfully!" else "Record created successfully!"
-                _onSaveSuccess?.invoke(msg)
+                _uiEffect.send(DailyLogUiEffect.SaveSuccess(msg))
             }.onFailure { error ->
-                _uiState.update { it.copy(snackbarMessage = error.message ?: "Failed to save log", isLoading = false) }
+                _uiState.update { it.copy(isLoading = false) }
+                _uiEffect.send(DailyLogUiEffect.ShowSnackBar(error.message ?: "Failed to save log"))
             }
         }
     }

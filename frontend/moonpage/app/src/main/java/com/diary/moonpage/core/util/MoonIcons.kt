@@ -68,6 +68,16 @@ object MoonIcons {
             }
         }
 
+        fun getMoodVisual(level: Int): MoonIcon {
+            return when (level) {
+                1 -> Happy
+                2 -> Good
+                3 -> Neutral
+                4 -> Sad
+                5 -> Angry
+                else -> Neutral
+            }
+        }
     }
 
     // 1. Hobbies (Sở thích)

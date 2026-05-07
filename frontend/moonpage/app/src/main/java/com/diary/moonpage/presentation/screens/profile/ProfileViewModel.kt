@@ -28,8 +28,8 @@ class ProfileViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState = _uiState.asStateFlow()
 
-    private val _uiEvent = MutableSharedFlow<ProfileUiEvent>()
-    val uiEvent = _uiEvent.asSharedFlow()
+    private val _uiEvent = MutableSharedFlow<ProfileUiEffect>()
+    val uiEffect = _uiEvent.asSharedFlow()
 
     init {
         // Observe cache changes from repository
@@ -44,9 +44,18 @@ class ProfileViewModel @Inject constructor(
                 _uiState.update { it.copy(localAvatarPath = path, tempAvatarPath = null) }
             }
         }
-        
+
         loadProfile(forceRefresh = false)
         loadMyThemes()
+    }
+
+    fun onEvent(event: ProfileUiEvent) {
+        when (event) {
+            is ProfileUiEvent.DeleteAccount -> deleteAccount(event.id) {
+                viewModelScope.launch { _uiEvent.emit(ProfileUiEffect.AccountDeleted) }
+            }
+            else -> {}
+        }
     }
 
     fun loadProfile(forceRefresh: Boolean = false) {
@@ -54,13 +63,13 @@ class ProfileViewModel @Inject constructor(
             if (forceRefresh) {
                 userRepository.clearCache()
             }
-            
+
             // Only show loading if we don't have cached user
             _uiState.update { it.copy(isLoading = it.user == null) }
-            
+
             userRepository.getCurrentUser()
-                .onSuccess { userDto ->
-                    _uiState.update { it.copy(user = userDto, isLoading = false) }
+                .onSuccess { user ->
+                    _uiState.update { it.copy(user = user, isLoading = false) }
                 }
                 .onFailure { e ->
                     _uiState.update { it.copy(error = e.message, isLoading = false) }
@@ -82,20 +91,20 @@ class ProfileViewModel @Inject constructor(
             val currentAvatarUrl = _uiState.value.user?.avatarUrl
             _uiState.update { it.copy(isUpdating = true) }
             val request = UpdateProfileRequestDto(
-                name = name, 
+                name = name,
                 avatarUrl = currentAvatarUrl,
-                gender = gender, 
+                gender = gender,
                 birthday = birthday
             )
             userRepository.updateProfile(request)
                 .onSuccess {
-                    _uiEvent.emit(ProfileUiEvent.UpdateSuccess)
-                    _uiEvent.emit(ProfileUiEvent.ShowSnackBar("Profile updated successfully"))
+                    _uiEvent.emit(ProfileUiEffect.UpdateSuccess)
+                    _uiEvent.emit(ProfileUiEffect.ShowSnackBar("Profile updated successfully"))
                     _uiState.update { it.copy(isUpdating = false) }
                 }
                 .onFailure { e ->
                     _uiState.update { it.copy(isUpdating = false) }
-                    _uiEvent.emit(ProfileUiEvent.ShowSnackBar(e.message ?: "Update failed"))
+                    _uiEvent.emit(ProfileUiEffect.ShowSnackBar(e.message ?: "Update failed"))
                 }
         }
     }
@@ -108,7 +117,7 @@ class ProfileViewModel @Inject constructor(
                 if (compressedFile != null) {
                     // Optimistic update: show picked image immediately
                     _uiState.update { it.copy(tempAvatarPath = compressedFile.absolutePath) }
-                    
+
                     val imagePart = MultipartBody.Part.createFormData(
                         "imageFile",
                         compressedFile.name,
@@ -116,21 +125,21 @@ class ProfileViewModel @Inject constructor(
                     )
                     userRepository.updateAvatar(imagePart, compressedFile)
                         .onSuccess {
-                            _uiEvent.emit(ProfileUiEvent.UpdateSuccess)
-                            _uiEvent.emit(ProfileUiEvent.ShowSnackBar("Avatar updated successfully"))
+                            _uiEvent.emit(ProfileUiEffect.UpdateSuccess)
+                            _uiEvent.emit(ProfileUiEffect.ShowSnackBar("Avatar updated successfully"))
                             _uiState.update { it.copy(isUpdating = false) }
                         }
                         .onFailure { e ->
                             _uiState.update { it.copy(isUpdating = false) }
-                            _uiEvent.emit(ProfileUiEvent.ShowSnackBar(e.message ?: "Avatar update failed"))
+                            _uiEvent.emit(ProfileUiEffect.ShowSnackBar(e.message ?: "Avatar update failed"))
                         }
                 } else {
                     _uiState.update { it.copy(isUpdating = false) }
-                    _uiEvent.emit(ProfileUiEvent.ShowSnackBar("Failed to process image"))
+                    _uiEvent.emit(ProfileUiEffect.ShowSnackBar("Failed to process image"))
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isUpdating = false) }
-                _uiEvent.emit(ProfileUiEvent.ShowSnackBar(e.message ?: "An error occurred"))
+                _uiEvent.emit(ProfileUiEffect.ShowSnackBar(e.message ?: "An error occurred"))
             }
         }
     }
@@ -142,7 +151,7 @@ class ProfileViewModel @Inject constructor(
                     onDeleted()
                 }
                 .onFailure { e ->
-                    _uiEvent.emit(ProfileUiEvent.ShowSnackBar(e.message ?: "Delete failed"))
+                    _uiEvent.emit(ProfileUiEffect.ShowSnackBar(e.message ?: "Delete failed"))
                 }
         }
     }

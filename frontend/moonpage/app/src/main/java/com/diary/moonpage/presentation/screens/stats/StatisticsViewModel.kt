@@ -28,8 +28,19 @@ class StatisticsViewModel @Inject constructor(
                     _uiState.value.selectedYear,
                     _uiState.value.selectedMonth
                 )
-                if (response.isSuccessful) {
-                    _uiState.update { it.copy(stats = response.body(), isLoading = false) }
+                if (response.isSuccessful && response.body() != null) {
+                    val stats = response.body()!!
+                    val freq = stats.bestActivities.sortedByDescending { it.occurrence }.take(3)
+                    val best = stats.bestActivities.sortedByDescending { it.averageMoodScore }.take(3)
+                    val worst = stats.bestActivities.sortedBy { it.averageMoodScore }.take(3)
+                    
+                    _uiState.update { it.copy(
+                        stats = stats, 
+                        frequentlyRecorded = freq,
+                        bestActivities = best,
+                        worstActivities = worst,
+                        isLoading = false
+                    ) }
                 } else {
                     _uiState.update { it.copy(error = "Failed to load statistics", isLoading = false) }
                 }

@@ -22,11 +22,17 @@ object DatabaseModule {
             context,
             MoonPageDatabase::class.java,
             MoonPageDatabase.DATABASE_NAME
-        ).build()
+        ).fallbackToDestructiveMigration()
+            .build()
     }
 
     @Provides
     fun provideDailyLogDao(db: MoonPageDatabase): DailyLogDao {
         return db.dailyLogDao()
+    }
+
+    @Provides
+    fun provideThemeDao(db: MoonPageDatabase): com.diary.moonpage.data.local.dao.ThemeDao {
+        return db.themeDao()
     }
 }

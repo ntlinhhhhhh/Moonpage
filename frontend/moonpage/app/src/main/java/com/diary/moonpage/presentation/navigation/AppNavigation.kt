@@ -1,7 +1,7 @@
 package com.diary.moonpage.presentation.navigation
 
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
@@ -13,11 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.diary.moonpage.presentation.screens.auth.ActivityCategorySelectionScreen
-import com.diary.moonpage.presentation.screens.auth.ActivityCategoryViewModel
-import com.diary.moonpage.presentation.screens.auth.OnboardingBirthdayScreen
-import com.diary.moonpage.presentation.screens.auth.OnboardingGenderScreen
-import com.diary.moonpage.presentation.screens.auth.OnboardingViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -93,8 +88,30 @@ fun AppNavigation() {
             navController = navController,
             startDestination = Screen.Loading.route,
             modifier = Modifier,
-            enterTransition = { EnterTransition.None },
-            exitTransition = { ExitTransition.None }
+            enterTransition = {
+                fadeIn(animationSpec = tween(400)) + slideInHorizontally(
+                    initialOffsetX = { 300 },
+                    animationSpec = tween(400)
+                )
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(400)) + slideOutHorizontally(
+                    targetOffsetX = { -300 },
+                    animationSpec = tween(400)
+                )
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(400)) + slideInHorizontally(
+                    initialOffsetX = { -300 },
+                    animationSpec = tween(400)
+                )
+            },
+            popExitTransition = {
+                fadeOut(animationSpec = tween(400)) + slideOutHorizontally(
+                    targetOffsetX = { 300 },
+                    animationSpec = tween(400)
+                )
+            }
         ) {
             composable(Screen.Loading.route) {
                 ScreenWrapper(Screen.Loading.route) {
@@ -276,6 +293,38 @@ fun AppNavigation() {
                             }
                         },
                         onNavigateToChangeAvatar = { navController.navigate(Screen.Photos.route) }
+                    )
+                }
+            }
+
+            composable(Screen.Settings.route) {
+                ScreenWrapper(Screen.Settings.route) {
+                    SettingsScreen(
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+            }
+
+            composable(Screen.Notifications.route) {
+                ScreenWrapper(Screen.Notifications.route) {
+                    NotificationsScreen(
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+            }
+
+            composable(Screen.Widgets.route) {
+                ScreenWrapper(Screen.Widgets.route) {
+                    WidgetsScreen(
+                        onNavigateBack = { navController.popBackStack() }
+                    )
+                }
+            }
+
+            composable(Screen.InviteFriend.route) {
+                ScreenWrapper(Screen.InviteFriend.route) {
+                    InviteFriendScreen(
+                        onNavigateBack = { navController.popBackStack() }
                     )
                 }
             }

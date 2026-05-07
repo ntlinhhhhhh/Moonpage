@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.core.util.MoonIcons
+import com.diary.moonpage.domain.model.DailyLog
 import com.diary.moonpage.presentation.components.calendar.*
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -161,7 +162,7 @@ fun CalendarScreenContent(
                     onDeleteLog = { date -> onEvent(CalendarUiEvent.OnDeleteLog(date)) },
                     onShareClick = { /* TODO */ }
                 )
-                
+
                 Spacer(modifier = Modifier.height(100.dp))
             }
         }
@@ -238,7 +239,7 @@ fun CalendarMonthHeader(
 fun CalendarPager(
     currentYearMonth: java.time.YearMonth,
     selectedDate: LocalDate,
-    dailyLogs: Map<LocalDate, com.diary.moonpage.data.remote.dto.calendar.DailyLogResponseDto>,
+    dailyLogs: Map<LocalDate, DailyLog>,
     onDateSelected: (LocalDate) -> Unit,
     onMonthChanged: (java.time.YearMonth) -> Unit
 ) {
@@ -332,7 +333,7 @@ fun CalendarPager(
 @Composable
 fun CalendarSelectedLogDetail(
     selectedDate: LocalDate,
-    dailyLogs: Map<LocalDate, com.diary.moonpage.data.remote.dto.calendar.DailyLogResponseDto>,
+    dailyLogs: Map<LocalDate, DailyLog>,
     dynamicActivities: List<com.diary.moonpage.domain.model.Activity>,
     onEditLog: (LocalDate) -> Unit,
     onDeleteLog: (LocalDate) -> Unit,

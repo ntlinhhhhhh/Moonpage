@@ -8,6 +8,7 @@ import android.location.Location
 import android.location.LocationManager
 import android.net.Uri
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -74,6 +75,37 @@ fun MomentCameraScreen(
     }
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    var isSuccess by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        viewModel.uiEffect.collect { effect ->
+            when (effect) {
+                MomentUiEffect.UploadSuccess -> {
+                    isSuccess = true
+                }
+                is MomentUiEffect.ShowSnackBar -> {
+                    Toast.makeText(context, effect.message.asString(context), Toast.LENGTH_SHORT).show()
+                }
+                is MomentUiEffect.ShareMoment -> {
+                    val intent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, "Check out my moment: ${effect.url}")
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                    context.startActivity(Intent.createChooser(intent, "Share Moment").apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    })
+                }
+                is MomentUiEffect.DownloadMoment -> {
+                    com.diary.moonpage.core.util.ImageUtils.downloadAndSaveImage(context, effect.url)
+                }
+                is MomentUiEffect.NavigateToDetail -> {
+                    // Handled by navigation
+                }
+            }
+        }
+    }
 
     val cameraPermission = cameraPermissionState.permissions.find { it.permission == Manifest.permission.CAMERA }
     if (cameraPermission?.status?.isGranted == true) {
@@ -85,7 +117,9 @@ fun MomentCameraScreen(
             onNavigateToGallery = onNavigateToGallery,
             onNavigateToHistory = onNavigateToHistory,
             avatarUrl = profileState.user?.avatarUrl,
-            localAvatarPath = profileState.localAvatarPath ?: profileState.tempAvatarPath
+            localAvatarPath = profileState.localAvatarPath ?: profileState.tempAvatarPath,
+            isSuccess = isSuccess,
+            onResetSuccess = { isSuccess = false }
         )
     } else {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -108,7 +142,9 @@ fun MomentCameraScreenContent(
     onNavigateToGallery: () -> Unit,
     onNavigateToHistory: () -> Unit,
     avatarUrl: String? = null,
-    localAvatarPath: String? = null
+    localAvatarPath: String? = null,
+    isSuccess: Boolean = false,
+    onResetSuccess: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -132,7 +168,6 @@ fun MomentCameraScreenContent(
     var userRating by remember { mutableFloatStateOf(0.0f) }
     var userLocation by remember { mutableStateOf("") }
     var userWeather by remember { mutableStateOf("Sunny ☀️") }
-    var isSuccess by remember { mutableStateOf(false) }
     var showTagSheet by remember { mutableStateOf(false) }
 
     val uploadPagerState = rememberPagerState(pageCount = { allTags.size })
@@ -278,18 +313,17 @@ fun MomentCameraScreenContent(
                         caption = caption,
                         location = if (currentTag.id == "location") userLocation else null,
                         weather = if (currentTag.id == "weather") userWeather else null,
-                        rating = if (currentTag.id == "review") userRating else null,
-                        onSuccess = { isSuccess = true }
+                        rating = if (currentTag.id == "review") userRating else null
                     ))
                 },
-                onShowTagSheet = { showTagSheet = false }
+                onShowTagSheet = { showTagSheet = true }
             )
 
             if (isSuccess) {
                 LaunchedEffect(Unit) {
                     kotlinx.coroutines.delay(500)
                     capturedImageUri = null
-                    isSuccess = false
+                    onResetSuccess()
                     userMessage = ""
                     userRating = 0.0f
                     userLocation = ""

@@ -6,9 +6,17 @@ data class LoginResponseDTO (
     val token: String,
     val userId: String,
     val name: String,
-    val avatarUrl: String
+    val avatarUrl: String?
 ) {
     fun toUser(): User {
-        return User(token = token, userId = userId, name = name, avatarUrl = avatarUrl)
+        return User(
+            token = token, 
+            userId = userId, 
+            name = name, 
+            email = "", 
+            avatarUrl = avatarUrl,
+            gender = null,
+            birthday = null
+        )
     }
 }

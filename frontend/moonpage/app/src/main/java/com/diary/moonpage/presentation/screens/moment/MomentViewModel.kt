@@ -1,61 +1,38 @@
 package com.diary.moonpage.presentation.screens.moment
 
-import android.content.Context
-import android.content.Intent
-import android.util.Log
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.ui.graphics.Color
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import coil.imageLoader
-import coil.request.CachePolicy
-import coil.request.ImageRequest
 import com.diary.moonpage.R
-import com.diary.moonpage.core.util.ImageUtils
 import com.diary.moonpage.core.util.UiText
-import com.diary.moonpage.domain.model.Moment
+import com.diary.moonpage.domain.repository.MomentRepository
 import com.diary.moonpage.domain.usecase.moment.*
 import com.diary.moonpage.presentation.components.moment.MomentTag
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 
-private val Context.momentDataStore by preferencesDataStore(name = "moment_cache")
-
 @HiltViewModel
 class MomentViewModel @Inject constructor(
+    private val repository: MomentRepository,
     private val getMyMomentsUseCase: GetMyMomentsUseCase,
     private val getMomentUseCase: GetMomentUseCase,
     private val uploadMomentUseCase: UploadMomentUseCase,
-    private val deleteMomentUseCase: DeleteMomentUseCase,
-    private val gson: Gson,
-    @ApplicationContext private val context: Context
+    private val deleteMomentUseCase: DeleteMomentUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MomentUiState())
     val uiState: StateFlow<MomentUiState> = _uiState.asStateFlow()
 
-    private val _uiEvent = Channel<MomentUiEvent>()
-    val uiEvent = _uiEvent.receiveAsFlow()
-
-    private val MOMENT_LIST_KEY = stringPreferencesKey("cached_moments")
-    private val LOCAL_PATHS_KEY = stringPreferencesKey("local_paths")
+    private val _uiEffect = Channel<MomentUiEffect>()
+    val uiEffect = _uiEffect.receiveAsFlow()
 
     val allTags = listOf(
         MomentTag("text", null, "Message"),
@@ -69,8 +46,21 @@ class MomentViewModel @Inject constructor(
     )
 
     init {
-        loadCachedMoments()
+        observeRepository()
         onEvent(MomentUiEvent.LoadMoments)
+    }
+
+    private fun observeRepository() {
+        viewModelScope.launch {
+            repository.moments.collect { list ->
+                _uiState.update { it.copy(moments = list) }
+            }
+        }
+        viewModelScope.launch {
+            repository.localPaths.collect { paths ->
+                _uiState.update { it.copy(localPaths = paths) }
+            }
+        }
     }
 
     fun onEvent(event: MomentUiEvent) {
@@ -84,64 +74,23 @@ class MomentViewModel @Inject constructor(
                 event.weather,
                 event.rating,
                 event.dailyLogId,
-                event.isPublic,
-                event.onSuccess
+                event.isPublic
             )
             is MomentUiEvent.DeleteMoment -> deleteMoment(event.id)
-            is MomentUiEvent.DownloadMoment -> downloadMoment(event.imageUrl)
-            is MomentUiEvent.ShareMoment -> shareMoment(event.url)
+            is MomentUiEvent.DownloadMoment -> viewModelScope.launch { _uiEffect.send(MomentUiEffect.DownloadMoment(event.imageUrl)) }
+            is MomentUiEvent.ShareMoment -> viewModelScope.launch { _uiEffect.send(MomentUiEffect.ShareMoment(event.url)) }
             MomentUiEvent.DismissMessage -> _uiState.update { it.copy(errorMessage = null, successMessage = null) }
-            is MomentUiEvent.ShowSnackBar -> viewModelScope.launch { _uiEvent.send(event) }
-        }
-    }
-
-    private fun loadCachedMoments() {
-        viewModelScope.launch {
-            try {
-                val preferences = context.momentDataStore.data.first()
-                val json = preferences[MOMENT_LIST_KEY]
-                if (!json.isNullOrEmpty()) {
-                    val type = object : TypeToken<List<Moment>>() {}.type
-                    val cachedList: List<Moment> = gson.fromJson(json, type)
-                    
-                    val pathsJson = preferences[LOCAL_PATHS_KEY]
-                    val localPaths: Map<String, String> = if (!pathsJson.isNullOrEmpty()) {
-                        val pathType = object : TypeToken<Map<String, String>>() {}.type
-                        gson.fromJson(pathsJson, pathType)
-                    } else emptyMap()
-
-                    _uiState.update { it.copy(moments = cachedList, localPaths = localPaths) }
-                }
-            } catch (e: Exception) {
-                Log.e("MomentVM", "Error loading cache", e)
-            }
-        }
-    }
-
-    private fun saveMomentsToCache(list: List<Moment>) {
-        viewModelScope.launch {
-            try {
-                val json = gson.toJson(list)
-                val pathsJson = gson.toJson(_uiState.value.localPaths)
-                context.momentDataStore.edit { prefs ->
-                    prefs[MOMENT_LIST_KEY] = json
-                    prefs[LOCAL_PATHS_KEY] = pathsJson
-                }
-            } catch (e: Exception) {
-                Log.e("MomentVM", "Error saving cache", e)
-            }
+            is MomentUiEvent.ShowSnackBar -> viewModelScope.launch { _uiEffect.send(MomentUiEffect.ShowSnackBar(event.message)) }
         }
     }
 
     private fun fetchMyMoments() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            getMyMomentsUseCase().onSuccess { newList ->
-                _uiState.update { it.copy(isLoading = false, moments = newList) }
-                saveMomentsToCache(newList)
-            }.onFailure { error ->
-                _uiState.update { it.copy(isLoading = false, errorMessage = UiText.DynamicString(error.message ?: "Unknown error")) }
+            getMyMomentsUseCase().onFailure { error ->
+                _uiEffect.send(MomentUiEffect.ShowSnackBar(UiText.DynamicString(error.message ?: "Unknown error")))
             }
+            _uiState.update { it.copy(isLoading = false) }
         }
     }
 
@@ -151,7 +100,8 @@ class MomentViewModel @Inject constructor(
             getMomentUseCase(id).onSuccess { moment ->
                 _uiState.update { it.copy(isLoading = false, selectedMoment = moment) }
             }.onFailure { error ->
-                _uiState.update { it.copy(isLoading = false, errorMessage = UiText.DynamicString(error.message ?: "Unknown error")) }
+                _uiState.update { it.copy(isLoading = false) }
+                _uiEffect.send(MomentUiEffect.ShowSnackBar(UiText.DynamicString(error.message ?: "Unknown error")))
             }
         }
     }
@@ -163,8 +113,7 @@ class MomentViewModel @Inject constructor(
         weather: String?,
         rating: Float?,
         dailyLogId: String,
-        isPublic: Boolean,
-        onSuccess: () -> Unit
+        isPublic: Boolean
     ) {
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
             timeZone = TimeZone.getTimeZone("UTC")
@@ -173,116 +122,36 @@ class MomentViewModel @Inject constructor(
 
         viewModelScope.launch {
             _uiState.update { it.copy(isUploading = true) }
-            try {
-                val imagePart = MultipartBody.Part.createFormData(
-                    "imageFile",
-                    imageFile.name,
-                    imageFile.asRequestBody("image/webp".toMediaTypeOrNull())
-                )
-                
-                val dailyLogIdBody = dailyLogId.toRequestBody("text/plain".toMediaTypeOrNull())
-                val captionBody = caption.toRequestBody("text/plain".toMediaTypeOrNull())
-                val isPublicBody = isPublic.toString().toRequestBody("text/plain".toMediaTypeOrNull())
-                val capturedAtBody = capturedAtStr.toRequestBody("text/plain".toMediaTypeOrNull())
-                val locationBody = location?.toRequestBody("text/plain".toMediaTypeOrNull())
-                val weatherBody = weather?.toRequestBody("text/plain".toMediaTypeOrNull())
-                val ratingBody = rating?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
-
-                uploadMomentUseCase(
-                    dailyLogIdBody,
-                    imagePart,
-                    captionBody,
-                    isPublicBody,
-                    capturedAtBody,
-                    locationBody,
-                    weatherBody,
-                    ratingBody
-                ).onSuccess { response ->
-                    val fileName = "moment_${response.id}.webp"
-                    val permanentFile = File(context.filesDir, "moments/$fileName")
-                    permanentFile.parentFile?.mkdirs()
-                    imageFile.copyTo(permanentFile, overwrite = true)
-                    
-                    _uiState.update { state ->
-                        val updatedPaths = state.localPaths + (response.imageUrl to permanentFile.absolutePath)
-                        val updatedList = (listOf(response) + state.moments).distinctBy { it.id }
-                        state.copy(
-                            isUploading = false,
-                            localPaths = updatedPaths,
-                            moments = updatedList,
-                            successMessage = UiText.StringResource(R.string.moment_upload_success)
-                        )
-                    }
-                    
-                    // Pre-warm Coil cache for the remote URL
-                    val preWarmRequest = ImageRequest.Builder(context)
-                        .data(response.imageUrl)
-                        .memoryCacheKey("feed_${response.imageUrl}")
-                        .diskCachePolicy(CachePolicy.ENABLED)
-                        .build()
-                    context.imageLoader.enqueue(preWarmRequest)
-
-                    saveMomentsToCache(_uiState.value.moments)
-                    onSuccess()
-                }.onFailure { error ->
-                    _uiState.update { it.copy(isUploading = false, errorMessage = UiText.DynamicString(error.message ?: "Upload failed")) }
-                }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(isUploading = false, errorMessage = UiText.DynamicString(e.message ?: "Error preparing upload")) }
+            uploadMomentUseCase(
+                dailyLogId,
+                imageFile,
+                caption,
+                isPublic,
+                capturedAtStr,
+                location,
+                weather,
+                rating
+            ).onSuccess {
+                _uiState.update { it.copy(isUploading = false) }
+                _uiEffect.send(MomentUiEffect.UploadSuccess)
+                _uiEffect.send(MomentUiEffect.ShowSnackBar(UiText.StringResource(R.string.moment_upload_success)))
+            }.onFailure { error ->
+                _uiState.update { it.copy(isUploading = false) }
+                _uiEffect.send(MomentUiEffect.ShowSnackBar(UiText.DynamicString(error.message ?: "Upload failed")))
             }
         }
     }
 
     private fun deleteMoment(id: String) {
         viewModelScope.launch {
-            val momentToDelete = _uiState.value.moments.find { it.id == id }
-            val localPath = momentToDelete?.let { _uiState.value.localPaths[it.imageUrl] }
-
             _uiState.update { it.copy(isLoading = true) }
             deleteMomentUseCase(id).onSuccess {
-                // Xóa file local nếu có
-                localPath?.let { path ->
-                    try {
-                        val file = File(path)
-                        if (file.exists()) file.delete()
-                    } catch (e: Exception) {
-                        Log.e("MomentVM", "Error deleting local file", e)
-                    }
-                }
-
-                _uiState.update { state ->
-                    val updatedList = state.moments.filter { it.id != id }
-                    val updatedPaths = state.localPaths.filter { (url, _) ->
-                        updatedList.any { it.imageUrl == url }
-                    }
-                    state.copy(
-                        isLoading = false,
-                        moments = updatedList,
-                        localPaths = updatedPaths,
-                        successMessage = UiText.StringResource(R.string.moment_deleted)
-                    )
-                }
-                saveMomentsToCache(_uiState.value.moments)
+                _uiState.update { it.copy(isLoading = false) }
+                _uiEffect.send(MomentUiEffect.ShowSnackBar(UiText.StringResource(R.string.moment_deleted)))
             }.onFailure { error ->
-                _uiState.update { it.copy(isLoading = false, errorMessage = UiText.DynamicString(error.message ?: "Delete failed")) }
+                _uiState.update { it.copy(isLoading = false) }
+                _uiEffect.send(MomentUiEffect.ShowSnackBar(UiText.DynamicString(error.message ?: "Delete failed")))
             }
         }
-    }
-
-    private fun downloadMoment(imageUrl: String) {
-        viewModelScope.launch {
-            ImageUtils.downloadAndSaveImage(context, imageUrl)
-        }
-    }
-
-    private fun shareMoment(url: String) {
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, "Check out my moment: $url")
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        }
-        context.startActivity(Intent.createChooser(intent, "Share Moment").apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        })
     }
 }

@@ -42,6 +42,34 @@ fun MomentHistoryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.uiEffect.collect { effect ->
+            when (effect) {
+                is MomentUiEffect.ShowSnackBar -> {
+                    android.widget.Toast.makeText(context, effect.message.asString(context), android.widget.Toast.LENGTH_SHORT).show()
+                }
+                is MomentUiEffect.ShareMoment -> {
+                    val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(android.content.Intent.EXTRA_TEXT, "Check out my moment: ${effect.url}")
+                        flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                    context.startActivity(android.content.Intent.createChooser(intent, "Share Moment").apply {
+                        flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                    })
+                }
+                is MomentUiEffect.DownloadMoment -> {
+                    com.diary.moonpage.core.util.ImageUtils.downloadAndSaveImage(context, effect.url)
+                }
+                MomentUiEffect.UploadSuccess -> {}
+                is MomentUiEffect.NavigateToDetail -> {
+                    onNavigateToDetail(effect.id)
+                }
+            }
+        }
+    }
 
     MomentHistoryScreenContent(
         moments = uiState.moments,

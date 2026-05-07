@@ -30,6 +30,20 @@ data class DailyLogEntity(
         )
     }
 
+    fun toDomain(): com.diary.moonpage.domain.model.DailyLog {
+        return com.diary.moonpage.domain.model.DailyLog(
+            id = id,
+            baseMoodId = baseMoodId,
+            date = date,
+            note = note,
+            sleepHours = sleepHours,
+            isMenstruation = isMenstruation,
+            menstruationPhase = menstruationPhase,
+            dailyPhotos = dailyPhotosJson?.split(",")?.filter { it.isNotBlank() },
+            activityIds = activityIdsJson?.split(",")?.filter { it.isNotBlank() }
+        )
+    }
+
     companion object {
         fun fromResponse(response: DailyLogResponseDto): DailyLogEntity {
             return DailyLogEntity(

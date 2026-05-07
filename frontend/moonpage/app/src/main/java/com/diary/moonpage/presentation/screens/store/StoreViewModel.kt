@@ -9,6 +9,7 @@ import com.diary.moonpage.domain.usecase.theme.GetOwnedThemesUseCase
 import com.diary.moonpage.domain.usecase.theme.GetThemesUseCase
 import com.diary.moonpage.domain.usecase.theme.SetActiveThemeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -24,11 +25,65 @@ class StoreViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(StoreUiState())
     val uiState: StateFlow<StoreUiState> = _uiState.asStateFlow()
 
+    private val _uiEffect = Channel<StoreUiEffect>()
+    val uiEffect = _uiEffect.receiveAsFlow()
+
     init {
         loadData()
     }
 
-    fun loadData() {
+    fun onTabSelected(index: Int) {
+        _uiState.update { it.copy(selectedTabIndex = index) }
+    }
+
+    fun selectTheme(theme: Theme) {
+        _uiState.update { it.copy(selectedThemeDetail = theme) }
+    }
+
+    fun activateTheme(themeId: String) {
+        onEvent(StoreUiEvent.ActivateTheme(themeId))
+    }
+
+    fun initiatePurchase(theme: Theme) {
+        onEvent(StoreUiEvent.InitiatePurchase(theme))
+    }
+
+    fun buyTheme(theme: Theme) {
+        onEvent(StoreUiEvent.BuyTheme(theme))
+    }
+
+    fun cancelPurchase() {
+        onEvent(StoreUiEvent.CancelPurchase)
+    }
+
+    fun dismissDialog() {
+        onEvent(StoreUiEvent.DismissDialog)
+    }
+
+    fun onEvent(event: StoreUiEvent) {
+        when (event) {
+            StoreUiEvent.LoadData -> loadData()
+            is StoreUiEvent.OnTabSelected -> {
+                _uiState.update { it.copy(selectedTabIndex = event.index) }
+            }
+            is StoreUiEvent.SelectTheme -> {
+                _uiState.update { it.copy(selectedThemeDetail = event.theme) }
+            }
+            is StoreUiEvent.InitiatePurchase -> {
+                _uiState.update { it.copy(showConfirmPurchaseDialog = true, themeToPurchase = event.theme) }
+            }
+            StoreUiEvent.CancelPurchase -> {
+                _uiState.update { it.copy(showConfirmPurchaseDialog = false, themeToPurchase = null) }
+            }
+            is StoreUiEvent.BuyTheme -> performBuyTheme(event.theme)
+            is StoreUiEvent.ActivateTheme -> performActivateTheme(event.themeId)
+            StoreUiEvent.DismissDialog -> {
+                _uiState.update { it.copy(showPurchaseSuccessDialog = false) }
+            }
+        }
+    }
+
+    private fun loadData() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             _uiState.update { it.copy(userCoins = 500) }
@@ -160,23 +215,7 @@ class StoreViewModel @Inject constructor(
         }
     }
 
-    fun onTabSelected(index: Int) {
-        _uiState.update { it.copy(selectedTabIndex = index) }
-    }
-
-    fun selectTheme(theme: Theme) {
-        _uiState.update { it.copy(selectedThemeDetail = theme) }
-    }
-
-    fun initiatePurchase(theme: Theme) {
-        _uiState.update { it.copy(showConfirmPurchaseDialog = true, themeToPurchase = theme) }
-    }
-
-    fun cancelPurchase() {
-        _uiState.update { it.copy(showConfirmPurchaseDialog = false, themeToPurchase = null) }
-    }
-
-    fun buyTheme(theme: Theme) {
+    private fun performBuyTheme(theme: Theme) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, showConfirmPurchaseDialog = false) }
             kotlinx.coroutines.delay(800)
@@ -204,10 +243,11 @@ class StoreViewModel @Inject constructor(
                     themeToPurchase = null
                 ) 
             }
+            _uiEffect.send(StoreUiEffect.PurchaseSuccess)
         }
     }
 
-    fun activateTheme(themeId: String) {
+    private fun performActivateTheme(themeId: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             kotlinx.coroutines.delay(400)
@@ -227,10 +267,8 @@ class StoreViewModel @Inject constructor(
                     selectedThemeDetail = updatedDetail
                 )
             }
+            _uiEffect.send(StoreUiEffect.ThemeActivated)
+            _uiEffect.send(StoreUiEffect.ShowSnackBar("Theme activated!"))
         }
-    }
-
-    fun dismissDialog() {
-        _uiState.update { it.copy(showPurchaseSuccessDialog = false) }
     }
 }

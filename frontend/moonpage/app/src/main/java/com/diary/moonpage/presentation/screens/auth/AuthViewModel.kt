@@ -20,7 +20,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import javax.inject.Inject
 
 @HiltViewModel
@@ -48,36 +47,6 @@ class AuthViewModel @Inject constructor (
 
     val tokenFlow = tokenManager.getToken()
 
-    /** Dùng bởi LoadingScreen: kiểm tra user hiện tại đã hoàn thành onboarding chưa */
-    suspend fun checkOnboardingForCurrentUser(): Boolean {
-        val userId = tokenManager.getUserId() ?: return false
-        return onboardingPrefsManager.checkOnboardingCompleted(userId)
-    }
-
-    fun loadInitialAppResources(onComplete: () -> Unit) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(loadingProgress = 0f) }
-            
-            // Tải dữ liệu song song hoặc tuần tự
-            val jobs = listOf(
-                async { userRepository.getCurrentUser() },
-                async { userRepository.getMyThemes() },
-                async { activityRepository.syncActivities() }
-            )
-
-            // Mỗi khi 1 job xong, tăng progress
-            val step = 1f / jobs.size
-            jobs.forEach { job ->
-                job.await()
-                _uiState.update { it.copy(loadingProgress = it.loadingProgress + step) }
-            }
-
-            // Đảm bảo là 1f
-            _uiState.update { it.copy(loadingProgress = 1f) }
-            onComplete()
-        }
-    }
-
     fun onEmailChange(email: String) {
         _uiState.update { it.copy(emailInput = email)}
     }
@@ -101,6 +70,33 @@ class AuthViewModel @Inject constructor (
         }
     }
 
+    /** Dùng bởi LoadingScreen: kiểm tra user hiện tại đã hoàn thành onboarding chưa */
+    suspend fun checkOnboardingForCurrentUser(): Boolean {
+        val userId = tokenManager.getUserId() ?: return false
+        return onboardingPrefsManager.checkOnboardingCompleted(userId)
+    }
+
+    fun loadInitialAppResources(onComplete: () -> Unit) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(loadingProgress = 0f) }
+            
+            val jobs = listOf(
+                async { userRepository.getCurrentUser() },
+                async { userRepository.getMyThemes() },
+                async { activityRepository.syncActivities() }
+            )
+
+            val step = 1f / jobs.size
+            jobs.forEach { job ->
+                job.await()
+                _uiState.update { it.copy(loadingProgress = (it.loadingProgress + step).coerceAtMost(1f)) }
+            }
+
+            _uiState.update { it.copy(loadingProgress = 1f) }
+            onComplete()
+        }
+    }
+
     fun login() {
         viewModelScope.launch {
             _uiState.update { it.copy(emailError = null, passwordError = null) }
@@ -108,9 +104,7 @@ class AuthViewModel @Inject constructor (
             val emailResult = validateEmail.execute(uiState.value.emailInput)
             val passwordResult = validatePassword.execute(uiState.value.passwordInput)
 
-            val hasError = listOf(emailResult, passwordResult).any { !it.successful }
-
-            if (hasError) {
+            if (!emailResult.successful || !passwordResult.successful) {
                 _uiState.update { it.copy(
                     emailError = emailResult.errorMessage,
                     passwordError = passwordResult.errorMessage
@@ -225,6 +219,7 @@ class AuthViewModel @Inject constructor (
         viewModelScope.launch {
             tokenManager.clearToken()
             _uiState.update { AuthUiState() }
+            _uiEvent.send(AuthUiEvent.NavigateToLogin)
         }
     }
 

@@ -65,7 +65,7 @@ fun ActionCard(
                     modifier = Modifier.size(20.dp)
                 )
             }
-            
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -83,7 +83,7 @@ fun ActionCard(
                         modifier = Modifier.size(24.dp)
                     )
                 }
-                
+
                 Spacer(modifier = Modifier.width(18.dp))
 
                 Text(

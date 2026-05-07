@@ -10,3 +10,4 @@ data class Moment(
     val weather: String? = null,
     val rating: Float? = null
 )
+

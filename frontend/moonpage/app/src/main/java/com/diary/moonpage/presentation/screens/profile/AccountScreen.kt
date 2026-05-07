@@ -1,6 +1,8 @@
 package com.diary.moonpage.presentation.screens.profile
 
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,7 +10,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.*
@@ -16,7 +17,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,16 +32,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.R
 import com.diary.moonpage.presentation.components.profile.*
 import com.diary.moonpage.presentation.theme.MoonPageTheme
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.AnnotatedString
 import kotlinx.coroutines.launch
 
 /**
@@ -53,11 +54,11 @@ fun AccountScreen(
     onLogoutClick: () -> Unit,
     onNavigateToChangeAvatar: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
     )
-    
+
     val coroutineScope = rememberCoroutineScope()
     var currentBottomSheet by remember { mutableStateOf(BottomSheetType.NONE) }
     var showLogoutDialog by remember { mutableStateOf(false) }
@@ -91,13 +92,16 @@ fun AccountScreen(
     // Listen for events (like showing snackbar)
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(Unit) {
-        viewModel.uiEvent.collect { event ->
-            when(event) {
-                is ProfileUiEvent.ShowSnackBar -> {
-                    snackbarHostState.showSnackbar(event.message)
+        viewModel.uiEffect.collect { effect ->
+            when(effect) {
+                is ProfileUiEffect.ShowSnackBar -> {
+                    snackbarHostState.showSnackbar(effect.message)
                 }
-                is ProfileUiEvent.UpdateSuccess -> {
+                is ProfileUiEffect.UpdateSuccess -> {
                     // Success logic if needed
+                }
+                ProfileUiEffect.AccountDeleted -> {
+                    onLogoutClick()
                 }
             }
         }
@@ -123,7 +127,7 @@ fun AccountScreen(
                 username = user?.name ?: "",
                 gender = user?.gender ?: "Not specified",
                 birthday = user?.birthday ?: "Not specified",
-                userIdFull = user?.id ?: "",
+                userIdFull = user?.userId ?: "",
                 email = user?.email ?: "",
                 avatarUrl = user?.avatarUrl,
                 localAvatarPath = uiState.localAvatarPath,
@@ -135,7 +139,7 @@ fun AccountScreen(
                 onAvatarEditClick = { avatarLauncher.launch("image/*") },
                 onUsernameEditClick = { currentBottomSheet = BottomSheetType.USERNAME }
             )
-            
+
             if (uiState.isUpdating) {
                 Box(
                     modifier = Modifier
@@ -179,7 +183,7 @@ fun AccountScreen(
                                     gender = newGender,
                                     birthday = user?.birthday
                                 )
-                                hideBottomSheet() 
+                                hideBottomSheet()
                             },
                             onClose = { hideBottomSheet() }
                         )
@@ -360,18 +364,18 @@ fun AccountScreenContent(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
-                title = { 
+                title = {
                     Text(
-                        "Account", 
-                        fontWeight = FontWeight.Bold, 
+                        "Account",
+                        fontWeight = FontWeight.Bold,
                         color = colorScheme.onBackground
-                    ) 
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = "Back", 
+                            contentDescription = "Back",
                             tint = colorScheme.onBackground
                         )
                     }
@@ -493,9 +497,9 @@ fun AccountScreenContent(
 
             TextButton(onClick = onLogoutClick) {
                 Text(
-                    "Log out", 
-                    color = colorScheme.error, 
-                    fontWeight = FontWeight.Bold, 
+                    "Log out",
+                    color = colorScheme.error,
+                    fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
@@ -510,7 +514,7 @@ fun AccountScreenContent(
 fun AccountScreenPreview() {
     MoonPageTheme {
         AccountScreenContent(
-            username = "🥑",
+            username = "Moon User",
             gender = "Female",
             birthday = "04/06/2005",
             userIdFull = "01KJPADDQZ5DSB2GYGFGX384RF",

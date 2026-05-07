@@ -1,5 +1,6 @@
 package com.diary.moonpage.data.remote.dto.calendar
 
+import com.diary.moonpage.domain.model.DailyLog
 import com.google.gson.annotations.SerializedName
 
 data class DailyLogResponseDto(
@@ -12,4 +13,18 @@ data class DailyLogResponseDto(
     @SerializedName("menstruationPhase") val menstruationPhase: String?,
     @SerializedName("dailyPhotos") val dailyPhotos: List<String>?,
     @SerializedName("activityIds") val activityIds: List<String>?
-)
+) {
+    fun toDomain(): DailyLog {
+        return DailyLog(
+            id = id,
+            baseMoodId = baseMoodId,
+            date = date,
+            note = note,
+            sleepHours = sleepHours,
+            isMenstruation = isMenstruation,
+            menstruationPhase = menstruationPhase,
+            dailyPhotos = dailyPhotos,
+            activityIds = activityIds
+        )
+    }
+}

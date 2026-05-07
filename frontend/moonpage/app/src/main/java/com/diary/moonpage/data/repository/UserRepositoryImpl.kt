@@ -7,14 +7,11 @@ import com.diary.moonpage.data.remote.api.UserApi
 import com.diary.moonpage.data.remote.dto.auth.UpdateProfileRequestDto
 import com.diary.moonpage.data.remote.dto.auth.UserResponseDto
 import com.diary.moonpage.domain.model.Theme
+import com.diary.moonpage.domain.model.User
 import com.diary.moonpage.domain.repository.UserRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
@@ -28,23 +25,23 @@ class UserRepositoryImpl @Inject constructor(
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
 ) : UserRepository {
 
-    private val _currentUser = MutableStateFlow<UserResponseDto?>(null)
-    override val currentUser: StateFlow<UserResponseDto?> = _currentUser.asStateFlow()
+    private val _currentUser = MutableStateFlow<User?>(null)
+    override val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
     
     override val localAvatarPath: Flow<String?> = userManager.getLocalAvatarPath()
 
     init {
         // Load user from DataStore (local storage) on initialization to show UI immediately
         CoroutineScope(Dispatchers.IO).launch {
-            userManager.getUser().collect { savedUser ->
-                _currentUser.value = savedUser
+            userManager.getUser().collect { savedUserDto ->
+                _currentUser.value = savedUserDto?.toDomain()
             }
         }
     }
 
-    override suspend fun getCurrentUser(): Result<UserResponseDto> {
-        val token = tokenManager.getToken().first()
-        if (token.isNullOrBlank()) {
+    override suspend fun getCurrentUser(): Result<User> {
+        val token = tokenManager.getToken().first() ?: ""
+        if (token.isBlank()) {
             return Result.failure(Exception("Not authenticated"))
         }
 
@@ -53,9 +50,10 @@ class UserRepositoryImpl @Inject constructor(
         return try {
             val response = userApi.getCurrentUser()
             if (response.isSuccessful && response.body() != null) {
-                val user = response.body()!!
+                val userDto = response.body()!!
+                val user = userDto.toDomain(token)
                 _currentUser.value = user
-                userManager.saveUser(user) // Update persistence
+                userManager.saveUser(userDto) // Update persistence with DTO
                 Result.success(user)
             } else {
                 cached?.let { Result.success(it) } ?: Result.failure(Exception("Failed to fetch profile"))
@@ -65,17 +63,18 @@ class UserRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateProfile(request: UpdateProfileRequestDto): Result<UserResponseDto> {
+    override suspend fun updateProfile(request: UpdateProfileRequestDto): Result<User> {
+        val token = tokenManager.getToken().first() ?: ""
         return try {
             val response = userApi.updateProfile(request)
             if (response.isSuccessful && response.body() != null) {
-                // Fetch the absolute latest profile from server after update to ensure sync
                 val latestProfileResponse = userApi.getCurrentUser()
-                val updatedUser = if (latestProfileResponse.isSuccessful) latestProfileResponse.body()!! else response.body()!!
+                val updatedUserDto = if (latestProfileResponse.isSuccessful) latestProfileResponse.body()!! else response.body()!!
+                val user = updatedUserDto.toDomain(token)
                 
-                _currentUser.value = updatedUser 
-                userManager.saveUser(updatedUser)
-                Result.success(updatedUser)
+                _currentUser.value = user 
+                userManager.saveUser(updatedUserDto)
+                Result.success(user)
             } else {
                 Result.failure(Exception("Update failed"))
             }
@@ -114,21 +113,21 @@ class UserRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateAvatar(image: okhttp3.MultipartBody.Part, localFile: File): Result<UserResponseDto> {
+    override suspend fun updateAvatar(image: okhttp3.MultipartBody.Part, localFile: File): Result<User> {
+        val token = tokenManager.getToken().first() ?: ""
         return try {
             val response = userApi.updateAvatar(image)
             if (response.isSuccessful && response.body() != null) {
-                // Save locally first for fast access
                 val savedPath = ImageUtils.saveAvatarLocally(context, localFile)
                 userManager.saveLocalAvatarPath(savedPath)
 
-                // Fetch the absolute latest profile from server after update to ensure sync
                 val latestProfileResponse = userApi.getCurrentUser()
-                val updatedUser = if (latestProfileResponse.isSuccessful) latestProfileResponse.body()!! else response.body()!!
+                val updatedUserDto = if (latestProfileResponse.isSuccessful) latestProfileResponse.body()!! else response.body()!!
+                val user = updatedUserDto.toDomain(token)
                 
-                _currentUser.value = updatedUser
-                userManager.saveUser(updatedUser)
-                Result.success(updatedUser)
+                _currentUser.value = user
+                userManager.saveUser(updatedUserDto)
+                Result.success(user)
             } else {
                 Result.failure(Exception("Avatar update failed"))
             }

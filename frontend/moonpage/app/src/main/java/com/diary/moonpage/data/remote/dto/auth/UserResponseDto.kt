@@ -10,12 +10,15 @@ data class UserResponseDto(
     val gender: String?,
     val birthday: String?
 ) {
-    fun toDomain(): User {
+    fun toDomain(token: String = ""): User {
         return User(
-            token = "", // Token usually managed separately or not returned here
+            token = token,
             userId = id,
             name = name,
-            avatarUrl = avatarUrl
+            email = email,
+            avatarUrl = avatarUrl,
+            gender = gender,
+            birthday = birthday
         )
     }
 }

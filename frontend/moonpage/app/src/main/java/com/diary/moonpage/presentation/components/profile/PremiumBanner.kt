@@ -47,9 +47,9 @@ fun PremiumBanner() {
                         )
                     )
                 }
-                
+
                 Spacer(modifier = Modifier.height(8.dp))
-                
+
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = "Premium Pass",
@@ -65,7 +65,7 @@ fun PremiumBanner() {
                         modifier = Modifier.size(20.dp)
                     )
                 }
-                
+
                 Text(
                     text = "Spring is here, celebrate with a special discount!",
                     style = MaterialTheme.typography.bodySmall.copy(
@@ -75,7 +75,7 @@ fun PremiumBanner() {
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
-            
+
             // Placeholder for the illustration
             Box(
                 modifier = Modifier

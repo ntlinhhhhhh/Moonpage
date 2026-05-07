@@ -60,7 +60,8 @@ fun NavGraphBuilder.authGraph(
         }
 
         composable(Screen.VerifyOtp.route) {
-            VerifyOtpScreen(
+            VerifyOtpCodeScreen(
+                email = authViewModel.uiState.value.savedEmailForOtp,
                 viewModel = authViewModel,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToResetPassword = { _, _ ->
@@ -71,7 +72,10 @@ fun NavGraphBuilder.authGraph(
 
         composable(Screen.ResetPassword.route) {
             ResetPasswordScreen(
+                email = authViewModel.uiState.value.savedEmailForOtp,
+                resetToken = authViewModel.uiState.value.resetToken,
                 viewModel = authViewModel,
+                onNavigateBack = { navController.popBackStack() },
                 onNavigateToLogin = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }

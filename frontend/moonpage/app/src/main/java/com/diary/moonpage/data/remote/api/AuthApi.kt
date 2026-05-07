@@ -14,7 +14,7 @@ interface AuthApi {
     @POST("api/auth/register")
     suspend fun register(
         @Body request: RegisterRequestDTO
-    ): Response<RegisterResponseDTO>
+    ): Response<RegisterResponseDto>
 
     @POST("api/auth/google-login")
     suspend fun googleLogin(
