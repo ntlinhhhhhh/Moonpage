@@ -82,145 +82,145 @@ object MoonIcons {
 
     // 1. Hobbies (Sở thích)
     object Hobbies {
-        val Exercise = MoonIcon(Icons.Rounded.FitnessCenter, Color(0xFFFF5252), "Exercise")
-        val TvContent = MoonIcon(Icons.Rounded.Tv, Color(0xFF7C4DFF), "TV & Content")
-        val Movie = MoonIcon(Icons.Rounded.Movie, Color(0xFF536DFE), "Movie")
-        val Gaming = MoonIcon(Icons.Rounded.SportsEsports, Color(0xFF40C4FF), "Gaming")
-        val Reading = MoonIcon(Icons.Rounded.AutoStories, Color(0xFF8D6E63), "Reading")
-        val Walk = MoonIcon(Icons.Rounded.DirectionsWalk, Color(0xFF4CAF50), "Walk")
-        val Music = MoonIcon(Icons.Rounded.MusicNote, Color(0xFFFF4081), "Music")
-        val Drawing = MoonIcon(Icons.Rounded.Brush, Color(0xFFFFAB40), "Drawing")
+        val Exercise = MoonIcon(Icons.Rounded.FitnessCenter, Color(0xFFE53935), "Exercise") // Đỏ đậm hơn
+        val TvContent = MoonIcon(Icons.Rounded.Tv, Color(0xFF651FFF), "TV & Content") // Tím đậm
+        val Movie = MoonIcon(Icons.Rounded.Movie, Color(0xFF3D5AFE), "Movie") // Xanh lam đậm
+        val Gaming = MoonIcon(Icons.Rounded.SportsEsports, Color(0xFF0091EA), "Gaming") // Xanh dương tươi
+        val Reading = MoonIcon(Icons.Rounded.AutoStories, Color(0xFF6D4C41), "Reading") // Nâu đậm
+        val Walk = MoonIcon(Icons.Rounded.DirectionsWalk, Color(0xFF2E7D32), "Walk") // Xanh lá đậm
+        val Music = MoonIcon(Icons.Rounded.MusicNote, Color(0xFFF50057), "Music") // Hồng tươi
+        val Drawing = MoonIcon(Icons.Rounded.Brush, Color(0xFFFF8F00), "Drawing") // Cam đậm
     }
 
     // 2. Emotions (Cảm xúc)
     object Emotions {
-        val Excited = MoonIcon(Icons.Rounded.Celebration, Color(0xFFFFD700), "Excited")
-        val Relaxed = MoonIcon(Icons.Rounded.Spa, Color(0xFF81C784), "Relaxed")
-        val Proud = MoonIcon(Icons.Rounded.EmojiEvents, Color(0xFFFFB300), "Proud")
-        val Hopeful = MoonIcon(Icons.Rounded.AutoAwesome, Color(0xFFFFF176), "Hopeful")
-        val Happy = MoonIcon(Icons.Rounded.SentimentVerySatisfied, Color(0xFFFFEE58), "Happy")
-        val Enthusiastic = MoonIcon(Icons.Rounded.Whatshot, Color(0xFFFF7043), "Enthusiastic")
-        val PitAPat = MoonIcon(Icons.Rounded.Favorite, Color(0xFFFF80AB), "Pit-a-pat")
-        val Refreshed = MoonIcon(Icons.Rounded.WaterDrop, Color(0xFF4FC3F7), "Refreshed")
-        val Calm = MoonIcon(Icons.Rounded.SelfImprovement, Color(0xFF9575CD), "Calm")
-        val Grateful = MoonIcon(Icons.Rounded.VolunteerActivism, Color(0xFFF06292), "Grateful")
-        val Depressed = MoonIcon(Icons.Rounded.SentimentVeryDissatisfied, Color(0xFF5C6BC0), "Depressed")
-        val Lonely = MoonIcon(Icons.Rounded.PersonOutline, Color(0xFF90A4AE), "Lonely")
-        val Anxious = MoonIcon(Icons.Rounded.SentimentDissatisfied, Color(0xFFB0BEC5), "Anxious")
-        val Sad = MoonIcon(Icons.Rounded.MoodBad, Color(0xFF64B5F6), "Sad")
-        val Angry = MoonIcon(Icons.Rounded.PriorityHigh, Color(0xFFEF5350), "Angry")
-        val Pressured = MoonIcon(Icons.Rounded.Timer, Color(0xFFFF8A65), "Pressured")
-        val Annoyed = MoonIcon(Icons.Rounded.ErrorOutline, Color(0xFFFFAB91), "Annoyed")
-        val Tired = MoonIcon(Icons.Rounded.Battery0Bar, Color(0xFFA1887F), "Tired")
-        val Stressed = MoonIcon(Icons.Rounded.Psychology, Color(0xFF7986CB), "Stressed")
-        val Bored = MoonIcon(Icons.Rounded.SentimentNeutral, Color(0xFFCFD8DC), "Bored")
+        val Excited = MoonIcon(Icons.Rounded.Celebration, Color(0xFFFFB300), "Excited") // Vàng cam
+        val Relaxed = MoonIcon(Icons.Rounded.Spa, Color(0xFF4CAF50), "Relaxed") // Xanh lá
+        val Proud = MoonIcon(Icons.Rounded.EmojiEvents, Color(0xFFFF8F00), "Proud") // Cam vàng
+        val Hopeful = MoonIcon(Icons.Rounded.AutoAwesome, Color(0xFFFFCA28), "Hopeful") // Vàng hổ phách
+        val Happy = MoonIcon(Icons.Rounded.SentimentVerySatisfied, Color(0xFFFFB300), "Happy") // Vàng cam
+        val Enthusiastic = MoonIcon(Icons.Rounded.Whatshot, Color(0xFFE64A19), "Enthusiastic") // Đỏ cam đậm
+        val PitAPat = MoonIcon(Icons.Rounded.Favorite, Color(0xFFF06292), "Pit-a-pat") // Hồng đậm hơn
+        val Refreshed = MoonIcon(Icons.Rounded.WaterDrop, Color(0xFF039BE5), "Refreshed") // Xanh nước biển
+        val Calm = MoonIcon(Icons.Rounded.SelfImprovement, Color(0xFF7E57C2), "Calm") // Tím
+        val Grateful = MoonIcon(Icons.Rounded.VolunteerActivism, Color(0xFFE91E63), "Grateful") // Hồng phấn đậm
+        val Depressed = MoonIcon(Icons.Rounded.SentimentVeryDissatisfied, Color(0xFF3949AB), "Depressed") // Xanh sẫm
+        val Lonely = MoonIcon(Icons.Rounded.PersonOutline, Color(0xFF4C9FBD), "Lonely") // Xám than xanh
+        val Anxious = MoonIcon(Icons.Rounded.SentimentDissatisfied, Color(0xFF0F87BD), "Anxious") // Xám xanh đậm
+        val Sad = MoonIcon(Icons.Rounded.MoodBad, Color(0xFF1B75D0), "Sad") // Xanh buồn đậm
+        val Angry = MoonIcon(Icons.Rounded.PriorityHigh, Color(0xFFD32F2F), "Angry") // Đỏ gắt
+        val Pressured = MoonIcon(Icons.Rounded.Timer, Color(0xFFE64A19), "Pressured") // Đỏ cam
+        val Annoyed = MoonIcon(Icons.Rounded.ErrorOutline, Color(0xFFF4511E), "Annoyed") // Cam cháy
+        val Tired = MoonIcon(Icons.Rounded.Battery0Bar, Color(0xFF5D4037), "Tired") // Nâu xám
+        val Stressed = MoonIcon(Icons.Rounded.Psychology, Color(0xFF3F51B5), "Stressed") // Xanh chàm
+        val Bored = MoonIcon(Icons.Rounded.SentimentNeutral, Color(0xFFC55113), "Bored") // Xám slate
     }
 
     // 3. Meals (Bữa ăn)
     object Meals {
-        val Breakfast = MoonIcon(Icons.Rounded.BreakfastDining, Color(0xFFFFD54F), "Breakfast")
-        val Lunch = MoonIcon(Icons.Rounded.LunchDining, Color(0xFFFF8A65), "Lunch")
-        val Dinner = MoonIcon(Icons.Rounded.DinnerDining, Color(0xFFF4511E), "Dinner")
-        val NightSnack = MoonIcon(Icons.Rounded.Nightlight, Color(0xFF5C6BC0), "Night Snack")
+        val Breakfast = MoonIcon(Icons.Rounded.BreakfastDining, Color(0xFFFFB300), "Breakfast")
+        val Lunch = MoonIcon(Icons.Rounded.LunchDining, Color(0xFFF4511E), "Lunch")
+        val Dinner = MoonIcon(Icons.Rounded.DinnerDining, Color(0xFFD84315), "Dinner")
+        val NightSnack = MoonIcon(Icons.Rounded.Nightlight, Color(0xFF3949AB), "Night Snack")
     }
 
     // 4. Self-Care (Chăm sóc bản thân)
     object SelfCare {
-        val Shower = MoonIcon(Icons.Rounded.Shower, Color(0xFF4FC3F7), "Shower")
-        val BrushTeeth = MoonIcon(Icons.Rounded.CleanHands, Color(0xFF81D4FA), "Brush Teeth")
-        val WashFace = MoonIcon(Icons.Rounded.WaterDrop, Color(0xFFB3E5FC), "Wash Face")
-        val DrinkWater = MoonIcon(Icons.Rounded.LocalDrink, Color(0xFF29B6F6), "Drink Water")
+        val Shower = MoonIcon(Icons.Rounded.Shower, Color(0xFF0288D1), "Shower")
+        val BrushTeeth = MoonIcon(Icons.Rounded.CleanHands, Color(0xFF039BE5), "Brush Teeth")
+        val WashFace = MoonIcon(Icons.Rounded.WaterDrop, Color(0xFF29B6F6), "Wash Face")
+        val DrinkWater = MoonIcon(Icons.Rounded.LocalDrink, Color(0xFF0277BD), "Drink Water")
     }
 
     // 5. Chores (Việc nhà)
     object Chores {
-        val Cleaning = MoonIcon(Icons.Rounded.CleaningServices, Color(0xFFAED581), "Cleaning")
-        val Cooking = MoonIcon(Icons.Rounded.Restaurant, Color(0xFFFFB74D), "Cooking")
-        val Laundry = MoonIcon(Icons.Rounded.LocalLaundryService, Color(0xFF64B5F6), "Laundry")
-        val Dishes = MoonIcon(Icons.Rounded.Countertops, Color(0xFF4DB6AC), "Dishes")
+        val Cleaning = MoonIcon(Icons.Rounded.CleaningServices, Color(0xFF7CB342), "Cleaning")
+        val Cooking = MoonIcon(Icons.Rounded.Restaurant, Color(0xFFFB8C00), "Cooking")
+        val Laundry = MoonIcon(Icons.Rounded.LocalLaundryService, Color(0xFF1E88E5), "Laundry")
+        val Dishes = MoonIcon(Icons.Rounded.Countertops, Color(0xFF00897B), "Dishes")
     }
 
     // 6. Events (Sự kiện)
     object Events {
-        val StayHome = MoonIcon(Icons.Rounded.Home, Color(0xFF9575CD), "Stay Home")
-        val School = MoonIcon(Icons.Rounded.School, Color(0xFF5C6BC0), "School")
-        val Restaurant = MoonIcon(Icons.Rounded.Restaurant, Color(0xFFFF8A65), "Restaurant")
-        val Cafe = MoonIcon(Icons.Rounded.Coffee, Color(0xFF8D6E63), "Cafe")
-        val Shopping = MoonIcon(Icons.Rounded.ShoppingBag, Color(0xFFF06292), "Shopping")
-        val Travel = MoonIcon(Icons.Rounded.TravelExplore, Color(0xFF4CAF50), "Travel")
-        val Party = MoonIcon(Icons.Rounded.Celebration, Color(0xFFFF4081), "Party")
-        val Cinema = MoonIcon(Icons.Rounded.Theaters, Color(0xFF424242), "Cinema")
+        val StayHome = MoonIcon(Icons.Rounded.Home, Color(0xFF7E57C2), "Stay Home")
+        val School = MoonIcon(Icons.Rounded.School, Color(0xFF3949AB), "School")
+        val Restaurant = MoonIcon(Icons.Rounded.Restaurant, Color(0xFFF4511E), "Restaurant")
+        val Cafe = MoonIcon(Icons.Rounded.Coffee, Color(0xFF6D4C41), "Cafe")
+        val Shopping = MoonIcon(Icons.Rounded.ShoppingBag, Color(0xFFD81B60), "Shopping")
+        val Travel = MoonIcon(Icons.Rounded.TravelExplore, Color(0xFF2E7D32), "Travel")
+        val Party = MoonIcon(Icons.Rounded.Celebration, Color(0xFFF50057), "Party")
+        val Cinema = MoonIcon(Icons.Rounded.Theaters, Color(0xFF3F90B5), "Cinema")
     }
 
     // 7. People (Người)
     object People {
-        val Friends = MoonIcon(Icons.Rounded.Group, Color(0xFF4DB6AC), "Friends")
-        val Family = MoonIcon(Icons.Rounded.Groups, Color(0xFFF06292), "Family")
-        val Partner = MoonIcon(Icons.Rounded.Favorite, Color(0xFFEC407A), "Partner")
-        val None = MoonIcon(Icons.Rounded.PersonOff, Color(0xFF90A4AE), "None")
+        val Friends = MoonIcon(Icons.Rounded.Group, Color(0xFF00897B), "Friends")
+        val Family = MoonIcon(Icons.Rounded.Groups, Color(0xFFD81B60), "Family")
+        val Partner = MoonIcon(Icons.Rounded.Favorite, Color(0xFFC2185B), "Partner")
+        val None = MoonIcon(Icons.Rounded.PersonOff, Color(0xFF2196F3), "None")
     }
 
     // 8. Beauty (Làm đẹp)
     object Beauty {
-        val Hair = MoonIcon(Icons.Rounded.ContentCut, Color(0xFFCE93D8), "Hair")
-        val Nails = MoonIcon(Icons.Rounded.Palette, Color(0xFFF48FB1), "Nails")
-        val Skincare = MoonIcon(Icons.Rounded.FaceRetouchingNatural, Color(0xFFF8BBD0), "Skincare")
-        val Makeup = MoonIcon(Icons.Rounded.AutoFixHigh, Color(0xFFE1BEE7), "Makeup")
+        val Hair = MoonIcon(Icons.Rounded.ContentCut, Color(0xFFAB47BC), "Hair")
+        val Nails = MoonIcon(Icons.Rounded.Palette, Color(0xFFEC407A), "Nails")
+        val Skincare = MoonIcon(Icons.Rounded.FaceRetouchingNatural, Color(0xFFF06292), "Skincare")
+        val Makeup = MoonIcon(Icons.Rounded.AutoFixHigh, Color(0xFFBA68C8), "Makeup")
     }
 
     // 9. Weather (Thời tiết)
     object Weather {
-        val Sunny = MoonIcon(Icons.Rounded.WbSunny, Color(0xFFFFD54F), "Sunny")
-        val Cloudy = MoonIcon(Icons.Rounded.Cloud, Color(0xFFB0BEC5), "Cloudy")
-        val Rainy = MoonIcon(Icons.Rounded.Umbrella, Color(0xFF64B5F6), "Rainy")
-        val Snowy = MoonIcon(Icons.Rounded.AcUnit, Color(0xFFE1F5FE), "Snowy")
-        val Windy = MoonIcon(Icons.Rounded.Air, Color(0xFF90A4AE), "Windy")
-        val Stormy = MoonIcon(Icons.Rounded.Thunderstorm, Color(0xFF78909C), "Stormy")
-        val Hot = MoonIcon(Icons.Rounded.Thermostat, Color(0xFFFF7043), "Hot")
-        val Cold = MoonIcon(Icons.Rounded.SevereCold, Color(0xFF0288D1), "Cold")
+        val Sunny = MoonIcon(Icons.Rounded.WbSunny, Color(0xFFFFB300), "Sunny")
+        val Cloudy = MoonIcon(Icons.Rounded.Cloud, Color(0xFF78909C), "Cloudy")
+        val Rainy = MoonIcon(Icons.Rounded.Umbrella, Color(0xFF1E88E5), "Rainy")
+        val Snowy = MoonIcon(Icons.Rounded.AcUnit, Color(0xFF039BE5), "Snowy") // Đổi tuyết từ trắng/xanh siêu nhạt sang xanh ngọc
+        val Windy = MoonIcon(Icons.Rounded.Air, Color(0xFF4CAF50), "Windy")
+        val Stormy = MoonIcon(Icons.Rounded.Thunderstorm, Color(0xFFFF9800), "Stormy")
+        val Hot = MoonIcon(Icons.Rounded.Thermostat, Color(0xFFE64A19), "Hot")
+        val Cold = MoonIcon(Icons.Rounded.SevereCold, Color(0xFF01579B), "Cold")
     }
 
     // 10. Health (Sức khỏe)
     object Health {
-        val Sick = MoonIcon(Icons.Rounded.Sick, Color(0xFFDCE775), "Sick")
-        val Hospital = MoonIcon(Icons.Rounded.LocalHospital, Color(0xFFEF5350), "Hospital")
-        val Checkup = MoonIcon(Icons.Rounded.AssignmentTurnedIn, Color(0xFF66BB6A), "Checkup")
-        val Medicine = MoonIcon(Icons.Rounded.Medication, Color(0xFF4FC3F7), "Medicine")
+        val Sick = MoonIcon(Icons.Rounded.Sick, Color(0xFFAFB42B), "Sick") // Xanh rêu/vàng úa đậm
+        val Hospital = MoonIcon(Icons.Rounded.LocalHospital, Color(0xFFD32F2F), "Hospital")
+        val Checkup = MoonIcon(Icons.Rounded.AssignmentTurnedIn, Color(0xFF388E3C), "Checkup")
+        val Medicine = MoonIcon(Icons.Rounded.Medication, Color(0xFF0288D1), "Medicine")
     }
 
     // 11. Work (Công việc)
     object Work {
-        val Work = MoonIcon(Icons.Rounded.Work, Color(0xFF5C6BC0), "Work")
-        val EndOnTime = MoonIcon(Icons.Rounded.AlarmOn, Color(0xFF66BB6A), "End on Time")
-        val Overtime = MoonIcon(Icons.Rounded.AccessTime, Color(0xFFFF8A65), "Overtime")
-        val Vacation = MoonIcon(Icons.Rounded.BeachAccess, Color(0xFF4DB6AC), "Vacation")
+        val Work = MoonIcon(Icons.Rounded.Work, Color(0xFF3949AB), "Work")
+        val EndOnTime = MoonIcon(Icons.Rounded.AlarmOn, Color(0xFF388E3C), "End on Time")
+        val Overtime = MoonIcon(Icons.Rounded.AccessTime, Color(0xFFF4511E), "Overtime")
+        val Vacation = MoonIcon(Icons.Rounded.BeachAccess, Color(0xFF00897B), "Vacation")
     }
 
     // 12. Other (Khác)
     object Other {
-        val Snack = MoonIcon(Icons.Rounded.Cookie, Color(0xFFFFB74D), "Snack")
-        val Coffee = MoonIcon(Icons.Rounded.Coffee, Color(0xFF8D6E63), "Coffee")
-        val Beverage = MoonIcon(Icons.Rounded.LocalDrink, Color(0xFF4FC3F7), "Beverage")
-        val Tea = MoonIcon(Icons.Rounded.EmojiFoodBeverage, Color(0xFF9CCC65), "Tea")
-        val Alcohol = MoonIcon(Icons.Rounded.LocalBar, Color(0xFF9575CD), "Alcohol")
-        val Smoking = MoonIcon(Icons.Rounded.SmokingRooms, Color(0xFF78909C), "Smoking")
+        val Snack = MoonIcon(Icons.Rounded.Cookie, Color(0xFFFB8C00), "Snack")
+        val Coffee = MoonIcon(Icons.Rounded.Coffee, Color(0xFF6D4C41), "Coffee")
+        val Beverage = MoonIcon(Icons.Rounded.LocalDrink, Color(0xFF0288D1), "Beverage")
+        val Tea = MoonIcon(Icons.Rounded.EmojiFoodBeverage, Color(0xFF7CB342), "Tea")
+        val Alcohol = MoonIcon(Icons.Rounded.LocalBar, Color(0xFF7E57C2), "Alcohol")
+        val Smoking = MoonIcon(Icons.Rounded.SmokingRooms, Color(0xFF2196F3), "Smoking")
     }
 
     // 13. School (Trường học)
     object School {
-        val Class = MoonIcon(Icons.Rounded.CastForEducation, Color(0xFF5C6BC0), "Class")
-        val Study = MoonIcon(Icons.Rounded.AutoStories, Color(0xFF7986CB), "Study")
-        val Homework = MoonIcon(Icons.Rounded.EditNote, Color(0xFF9FA8DA), "Homework")
-        val Exam = MoonIcon(Icons.Rounded.FactCheck, Color(0xFFEF5350), "Exam")
+        val Class = MoonIcon(Icons.Rounded.CastForEducation, Color(0xFF3949AB), "Class")
+        val Study = MoonIcon(Icons.Rounded.AutoStories, Color(0xFF3F51B5), "Study")
+        val Homework = MoonIcon(Icons.Rounded.EditNote, Color(0xFF5C6BC0), "Homework")
+        val Exam = MoonIcon(Icons.Rounded.FactCheck, Color(0xFFD32F2F), "Exam")
     }
 
     // 14. Relationship (Mối quan hệ)
     object Relationship {
-        val Date = MoonIcon(Icons.Rounded.Favorite, Color(0xFFF06292), "Date")
-        val Anniversary = MoonIcon(Icons.Rounded.Cake, Color(0xFFFF8A65), "Anniversary")
-        val Gift = MoonIcon(Icons.Rounded.CardGiftcard, Color(0xFFFFD54F), "Gift")
-        val Conflict = MoonIcon(Icons.Rounded.FlashOn, Color(0xFF78909C), "Conflict")
-        val Sex = MoonIcon(Icons.Rounded.BedroomParent, Color(0xFFBA68C8), "Sex")
+        val Date = MoonIcon(Icons.Rounded.Favorite, Color(0xFFD81B60), "Date")
+        val Anniversary = MoonIcon(Icons.Rounded.Cake, Color(0xFFE64A19), "Anniversary")
+        val Gift = MoonIcon(Icons.Rounded.CardGiftcard, Color(0xFFFFB300), "Gift")
+        val Conflict = MoonIcon(Icons.Rounded.FlashOn, Color(0xFF00BCD4), "Conflict")
+        val Sex = MoonIcon(Icons.Rounded.BedroomParent, Color(0xFF8E24AA), "Sex")
     }
 
     fun getAllCategories(): Map<String, List<MoonIcon>> {
@@ -243,22 +243,19 @@ object MoonIcons {
         )
     }
 
-    // 1. Lưu cache danh sách List để không phải flatten lại nhiều lần
     val allIconsList: List<MoonIcon> by lazy {
         getAllCategories().values.flatten()
     }
 
-    // 2. Tạo một Map siêu tốc (O(1)) để tìm kiếm Icon theo tên
     private val iconMapByName: Map<String, MoonIcon> by lazy {
         allIconsList.associateBy { it.name.replace(" ", "").lowercase() }
     }
 
     fun getAllIcons(): List<MoonIcon> = allIconsList
 
-    // 3. Hàm tìm kiếm giờ đây chạy nhanh gấp 100 lần
     fun getIconForActivity(activityName: String): MoonIcon {
         val searchKey = activityName.replace(" ", "").lowercase()
-        return iconMapByName[searchKey] ?: Other.Coffee // Fallback nếu không tìm thấy
+        return iconMapByName[searchKey] ?: Other.Coffee
     }
 }
 

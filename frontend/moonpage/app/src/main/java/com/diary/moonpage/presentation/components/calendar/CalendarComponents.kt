@@ -36,6 +36,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.*
+import androidx.compose.ui.platform.LocalLocale
 
 @Composable
 fun CalendarTopBar(
@@ -80,24 +81,45 @@ fun CalendarTopBar(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Rounded.BreakfastDining,
-                contentDescription = null,
-                tint = Color(0xFFFFCC80),
-                modifier = Modifier.size(28.dp).clickable { /* TODO */ }
-            )
-            Icon(
-                imageVector = Icons.Rounded.Palette,
-                contentDescription = "Theme",
-                tint = Color(0xFFFFE082),
-                modifier = Modifier.size(28.dp).clickable { onThemeClick() }
-            )
-            Icon(
-                imageVector = Icons.Rounded.Menu,
-                contentDescription = "Menu",
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(28.dp).clickable { onSettingsClick() }
-            )
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .clickable { /* TODO */ }
+                    .padding(4.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.BreakfastDining,
+                    contentDescription = null,
+                    tint = Color(0xFFFFCC80),
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .clickable { onThemeClick() }
+                    .padding(4.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Palette,
+                    contentDescription = "Theme",
+                    tint = Color(0xFFFFE082),
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .clickable { onSettingsClick() }
+                    .padding(4.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Menu,
+                    contentDescription = "Menu",
+                    tint = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
         }
     }
 }
@@ -166,10 +188,6 @@ fun DayItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null
-            ) { onClick() }
             .padding(horizontal = 2.dp, vertical = 4.dp)
     ) {
         Box(
@@ -177,6 +195,7 @@ fun DayItem(
                 .size(42.dp)
                 .clip(CircleShape)
                 .background(animatedBg)
+                .clickable { onClick() }
                 .then(
                     when {
                         isSelected && moodColor == null ->
@@ -552,7 +571,7 @@ fun MonthYearPickerBottomSheet(
                 Box(modifier = Modifier.weight(1f)) {
                     WheelPicker(
                         items = months,
-                        initialValue = java.time.Month.of(tempMonth).getDisplayName(TextStyle.FULL, Locale.getDefault()),
+                        initialValue = java.time.Month.of(tempMonth).getDisplayName(TextStyle.FULL, LocalLocale.current.platformLocale),
                         onItemSelected = { monthName ->
                             val monthIndex = months.indexOf(monthName)
                             if (monthIndex != -1) tempMonth = monthIndex + 1

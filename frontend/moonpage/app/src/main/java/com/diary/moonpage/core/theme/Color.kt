@@ -1,4 +1,4 @@
-package com.diary.moonpage.core.theme
+ package com.diary.moonpage.core.theme
 
 import androidx.compose.ui.graphics.Color
 

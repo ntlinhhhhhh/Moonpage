@@ -34,12 +34,15 @@ fun UserInfoCard(
     val outerCircleColor = MaterialTheme.colorScheme.surfaceVariant
     val innerCircleColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
 
+    val shape = RoundedCornerShape(20.dp)
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(shape)
             .clickable { onClick() },
         colors = CardDefaults.cardColors(containerColor = cardBg),
-        shape = RoundedCornerShape(20.dp),
+        shape = shape,
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(

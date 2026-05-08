@@ -32,6 +32,7 @@ fun TabItem(text: String, isSelected: Boolean, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .width(120.dp)
+            .clip(RoundedCornerShape(12.dp))
             .clickable { onClick() }
             .padding(vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally

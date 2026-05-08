@@ -138,7 +138,7 @@ class DailyLogViewModel @Inject constructor(
     private fun saveDailyLog() {
         val state = _uiState.value
         if (state.selectedMood == null) {
-            viewModelScope.launch { _uiEffect.send(DailyLogUiEffect.ShowSnackBar("Please select a mood first!")) }
+            _uiState.update { it.copy(snackbarMessage = "Please select a mood first!") }
             return
         }
 
@@ -158,8 +158,7 @@ class DailyLogViewModel @Inject constructor(
                 val msg = if (state.existingLog != null) "Record updated successfully!" else "Record created successfully!"
                 _uiEffect.send(DailyLogUiEffect.SaveSuccess(msg))
             }.onFailure { error ->
-                _uiState.update { it.copy(isLoading = false) }
-                _uiEffect.send(DailyLogUiEffect.ShowSnackBar(error.message ?: "Failed to save log"))
+                _uiState.update { it.copy(isLoading = false, snackbarMessage = error.message ?: "Failed to save log") }
             }
         }
     }
