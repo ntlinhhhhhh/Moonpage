@@ -33,6 +33,9 @@ sealed class Screen (val route: String) {
     // Calendar Sub-screens
     object Filter: Screen("filter_screen")
     object DailyLog: Screen("daily_log_screen/{date}")
+    object Music: Screen("music_screen")
+    object MenstrualCycle: Screen("menstrual_cycle_screen")
+    object DailyPhoto: Screen("daily_photo_screen")
 
     // Moment Sub-screens
     object MomentDetail: Screen("moment_detail_screen/{momentId}")

@@ -3,6 +3,7 @@ package com.diary.moonpage.presentation.components.profile
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -14,16 +15,21 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import java.time.YearMonth
 
 private const val INFINITE_MULTIPLIER = 1000
 
 private val MONTH_NAMES = listOf("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
-private val YEAR_LIST = (1950..2024).map { it.toString() }
+private val YEAR_LIST = (1950..java.time.LocalDate.now().year).map { it.toString() }
 
 @Composable
 fun BottomSheetHeader(title: String, onClose: () -> Unit) {
@@ -136,6 +142,7 @@ fun GenderBottomSheetContent(
     val options = listOf("Female", "Male", "Other")
     var selectedOption by remember { mutableStateOf(if (currentGender.isBlank()) "Female" else currentGender) }
     val colorScheme = MaterialTheme.colorScheme
+    val haptic = LocalHapticFeedback.current
 
     Column(
         modifier = Modifier
@@ -155,10 +162,13 @@ fun GenderBottomSheetContent(
                     .padding(horizontal = 20.dp, vertical = 4.dp)
                     .clip(RoundedCornerShape(14.dp))
                     .background(
-                        if (isSelected) colorScheme.surfaceVariant
+                        if (isSelected) colorScheme.primary.copy(alpha = 0.1f)
                         else colorScheme.surface
                     )
-                    .clickable { selectedOption = text }
+                    .clickable { 
+                        selectedOption = text 
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    }
                     .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
                 Text(
@@ -239,22 +249,18 @@ fun BirthdayBottomSheetContent(
     ) {
         BottomSheetHeader(title = "Birthday", onClose = onClose)
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // ── Wheel picker: Month | Day | Year with divider lines ───────────────
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = 32.dp),
             contentAlignment = Alignment.Center
         ) {
-            // Divider lines above and below center row
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(44.dp)
-            ) {
-                HorizontalDivider(color = colorScheme.onSurface.copy(alpha = 0.12f), thickness = 1.dp)
-                HorizontalDivider(color = colorScheme.onSurface.copy(alpha = 0.12f), thickness = 1.dp)
+            // Lines
+            Column(modifier = Modifier.fillMaxWidth().height(44.dp), verticalArrangement = Arrangement.SpaceBetween) {
+                Divider(color = colorScheme.onSurface.copy(alpha = 0.15f), thickness = 1.dp)
+                Divider(color = colorScheme.onSurface.copy(alpha = 0.15f), thickness = 1.dp)
             }
 
             Row(
@@ -262,7 +268,7 @@ fun BirthdayBottomSheetContent(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Month – circular, full names
+                // Month – circular
                 BirthdayWheelCircular(
                     items = MONTH_NAMES,
                     initialIndex = selectedMonthIndex,
@@ -276,8 +282,8 @@ fun BirthdayBottomSheetContent(
                     onIndexChange = { selectedDayIndex = it },
                     modifier = Modifier.weight(1f)
                 )
-                // Year – linear
-                BirthdayWheelLinear(
+                // Year – circular
+                BirthdayWheelCircular(
                     items = YEAR_LIST,
                     initialIndex = selectedYearIndex,
                     onIndexChange = { selectedYearIndex = it },
@@ -286,7 +292,7 @@ fun BirthdayBottomSheetContent(
             }
         }
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(40.dp))
 
         Button(
             onClick = {
@@ -296,12 +302,12 @@ fun BirthdayBottomSheetContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp)
-                .height(54.dp),
+                .height(56.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = colorScheme.primary,
                 contentColor = colorScheme.onPrimary
             ),
-            shape = RoundedCornerShape(28.dp),
+            shape = RoundedCornerShape(16.dp),
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
         ) {
             Text("Done", fontWeight = FontWeight.Bold, fontSize = 16.sp)
@@ -315,17 +321,23 @@ private fun BirthdayWheelCircular(
     initialIndex: Int,
     onIndexChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    itemHeight: androidx.compose.ui.unit.Dp = 44.dp
+    itemHeight: Dp = 44.dp
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val count = items.size
-    val startIndex = INFINITE_MULTIPLIER / 2 * count + initialIndex
+    val haptic = LocalHapticFeedback.current
+    val coroutineScope = rememberCoroutineScope()
+
+    val startIndex = (INFINITE_MULTIPLIER / 2) * count + initialIndex
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = startIndex)
     val snapFling = rememberSnapFlingBehavior(lazyListState = listState)
 
     val selectedRealIndex by remember { derivedStateOf { listState.firstVisibleItemIndex % count } }
 
-    LaunchedEffect(selectedRealIndex) { onIndexChange(selectedRealIndex) }
+    LaunchedEffect(selectedRealIndex) { 
+        onIndexChange(selectedRealIndex) 
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+    }
 
     Box(modifier = modifier.height(itemHeight * 3), contentAlignment = Alignment.Center) {
         LazyColumn(
@@ -337,57 +349,50 @@ private fun BirthdayWheelCircular(
         ) {
             items(INFINITE_MULTIPLIER * count) { flatIndex ->
                 val ri = flatIndex % count
-                val isSel = ri == selectedRealIndex
+                val isSel = flatIndex == listState.firstVisibleItemIndex
                 Box(Modifier.height(itemHeight).fillMaxWidth(), contentAlignment = Alignment.Center) {
                     Text(
                         text = items[ri],
                         fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
-                        fontSize = if (isSel) 17.sp else 13.sp,
-                        color = if (isSel) colorScheme.onSurface else colorScheme.onSurface.copy(alpha = 0.3f),
+                        fontSize = if (isSel) 17.sp else 15.sp,
+                        color = if (isSel) colorScheme.onSurface else colorScheme.onSurface.copy(alpha = 0.35f),
                         textAlign = TextAlign.Center
                     )
                 }
             }
         }
-    }
-}
 
-@Composable
-private fun BirthdayWheelLinear(
-    items: List<String>,
-    initialIndex: Int,
-    onIndexChange: (Int) -> Unit,
-    modifier: Modifier = Modifier,
-    itemHeight: androidx.compose.ui.unit.Dp = 44.dp
-) {
-    val colorScheme = MaterialTheme.colorScheme
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
-    val snapFling = rememberSnapFlingBehavior(lazyListState = listState)
-    val selectedIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
-
-    LaunchedEffect(selectedIndex) { onIndexChange(selectedIndex.coerceIn(0, items.lastIndex)) }
-
-    Box(modifier = modifier.height(itemHeight * 3), contentAlignment = Alignment.Center) {
-        LazyColumn(
-            state = listState,
-            flingBehavior = snapFling,
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            contentPadding = PaddingValues(vertical = itemHeight)
-        ) {
-            items(items.size) { index ->
-                val isSel = index == selectedIndex
-                Box(Modifier.height(itemHeight).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = items[index],
-                        fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
-                        fontSize = if (isSel) 17.sp else 13.sp,
-                        color = if (isSel) colorScheme.onSurface else colorScheme.onSurface.copy(alpha = 0.3f),
-                        textAlign = TextAlign.Center
-                    )
+        // Tap area above
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .height(itemHeight)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
+                    coroutineScope.launch {
+                        listState.animateScrollToItem(listState.firstVisibleItemIndex - 1)
+                    }
                 }
-            }
-        }
+        )
+
+        // Tap area below
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(itemHeight)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
+                    coroutineScope.launch {
+                        listState.animateScrollToItem(listState.firstVisibleItemIndex + 1)
+                    }
+                }
+        )
     }
 }
 

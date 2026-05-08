@@ -4,6 +4,11 @@ import androidx.compose.runtime.*
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
+import androidx.compose.ui.platform.LocalContext
+import coil.imageLoader
+import coil.request.ImageRequest
+import kotlinx.coroutines.launch
+
 /**
  * Stateful Component
  */
@@ -15,6 +20,31 @@ fun MomentDetailScreen(
     onNavigateToGallery: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        viewModel.uiEffect.collect { effect ->
+            when (effect) {
+                is MomentUiEffect.ShareMoment -> {
+                    coroutineScope.launch {
+                        val request = ImageRequest.Builder(context)
+                            .data(effect.url)
+                            .build()
+                        val result = context.imageLoader.execute(request)
+                        if (result is coil.request.SuccessResult) {
+                            val bitmap = (result.drawable as android.graphics.drawable.BitmapDrawable).bitmap
+                            com.diary.moonpage.core.util.ImageUtils.shareImage(context, bitmap, "Share Moment")
+                        }
+                    }
+                }
+                is MomentUiEffect.DownloadMoment -> {
+                    com.diary.moonpage.core.util.ImageUtils.downloadAndSaveImage(context, effect.url)
+                }
+                else -> {}
+            }
+        }
+    }
 
     MomentDetailScreenContent(
         uiState = uiState,

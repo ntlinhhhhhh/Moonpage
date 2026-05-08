@@ -31,11 +31,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
@@ -62,18 +62,15 @@ dependencies {
     implementation(libs.retrofit.gson)
 
     implementation(libs.hilt.android)
-    implementation(libs.androidx.compose.animation.core.lint)
-    implementation(libs.androidx.ui)
-    implementation(libs.places)
-    implementation(libs.androidx.compose.foundation.layout)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
+    implementation(libs.places)
+    implementation(libs.androidx.compose.foundation.layout)
+
     implementation("androidx.navigation:navigation-compose:2.7.7")
-    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
     implementation("com.google.firebase:firebase-messaging")
-    implementation("androidx.compose.material:material-icons-extended:1.6.3")
     implementation("com.google.firebase:firebase-analytics:22.0.2")
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
     implementation("androidx.compose.material:material-icons-extended:1.6.5")

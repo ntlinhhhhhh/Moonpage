@@ -3,7 +3,9 @@ package com.diary.moonpage.presentation.screens.auth
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -15,6 +17,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -28,7 +32,7 @@ private val MONTHS = listOf(
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 )
-private val YEARS = (1950..2015).map { it.toString() }
+private val YEARS = (1950..java.time.LocalDate.now().year).map { it.toString() }
 
 // Large multiplier for infinite circular effect
 private const val INFINITE_MULTIPLIER = 1000
@@ -40,6 +44,7 @@ fun OnboardingBirthdayScreen(
     onNext: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
+    val haptic = LocalHapticFeedback.current
 
     // Default: 15th April 2000
     var selectedMonthIndex by remember { mutableIntStateOf(3) }   // April (0-based)
@@ -155,17 +160,9 @@ fun OnboardingBirthdayScreen(
                             .fillMaxWidth()
                             .height(48.dp)
                             .background(
-                                colorScheme.primary.copy(alpha = 0.08f),
+                                colorScheme.primary.copy(alpha = 0.12f),
                                 RoundedCornerShape(12.dp)
                             )
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.align(Alignment.Center).offset(y = (-24).dp),
-                        color = colorScheme.primary.copy(alpha = 0.25f)
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.align(Alignment.Center).offset(y = 24.dp),
-                        color = colorScheme.primary.copy(alpha = 0.25f)
                     )
 
                     Row(
@@ -174,27 +171,27 @@ fun OnboardingBirthdayScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Month – circular
-                        CircularWheelColumn(
+                        InfiniteWheelColumn(
                             items = MONTHS,
                             initialIndex = selectedMonthIndex,
                             onIndexChange = { selectedMonthIndex = it },
-                            modifier = Modifier.width(80.dp)
+                            modifier = Modifier.width(90.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
                         // Day – circular, respects daysInMonth
-                        CircularWheelColumn(
+                        InfiniteWheelColumn(
                             items = DAYS,
                             initialIndex = selectedDayIndex.coerceAtMost(daysInMonth - 1),
                             onIndexChange = { selectedDayIndex = it },
-                            modifier = Modifier.width(64.dp)
+                            modifier = Modifier.width(70.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        // Year – NOT circular, just scrollable
-                        LinearWheelColumn(
+                        Spacer(modifier = Modifier.width(12.dp))
+                        // Year – circular
+                        InfiniteWheelColumn(
                             items = YEARS,
                             initialIndex = selectedYearIndex,
                             onIndexChange = { selectedYearIndex = it },
-                            modifier = Modifier.width(80.dp)
+                            modifier = Modifier.width(90.dp)
                         )
                     }
                 }
@@ -232,10 +229,10 @@ fun OnboardingBirthdayScreen(
     }
 }
 
-// ── Circular Wheel (month, day) ──────────────────────────────────────────────
+// ── Circular Wheel with Tap-to-Scroll ────────────────────────────────────────
 
 @Composable
-fun CircularWheelColumn(
+fun InfiniteWheelColumn(
     items: List<String>,
     initialIndex: Int,
     onIndexChange: (Int) -> Unit,
@@ -243,11 +240,12 @@ fun CircularWheelColumn(
     itemHeight: Dp = 48.dp
 ) {
     val colorScheme = MaterialTheme.colorScheme
+    val haptic = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
     val count = items.size
 
-    // Start in the middle of the infinite list so we can scroll both directions
-    val startIndex = INFINITE_MULTIPLIER / 2 * count + initialIndex
+    // Start in the middle of the infinite list
+    val startIndex = (INFINITE_MULTIPLIER / 2) * count + initialIndex
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = startIndex)
     val snapFling = rememberSnapFlingBehavior(lazyListState = listState)
 
@@ -257,86 +255,71 @@ fun CircularWheelColumn(
 
     LaunchedEffect(selectedRealIndex) {
         onIndexChange(selectedRealIndex)
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
     }
 
-    LazyColumn(
-        state = listState,
-        flingBehavior = snapFling,
-        modifier = modifier.height(itemHeight * 3),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        contentPadding = PaddingValues(vertical = itemHeight)
-    ) {
-        items(INFINITE_MULTIPLIER * count) { flatIndex ->
-            val realIndex = flatIndex % count
-            val isSelected = realIndex == selectedRealIndex
+    Box(modifier = modifier.height(itemHeight * 3)) {
+        LazyColumn(
+            state = listState,
+            flingBehavior = snapFling,
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            contentPadding = PaddingValues(vertical = itemHeight)
+        ) {
+            items(INFINITE_MULTIPLIER * count) { flatIndex ->
+                val realIndex = flatIndex % count
+                val isSelected = flatIndex == listState.firstVisibleItemIndex
 
-            Box(
-                modifier = Modifier
-                    .height(itemHeight)
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = items[realIndex],
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                    fontSize = if (isSelected) 17.sp else 13.sp,
-                    color = if (isSelected)
-                        colorScheme.onBackground
-                    else
-                        colorScheme.onBackground.copy(alpha = 0.32f),
-                    textAlign = TextAlign.Center
-                )
+                Box(
+                    modifier = Modifier
+                        .height(itemHeight)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = items[realIndex],
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                        fontSize = if (isSelected) 18.sp else 14.sp,
+                        color = if (isSelected)
+                            colorScheme.onBackground
+                        else
+                            colorScheme.onBackground.copy(alpha = 0.35f),
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
-    }
-}
 
-// ── Linear Wheel (year) ──────────────────────────────────────────────────────
+        // Tap area above center
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .height(itemHeight)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
+                    coroutineScope.launch {
+                        listState.animateScrollToItem(listState.firstVisibleItemIndex - 1)
+                    }
+                }
+        )
 
-@Composable
-fun LinearWheelColumn(
-    items: List<String>,
-    initialIndex: Int,
-    onIndexChange: (Int) -> Unit,
-    modifier: Modifier = Modifier,
-    itemHeight: Dp = 48.dp
-) {
-    val colorScheme = MaterialTheme.colorScheme
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
-    val snapFling = rememberSnapFlingBehavior(lazyListState = listState)
-
-    val selectedIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
-
-    LaunchedEffect(selectedIndex) {
-        onIndexChange(selectedIndex.coerceIn(0, items.lastIndex))
-    }
-
-    LazyColumn(
-        state = listState,
-        flingBehavior = snapFling,
-        modifier = modifier.height(itemHeight * 3),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        contentPadding = PaddingValues(vertical = itemHeight)
-    ) {
-        items(items.size) { index ->
-            val isSelected = index == selectedIndex
-            Box(
-                modifier = Modifier
-                    .height(itemHeight)
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = items[index],
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                    fontSize = if (isSelected) 17.sp else 13.sp,
-                    color = if (isSelected)
-                        colorScheme.onBackground
-                    else
-                        colorScheme.onBackground.copy(alpha = 0.32f),
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
+        // Tap area below center
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(itemHeight)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
+                    coroutineScope.launch {
+                        listState.animateScrollToItem(listState.firstVisibleItemIndex + 1)
+                    }
+                }
+        )
     }
 }

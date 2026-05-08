@@ -8,10 +8,11 @@ import java.time.YearMonth
 data class CalendarUiState(
     val isLoading: Boolean = false,
     val currentYearMonth: YearMonth = YearMonth.now(),
-    val selectedDate: LocalDate = LocalDate.now(),
+    val selectedDate: LocalDate? = LocalDate.now(),
     val dailyLogs: Map<LocalDate, DailyLog> = emptyMap(),
     val dynamicActivities: List<Activity> = emptyList(),
     val snackbarMessage: String? = null,
     val showMonthPicker: Boolean = false,
-    val showFilterSheet: Boolean = false
+    val showFilterSheet: Boolean = false,
+    val showShareSheet: Boolean = false
 )

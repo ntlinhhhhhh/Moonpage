@@ -24,6 +24,7 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
+import kotlinx.coroutines.launch
 import com.diary.moonpage.presentation.theme.MoonPageTheme
 import com.diary.moonpage.domain.model.Moment
 import com.diary.moonpage.presentation.components.moment.MomentFeedItem
@@ -43,6 +44,7 @@ fun MomentHistoryScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
@@ -51,14 +53,18 @@ fun MomentHistoryScreen(
                     android.widget.Toast.makeText(context, effect.message.asString(context), android.widget.Toast.LENGTH_SHORT).show()
                 }
                 is MomentUiEffect.ShareMoment -> {
-                    val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        putExtra(android.content.Intent.EXTRA_TEXT, "Check out my moment: ${effect.url}")
-                        flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                    coroutineScope.launch {
+                        val request = ImageRequest.Builder(context)
+                            .data(effect.url)
+                            .build()
+                        val result = context.imageLoader.execute(request)
+                        if (result is coil.request.SuccessResult) {
+                            val bitmap = (result.drawable as android.graphics.drawable.BitmapDrawable).bitmap
+                            com.diary.moonpage.core.util.ImageUtils.shareImage(context, bitmap, "Share Moment")
+                        } else {
+                            android.widget.Toast.makeText(context, "Failed to load image for sharing", android.widget.Toast.LENGTH_SHORT).show()
+                        }
                     }
-                    context.startActivity(android.content.Intent.createChooser(intent, "Share Moment").apply {
-                        flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
-                    })
                 }
                 is MomentUiEffect.DownloadMoment -> {
                     com.diary.moonpage.core.util.ImageUtils.downloadAndSaveImage(context, effect.url)

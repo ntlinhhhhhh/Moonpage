@@ -18,6 +18,9 @@ sealed class CalendarUiEvent {
     object DismissMessage : CalendarUiEvent()
     object OnSettingsClick : CalendarUiEvent()
     object OnThemeClick : CalendarUiEvent()
+    object OnShareClick : CalendarUiEvent()
+    data class OnShareModeSelected(val isSquare: Boolean) : CalendarUiEvent()
+    object OnShareDismiss : CalendarUiEvent()
 }
 
 /**

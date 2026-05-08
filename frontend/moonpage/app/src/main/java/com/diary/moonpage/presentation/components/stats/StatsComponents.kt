@@ -17,13 +17,13 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.data.remote.dto.stats.BestActivityDto
 import com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto
 import com.diary.moonpage.data.remote.dto.stats.MoodFlowDto
-import java.time.LocalDate
 import java.time.YearMonth
 
 @Composable
@@ -60,11 +60,10 @@ fun StatsCard(
     onSampleClick: () -> Unit = {},
     content: @Composable () -> Unit
 ) {
-    val colorScheme = MaterialTheme.colorScheme
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
@@ -77,7 +76,7 @@ fun StatsCard(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = colorScheme.onSurface
+                    color = Color.Black
                 )
                 Surface(
                     onClick = onSampleClick,
@@ -100,7 +99,7 @@ fun StatsCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFE8F5E9).copy(alpha = if (isSystemInDarkTheme()) 0.15f else 1f))
+                        .background(Color(0xFFE8F5E9))
                         .padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -126,14 +125,15 @@ fun StatsCard(
 }
 
 @Composable
-fun MoodFlowChart(moodFlow: List<MoodFlowDto>, year: Int, month: Int) {
-    val colorScheme = MaterialTheme.colorScheme
-    val daysInMonth = YearMonth.of(year, month).lengthOfMonth()
+fun MoodFlowChart(moodFlow: List<MoodFlowDto>, year: Int, month: Int, isMonthly: Boolean = true) {
+    val daysCount = if (isMonthly) YearMonth.of(year, month).lengthOfMonth() else 12
+    val primaryColor = Color(0xFF81C784)
     
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(220.dp)
+            .height(240.dp)
+            .padding(top = 16.dp)
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             val width = size.width
@@ -143,10 +143,11 @@ fun MoodFlowChart(moodFlow: List<MoodFlowDto>, year: Int, month: Int) {
             val startX = 60.dp.toPx()
             val endX = width - 20.dp.toPx()
             
+            // Draw grid lines
             for (i in 0 until moodLevels) {
                 val y = paddingY + (height - 2 * paddingY) * i / (moodLevels - 1)
                 drawLine(
-                    color = colorScheme.onSurface.copy(alpha = 0.05f),
+                    color = Color.Gray.copy(alpha = 0.05f),
                     start = androidx.compose.ui.geometry.Offset(startX, y),
                     end = androidx.compose.ui.geometry.Offset(width, y),
                     strokeWidth = 1.dp.toPx()
@@ -154,34 +155,28 @@ fun MoodFlowChart(moodFlow: List<MoodFlowDto>, year: Int, month: Int) {
             }
 
             if (moodFlow.isNotEmpty()) {
-                val dx = (endX - startX) / (daysInMonth - 1).coerceAtLeast(1)
+                val dx = (endX - startX) / (daysCount - 1).coerceAtLeast(1)
                 val path = Path()
                 
-                val flowMap = moodFlow.associate { 
-                    try {
-                        val cleanDate = if (it.date.contains("T")) it.date.split("T")[0] else it.date
-                        LocalDate.parse(cleanDate).dayOfMonth to it.moodId
-                    } catch (e: Exception) {
-                        0 to 0
-                    }
-                }.filter { it.key != 0 }
-
                 var firstPoint = true
-                for (day in 1..daysInMonth) {
-                    val moodId = flowMap[day]
-                    if (moodId != null && moodId in 1..5) {
-                        val x = startX + (day - 1) * dx
-                        val y = paddingY + (height - 2 * paddingY) * (moodId - 1) / (moodLevels - 1)
+                moodFlow.forEachIndexed { index, item ->
+                    if (item.moodId in 1..5) {
+                        val x = startX + index * dx
+                        val y = paddingY + (height - 2 * paddingY) * (item.moodId - 1) / (moodLevels - 1)
                         
                         if (firstPoint) {
                             path.moveTo(x, y)
                             firstPoint = false
                         } else {
+                            // Quadratic curve for smoother lines
+                            val prevX = startX + (index - 1) * dx
+                            val prevY = paddingY + (height - 2 * paddingY) * (moodFlow[index-1].moodId - 1) / (moodLevels - 1)
+                            path.quadraticBezierTo(prevX + dx/2, prevY, (prevX + x)/2, (prevY + y)/2)
                             path.lineTo(x, y)
                         }
                         
                         drawCircle(
-                            color = Color(0xFF81C784),
+                            color = primaryColor,
                             radius = 3.dp.toPx(),
                             center = androidx.compose.ui.geometry.Offset(x, y)
                         )
@@ -189,14 +184,14 @@ fun MoodFlowChart(moodFlow: List<MoodFlowDto>, year: Int, month: Int) {
                 }
                 drawPath(
                     path = path,
-                    color = Color(0xFF81C784),
-                    style = Stroke(width = 2.dp.toPx())
+                    color = primaryColor,
+                    style = Stroke(width = 2.5.dp.toPx())
                 )
             }
         }
         
         Column(
-            modifier = Modifier.fillMaxHeight().width(50.dp).padding(vertical = 10.dp),
+            modifier = Modifier.fillMaxHeight().width(50.dp).padding(vertical = 8.dp),
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -210,28 +205,28 @@ fun MoodFlowChart(moodFlow: List<MoodFlowDto>, year: Int, month: Int) {
                 Image(
                     painter = painterResource(id = mood.drawableRes!!),
                     contentDescription = null,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(22.dp)
                 )
             }
         }
         
         Row(
-            modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(start = 60.dp, end = 20.dp, bottom = 4.dp),
+            modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(
+                start = 54.dp,
+                end = 16.dp,
+                bottom = 4.dp
+            ),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            val labelDays = listOf(1, 6, 11, 16, 21, 26, daysInMonth)
-            labelDays.forEach { day ->
-                val monthLabel = if (day == daysInMonth) {
-                    if (month == 12) 1 else month + 1
-                } else month
-                val dayLabel = if (day == daysInMonth) 1 else day
-                
-                Text(
-                    text = "$monthLabel/$dayLabel",
-                    fontSize = 10.sp,
-                    color = Color.Gray,
-                    textAlign = TextAlign.Center
-                )
+            if (isMonthly) {
+                val labelDays = listOf(1, 10, 20, daysCount)
+                labelDays.forEach { day ->
+                    Text(text = "$month/$day", fontSize = 10.sp, color = Color.Gray, fontWeight = FontWeight.Medium)
+                }
+            } else {
+                listOf(1, 3, 6, 9, 12).forEach { m ->
+                    Text(text = "$m", fontSize = 10.sp, color = Color.Gray, fontWeight = FontWeight.Medium)
+                }
             }
         }
     }
@@ -263,29 +258,24 @@ fun MoodDistributionView(distribution: List<MoodDistributionDto>) {
                 }
                 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        "${dist?.percentage ?: 0}%",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
                     Box(
                         modifier = Modifier
-                            .size(if(mood.name == "Neutral") 52.dp else 44.dp)
+                            .size(if(mood.name == "Neutral") 48.dp else 40.dp)
                             .clip(CircleShape)
-                            .background(mood.color.copy(alpha = 0.2f)),
+                            .background(mood.color.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
                             painter = painterResource(id = mood.drawableRes!!),
                             contentDescription = mood.name,
-                            modifier = Modifier.size(if(mood.name == "Neutral") 36.dp else 30.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Surface(
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text(
-                            "${dist?.percentage ?: 0}%",
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            modifier = Modifier.size(if(mood.name == "Neutral") 32.dp else 26.dp)
                         )
                     }
                 }
@@ -297,10 +287,10 @@ fun MoodDistributionView(distribution: List<MoodDistributionDto>) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(28.dp)
-                .clip(RoundedCornerShape(14.dp))
+                .height(24.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color(0xFFF5F5F5))
         ) {
-            var totalWeight = 0f
             moods.forEach { mood ->
                 val dist = distribution.find { 
                     it.label.equals(mood.name, ignoreCase = true) ||
@@ -317,12 +307,69 @@ fun MoodDistributionView(distribution: List<MoodDistributionDto>) {
                             .weight(weight)
                             .background(mood.color)
                     )
-                    totalWeight += weight
                 }
             }
-            if (totalWeight == 0f) {
-                Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant))
+        }
+    }
+}
+
+@Composable
+fun YearInBeansView(year: Int, data: Map<Int, List<Int>>) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text("Look back on your $year.", color = Color.Gray, fontSize = 14.sp)
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Spacer(modifier = Modifier.width(24.dp))
+            (1..12).forEach { m ->
+                Text(
+                    text = "$m",
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center,
+                    fontSize = 10.sp,
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Bold
+                )
             }
+        }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        (1..31).forEach { day ->
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "$day",
+                    modifier = Modifier.width(24.dp),
+                    fontSize = 9.sp,
+                    color = Color.Gray,
+                    textAlign = TextAlign.End
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                (1..12).forEach { month ->
+                    val moodId = data[month]?.getOrNull(day - 1) ?: 0
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(1.dp)
+                            .aspectRatio(1f)
+                            .clip(CircleShape)
+                            .background(
+                                if (moodId > 0) MoonIcons.Moods.getMoodColor(moodId)
+                                else Color(0xFFF5F5F5)
+                            )
+                    )
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        Button(
+            onClick = {},
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF81C784)),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Text("Download Report", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
         }
     }
 }
@@ -354,7 +401,7 @@ fun FrequentlyRecordedView(activities: List<BestActivityDto>) {
                 text = "You recorded ${activities.first().activityName} the most.",
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                color = Color.Gray,
                 fontSize = 14.sp
             )
         }
@@ -364,13 +411,12 @@ fun FrequentlyRecordedView(activities: List<BestActivityDto>) {
 @Composable
 fun ActivityRankCard(rank: Int, name: String, count: Int, iconName: String, modifier: Modifier = Modifier) {
     val moonIcon = MoonIcons.getIconForActivity(iconName)
-    val colorScheme = MaterialTheme.colorScheme
     
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
-        border = BorderStroke(1.dp, colorScheme.outlineVariant.copy(alpha = 0.5f))
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, Color(0xFFEEEEEE))
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
@@ -391,8 +437,8 @@ fun ActivityRankCard(rank: Int, name: String, count: Int, iconName: String, modi
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Text(name, fontWeight = FontWeight.Medium, fontSize = 13.sp, maxLines = 1, color = colorScheme.onSurface)
-            Text("x$count", color = colorScheme.onSurface.copy(alpha = 0.5f), fontSize = 11.sp)
+            Text(name, fontWeight = FontWeight.Medium, fontSize = 13.sp, maxLines = 1, color = Color.Black)
+            Text("x$count", color = Color.Gray, fontSize = 11.sp)
         }
     }
 }
@@ -428,8 +474,8 @@ fun ActivityScoreCard(rank: Int, name: String, score: Double, modifier: Modifier
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, Color(0xFFEEEEEE))
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
@@ -450,7 +496,7 @@ fun ActivityScoreCard(rank: Int, name: String, score: Double, modifier: Modifier
                 }
             }
             Spacer(modifier = Modifier.height(4.dp))
-            Text(name, fontWeight = FontWeight.Medium, fontSize = 12.sp, maxLines = 1, color = MaterialTheme.colorScheme.onSurface)
+            Text(name, fontWeight = FontWeight.Medium, fontSize = 12.sp, maxLines = 1, color = Color.Black)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Rounded.Star, contentDescription = null, modifier = Modifier.size(12.dp), tint = Color(0xFFFFD700))
                 Text(String.format(" %.1f", score), color = Color.Gray, fontSize = 11.sp)

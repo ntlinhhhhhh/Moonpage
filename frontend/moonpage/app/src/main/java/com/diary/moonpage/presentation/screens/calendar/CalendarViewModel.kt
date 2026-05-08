@@ -36,7 +36,10 @@ class CalendarViewModel @Inject constructor(
     fun onEvent(event: CalendarUiEvent) {
         when (event) {
             is CalendarUiEvent.OnDateSelected -> {
-                _uiState.update { it.copy(selectedDate = event.date) }
+                _uiState.update { currentState ->
+                    val newDate = if (currentState.selectedDate == event.date) null else event.date
+                    currentState.copy(selectedDate = newDate)
+                }
             }
             is CalendarUiEvent.OnMonthChanged -> {
                 _uiState.update { it.copy(currentYearMonth = event.yearMonth) }
@@ -62,6 +65,15 @@ class CalendarViewModel @Inject constructor(
             CalendarUiEvent.OnFilterDismiss -> {
                 _uiState.update { it.copy(showFilterSheet = false) }
             }
+            CalendarUiEvent.OnShareClick -> {
+                _uiState.update { it.copy(showShareSheet = true) }
+            }
+            CalendarUiEvent.OnShareDismiss -> {
+                _uiState.update { it.copy(showShareSheet = false) }
+            }
+            is CalendarUiEvent.OnShareModeSelected -> {
+                _uiState.update { it.copy(showShareSheet = false) }
+            }
             CalendarUiEvent.DismissMessage -> {
                 _uiState.update { it.copy(snackbarMessage = null) }
             }
@@ -82,7 +94,6 @@ class CalendarViewModel @Inject constructor(
                 val logsMap = logs.associateBy { LocalDate.parse(it.date) }
                 _uiState.update { currentState ->
                     val currentMap = currentState.dailyLogs.toMutableMap()
-                    // Re-calculate to avoid duplicates if collecting multiple times
                     currentMap.putAll(logsMap)
                     currentState.copy(dailyLogs = currentMap, isLoading = false)
                 }
@@ -94,7 +105,7 @@ class CalendarViewModel @Inject constructor(
         viewModelScope.launch {
             repository.deleteDailyLog(date.toString()).onSuccess {
                 refreshLogs()
-                _uiState.update { it.copy(snackbarMessage = "Record deleted successfully!") }
+                _uiState.update { it.copy(snackbarMessage = "Record deleted successfully!", selectedDate = null) }
             }.onFailure { exception ->
                 _uiState.update { it.copy(snackbarMessage = exception.message ?: "Failed to delete log") }
             }

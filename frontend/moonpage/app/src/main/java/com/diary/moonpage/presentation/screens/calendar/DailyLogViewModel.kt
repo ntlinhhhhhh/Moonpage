@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
+import java.io.File
 
 @HiltViewModel
 class DailyLogViewModel @Inject constructor(
@@ -61,6 +62,15 @@ class DailyLogViewModel @Inject constructor(
                 _uiState.update { it.copy(date = event.date) }
                 fetchLogForDate(event.date)
             }
+            is DailyLogUiEvent.OnMenstruationToggled -> {
+                _uiState.update { it.copy(isMenstruation = event.isMenstruation) }
+            }
+            is DailyLogUiEvent.OnPhotosChanged -> {
+                _uiState.update { it.copy(dailyPhotos = event.photos) }
+            }
+            is DailyLogUiEvent.OnMusicChanged -> {
+                _uiState.update { it.copy(musicTitle = event.musicTitle) }
+            }
             DailyLogUiEvent.OnSaveClick -> {
                 saveDailyLog()
             }
@@ -106,6 +116,9 @@ class DailyLogViewModel @Inject constructor(
                     selectedActivities = log.activityIds ?: emptyList(),
                     noteText = log.note ?: "",
                     sleepHours = log.sleepHours?.toFloat() ?: 7f,
+                    isMenstruation = log.isMenstruation,
+                    menstruationPhase = log.menstruationPhase,
+                    dailyPhotos = log.dailyPhotos ?: emptyList(),
                     isLoading = false
                 ) }
             }.onFailure {
@@ -115,6 +128,10 @@ class DailyLogViewModel @Inject constructor(
                     selectedActivities = emptyList(),
                     noteText = "",
                     sleepHours = 7f,
+                    isMenstruation = false,
+                    menstruationPhase = null,
+                    dailyPhotos = emptyList(),
+                    musicTitle = null,
                     isLoading = false
                 ) }
             }
@@ -150,10 +167,10 @@ class DailyLogViewModel @Inject constructor(
                 date = state.date.toString(),
                 note = state.noteText.takeIf { it.isNotBlank() },
                 sleepHours = state.sleepHours.toDouble(),
-                isMenstruation = false,
-                menstruationPhase = null,
+                isMenstruation = state.isMenstruation,
+                menstruationPhase = state.menstruationPhase,
                 activityIds = state.selectedActivities,
-                dailyPhotos = null
+                dailyPhotos = state.dailyPhotos.takeIf { it.isNotEmpty() } as List<File>?
             ).onSuccess {
                 val msg = if (state.existingLog != null) "Record updated successfully!" else "Record created successfully!"
                 _uiEffect.send(DailyLogUiEffect.SaveSuccess(msg))

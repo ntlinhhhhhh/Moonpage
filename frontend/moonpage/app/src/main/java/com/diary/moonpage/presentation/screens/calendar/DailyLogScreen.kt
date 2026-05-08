@@ -1,14 +1,12 @@
 package com.diary.moonpage.presentation.screens.calendar
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.*
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -39,6 +37,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.core.util.MoonIcon
 import com.diary.moonpage.core.util.MoonIcons
+import com.diary.moonpage.presentation.components.calendar.CalendarSnackbarHost
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -52,6 +51,9 @@ import kotlinx.coroutines.launch
 fun DailyLogScreen(
     dateString: String,
     onNavigateBack: () -> Unit,
+    onNavigateToMusic: () -> Unit,
+    onNavigateToMenstrualCycle: () -> Unit,
+    onNavigateToDailyPhoto: () -> Unit,
     onDone: (String) -> Unit,
     viewModel: DailyLogViewModel = hiltViewModel()
 ) {
@@ -73,6 +75,9 @@ fun DailyLogScreen(
         uiState = uiState,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
+        onNavigateToMusic = onNavigateToMusic,
+        onNavigateToMenstrualCycle = onNavigateToMenstrualCycle,
+        onNavigateToDailyPhoto = onNavigateToDailyPhoto,
         checkLogExists = viewModel::checkLogExists,
         setPendingDate = viewModel::setPendingDate
     )
@@ -86,6 +91,9 @@ fun DailyLogScreenContent(
     uiState: DailyLogUiState,
     onEvent: (DailyLogUiEvent) -> Unit,
     onNavigateBack: () -> Unit,
+    onNavigateToMusic: () -> Unit,
+    onNavigateToMenstrualCycle: () -> Unit,
+    onNavigateToDailyPhoto: () -> Unit,
     checkLogExists: (LocalDate, (Boolean) -> Unit) -> Unit,
     setPendingDate: (LocalDate) -> Unit
 ) {
@@ -118,13 +126,16 @@ fun DailyLogScreenContent(
                 onSaveClick = { onEvent(DailyLogUiEvent.OnSaveClick) }
             )
         },
-        containerColor = colorScheme.background,
+        containerColor = Color(0xFFF7F7F2),
         snackbarHost = { CalendarSnackbarHost(snackbarHostState = snackbarHostState) }
     ) { paddingValues ->
         DailyLogMainContent(
             modifier = Modifier.padding(paddingValues),
             uiState = uiState,
-            onEvent = onEvent
+            onEvent = onEvent,
+            onNavigateToMusic = onNavigateToMusic,
+            onNavigateToMenstrualCycle = onNavigateToMenstrualCycle,
+            onNavigateToDailyPhoto = onNavigateToDailyPhoto
         )
     }
 
@@ -147,9 +158,7 @@ fun DailyLogScreenContent(
             initialDate = uiState.date,
             onDateSelected = { date ->
                 onEvent(DailyLogUiEvent.OnDatePickerDismiss)
-                if (date.isAfter(LocalDate.now())) {
-                    // Logic already handled in DatePicker
-                } else {
+                if (!date.isAfter(LocalDate.now())) {
                     checkLogExists(date) { exists ->
                         if (exists) {
                             setPendingDate(date)
@@ -177,7 +186,7 @@ private fun DailyLogTopBar(
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onBackClick) {
-            Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back", tint = colorScheme.onBackground)
+            Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back", tint = Color.Black)
         }
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -186,16 +195,17 @@ private fun DailyLogTopBar(
                 .clickable { onDateClick() }
                 .padding(horizontal = 8.dp, vertical = 4.dp)
         ) {
+            val formatter = DateTimeFormatter.ofPattern("EEEE, MMM d", Locale.ENGLISH)
             Text(
-                text = date.format(DateTimeFormatter.ofPattern("MMM dd, yyyy")),
+                text = date.format(formatter),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = colorScheme.onBackground
+                color = Color.Black
             )
-            Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null, tint = colorScheme.onBackground)
+            Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null, tint = Color.Black)
         }
         IconButton(onClick = {}) {
-            Icon(Icons.Rounded.Settings, contentDescription = "Settings", tint = colorScheme.onBackground)
+            Icon(Icons.Rounded.Settings, contentDescription = "Settings", tint = Color.Black)
         }
     }
 }
@@ -205,23 +215,22 @@ private fun DailyLogBottomBar(
     isLoading: Boolean,
     onSaveClick: () -> Unit
 ) {
-    val colorScheme = MaterialTheme.colorScheme
-    Box {
+    Box(modifier = Modifier.background(Color.White).fillMaxWidth()) {
         Button(
             onClick = onSaveClick,
             modifier = Modifier.fillMaxWidth().padding(16.dp).height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
             shape = RoundedCornerShape(16.dp),
             enabled = !isLoading
         ) {
             if (isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
-                    color = colorScheme.onPrimary,
+                    color = Color.White,
                     strokeWidth = 3.dp
                 )
             } else {
-                Text("Done", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = colorScheme.onPrimary)
+                Text("Done", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
             }
         }
     }
@@ -231,9 +240,11 @@ private fun DailyLogBottomBar(
 private fun DailyLogMainContent(
     modifier: Modifier = Modifier,
     uiState: DailyLogUiState,
-    onEvent: (DailyLogUiEvent) -> Unit
+    onEvent: (DailyLogUiEvent) -> Unit,
+    onNavigateToMusic: () -> Unit,
+    onNavigateToMenstrualCycle: () -> Unit,
+    onNavigateToDailyPhoto: () -> Unit
 ) {
-    val colorScheme = MaterialTheme.colorScheme
     val moods = remember {
         listOf(
             Pair(1, MoonIcons.Moods.Happy),
@@ -258,7 +269,7 @@ private fun DailyLogMainContent(
 
     LazyColumn(
         modifier = modifier.fillMaxSize().padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
             DailyMoodSection(
@@ -266,6 +277,10 @@ private fun DailyLogMainContent(
                 moods = moods,
                 onMoodSelected = { onEvent(DailyLogUiEvent.OnMoodSelected(it)) }
             )
+        }
+
+        item {
+            DailyMusicSection(musicTitle = uiState.musicTitle, onMusicClick = onNavigateToMusic)
         }
 
         uiState.enabledCategories.forEach { category ->
@@ -284,9 +299,14 @@ private fun DailyLogMainContent(
         }
 
         item {
-            DailySleepSection(
-                sleepHours = uiState.sleepHours,
-                onSleepChanged = { onEvent(DailyLogUiEvent.OnSleepChanged(it)) }
+            DailySleepSection(sleepHours = uiState.sleepHours)
+        }
+
+        item {
+            DailyMenstruationSection(
+                isMenstruation = uiState.isMenstruation,
+                onToggle = { onEvent(DailyLogUiEvent.OnMenstruationToggled(it)) },
+                onMenstrualClick = onNavigateToMenstrualCycle
             )
         }
 
@@ -297,7 +317,11 @@ private fun DailyLogMainContent(
             )
         }
 
-        item { Spacer(modifier = Modifier.height(16.dp)) }
+        item {
+            DailyPhotoSection(photos = uiState.dailyPhotos, onPhotoClick = onNavigateToDailyPhoto)
+        }
+
+        item { Spacer(modifier = Modifier.height(32.dp)) }
     }
 }
 
@@ -307,10 +331,13 @@ private fun DailyMoodSection(
     moods: List<Pair<Int, MoonIcon>>,
     onMoodSelected: (Int) -> Unit
 ) {
-    val colorScheme = MaterialTheme.colorScheme
-    Surface(color = colorScheme.surface, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        modifier = Modifier.fillMaxWidth()
+    ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
-            Text("How was your day?", color = colorScheme.onSurface, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
+            Text("How was your day?", color = Color.Black, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 moods.forEach { (id, moodIcon) ->
                     val isSelected = selectedMood == id
@@ -330,12 +357,6 @@ private fun DailyMoodSection(
                                 contentDescription = null,
                                 modifier = Modifier.size(if (isSelected) 32.dp else 28.dp)
                             )
-                        } else if (moodIcon.vector != null) {
-                            Icon(
-                                moodIcon.vector, contentDescription = null,
-                                tint = if (isSelected) Color.White else moodColor,
-                                modifier = Modifier.size(24.dp)
-                            )
                         }
                     }
                 }
@@ -345,38 +366,19 @@ private fun DailyMoodSection(
 }
 
 @Composable
-private fun DailySleepSection(
-    sleepHours: Float,
-    onSleepChanged: (Float) -> Unit
-) {
-    val colorScheme = MaterialTheme.colorScheme
-    Column {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("Sleep", color = colorScheme.onBackground, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text("${sleepHours.toInt()}h ${((sleepHours % 1) * 60).toInt()}m", color = colorScheme.primary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-        Surface(color = colorScheme.surface, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Icon(Icons.Rounded.Bedtime, contentDescription = null, tint = colorScheme.tertiary, modifier = Modifier.size(28.dp))
-                    Slider(
-                        value = sleepHours,
-                        onValueChange = onSleepChanged,
-                        valueRange = 0f..12f,
-                        steps = 23,
-                        modifier = Modifier.weight(1f),
-                        colors = SliderDefaults.colors(
-                            thumbColor = colorScheme.primary,
-                            activeTrackColor = colorScheme.primary,
-                            inactiveTrackColor = colorScheme.onSurface.copy(alpha = 0.2f)
-                        )
-                    )
-                }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("0h", color = colorScheme.onSurface.copy(alpha = 0.4f), fontSize = 11.sp)
-                    Text("6h", color = colorScheme.onSurface.copy(alpha = 0.4f), fontSize = 11.sp)
-                    Text("12h", color = colorScheme.onSurface.copy(alpha = 0.4f), fontSize = 11.sp)
+private fun DailyMusicSection(musicTitle: String?, onMusicClick: () -> Unit) {
+    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White), modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("Music", fontWeight = FontWeight.Bold, color = Color.Black)
+                Text("Link account", fontSize = 12.sp, color = Color.Gray)
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Surface(color = Color(0xFFF5F5F5), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().clickable { onMusicClick() }) {
+                Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Rounded.MusicNote, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Gray)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(musicTitle ?: "Add a song", fontSize = 14.sp, color = Color.Gray)
                 }
             }
         }
@@ -384,92 +386,125 @@ private fun DailySleepSection(
 }
 
 @Composable
-private fun DailyNoteSection(
-    noteText: String,
-    onNoteChanged: (String) -> Unit
+fun DailyActivitySection(
+    title: String,
+    items: List<DailyActivity>,
+    selectedIds: List<String>,
+    onItemClick: (String) -> Unit
 ) {
-    val colorScheme = MaterialTheme.colorScheme
-    Column {
-        Text("Today's note", color = colorScheme.onBackground, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 12.dp))
-        Surface(color = colorScheme.surface, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(
-                value = noteText, onValueChange = onNoteChanged,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp),
-                placeholder = { Text("Write about your day...", color = colorScheme.onSurface.copy(alpha = 0.4f), fontSize = 14.sp) },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = colorScheme.onSurface,
-                    unfocusedTextColor = colorScheme.onSurface,
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedBorderColor = colorScheme.primary.copy(alpha = 0.6f),
-                    unfocusedBorderColor = Color.Transparent,
-                    cursorColor = colorScheme.primary
-                ),
-                shape = RoundedCornerShape(12.dp), maxLines = 8
-            )
-        }
-    }
-}
+    var isCollapsed by remember { mutableStateOf(false) }
+    val rotation by animateFloatAsState(targetValue = if (isCollapsed) -90f else 0f, label = "")
 
-@Composable
-private fun DailyLogExitDialog(
-    onDismiss: () -> Unit,
-    onExit: () -> Unit
-) {
-    val colorScheme = MaterialTheme.colorScheme
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Surface(
-            shape = RoundedCornerShape(20.dp),
-            color = colorScheme.surface,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { isCollapsed = !isCollapsed },
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Changes have not been saved.",
+                    title,
+                    color = Color.Black,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = colorScheme.onSurface,
-                    textAlign = TextAlign.Center
+                    fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Are you sure you want to exit?",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
+                Icon(
+                    Icons.Rounded.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = Color.Gray,
+                    modifier = Modifier.rotate(rotation)
                 )
-                Spacer(modifier = Modifier.height(32.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Button(
-                        onClick = onDismiss,
-                        modifier = Modifier.weight(1f).height(48.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colorScheme.surfaceVariant,
-                            contentColor = colorScheme.onSurfaceVariant
-                        ),
-                        shape = RoundedCornerShape(12.dp)
+            }
+
+            AnimatedVisibility(
+                visible = !isCollapsed,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Column {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    DailyLogGrid(items = items, selectedIds = selectedIds, onItemClick = onItemClick)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DailyLogGrid(
+    items: List<DailyActivity>,
+    selectedIds: List<String>,
+    onItemClick: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        items.chunked(4).forEach { rowItems ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                rowItems.forEach { item ->
+                    val isSelected = selectedIds.contains(item.id)
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.width(72.dp)
                     ) {
-                        Text("Cancel", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clip(CircleShape)
+                                .background(if (isSelected) Color(0xFFEFEBE9) else Color(0xFFF5F5F5))
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = ripple()
+                                ) { onItemClick(item.id) },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (item.icon.drawableRes != null) {
+                                Image(
+                                    painter = painterResource(id = item.icon.drawableRes),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .alpha(if (isSelected) 1f else 0.4f)
+                                )
+                            } else if (item.icon.vector != null) {
+                                Icon(
+                                    item.icon.vector,
+                                    contentDescription = null,
+                                    tint = if (isSelected) item.icon.color else Color.Gray.copy(alpha = 0.5f),
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            item.label,
+                            color = if (isSelected) Color.Black else Color.Gray,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                            textAlign = TextAlign.Center
+                        )
                     }
-                    Button(
-                        onClick = onExit,
-                        modifier = Modifier.weight(1f).height(48.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colorScheme.primary,
-                            contentColor = colorScheme.onPrimary
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("Exit", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
+                // Fill remaining space in the row if less than 4 items
+                if (rowItems.size < 4) {
+                    repeat(4 - rowItems.size) {
+                        Spacer(modifier = Modifier.width(72.dp))
                     }
                 }
             }
@@ -478,63 +513,122 @@ private fun DailyLogExitDialog(
 }
 
 @Composable
-private fun DailyLogOverwriteDialog(
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit
-) {
-    val colorScheme = MaterialTheme.colorScheme
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Surface(
-            shape = RoundedCornerShape(24.dp),
-            color = colorScheme.surface,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 28.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Icon(
-                    Icons.Rounded.Warning,
-                    contentDescription = null,
-                    tint = Color(0xFFE57373),
-                    modifier = Modifier.size(48.dp)
+private fun DailySleepSection(sleepHours: Float) {
+    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White), modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("Sleep", fontWeight = FontWeight.Bold, color = Color.Black)
+                Text("Import", fontSize = 12.sp, color = Color.Gray)
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Surface(color = Color(0xFFF5F5F5), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Rounded.Bedtime, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Gray)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Record your sleep", fontSize = 14.sp, color = Color.Gray)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean) -> Unit, onMenstrualClick: () -> Unit) {
+    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White), modifier = Modifier.fillMaxWidth().clickable { onMenstrualClick() }) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Menstruation", fontWeight = FontWeight.Bold, color = Color.Black)
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.CenterVertically) {
+                repeat(5) { i ->
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("5/${6+i}", fontSize = 10.sp, color = Color.Gray)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Box(
+                            modifier = Modifier.size(40.dp).clip(CircleShape)
+                                .background(if (i == 2 && isMenstruation) Color(0xFFE0E0E0) else Color(0xFFF5F5F5))
+                                .clickable { if (i == 2) onToggle(!isMenstruation) },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Rounded.WaterDrop, contentDescription = null, tint = if (i == 2 && isMenstruation) Color.Gray else Color.LightGray)
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Rounded.WaterDrop, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Gray)
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("On day 60 of cycle", fontSize = 12.sp, color = Color.Gray)
+            }
+        }
+    }
+}
+
+@Composable
+private fun DailyNoteSection(noteText: String, onNoteChanged: (String) -> Unit) {
+    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White), modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Today's note", fontWeight = FontWeight.Bold, color = Color.Black)
+            Spacer(modifier = Modifier.height(12.dp))
+            Surface(color = Color(0xFFF5F5F5), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = noteText, onValueChange = onNoteChanged, modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
+                    placeholder = { Text("Write here...", color = Color.Gray, fontSize = 14.sp) },
+                    colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent, focusedBorderColor = Color.Transparent, unfocusedBorderColor = Color.Transparent, cursorColor = Color.Black),
+                    shape = RoundedCornerShape(12.dp), maxLines = 5
                 )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Data already exists",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = "There is already a record for this day. Do you want to overwrite it with your current changes?",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DailyPhotoSection(photos: List<String>, onPhotoClick: () -> Unit) {
+    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White), modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Today's photo", fontWeight = FontWeight.Bold, color = Color.Black)
+            Spacer(modifier = Modifier.height(12.dp))
+            Surface(color = Color(0xFFF5F5F5), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().aspectRatio(1f).clickable { onPhotoClick() }) {
+                Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Rounded.CameraAlt, contentDescription = null, modifier = Modifier.size(48.dp), tint = Color.LightGray)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text("Select up to 3 photos", color = Color.Gray, fontSize = 14.sp)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DailyLogExitDialog(onDismiss: () -> Unit, onExit: () -> Unit) {
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Surface(shape = RoundedCornerShape(20.dp), color = Color.White, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+            Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(text = "Changes have not been saved.", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.Black, textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(32.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    TextButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.weight(1f).height(48.dp)
-                    ) {
-                        Text("Cancel", color = colorScheme.onSurfaceVariant)
-                    }
-                    Button(
-                        onClick = onConfirm,
-                        modifier = Modifier.weight(1f).height(48.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("Overwrite", color = Color.White, fontWeight = FontWeight.Bold)
-                    }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF5F5F5), contentColor = Color.Black), shape = RoundedCornerShape(12.dp)) { Text("Cancel", fontWeight = FontWeight.Bold) }
+                    Button(onClick = onExit, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)), shape = RoundedCornerShape(12.dp)) { Text("Exit", fontWeight = FontWeight.Bold, color = Color.White) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DailyLogOverwriteDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Surface(shape = RoundedCornerShape(24.dp), color = Color.White, modifier = Modifier.fillMaxWidth().padding(horizontal = 28.dp)) {
+            Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(Icons.Rounded.Warning, contentDescription = null, tint = Color(0xFFE57373), modifier = Modifier.size(48.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(text = "Data already exists", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.Black)
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(text = "There is already a record for this day. Do you want to overwrite it?", style = MaterialTheme.typography.bodyMedium, color = Color.Gray, textAlign = TextAlign.Center)
+                Spacer(modifier = Modifier.height(32.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    TextButton(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp)) { Text("Cancel", color = Color.Gray) }
+                    Button(onClick = onConfirm, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)), shape = RoundedCornerShape(12.dp)) { Text("Overwrite", color = Color.White, fontWeight = FontWeight.Bold) }
                 }
             }
         }
@@ -544,261 +638,45 @@ private fun DailyLogOverwriteDialog(
 data class DailyActivity(val id: String, val label: String, val icon: MoonIcon)
 
 @Composable
-fun DailyActivitySection(
-    title: String,
-    items: List<DailyActivity>,
-    selectedIds: List<String>,
-    onItemClick: (String) -> Unit
-) {
-    val colorScheme = MaterialTheme.colorScheme
-    var isCollapsed by remember { mutableStateOf(false) }
-    val rotation by androidx.compose.animation.core.animateFloatAsState(
-        targetValue = if (isCollapsed) -90f else 0f,
-        label = "arrowRotation"
-    )
-
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .clickable { isCollapsed = !isCollapsed }
-                .padding(vertical = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(title, color = colorScheme.onBackground, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Icon(
-                imageVector = Icons.Rounded.KeyboardArrowDown,
-                contentDescription = null,
-                tint = colorScheme.onBackground.copy(alpha = 0.4f),
-                modifier = Modifier.rotate(rotation)
-            )
-        }
-
-        AnimatedVisibility(
-            visible = !isCollapsed,
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
-        ) {
-            Column {
-                Spacer(modifier = Modifier.height(16.dp))
-                DailyLogGrid(items = items, selectedIds = selectedIds, onItemClick = onItemClick)
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-fun DailyLogGrid(
-    items: List<DailyActivity>,
-    selectedIds: List<String>,
-    onItemClick: (String) -> Unit
-) {
-    val colorScheme = MaterialTheme.colorScheme
-    androidx.compose.foundation.layout.FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        items.forEach { item ->
-            val isSelected = selectedIds.contains(item.id)
-            val iconColor = item.icon.color
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.width(72.dp).clickable { onItemClick(item.id) }
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (isSelected) iconColor.copy(alpha = 0.18f)
-                            else colorScheme.onSurface.copy(alpha = 0.08f)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (item.icon.drawableRes != null) {
-                        Image(
-                            painter = painterResource(id = item.icon.drawableRes),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(32.dp)
-                                .alpha(if (isSelected) 1f else 0.4f)
-                        )
-                    } else if (item.icon.vector != null) {
-                        Icon(
-                            item.icon.vector, contentDescription = null,
-                            tint = if (isSelected) iconColor else colorScheme.onSurface.copy(alpha = 0.35f),
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    item.label,
-                    color = if (isSelected) iconColor else colorScheme.onBackground.copy(alpha = 0.5f),
-                    style = MaterialTheme.typography.bodySmall,
-                    fontSize = 11.sp,
-                    maxLines = 1,
-                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun DailyLogDatePickerDialog(
-    initialDate: LocalDate,
-    onDateSelected: (LocalDate) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val colorScheme = MaterialTheme.colorScheme
+fun DailyLogDatePickerDialog(initialDate: LocalDate, onDateSelected: (LocalDate) -> Unit, onDismiss: () -> Unit) {
     val initialPage = 500 * 12
     val baseYearMonth = YearMonth.from(initialDate)
-    val pagerState = rememberPagerState(
-        initialPage = initialPage,
-        pageCount = { initialPage * 2 }
-    )
+    val pagerState = rememberPagerState(initialPage = initialPage, pageCount = { initialPage * 2 })
     var selectedDateInPicker by remember { mutableStateOf(initialDate) }
     val scope = rememberCoroutineScope()
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Surface(
-            shape = RoundedCornerShape(28.dp),
-            color = colorScheme.surface,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    "Which day is this record for?",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = colorScheme.onSurface,
-                    modifier = Modifier.padding(vertical = 16.dp),
-                    textAlign = TextAlign.Center
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Surface(shape = RoundedCornerShape(28.dp), color = Color.White, modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)) {
+            Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Which day is this record for?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.Black, modifier = Modifier.padding(vertical = 16.dp))
+                Row(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     val currentPageMonth = baseYearMonth.plusMonths((pagerState.currentPage - initialPage).toLong())
-                    Text(
-                        text = currentPageMonth.format(DateTimeFormatter.ofPattern("MMM yyyy")),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = colorScheme.onSurface,
-                        modifier = Modifier.padding(start = 20.dp)
-                    )
-                    Row(modifier = Modifier.padding(end = 4.dp)) {
-                        IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } }) {
-                            Icon(Icons.Rounded.KeyboardArrowLeft, contentDescription = "Prev", tint = colorScheme.primary)
-                        }
-                        IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } }) {
-                            Icon(Icons.Rounded.KeyboardArrowRight, contentDescription = "Next", tint = colorScheme.primary)
-                        }
+                    Text(text = currentPageMonth.format(DateTimeFormatter.ofPattern("MMM yyyy")), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color.Black)
+                    Row {
+                        IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } }) { Icon(Icons.Rounded.KeyboardArrowLeft, contentDescription = null, tint = Color(0xFF4CAF50)) }
+                        IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } }) { Icon(Icons.Rounded.KeyboardArrowRight, contentDescription = null, tint = Color(0xFF4CAF50)) }
                     }
                 }
-
-                Row(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-                    listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat").forEach { day ->
-                        Text(
-                            text = day,
-                            modifier = Modifier.weight(1f),
-                            textAlign = TextAlign.Center,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = colorScheme.onSurface.copy(alpha = 0.4f)
-                        )
-                    }
-                }
-
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier.fillMaxWidth().height(240.dp)
-                ) { page ->
+                HorizontalPager(state = pagerState, modifier = Modifier.fillMaxWidth().height(240.dp)) { page ->
                     val offset = page - initialPage
                     val pageYearMonth = baseYearMonth.plusMonths(offset.toLong())
                     val daysInMonth = (1..pageYearMonth.lengthOfMonth()).toList()
-                    val firstDayOfMonth = pageYearMonth.atDay(1)
-                    val firstDayOffset = if (firstDayOfMonth.dayOfWeek == java.time.DayOfWeek.SUNDAY) 0 else firstDayOfMonth.dayOfWeek.value
-
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(7),
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        userScrollEnabled = false
-                    ) {
+                    val firstDayOffset = if (pageYearMonth.atDay(1).dayOfWeek == java.time.DayOfWeek.SUNDAY) 0 else pageYearMonth.atDay(1).dayOfWeek.value
+                    LazyVerticalGrid(columns = GridCells.Fixed(7), modifier = Modifier.fillMaxSize(), userScrollEnabled = false) {
                         items(firstDayOffset) { Spacer(Modifier) }
                         items(daysInMonth) { day ->
                             val date = pageYearMonth.atDay(day)
-                            val isFuture = date.isAfter(LocalDate.now())
                             val isSelected = date == selectedDateInPicker
-                            val isToday = date == LocalDate.now()
-
-                            Box(
-                                modifier = Modifier
-                                    .aspectRatio(1f)
-                                    .clip(CircleShape)
-                                    .background(
-                                        when {
-                                            isSelected -> colorScheme.primary
-                                            else -> Color.Transparent
-                                        }
-                                    )
-                                    .clickable(enabled = !isFuture) { selectedDateInPicker = date },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = day.toString(),
-                                    color = when {
-                                        isSelected -> colorScheme.onPrimary
-                                        isFuture -> colorScheme.onSurface.copy(alpha = 0.2f)
-                                        isToday && !isSelected -> colorScheme.primary
-                                        else -> colorScheme.onSurface
-                                    },
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Normal
-                                )
+                            Box(modifier = Modifier.aspectRatio(1f).clip(CircleShape).background(if (isSelected) Color(0xFF4CAF50) else Color.Transparent).clickable(enabled = !date.isAfter(LocalDate.now())) { selectedDateInPicker = date }, contentAlignment = Alignment.Center) {
+                                Text(text = day.toString(), color = if (isSelected) Color.White else if (date.isAfter(LocalDate.now())) Color.LightGray else Color.Black, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
                             }
                         }
                     }
                 }
-
                 Spacer(modifier = Modifier.height(24.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Button(
-                        onClick = onDismiss,
-                        modifier = Modifier.weight(1f).height(48.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = colorScheme.surfaceVariant, contentColor = colorScheme.onSurfaceVariant),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("Cancel", fontWeight = FontWeight.Bold)
-                    }
-                    Button(
-                        onClick = { onDateSelected(selectedDateInPicker) },
-                        modifier = Modifier.weight(1f).height(48.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary, contentColor = colorScheme.onPrimary),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("OK", fontWeight = FontWeight.Bold)
-                    }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF5F5F5), contentColor = Color.Black), shape = RoundedCornerShape(12.dp)) { Text("Cancel") }
+                    Button(onClick = { onDateSelected(selectedDateInPicker) }, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)), shape = RoundedCornerShape(12.dp)) { Text("OK", color = Color.White) }
                 }
             }
         }

@@ -19,9 +19,46 @@ import java.io.FileOutputStream
 import java.net.URL
 import kotlin.math.min
 
+import android.content.Intent
+import androidx.core.content.FileProvider
+
 object ImageUtils {
     /**
      */
+    fun shareImage(context: Context, bitmap: Bitmap, title: String = "Share Mood") {
+        try {
+            val cachePath = File(context.cacheDir, "shared_images")
+            if (!cachePath.exists()) cachePath.mkdirs()
+            
+            val file = File(cachePath, "share_${System.currentTimeMillis()}.jpg")
+            val stream = FileOutputStream(file)
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream)
+            stream.close()
+
+            val contentUri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
+            )
+
+            if (contentUri != null) {
+                val shareIntent = Intent().apply {
+                    action = Intent.ACTION_SEND
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    setDataAndType(contentUri, context.contentResolver.getType(contentUri))
+                    putExtra(Intent.EXTRA_STREAM, contentUri)
+                    type = "image/jpeg"
+                }
+                context.startActivity(Intent.createChooser(shareIntent, title).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                })
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(context, "Failed to share image", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     suspend fun compressAndCropSquare(
         context: Context,
         uri: Uri,

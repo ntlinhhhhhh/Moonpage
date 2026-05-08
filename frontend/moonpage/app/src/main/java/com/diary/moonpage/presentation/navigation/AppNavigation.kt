@@ -20,7 +20,10 @@ import androidx.navigation.compose.rememberNavController
 import com.diary.moonpage.presentation.components.core.navigation.MoonBottomNavBar
 import com.diary.moonpage.presentation.screens.auth.*
 import com.diary.moonpage.presentation.screens.calendar.DailyLogScreen
+import com.diary.moonpage.presentation.screens.calendar.DailyPhotoScreen
 import com.diary.moonpage.presentation.screens.calendar.FilterScreen
+import com.diary.moonpage.presentation.screens.calendar.MenstrualCycleScreen
+import com.diary.moonpage.presentation.screens.calendar.MusicScreen
 import com.diary.moonpage.presentation.screens.calendar.calendarScreen
 import com.diary.moonpage.presentation.screens.moment.MomentCameraScreen
 import com.diary.moonpage.presentation.screens.moment.MomentDetailScreen
@@ -217,6 +220,9 @@ fun AppNavigation() {
                     DailyLogScreen(
                         dateString = dateStr,
                         onNavigateBack = { navController.popBackStack() },
+                        onNavigateToMusic = { navController.navigate(Screen.Music.route) },
+                        onNavigateToMenstrualCycle = { navController.navigate(Screen.MenstrualCycle.route) },
+                        onNavigateToDailyPhoto = { navController.navigate(Screen.DailyPhoto.route) },
                         onDone = { message ->
                             navController.previousBackStackEntry?.savedStateHandle?.apply {
                                 set("created_log_date", dateStr)
@@ -225,6 +231,24 @@ fun AppNavigation() {
                             navController.popBackStack()
                         }
                     )
+                }
+            }
+
+            composable(Screen.Music.route) {
+                ScreenWrapper(Screen.Music.route) {
+                    MusicScreen(onNavigateBack = { navController.popBackStack() })
+                }
+            }
+
+            composable(Screen.MenstrualCycle.route) {
+                ScreenWrapper(Screen.MenstrualCycle.route) {
+                    MenstrualCycleScreen(onNavigateBack = { navController.popBackStack() })
+                }
+            }
+
+            composable(Screen.DailyPhoto.route) {
+                ScreenWrapper(Screen.DailyPhoto.route) {
+                    DailyPhotoScreen(onNavigateBack = { navController.popBackStack() })
                 }
             }
 

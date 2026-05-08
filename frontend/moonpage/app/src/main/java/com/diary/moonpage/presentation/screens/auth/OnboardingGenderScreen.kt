@@ -42,6 +42,7 @@ fun OnboardingGenderScreen(
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val uiState by viewModel.uiState.collectAsState()
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
 
     var selectedGender by remember { mutableStateOf("") }
 
@@ -121,7 +122,10 @@ fun OnboardingGenderScreen(
                         GenderCard(
                             option = option,
                             isSelected = selectedGender == option.label,
-                            onClick = { selectedGender = option.label },
+                            onClick = { 
+                                selectedGender = option.label 
+                                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                            },
                             modifier = Modifier.weight(1f)
                         )
                     }

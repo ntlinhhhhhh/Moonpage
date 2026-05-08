@@ -26,7 +26,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.domain.model.DailyLog
+import androidx.compose.ui.platform.LocalView
+import com.diary.moonpage.core.util.ComposeCaptureUtils
+import com.diary.moonpage.core.util.ImageUtils
 import com.diary.moonpage.presentation.components.calendar.*
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -86,6 +90,8 @@ fun CalendarScreenContent(
     val snackbarHostState = remember { SnackbarHostState() }
     val monthFormatter = remember { DateTimeFormatter.ofPattern("MMM yyyy") }
     val currentMonthName = remember(uiState.currentYearMonth) { uiState.currentYearMonth.format(monthFormatter) }
+    val view = LocalView.current
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(uiState.snackbarMessage) {
         uiState.snackbarMessage?.let {
@@ -128,7 +134,7 @@ fun CalendarScreenContent(
                 CalendarMonthHeader(
                     currentMonthName = currentMonthName,
                     onMonthClick = { onEvent(CalendarUiEvent.OnMonthPickerClick) },
-                    onShareClick = { /* TODO */ }
+                    onShareClick = { onEvent(CalendarUiEvent.OnShareClick) }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -160,7 +166,7 @@ fun CalendarScreenContent(
                     dynamicActivities = uiState.dynamicActivities,
                     onEditLog = { date -> onNavigateToDailyLog(date.toString()) },
                     onDeleteLog = { date -> onEvent(CalendarUiEvent.OnDeleteLog(date)) },
-                    onShareClick = { /* TODO */ }
+                    onShareClick = { onEvent(CalendarUiEvent.OnShareClick) }
                 )
 
                 Spacer(modifier = Modifier.height(100.dp))
@@ -169,10 +175,42 @@ fun CalendarScreenContent(
     }
 
     if (uiState.showMonthPicker) {
-        MonthYearPickerBottomSheet(
+        MonthYearPickerDialog(
             currentYearMonth = uiState.currentYearMonth,
             onConfirm = { year, month -> onEvent(CalendarUiEvent.OnMonthPickerConfirm(year, month)) },
             onDismiss = { onEvent(CalendarUiEvent.OnMonthPickerDismiss) }
+        )
+    }
+
+    if (uiState.showShareSheet) {
+        ShareModeBottomSheet(
+            onDismiss = { onEvent(CalendarUiEvent.OnShareDismiss) },
+            onModeSelected = { isSquare ->
+                coroutineScope.launch {
+                    val width = 1080
+                    val height = if (isSquare) 1080 else 1920
+                    
+                    ComposeCaptureUtils.captureComposable(
+                        view = view,
+                        content = {
+                            // Wrap in theme to ensure correct colors
+                            Surface(color = MaterialTheme.colorScheme.background) {
+                                ShareCalendarCard(
+                                    yearMonth = uiState.currentYearMonth,
+                                    dailyLogs = uiState.dailyLogs,
+                                    isSquare = isSquare
+                                )
+                            }
+                        },
+                        width = width,
+                        height = height,
+                        onBitmapCaptured = { bitmap ->
+                            ImageUtils.shareImage(view.context, bitmap, "My Mood Calendar")
+                        }
+                    )
+                    onEvent(CalendarUiEvent.OnShareDismiss)
+                }
+            }
         )
     }
 
@@ -238,7 +276,7 @@ fun CalendarMonthHeader(
 @Composable
 fun CalendarPager(
     currentYearMonth: java.time.YearMonth,
-    selectedDate: LocalDate,
+    selectedDate: LocalDate?,
     dailyLogs: Map<LocalDate, DailyLog>,
     onDateSelected: (LocalDate) -> Unit,
     onMonthChanged: (java.time.YearMonth) -> Unit
@@ -306,14 +344,14 @@ fun CalendarPager(
                                 val isToday = date == today
                                 val logForDay = dailyLogs[date]
 
-                                val mv = if (logForDay != null) moodVisualFor(logForDay.baseMoodId) else null
+                                val mv = if (logForDay != null) com.diary.moonpage.core.util.MoonIcons.Moods.getMoodVisual(logForDay.baseMoodId) else null
                                 val isLoggedToday = logForDay?.date == today.toString()
 
                                 DayItem(
                                     day = day,
                                     isSelected = isSelected,
                                     moodColor = mv?.color,
-                                    moodIcon = mv?.icon,
+                                    moodIcon = mv?.vector,
                                     moodDrawable = mv?.drawableRes,
                                     isToday = isToday,
                                     isDimmed = logForDay != null && !isLoggedToday,
@@ -332,15 +370,16 @@ fun CalendarPager(
 
 @Composable
 fun CalendarSelectedLogDetail(
-    selectedDate: LocalDate,
+    selectedDate: LocalDate?,
     dailyLogs: Map<LocalDate, DailyLog>,
     dynamicActivities: List<com.diary.moonpage.domain.model.Activity>,
     onEditLog: (LocalDate) -> Unit,
     onDeleteLog: (LocalDate) -> Unit,
     onShareClick: () -> Unit
 ) {
-    val selectedLog = dailyLogs[selectedDate] ?: return
-    val mv = moodVisualFor(selectedLog.baseMoodId)
+    val date = selectedDate ?: return
+    val selectedLog = dailyLogs[date] ?: return
+    val mv = com.diary.moonpage.core.util.MoonIcons.Moods.getMoodVisual(selectedLog.baseMoodId)
     val activityNames = selectedLog.activityIds?.mapNotNull { id ->
         dynamicActivities.find { it.id == id }?.name
     } ?: emptyList()
@@ -364,10 +403,10 @@ fun CalendarSelectedLogDetail(
                 IconButton(onClick = onShareClick) {
                     Icon(Icons.Rounded.IosShare, contentDescription = "Share", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp))
                 }
-                IconButton(onClick = { onEditLog(selectedDate) }) {
+                IconButton(onClick = { onEditLog(date) }) {
                     Icon(Icons.Rounded.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp))
                 }
-                IconButton(onClick = { onDeleteLog(selectedDate) }) {
+                IconButton(onClick = { onDeleteLog(date) }) {
                     Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp))
                 }
             }
@@ -384,76 +423,16 @@ fun CalendarSelectedLogDetail(
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             DayDetailArea(
-                date = selectedDate,
-                moodIcon = mv.icon,
+                date = date,
+                moodIcon = mv.vector,
                 moodDrawable = mv.drawableRes,
                 moodColor = mv.color,
-                moodLabel = mv.label,
+                moodLabel = mv.name,
                 noteSnippet = selectedLog.note,
                 activityNames = activityNames
             )
+
         }
     }
 }
 
-@Composable
-fun CalendarSnackbarHost(snackbarHostState: SnackbarHostState) {
-    SnackbarHost(
-        hostState = snackbarHostState,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) { data ->
-        val isError = data.visuals.message.contains("future", ignoreCase = true) ||
-                data.visuals.message.contains("Failed", ignoreCase = true) ||
-                data.visuals.message.contains("Please select", ignoreCase = true)
-        val isSuccess = data.visuals.message.contains("success", ignoreCase = true) ||
-                data.visuals.message.contains("deleted", ignoreCase = true) ||
-                data.visuals.message.contains("recorded", ignoreCase = true) ||
-                data.visuals.message.contains("updated", ignoreCase = true) ||
-                data.visuals.message.contains("edited", ignoreCase = true)
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFF333333), RoundedCornerShape(12.dp))
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = when {
-                    isError -> Icons.Rounded.Error
-                    isSuccess -> Icons.Rounded.CheckCircle
-                    else -> Icons.Rounded.Info
-                },
-                contentDescription = null,
-                tint = when {
-                    isError -> Color(0xFFE57373)
-                    isSuccess -> Color(0xFF81C784)
-                    else -> Color(0xFFFFB74D)
-                },
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = data.visuals.message,
-                color = Color.White,
-                style = MaterialTheme.typography.bodyMedium
-            )
-        }
-    }
-}
-
-private data class MoodVisual(val color: Color, val icon: androidx.compose.ui.graphics.vector.ImageVector? = null, val drawableRes: Int? = null, val label: String)
-
-private fun moodVisualFor(baseMoodId: Int?): MoodVisual {
-    val moodIcon = when (baseMoodId) {
-        1 -> MoonIcons.Moods.Happy
-        2 -> MoonIcons.Moods.Good
-        3 -> MoonIcons.Moods.Neutral
-        4 -> MoonIcons.Moods.Sad
-        5 -> MoonIcons.Moods.Angry
-        else -> MoonIcons.Moods.Good
-    }
-    return MoodVisual(moodIcon.color, moodIcon.vector, moodIcon.drawableRes, moodIcon.name)
-}
