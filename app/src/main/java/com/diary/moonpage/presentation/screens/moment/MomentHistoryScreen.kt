@@ -25,7 +25,7 @@ import coil.request.ImageRequest
 import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import kotlinx.coroutines.launch
-import com.diary.moonpage.presentation.theme.MoonPageTheme
+import com.diary.moonpage.core.theme.MoonPageTheme
 import com.diary.moonpage.domain.model.Moment
 import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import com.diary.moonpage.presentation.components.moment.MomentFeedItem

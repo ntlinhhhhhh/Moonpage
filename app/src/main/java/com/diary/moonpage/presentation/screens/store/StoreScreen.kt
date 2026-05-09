@@ -27,7 +27,7 @@ import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.domain.model.ThemeType
 import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import com.diary.moonpage.presentation.screens.store.components.*
-import com.diary.moonpage.presentation.theme.*
+import com.diary.moonpage.core.theme.*
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable

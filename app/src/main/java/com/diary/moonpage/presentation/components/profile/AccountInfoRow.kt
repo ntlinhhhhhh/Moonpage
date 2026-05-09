@@ -16,7 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.diary.moonpage.presentation.theme.MoonPageTheme
+import com.diary.moonpage.core.theme.MoonPageTheme
 
 @Composable
 fun AccountInfoRow(

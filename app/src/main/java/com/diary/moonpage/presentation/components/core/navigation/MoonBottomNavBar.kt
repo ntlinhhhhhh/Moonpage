@@ -3,6 +3,7 @@ package com.diary.moonpage.presentation.components.core.navigation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,7 +25,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.diary.moonpage.presentation.navigation.Screen
-import com.diary.moonpage.presentation.theme.*
+import com.diary.moonpage.core.theme.*
+
+import com.diary.moonpage.core.theme.MoonUnselectedLight
+import com.diary.moonpage.core.theme.MoonBottomNavBgDark
+import com.diary.moonpage.core.theme.MoonUnselectedDark
 
 @Composable
 fun MoonBottomNavBar(
@@ -32,11 +37,15 @@ fun MoonBottomNavBar(
     onItemSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-
-    val navBgColor = MaterialTheme.colorScheme.surface
+    val isDark = isSystemInDarkTheme()
+    val navBgColor = if (isDark) MoonBottomNavBgDark else MaterialTheme.colorScheme.surface
     val cameraBgColor = MaterialTheme.colorScheme.background
     val activeColor = MaterialTheme.colorScheme.primary
-    val inactiveColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+    val inactiveColor = if (isDark) {
+        MoonUnselectedDark
+    } else {
+        MoonUnselectedLight
+    }
 
     val calendar = Screen.Calendar.route
     val stats = Screen.Stats.route

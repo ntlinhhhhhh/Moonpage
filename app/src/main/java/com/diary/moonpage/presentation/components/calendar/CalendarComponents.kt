@@ -7,6 +7,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -39,7 +40,7 @@ import java.util.*
 import androidx.compose.ui.platform.LocalLocale
 import kotlinx.coroutines.launch
 import com.diary.moonpage.core.util.MoonIcons
-import com.diary.moonpage.presentation.theme.MoonThemeType
+import com.diary.moonpage.core.theme.MoonThemeType
 
 @Composable
 fun CalendarTopBar(
@@ -58,36 +59,38 @@ fun CalendarTopBar(
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.clickable { onFilterClick() }
+            modifier = Modifier.clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) { onFilterClick() }
         ) {
             Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .background(Color(0xFFE8F5E9), RoundedCornerShape(12.dp)),
+                modifier = Modifier.size(40.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Rounded.FilterList,
                     contentDescription = "Filter",
-                    tint = Color(0xFF4CAF50),
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
                 if (isFilterActive) {
                     Box(
                         modifier = Modifier
-                            .size(10.dp)
+                            .size(8.dp)
                             .align(Alignment.TopEnd)
-                            .offset(x = 2.dp, y = (-2).dp)
-                            .background(MaterialTheme.colorScheme.error, CircleShape)
-                            .border(2.dp, MaterialTheme.colorScheme.background, CircleShape)
+                            .offset(x = 2.dp, y = 2.dp)
+                            .background(MaterialTheme.colorScheme.primary, CircleShape)
+                            .border(1.5.dp, MaterialTheme.colorScheme.background, CircleShape)
                     )
                 }
             }
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(modifier = Modifier.width(0.dp))
             Icon(
                 imageVector = Icons.Rounded.KeyboardArrowDown,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(20.dp)
             )
         }
 
@@ -97,8 +100,10 @@ fun CalendarTopBar(
         ) {
             Box(
                 modifier = Modifier
-                    .clip(CircleShape)
-                    .clickable { /* TODO */ }
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { /* TODO */ }
                     .padding(4.dp)
             ) {
                 Icon(
@@ -110,8 +115,10 @@ fun CalendarTopBar(
             }
             Box(
                 modifier = Modifier
-                    .clip(CircleShape)
-                    .clickable { onThemeClick() }
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { onThemeClick() }
                     .padding(4.dp)
             ) {
                 Icon(
@@ -123,8 +130,10 @@ fun CalendarTopBar(
             }
             Box(
                 modifier = Modifier
-                    .clip(CircleShape)
-                    .clickable { onSettingsClick() }
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { onSettingsClick() }
                     .padding(4.dp)
             ) {
                 Icon(
@@ -168,7 +177,8 @@ fun DayItem(
     moodDrawable: Int? = null,
     isToday: Boolean = false,
     isDimmed: Boolean = false,
-    themeType: com.diary.moonpage.presentation.theme.MoonThemeType = com.diary.moonpage.presentation.theme.MoonThemeType.DEFAULT,
+    isFiltered: Boolean = false,
+    themeType: com.diary.moonpage.core.theme.MoonThemeType = com.diary.moonpage.core.theme.MoonThemeType.DEFAULT,
     onClick: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -185,7 +195,20 @@ fun DayItem(
         return
     }
 
-    val emptyDayBg = colorScheme.surfaceVariant.copy(alpha = 0.7f)
+    if (isFiltered && isDimmed) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 2.dp, vertical = 4.dp)
+        ) {
+            Box(modifier = Modifier.size(42.dp).align(Alignment.Center))
+            Spacer(modifier = Modifier.height(2.dp + 14.dp))
+        }
+        return
+    }
+
+    val isDark = isSystemInDarkTheme()
+    val emptyDayBg = if (isDark) com.diary.moonpage.core.theme.MoonDayCircleDark else colorScheme.surfaceVariant.copy(alpha = 0.7f)
 
     val circleBg = when {
         moodColor != null -> moodColor

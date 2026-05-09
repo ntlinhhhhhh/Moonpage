@@ -9,7 +9,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material.icons.rounded.BrokenImage
 import androidx.compose.material.icons.rounded.PhotoLibrary
 import androidx.compose.material3.*
@@ -85,7 +85,7 @@ fun GalleryScreenContent(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            Icons.AutoMirrored.Rounded.ArrowBack,
+                            Icons.Rounded.ArrowBackIosNew,
                             contentDescription = "Back",
                             tint = colorScheme.onBackground
                         )

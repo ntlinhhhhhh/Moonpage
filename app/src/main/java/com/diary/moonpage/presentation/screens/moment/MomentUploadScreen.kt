@@ -50,7 +50,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.diary.moonpage.core.util.ImageUtils
 import com.diary.moonpage.presentation.components.moment.MomentTag
-import com.diary.moonpage.presentation.theme.nunitoFontFamily
+import com.diary.moonpage.core.theme.nunitoFontFamily
 import kotlinx.coroutines.launch
 import java.io.File
 

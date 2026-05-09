@@ -26,7 +26,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.diary.moonpage.presentation.theme.MoonPageTheme
+import com.diary.moonpage.core.theme.MoonPageTheme
 
 @Composable
 fun MoonOtpField(
@@ -82,7 +82,7 @@ fun OtpInputField(
                 repeat(otpCount) { index ->
                     val char = when {
                         index >= otpText.length -> ""
-                        else -> "•"
+                        else -> "â€¢"
                     }
                     Box(
                         modifier = Modifier

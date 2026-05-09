@@ -39,7 +39,7 @@ import com.diary.moonpage.core.util.MoonIcon
 import com.diary.moonpage.core.util.MoonIcons
 import androidx.compose.ui.graphics.ColorFilter
 import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
-import com.diary.moonpage.presentation.theme.MoonTheme
+import com.diary.moonpage.core.theme.MoonTheme
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -216,7 +216,7 @@ private fun DailyLogTopBar(
 private fun DailyLogBottomBar(
     isLoading: Boolean,
     onSaveClick: () -> Unit,
-    themeType: com.diary.moonpage.presentation.theme.MoonThemeType,
+    themeType: com.diary.moonpage.core.theme.MoonThemeType,
     selectedMood: Int?
 ) {
     Surface(
@@ -224,18 +224,12 @@ private fun DailyLogBottomBar(
         tonalElevation = 2.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
-        val buttonColor = if (selectedMood != null) {
-            MoonIcons.Moods.getMoodColor(selectedMood, themeType)
-        } else {
-            MaterialTheme.colorScheme.primary
-        }
-
         Button(
             onClick = onSaveClick,
             modifier = Modifier.fillMaxWidth().padding(16.dp).height(56.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = buttonColor,
-                contentColor = if (selectedMood != null) Color.Black.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onPrimary
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
             ),
             shape = RoundedCornerShape(16.dp),
             enabled = !isLoading
@@ -337,7 +331,7 @@ private fun DailyLogMainContent(
 @Composable
 private fun DailyMoodSection(
     selectedMood: Int?,
-    themeType: com.diary.moonpage.presentation.theme.MoonThemeType,
+    themeType: com.diary.moonpage.core.theme.MoonThemeType,
     onMoodSelected: (Int) -> Unit
 ) {
     Card(
@@ -353,7 +347,7 @@ private fun DailyMoodSection(
                     val moodColor = MoonIcons.Moods.getMoodColor(id, themeType)
                     val moodVisual = MoonIcons.Moods.getMoodVisual(id, themeType)
                     Box(
-                        modifier = Modifier.size(48.dp).clip(CircleShape)
+                        modifier = Modifier.size(54.dp).clip(CircleShape)
                             .background(
                                 if (isSelected) moodColor
                                 else moodColor.copy(alpha = 0.2f)
@@ -365,7 +359,7 @@ private fun DailyMoodSection(
                             Image(
                                 painter = painterResource(id = moodVisual.drawableRes),
                                 contentDescription = null,
-                                modifier = Modifier.size(if (isSelected) 32.dp else 28.dp)
+                                modifier = Modifier.size(if (isSelected) 38.dp else 32.dp)
                             )
                         }
                     }
@@ -380,15 +374,15 @@ private fun DailyMusicSection(musicTitle: String?, onMusicClick: () -> Unit) {
     Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Music", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
+                Text("Music", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 16.sp)
                 Text("Link account", fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
             }
             Spacer(modifier = Modifier.height(10.dp))
             Surface(color = MoonTheme.customColors.logItemBg, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().clickable { onMusicClick() }) {
                 Row(modifier = Modifier.padding(10.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Rounded.MusicNote, contentDescription = null, modifier = Modifier.size(16.dp), tint = MoonTheme.customColors.logCardOnBg)
+                    Icon(Icons.Rounded.MusicNote, contentDescription = null, modifier = Modifier.size(20.dp), tint = MoonTheme.customColors.logCardOnBg)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(musicTitle ?: "Add a song", fontSize = 12.sp, color = MoonTheme.customColors.logCardOnBg)
+                    Text(musicTitle ?: "Add a song", fontSize = 14.sp, color = MoonTheme.customColors.logCardOnBg)
                 }
             }
         }
@@ -427,7 +421,7 @@ fun DailyActivitySection(
                     color = MoonTheme.customColors.logCardOnBg,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
+                    fontSize = 16.sp
                 )
                 Icon(
                     Icons.Rounded.KeyboardArrowDown,
@@ -474,7 +468,7 @@ fun DailyLogGrid(
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(48.dp)
+                                .size(54.dp)
                                 .clip(CircleShape)
                                 .background(if (isSelected) MoonTheme.customColors.logItemSelect else MoonTheme.customColors.logItemBg)
                                 .clickable(
@@ -488,7 +482,7 @@ fun DailyLogGrid(
                                     painter = painterResource(id = item.icon.drawableRes),
                                     contentDescription = null,
                                     modifier = Modifier
-                                        .size(24.dp),
+                                        .size(28.dp),
                                     colorFilter = if (isSelected) null else ColorFilter.tint(MoonTheme.customColors.logItemIconUnselected.copy(alpha = 0.4f))
                                 )
                             } else if (item.icon.vector != null) {
@@ -496,7 +490,7 @@ fun DailyLogGrid(
                                     item.icon.vector,
                                     contentDescription = null,
                                     tint = if (isSelected) item.icon.color else MoonTheme.customColors.logItemIconUnselected.copy(alpha = 0.4f),
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(24.dp)
                                 )
                             }
                         }
@@ -505,7 +499,7 @@ fun DailyLogGrid(
                             item.label,
                             color = MoonTheme.customColors.logCardOnBg.copy(alpha = if (isSelected) 1f else 0.7f),
                             style = MaterialTheme.typography.bodySmall,
-                            fontSize = 10.sp,
+                            fontSize = 11.sp,
                             maxLines = 1,
                             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                             textAlign = TextAlign.Center
@@ -527,13 +521,13 @@ private fun DailySleepSection(sleepHours: Float) {
     Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Sleep", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
+                Text("Sleep", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 16.sp)
                 Text("Import", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
             }
             Spacer(modifier = Modifier.height(12.dp))
             Surface(color = MoonTheme.customColors.logItemBg, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
                 Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Rounded.Bedtime, contentDescription = null, modifier = Modifier.size(16.dp), tint = MoonTheme.customColors.logCardOnBg)
+                    Icon(Icons.Rounded.Bedtime, contentDescription = null, modifier = Modifier.size(20.dp), tint = MoonTheme.customColors.logCardOnBg)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Record your sleep", fontSize = 14.sp, color = MoonTheme.customColors.logCardOnBg)
                 }

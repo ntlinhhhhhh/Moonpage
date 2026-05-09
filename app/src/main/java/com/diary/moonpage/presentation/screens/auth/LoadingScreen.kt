@@ -31,7 +31,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.diary.moonpage.R
-import com.diary.moonpage.presentation.theme.MoonPageTheme
+import com.diary.moonpage.core.theme.MoonPageTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch

@@ -11,7 +11,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -36,7 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.R
 import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import com.diary.moonpage.presentation.components.profile.*
-import com.diary.moonpage.presentation.theme.MoonPageTheme
+import com.diary.moonpage.core.theme.MoonPageTheme
 import kotlinx.coroutines.launch
 
 /**
@@ -375,7 +374,7 @@ fun AccountScreenContent(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            Icons.AutoMirrored.Rounded.ArrowBack,
+                            Icons.Rounded.ArrowBackIosNew,
                             contentDescription = "Back",
                             tint = colorScheme.onBackground
                         )

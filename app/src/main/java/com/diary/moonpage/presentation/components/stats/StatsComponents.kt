@@ -29,12 +29,12 @@ import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.data.remote.dto.stats.BestActivityDto
 import com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto
 import com.diary.moonpage.data.remote.dto.stats.MoodFlowDto
-import com.diary.moonpage.presentation.theme.*
+import com.diary.moonpage.core.theme.*
 import java.time.YearMonth
 
 @Composable
 fun TabItem(text: String, isSelected: Boolean, onClick: () -> Unit) {
-    val color = if (isSelected) Color(0xFF66BB6A) else Color.Gray
+    val color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
     Column(
         modifier = Modifier
             .width(140.dp)
@@ -75,7 +75,7 @@ fun StatsCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(32.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
@@ -88,12 +88,13 @@ fun StatsCard(
                     text = title,
                     style = MaterialTheme.typography.titleLarge.copy(fontSize = 19.sp),
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF333333)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 if (actionText != null) {
+                    val actionColor = MaterialTheme.colorScheme.onSurfaceVariant
                     TextButton(onClick = onActionClick, contentPadding = PaddingValues(0.dp)) {
-                        Text(actionText, color = Color.Gray, fontSize = 16.sp)
-                        Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(20.dp))
+                        Text(actionText, color = actionColor, fontSize = 16.sp)
+                        Icon(Icons.Rounded.ChevronRight, contentDescription = null, tint = actionColor, modifier = Modifier.size(20.dp))
                     }
                 }
             }
@@ -142,6 +143,7 @@ fun MoodFlowChart(
         }
 
         Column(modifier = Modifier.fillMaxSize().padding(start = 35.dp)) {
+            val gridColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
             Canvas(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 val width = size.width
                 val height = size.height
@@ -151,7 +153,7 @@ fun MoodFlowChart(
                 for (i in 0..gridCount) {
                     val x = width * i / gridCount
                     drawLine(
-                        color = Color.LightGray.copy(alpha = 0.3f),
+                        color = gridColor,
                         start = androidx.compose.ui.geometry.Offset(x, 0f),
                         end = androidx.compose.ui.geometry.Offset(x, height),
                         strokeWidth = 1.dp.toPx()
@@ -174,13 +176,14 @@ fun MoodFlowChart(
             
             // X-Axis Labels
             Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
                 if (isMonthly) {
                     val nextMonth = if (month == 12) 1 else month + 1
                     listOf("$month/1", "$month/6", "$month/11", "$month/16", "$month/21", "$month/26", "$nextMonth/1").forEach {
-                        Text(it, fontSize = 12.sp, color = Color.Gray)
+                        Text(it, fontSize = 12.sp, color = labelColor)
                     }
                 } else {
-                    (1..12).forEach { Text("$it", fontSize = 12.sp, color = Color.Gray) }
+                    (1..12).forEach { Text("$it", fontSize = 12.sp, color = labelColor) }
                 }
             }
         }
@@ -224,14 +227,14 @@ fun MoodDistributionView(
                     Spacer(modifier = Modifier.height(12.dp))
                     Surface(
                         shape = RoundedCornerShape(12.dp),
-                        color = if (percentage > 0) Color(0xFFE8F5E9) else Color(0xFFF5F5F5)
+                        color = if (percentage > 0) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f) else MoonTheme.customColors.logItemBg
                     ) {
                         Text(
                             "$percentage%",
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (percentage > 0) Color(0xFF66BB6A) else Color.Gray,
+                            color = if (percentage > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -241,8 +244,8 @@ fun MoodDistributionView(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Thanh phân đoạn màu sắc bên dưới
-        Row(modifier = Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(22.dp)).background(Color(0xFFF5F5F5))) {
+        // Thanh phÃ¢n Ä‘oáº¡n mÃ u sáº¯c bÃªn dÆ°á»›i
+        Row(modifier = Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(22.dp)).background(MoonTheme.customColors.logItemBg)) {
             moods.forEach { mood ->
                 val dist = distribution.find { it.label.equals(mood.name, true) }
                 val weight = dist?.percentage?.toFloat() ?: 0f
@@ -259,16 +262,19 @@ fun YearInBeansView(
     year: Int,
     themeType: MoonThemeType = MoonThemeType.DEFAULT
 ) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+    
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = buildAnnotatedString {
                 append("Look back on your ")
-                withStyle(style = SpanStyle(color = Color(0xFF66BB6A), fontWeight = FontWeight.Bold)) {
+                withStyle(style = SpanStyle(color = primaryColor, fontWeight = FontWeight.Bold)) {
                     append("$year")
                 }
                 append(".")
             },
-            color = Color.Gray,
+            color = onSurfaceVariant,
             fontSize = 18.sp,
             modifier = Modifier.padding(bottom = 24.dp)
         )
@@ -284,7 +290,7 @@ fun YearInBeansView(
                             modifier = Modifier.width(32.dp),
                             textAlign = TextAlign.Center,
                             fontSize = 14.sp,
-                            color = Color.Gray
+                            color = onSurfaceVariant
                         )
                     }
                 }
@@ -298,11 +304,11 @@ fun YearInBeansView(
                             text = "$day",
                             modifier = Modifier.width(35.dp),
                             fontSize = 14.sp,
-                            color = Color.Gray,
+                            color = onSurfaceVariant,
                             textAlign = TextAlign.Start
                         )
                         (1..12).forEach { month ->
-                            // Giả lập màu sắc tâm trạng cho lưới
+                            // Giáº£ láº­p mÃ u sáº¯c tÃ¢m tráº¡ng cho lÆ°á»›i
                             val color = if ((month + day) % 2 == 0) MoonIcons.Moods.getMoodColor(1, themeType) else MoonIcons.Moods.getMoodColor(2, themeType)
                             Box(
                                 modifier = Modifier
@@ -321,16 +327,19 @@ fun YearInBeansView(
         Button(
             onClick = {},
             modifier = Modifier.fillMaxWidth().height(60.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF66BB6A)),
+            colors = ButtonDefaults.buttonColors(containerColor = primaryColor),
             shape = RoundedCornerShape(16.dp)
         ) {
-            Text("OK", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            Text("OK", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 18.sp)
         }
     }
 }
 
 @Composable
 fun FrequentlyRecordedView(activities: List<BestActivityDto>) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+    
     Column {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             repeat(3) { index ->
@@ -347,14 +356,14 @@ fun FrequentlyRecordedView(activities: List<BestActivityDto>) {
             Text(
                 text = buildAnnotatedString {
                     append("You recorded ")
-                    withStyle(style = SpanStyle(color = Color(0xFF66BB6A), fontWeight = FontWeight.Bold)) {
+                    withStyle(style = SpanStyle(color = primaryColor, fontWeight = FontWeight.Bold)) {
                         append(activities.first().activityName)
                     }
                     append(" the most.")
                 },
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
-                color = Color.Gray,
+                color = onSurfaceVariant,
                 fontSize = 16.sp
             )
         }
@@ -364,23 +373,25 @@ fun FrequentlyRecordedView(activities: List<BestActivityDto>) {
 @Composable
 fun ActivityRankCard(rank: Int, name: String, count: Int, modifier: Modifier = Modifier) {
     val icon = MoonIcons.getIconForActivity(name)
+    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+    
     Card(
         modifier = modifier.height(160.dp),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.5.dp, Color(0xFFEEEEEE))
+        colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
+        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("$rank", modifier = Modifier.align(Alignment.Start), color = Color.Gray, fontSize = 14.sp)
+            Text("$rank", modifier = Modifier.align(Alignment.Start), color = onSurfaceVariant, fontSize = 14.sp)
             Box(
                 modifier = Modifier
                     .size(64.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFF5F9F5)),
+                    .background(MoonTheme.customColors.logItemBg),
                 contentAlignment = Alignment.Center
             ) {
                 if (icon.drawableRes != null) {
@@ -388,25 +399,28 @@ fun ActivityRankCard(rank: Int, name: String, count: Int, modifier: Modifier = M
                 }
             }
             Text(name, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1, textAlign = TextAlign.Center)
-            Text("x$count", color = Color.Gray, fontSize = 14.sp)
+            Text("x$count", color = onSurfaceVariant, fontSize = 14.sp)
         }
     }
 }
 
 @Composable
 fun BestAndWorstView(best: List<BestActivityDto>, worst: List<BestActivityDto>) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    
     Column {
         Text(
             text = buildAnnotatedString {
                 append("When you were feeling ")
-                withStyle(style = SpanStyle(color = Color(0xFF66BB6A), fontWeight = FontWeight.Bold)) {
+                withStyle(style = SpanStyle(color = primaryColor, fontWeight = FontWeight.Bold)) {
                     append("good")
                 }
                 append("...")
             },
             fontSize = 18.sp,
             fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(bottom = 20.dp)
+            modifier = Modifier.padding(bottom = 20.dp),
+            color = MaterialTheme.colorScheme.onSurface
         )
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             repeat(3) { index ->
@@ -424,23 +438,26 @@ fun BestAndWorstView(best: List<BestActivityDto>, worst: List<BestActivityDto>) 
 @Composable
 fun ActivityScoreCard(rank: Int, name: String, score: Double, modifier: Modifier = Modifier) {
     val icon = MoonIcons.getIconForActivity(name)
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+    
     Card(
         modifier = modifier.height(160.dp),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.5.dp, Color(0xFFEEEEEE))
+        colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
+        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("$rank", modifier = Modifier.align(Alignment.Start), color = Color.Gray, fontSize = 14.sp)
+            Text("$rank", modifier = Modifier.align(Alignment.Start), color = onSurfaceVariant, fontSize = 14.sp)
             Box(
                 modifier = Modifier
                     .size(64.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFF5F9F5)),
+                    .background(MoonTheme.customColors.logItemBg),
                 contentAlignment = Alignment.Center
             ) {
                 if (icon.drawableRes != null) {
@@ -450,14 +467,14 @@ fun ActivityScoreCard(rank: Int, name: String, score: Double, modifier: Modifier
             Text(name, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1, textAlign = TextAlign.Center)
             Surface(
                 shape = RoundedCornerShape(14.dp),
-                color = Color(0xFFE8F5E9)
+                color = primaryColor.copy(alpha = 0.2f)
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Rounded.Star, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color(0xFF66BB6A))
-                    Text(String.format(" %.1f", score), color = Color(0xFF66BB6A), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Icon(Icons.Rounded.Star, contentDescription = null, modifier = Modifier.size(16.dp), tint = primaryColor)
+                    Text(String.format(" %.1f", score), color = primaryColor, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -467,13 +484,16 @@ fun ActivityScoreCard(rank: Int, name: String, score: Double, modifier: Modifier
 @Composable
 fun PremiumAnalysisSection(themeType: MoonThemeType = MoonThemeType.DEFAULT) {
     val shades = getThemeShades(themeType)
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+    
     Column(
         modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(Icons.Rounded.EmojiEvents, contentDescription = null, tint = Color(0xFF66BB6A), modifier = Modifier.size(48.dp))
+        Icon(Icons.Rounded.EmojiEvents, contentDescription = null, tint = primaryColor, modifier = Modifier.size(48.dp))
         Spacer(modifier = Modifier.height(12.dp))
-        Text("Premium Analysis", fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 20.sp)
+        Text("Premium Analysis", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, fontSize = 20.sp)
     }
     
     StatsCard(title = "Icon Deep Dive") {
@@ -485,22 +505,22 @@ fun PremiumAnalysisSection(themeType: MoonThemeType = MoonThemeType.DEFAULT) {
             Text(
                 text = buildAnnotatedString {
                     append("Your mood for ")
-                    withStyle(style = SpanStyle(color = Color(0xFF66BB6A), fontWeight = FontWeight.Bold)) {
+                    withStyle(style = SpanStyle(color = primaryColor, fontWeight = FontWeight.Bold)) {
                         append("coffee")
                     }
                 },
-                color = Color.Gray,
+                color = onSurfaceVariant,
                 fontSize = 18.sp
             )
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = Color(0xFF66BB6A),
+                color = primaryColor,
                 onClick = {}
             ) {
                 Text(
                     "Sample",
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onPrimary,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -514,7 +534,7 @@ fun PremiumAnalysisSection(themeType: MoonThemeType = MoonThemeType.DEFAULT) {
                 modifier = Modifier
                     .size(72.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFF9FBF9)),
+                    .background(MoonTheme.customColors.logItemBg),
                 contentAlignment = Alignment.Center
             ) {
                 val icon = MoonIcons.getIconForActivity("Coffee")
@@ -525,13 +545,13 @@ fun PremiumAnalysisSection(themeType: MoonThemeType = MoonThemeType.DEFAULT) {
             
             Spacer(modifier = Modifier.width(20.dp))
             
-            // Segmented Bar mẫu trong Premium
+            // Segmented Bar máº«u trong Premium
             Row(
                 modifier = Modifier
                     .weight(1f)
                     .height(36.dp)
                     .clip(RoundedCornerShape(18.dp))
-                    .background(Color(0xFFF5F5F5))
+                    .background(MoonTheme.customColors.logItemBg)
             ) {
                 shades.forEach { color ->
                     Box(modifier = Modifier.weight(1f).fillMaxHeight().background(color))
@@ -540,6 +560,6 @@ fun PremiumAnalysisSection(themeType: MoonThemeType = MoonThemeType.DEFAULT) {
         }
         
         Spacer(modifier = Modifier.height(24.dp))
-        Text(text = "Recorded together with snack", color = Color.Gray, fontSize = 16.sp)
+        Text(text = "Recorded together with snack", color = onSurfaceVariant, fontSize = 16.sp)
     }
 }

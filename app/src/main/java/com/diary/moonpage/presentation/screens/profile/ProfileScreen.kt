@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.diary.moonpage.presentation.components.profile.*
 import com.diary.moonpage.presentation.components.core.layout.SectionTitle
-import com.diary.moonpage.presentation.theme.*
+import com.diary.moonpage.core.theme.*
 
 /**
  * Stateful Component for Profile Screen

@@ -1,9 +1,15 @@
 package com.diary.moonpage.presentation.screens.calendar
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -16,52 +22,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.diary.moonpage.core.util.MoonIcons
-import com.diary.moonpage.presentation.theme.MoonTheme
+import com.diary.moonpage.core.theme.MoonTheme
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun FilterScreen(
     onDismiss: () -> Unit,
-    onSeeResults: () -> Unit,
-    mainViewModel: com.diary.moonpage.MainViewModel = hiltViewModel()
+    onSeeResults: (FilterItem?) -> Unit,
+    currentFilter: FilterItem? = null,
+    dynamicActivities: List<com.diary.moonpage.domain.model.Activity> = emptyList(),
+    themeType: com.diary.moonpage.core.theme.MoonThemeType = com.diary.moonpage.core.theme.MoonThemeType.DEFAULT
 ) {
-    val themeType by mainViewModel.themeType.collectAsState()
-    
-    // Stateful logic for filters
-    var selectedMood by remember { mutableStateOf<Int?>(null) }
-    val selectedHobbies = remember { mutableStateListOf<String>() }
+    var selectedItem by remember { mutableStateOf<FilterItem?>(currentFilter) }
 
-    FilterContent(
-        selectedMood = selectedMood,
-        themeType = themeType,
-        onMoodSelect = { selectedMood = it },
-        onDismiss = onDismiss,
-        onReset = {
-            selectedMood = null
-            selectedHobbies.clear()
-        },
-        onSeeResults = onSeeResults
-    )
-}
-
-@Composable
-fun FilterContent(
-    selectedMood: Int?,
-    themeType: com.diary.moonpage.presentation.theme.MoonThemeType,
-    onMoodSelect: (Int) -> Unit,
-    onDismiss: () -> Unit,
-    onReset: () -> Unit,
-    onSeeResults: () -> Unit
-) {
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+        color = MaterialTheme.colorScheme.background
     ) {
         Column(
             modifier = Modifier
@@ -69,25 +52,50 @@ fun FilterContent(
                 .padding(24.dp)
         ) {
             // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Spacer(modifier = Modifier.width(48.dp)) // To center title
+            Box(modifier = Modifier.fillMaxWidth()) {
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.CenterStart)
+                ) {
+                    Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back")
+                }
                 Text(
                     text = "When did I record...",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.Center)
                 )
-                IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = "Close")
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Selection Display Box
+            Box(
+                modifier = Modifier
+                    .size(100.dp)
+                    .align(Alignment.CenterHorizontally)
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(24.dp))
+                    .border(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(24.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (selectedItem == null) {
+                    Icon(
+                        Icons.Rounded.Search,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                        modifier = Modifier.size(40.dp)
+                    )
+                } else {
+                    SelectedItemDisplay(selectedItem!!, themeType)
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(40.dp))
 
-            LazyColumn(modifier = Modifier.weight(1f)) {
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(32.dp)
+            ) {
                 item {
                     // Mood Section
                     FilterSectionTitle("Mood")
@@ -95,38 +103,60 @@ fun FilterContent(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        repeat(5) { i ->
-                            val moodId = i + 1
-                            val color = MoonIcons.Moods.getMoodColor(moodId, themeType)
+                        (1..5).forEach { moodId ->
                             val visual = MoonIcons.Moods.getMoodVisual(moodId, themeType)
-                            MoodItem(
-                                color = color,
+                            val isSelected = (selectedItem as? FilterItem.Mood)?.id == moodId
+                            MoodFilterItem(
                                 visual = visual,
-                                isSelected = selectedMood == moodId,
-                                onClick = { onMoodSelect(moodId) }
+                                isSelected = isSelected,
+                                onClick = { selectedItem = FilterItem.Mood(moodId) }
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(24.dp))
                 }
 
                 item {
-                    // Hobbies Section
-                    FilterSectionTitle("Hobbies")
-                    val hobbies = listOf(
-                        Icons.Rounded.FitnessCenter, Icons.Rounded.Tv, Icons.Rounded.LocalMovies,
-                        Icons.Rounded.Gamepad, Icons.Rounded.MenuBook, Icons.Rounded.DirectionsRun,
-                        Icons.Rounded.Headphones, Icons.Rounded.Palette
+                    // Grouped Activities Section
+                    val groupedActivities = dynamicActivities.groupBy { it.category }
+                    Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
+                        groupedActivities.forEach { (category, activities) ->
+                            Column {
+                                FilterSectionTitle(category.ifBlank { "Activities" })
+                                val activityItems = activities.map { 
+                                    FilterItem.Activity(it.id, it.name)
+                                }
+                                ActivityFilterGrid(
+                                    items = activityItems,
+                                    selectedId = (selectedItem as? FilterItem.Activity)?.id,
+                                    onItemClick = { selectedItem = it }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                item {
+                    // Special Section
+                    FilterSectionTitle("Special")
+                    val specials = listOf(
+                        FilterItem.Special("music", "Music", Icons.Rounded.MusicNote),
+                        FilterItem.Special("sleep", "Sleep", Icons.Rounded.Bedtime),
+                        FilterItem.Special("sleep_long", "6-8h Sleep", Icons.Rounded.Timer),
+                        FilterItem.Special("menstruation", "Menstruation", Icons.Rounded.WaterDrop)
                     )
-                    FlowRow(hobbies)
-                    Spacer(modifier = Modifier.height(24.dp))
-                }
-
-                item {
-                    // Emotions Section
-                    FilterSectionTitle("Emotions")
-                    val emotions = listOf(Icons.Rounded.Weekend, Icons.Rounded.Bedtime)
-                    FlowRow(emotions)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        specials.forEach { special ->
+                            val isSelected = (selectedItem as? FilterItem.Special)?.id == special.id
+                            SpecialFilterItem(
+                                item = special,
+                                isSelected = isSelected,
+                                onClick = { selectedItem = special }
+                            )
+                        }
+                    }
                 }
             }
 
@@ -138,22 +168,65 @@ fun FilterContent(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Button(
-                    onClick = onReset,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = MoonTheme.customColors.logItemBg),
-                    shape = RoundedCornerShape(12.dp)
+                    onClick = { selectedItem = null },
+                    modifier = Modifier.weight(1f).height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = ButtonDefaults.buttonElevation(0.dp)
                 ) {
-                    Text("Reset", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Reset", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
                 }
                 Button(
-                    onClick = onSeeResults,
-                    modifier = Modifier.weight(2f),
+                    onClick = { onSeeResults(selectedItem) },
+                    modifier = Modifier.weight(1.5f).height(56.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = ButtonDefaults.buttonElevation(0.dp)
                 ) {
-                    Text("See results", color = MaterialTheme.colorScheme.onPrimary)
+                    Text("See results", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun SelectedItemDisplay(item: FilterItem, themeType: com.diary.moonpage.core.theme.MoonThemeType) {
+    when (item) {
+        is FilterItem.Mood -> {
+            val visual = MoonIcons.Moods.getMoodVisual(item.id, themeType)
+            if (visual.drawableRes != null) {
+                Image(
+                    painter = painterResource(id = visual.drawableRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(60.dp)
+                )
+            }
+        }
+        is FilterItem.Activity -> {
+            val icon = MoonIcons.getIconForActivity(item.name)
+            if (icon.drawableRes != null) {
+                Image(
+                    painter = painterResource(id = icon.drawableRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(60.dp)
+                )
+            } else if (icon.vector != null) {
+                Icon(
+                    icon.vector,
+                    contentDescription = null,
+                    tint = icon.color,
+                    modifier = Modifier.size(50.dp)
+                )
+            }
+        }
+        is FilterItem.Special -> {
+            Icon(
+                item.icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(50.dp)
+            )
         }
     }
 }
@@ -162,54 +235,106 @@ fun FilterContent(
 fun FilterSectionTitle(title: String) {
     Text(
         text = title,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(bottom = 12.dp)
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier.padding(bottom = 16.dp)
     )
 }
 
 @Composable
-fun MoodItem(color: Color, visual: com.diary.moonpage.core.util.MoonIcon, isSelected: Boolean, onClick: () -> Unit) {
+fun MoodFilterItem(
+    visual: com.diary.moonpage.core.util.MoonIcon,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
     Box(
         modifier = Modifier
-            .size(50.dp)
+            .size(56.dp)
             .clip(CircleShape)
-            .background(if (isSelected) color else color.copy(alpha = 0.2f))
-            .clickable { onClick() },
+            .background(if (isSelected) visual.color.copy(alpha = 0.2f) else Color.Transparent)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) { onClick() },
         contentAlignment = Alignment.Center
     ) {
         if (visual.drawableRes != null) {
-            androidx.compose.foundation.Image(
-                painter = androidx.compose.ui.res.painterResource(id = visual.drawableRes),
+            Image(
+                painter = painterResource(id = visual.drawableRes),
                 contentDescription = null,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(if (isSelected) 44.dp else 40.dp)
             )
         }
     }
 }
 
+@Composable
+fun SpecialFilterItem(
+    item: FilterItem.Special,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size(56.dp)
+            .clip(CircleShape)
+            .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            item.icon,
+            contentDescription = item.name,
+            tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(28.dp)
+        )
+    }
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun FlowRow(icons: List<ImageVector>) {
-    androidx.compose.foundation.layout.FlowRow(
+fun ActivityFilterGrid(
+    items: List<FilterItem.Activity>,
+    selectedId: String?,
+    onItemClick: (FilterItem.Activity) -> Unit
+) {
+    FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        icons.forEach { icon ->
+        items.forEach { item ->
+            val isSelected = item.id == selectedId
+            val icon = MoonIcons.getIconForActivity(item.name)
             Box(
                 modifier = Modifier
-                    .size(50.dp)
+                    .size(52.dp)
                     .clip(CircleShape)
-                    .background(MoonTheme.customColors.logItemBg),
+                    .background(if (isSelected) icon.color.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { onItemClick(item) },
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp)
-                )
+                if (icon.drawableRes != null) {
+                    Image(
+                        painter = painterResource(id = icon.drawableRes),
+                        contentDescription = item.name,
+                        modifier = Modifier.size(32.dp)
+                    )
+                } else if (icon.vector != null) {
+                    Icon(
+                        icon.vector,
+                        contentDescription = item.name,
+                        tint = if (isSelected) icon.color else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
         }
     }

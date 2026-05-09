@@ -3,7 +3,7 @@ package com.diary.moonpage.presentation.screens.stats
 import com.diary.moonpage.data.remote.dto.stats.BestActivityDto
 import com.diary.moonpage.data.remote.dto.stats.StatisticsResponse
 
-import com.diary.moonpage.presentation.theme.MoonThemeType
+import com.diary.moonpage.core.theme.MoonThemeType
 
 data class StatisticsUiState(
     val isLoading: Boolean = false,

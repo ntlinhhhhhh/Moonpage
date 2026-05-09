@@ -116,7 +116,7 @@ fun CalendarScreenContent(
                     onFilterClick = { onEvent(CalendarUiEvent.OnFilterClick) },
                     onSettingsClick = onNavigateToSettings,
                     onThemeClick = onNavigateToThemeCalendar,
-                    isFilterActive = uiState.filterMoodIds.isNotEmpty() || uiState.filterActivityIds.isNotEmpty()
+                    isFilterActive = uiState.selectedFilter != null
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -135,8 +135,7 @@ fun CalendarScreenContent(
                     currentYearMonth = uiState.currentYearMonth,
                     selectedDate = uiState.selectedDate,
                     dailyLogs = uiState.dailyLogs,
-                    filterMoodIds = uiState.filterMoodIds,
-                    filterActivityIds = uiState.filterActivityIds,
+                    selectedFilter = uiState.selectedFilter,
                     dynamicActivities = uiState.dynamicActivities,
                     themeType = uiState.themeType,
                     onDateSelected = { date ->
@@ -210,21 +209,18 @@ fun CalendarScreenContent(
     }
 
     if (uiState.showFilterSheet) {
-        @OptIn(ExperimentalMaterial3Api::class)
-        ModalBottomSheet(
+        androidx.compose.ui.window.Dialog(
             onDismissRequest = { onEvent(CalendarUiEvent.OnFilterDismiss) },
-            containerColor = Color.Transparent,
-            dragHandle = null
+            properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
         ) {
-            FilterBottomSheet(
-                selectedMoodIds = uiState.filterMoodIds,
-                selectedActivityIds = uiState.filterActivityIds,
+            FilterScreen(
+                currentFilter = uiState.selectedFilter,
                 dynamicActivities = uiState.dynamicActivities,
                 themeType = uiState.themeType,
-                onMoodToggled = { onEvent(CalendarUiEvent.OnFilterMoodToggled(it)) },
-                onActivityToggled = { onEvent(CalendarUiEvent.OnFilterActivityToggled(it)) },
-                onClearAll = { onEvent(CalendarUiEvent.OnClearFilters) },
-                onDismiss = { onEvent(CalendarUiEvent.OnFilterDismiss) }
+                onDismiss = { onEvent(CalendarUiEvent.OnFilterDismiss) },
+                onSeeResults = { filter ->
+                    onEvent(CalendarUiEvent.ApplyFilter(filter))
+                }
             )
         }
     }
@@ -276,11 +272,10 @@ fun CalendarMonthHeader(
 fun CalendarPager(
     currentYearMonth: java.time.YearMonth,
     selectedDate: LocalDate?,
-    dailyLogs: Map<LocalDate, DailyLog>,
-    filterMoodIds: Set<Int>,
-    filterActivityIds: Set<String>,
+    dailyLogs: Map<LocalDate, com.diary.moonpage.domain.model.DailyLog>,
+    selectedFilter: FilterItem?,
     dynamicActivities: List<com.diary.moonpage.domain.model.Activity>,
-    themeType: com.diary.moonpage.presentation.theme.MoonThemeType,
+    themeType: com.diary.moonpage.core.theme.MoonThemeType,
     onDateSelected: (LocalDate) -> Unit,
     onMonthChanged: (java.time.YearMonth) -> Unit
 ) {
@@ -347,11 +342,22 @@ fun CalendarPager(
                                 val isToday = date == today
                                 val logForDay = dailyLogs[date]
 
-                                val matchesMood = filterMoodIds.isEmpty() || (logForDay != null && filterMoodIds.contains(logForDay.baseMoodId))
-                                val matchesActivity = filterActivityIds.isEmpty() || (logForDay != null && logForDay.activityIds?.any { filterActivityIds.contains(it) } == true)
+                                val isMatch = when (val filter = selectedFilter) {
+                                    null -> true
+                                    is FilterItem.Mood -> logForDay?.baseMoodId == filter.id
+                                    is FilterItem.Activity -> logForDay?.activityIds?.contains(filter.id) == true
+                                    is FilterItem.Special -> {
+                                        when (filter.id) {
+                                            "music" -> logForDay?.activityIds?.any { it.contains("music", ignoreCase = true) } == true
+                                            "sleep" -> (logForDay?.sleepHours ?: 0.0) > 0.0
+                                            "sleep_long" -> (logForDay?.sleepHours ?: 0.0) >= 6.0 && (logForDay?.sleepHours ?: 0.0) <= 8.0
+                                            "menstruation" -> logForDay?.isMenstruation == true
+                                            else -> false
+                                        }
+                                    }
+                                }
                                 
-                                val isFiltered = filterMoodIds.isNotEmpty() || filterActivityIds.isNotEmpty()
-                                val isMatch = matchesMood && matchesActivity
+                                val isFiltered = selectedFilter != null
                                 val isDimmed = isFiltered && !isMatch
 
                                 // Determine what to show in the circle
@@ -363,10 +369,8 @@ fun CalendarPager(
                                     val mv = MoonIcons.Moods.getMoodVisual(logForDay.baseMoodId, themeType)
                                     moodColor = mv.color
                                     
-                                    if (filterActivityIds.isNotEmpty()) {
-                                        // Show activity icon if filtered by activities
-                                        val firstMatchedActivityId = logForDay.activityIds?.find { filterActivityIds.contains(it) }
-                                        val activity = dynamicActivities.find { it.id == firstMatchedActivityId }
+                                    if (selectedFilter is FilterItem.Activity) {
+                                        val activity = dynamicActivities.find { it.id == selectedFilter.id }
                                         if (activity != null) {
                                             val activityIcon = MoonIcons.getIconForActivity(activity.name)
                                             moodDrawable = activityIcon.drawableRes
@@ -374,6 +378,8 @@ fun CalendarPager(
                                         } else {
                                             moodDrawable = mv.drawableRes
                                         }
+                                    } else if (selectedFilter is FilterItem.Special) {
+                                        moodIcon = selectedFilter.icon
                                     } else {
                                         moodDrawable = mv.drawableRes
                                     }
@@ -387,6 +393,7 @@ fun CalendarPager(
                                     moodDrawable = moodDrawable,
                                     isToday = isToday,
                                     isDimmed = isDimmed,
+                                    isFiltered = isFiltered,
                                     themeType = themeType,
                                     onClick = { onDateSelected(date) }
                                 )
@@ -406,7 +413,7 @@ fun CalendarSelectedLogDetail(
     selectedDate: LocalDate?,
     dailyLogs: Map<LocalDate, DailyLog>,
     dynamicActivities: List<com.diary.moonpage.domain.model.Activity>,
-    themeType: com.diary.moonpage.presentation.theme.MoonThemeType,
+    themeType: com.diary.moonpage.core.theme.MoonThemeType,
     onEditLog: (LocalDate) -> Unit,
     onDeleteLog: (LocalDate) -> Unit,
     onShareClick: () -> Unit

@@ -10,6 +10,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.MailOutline
+import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,7 +36,7 @@ import com.diary.moonpage.presentation.components.core.buttons.MoonPrimaryButton
 import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import com.diary.moonpage.presentation.components.core.inputs.MoonTextField
 import com.diary.moonpage.presentation.components.core.navigation.TopCircularIcon
-import com.diary.moonpage.presentation.theme.*
+import com.diary.moonpage.core.theme.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -130,7 +131,7 @@ fun VerifyOtpCodeScreenContent(
                     modifier = Modifier.offset(x = (-12).dp)
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.ic_back),
+                        imageVector = Icons.Rounded.ArrowBackIosNew,
                         contentDescription = "Back",
                         tint = iconColor
                     )

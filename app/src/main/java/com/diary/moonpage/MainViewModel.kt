@@ -3,7 +3,7 @@ package com.diary.moonpage
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.core.util.ThemePreferencesManager
-import com.diary.moonpage.presentation.theme.MoonThemeType
+import com.diary.moonpage.core.theme.MoonThemeType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

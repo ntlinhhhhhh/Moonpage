@@ -77,27 +77,8 @@ class CalendarViewModel @Inject constructor(
             CalendarUiEvent.OnShareDismiss -> {
                 _uiState.update { it.copy(showShareSheet = false) }
             }
-            is CalendarUiEvent.OnShareModeSelected -> {
-                _uiState.update { it.copy(showShareSheet = false) }
-            }
-            is CalendarUiEvent.OnFilterMoodToggled -> {
-                _uiState.update { currentState ->
-                    val newFilters = currentState.filterMoodIds.toMutableSet()
-                    if (newFilters.contains(event.moodId)) newFilters.remove(event.moodId)
-                    else newFilters.add(event.moodId)
-                    currentState.copy(filterMoodIds = newFilters)
-                }
-            }
-            is CalendarUiEvent.OnFilterActivityToggled -> {
-                _uiState.update { currentState ->
-                    val newFilters = currentState.filterActivityIds.toMutableSet()
-                    if (newFilters.contains(event.activityId)) newFilters.remove(event.activityId)
-                    else newFilters.add(event.activityId)
-                    currentState.copy(filterActivityIds = newFilters)
-                }
-            }
-            CalendarUiEvent.OnClearFilters -> {
-                _uiState.update { it.copy(filterMoodIds = emptySet(), filterActivityIds = emptySet()) }
+            is CalendarUiEvent.ApplyFilter -> {
+                _uiState.update { it.copy(selectedFilter = event.filterItem, showFilterSheet = false) }
             }
             CalendarUiEvent.DismissMessage -> {
                 _uiState.update { it.copy(snackbarMessage = null) }

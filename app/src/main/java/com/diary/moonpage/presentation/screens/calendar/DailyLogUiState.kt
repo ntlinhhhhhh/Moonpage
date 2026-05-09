@@ -2,7 +2,7 @@ package com.diary.moonpage.presentation.screens.calendar
 
 import com.diary.moonpage.domain.model.DailyLog
 import com.diary.moonpage.domain.model.Activity
-import com.diary.moonpage.presentation.theme.MoonThemeType
+import com.diary.moonpage.core.theme.MoonThemeType
 import java.time.LocalDate
 
 data class DailyLogUiState(

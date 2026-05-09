@@ -5,7 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.diary.moonpage.presentation.components.profile.AvatarOption
 import com.diary.moonpage.presentation.components.profile.ProfileAvatarGroup
-import com.diary.moonpage.presentation.theme.MoonPageTheme
+import com.diary.moonpage.core.theme.MoonPageTheme
 
 /**
  * Stateful Screen for Changing Profile Picture
@@ -86,7 +86,7 @@ fun ChangeProfilePictureContent(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            Icons.AutoMirrored.Rounded.ArrowBack, 
+                            Icons.Rounded.ArrowBackIosNew, 
                             contentDescription = "Back",
                             tint = colorScheme.onBackground
                         )

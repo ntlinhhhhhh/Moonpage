@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import com.diary.moonpage.domain.model.Theme
-import com.diary.moonpage.presentation.theme.*
+import com.diary.moonpage.core.theme.*
 
 @Composable
 fun CuteBeanIcon(
@@ -442,7 +442,7 @@ fun CurrentThemeCard(theme: Theme) {
                     .background(MaterialTheme.colorScheme.primary, CircleShape), 
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "✓", color = MaterialTheme.colorScheme.onPrimary, fontSize = 20.sp)
+                Text(text = "âœ“", color = MaterialTheme.colorScheme.onPrimary, fontSize = 20.sp)
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column {
@@ -573,7 +573,7 @@ fun PurchaseSuccessDialog(
                         .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("✓", color = MaterialTheme.colorScheme.primary, fontSize = 32.sp)
+                    Text("âœ“", color = MaterialTheme.colorScheme.primary, fontSize = 32.sp)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(

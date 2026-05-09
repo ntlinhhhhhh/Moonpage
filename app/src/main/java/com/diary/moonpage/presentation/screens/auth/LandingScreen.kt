@@ -22,7 +22,7 @@ import com.diary.moonpage.presentation.components.core.layout.MoonPageIndicator
 import com.diary.moonpage.presentation.components.core.buttons.MoonPrimaryButton
 import com.diary.moonpage.presentation.components.core.navigation.OnboardingPage
 import com.diary.moonpage.presentation.components.core.navigation.OnboardingPageItem
-import com.diary.moonpage.presentation.theme.MoonPageTheme
+import com.diary.moonpage.core.theme.MoonPageTheme
 
 val onboardingPages = listOf(
     OnboardingPage(

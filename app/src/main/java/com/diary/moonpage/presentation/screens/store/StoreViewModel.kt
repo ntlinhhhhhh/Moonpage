@@ -8,7 +8,7 @@ import com.diary.moonpage.domain.usecase.theme.BuyThemeUseCase
 import com.diary.moonpage.domain.usecase.theme.GetOwnedThemesUseCase
 import com.diary.moonpage.domain.usecase.theme.GetThemesUseCase
 import com.diary.moonpage.domain.usecase.theme.SetActiveThemeUseCase
-import com.diary.moonpage.presentation.theme.MoonThemeType
+import com.diary.moonpage.core.theme.MoonThemeType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*

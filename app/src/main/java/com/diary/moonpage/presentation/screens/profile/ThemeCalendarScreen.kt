@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,8 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.diary.moonpage.MainViewModel
-import com.diary.moonpage.presentation.theme.MoonPageTheme
-import com.diary.moonpage.presentation.theme.MoonThemeType
+import com.diary.moonpage.core.theme.MoonPageTheme
+import com.diary.moonpage.core.theme.MoonThemeType
 
 // ---- Data model for theme packs ----
 
@@ -45,7 +44,7 @@ private val beanThemes = listOf(
     BeanThemePack(
         id = "basic",
         name = "Basic Bean",
-        description = "The classic round bean — simple and expressive.",
+        description = "The classic round bean â€” simple and expressive.",
         accentColor = Color(0xFF4CAF50),
         secondaryColor = Color(0xFFE8F5E9),
         icon = Icons.Rounded.Circle,
@@ -123,7 +122,7 @@ fun ThemePickerContent(
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(

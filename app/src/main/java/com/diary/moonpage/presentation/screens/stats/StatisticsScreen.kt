@@ -52,12 +52,12 @@ fun StatisticsScreenContent(
     Scaffold(
         topBar = {
             Surface(
-                color = Color(0xFFF9FBF9),
+                color = MaterialTheme.colorScheme.background,
                 tonalElevation = 0.dp
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     CenterAlignedTopAppBar(
-                        title = { Text("Report", fontWeight = FontWeight.Bold, color = Color(0xFF424242)) },
+                        title = { Text("Report", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface) },
                         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
                     )
 
@@ -84,19 +84,19 @@ fun StatisticsScreenContent(
                             text = if (uiState.isMonthly) date.format(DateTimeFormatter.ofPattern("MMM yyyy")) else uiState.selectedYear.toString(),
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
-                            color = Color(0xFF424242)
+                            color = MaterialTheme.colorScheme.onSurface
                         )
-                        Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null, tint = Color.Gray)
+                        Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         },
-        containerColor = Color(0xFFF9FBF9)
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             if (uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFF66BB6A))
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = MaterialTheme.colorScheme.primary)
             } else {
                 Column(
                     modifier = Modifier

@@ -11,7 +11,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.diary.moonpage.presentation.navigation.AppNavigation
-import com.diary.moonpage.presentation.theme.MoonPageTheme
+import com.diary.moonpage.core.theme.MoonPageTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
