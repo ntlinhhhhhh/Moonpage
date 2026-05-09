@@ -124,7 +124,9 @@ fun DailyLogScreenContent(
         bottomBar = {
             DailyLogBottomBar(
                 isLoading = uiState.isLoading,
-                onSaveClick = { onEvent(DailyLogUiEvent.OnSaveClick) }
+                onSaveClick = { onEvent(DailyLogUiEvent.OnSaveClick) },
+                themeType = uiState.themeType,
+                selectedMood = uiState.selectedMood
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -213,19 +215,27 @@ private fun DailyLogTopBar(
 @Composable
 private fun DailyLogBottomBar(
     isLoading: Boolean,
-    onSaveClick: () -> Unit
+    onSaveClick: () -> Unit,
+    themeType: com.diary.moonpage.presentation.theme.MoonThemeType,
+    selectedMood: Int?
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 2.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
+        val buttonColor = if (selectedMood != null) {
+            MoonIcons.Moods.getMoodColor(selectedMood, themeType)
+        } else {
+            MaterialTheme.colorScheme.primary
+        }
+
         Button(
             onClick = onSaveClick,
             modifier = Modifier.fillMaxWidth().padding(16.dp).height(56.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                containerColor = buttonColor,
+                contentColor = if (selectedMood != null) Color.Black.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onPrimary
             ),
             shape = RoundedCornerShape(16.dp),
             enabled = !isLoading
@@ -252,15 +262,7 @@ private fun DailyLogMainContent(
     onNavigateToMenstrualCycle: () -> Unit,
     onNavigateToDailyPhoto: () -> Unit
 ) {
-    val moods = remember {
-        listOf(
-            Pair(1, MoonIcons.Moods.Happy),
-            Pair(2, MoonIcons.Moods.Good),
-            Pair(3, MoonIcons.Moods.Neutral),
-            Pair(4, MoonIcons.Moods.Sad),
-            Pair(5, MoonIcons.Moods.Angry)
-        )
-    }
+    val themeType = uiState.themeType
 
     val activitiesByCategory = remember(uiState.dynamicActivities) {
         uiState.dynamicActivities.groupBy { it.category }.mapValues { entry ->
@@ -281,7 +283,7 @@ private fun DailyLogMainContent(
         item {
             DailyMoodSection(
                 selectedMood = uiState.selectedMood,
-                moods = moods,
+                themeType = themeType,
                 onMoodSelected = { onEvent(DailyLogUiEvent.OnMoodSelected(it)) }
             )
         }
@@ -335,7 +337,7 @@ private fun DailyLogMainContent(
 @Composable
 private fun DailyMoodSection(
     selectedMood: Int?,
-    moods: List<Pair<Int, MoonIcon>>,
+    themeType: com.diary.moonpage.presentation.theme.MoonThemeType,
     onMoodSelected: (Int) -> Unit
 ) {
     Card(
@@ -346,9 +348,10 @@ private fun DailyMoodSection(
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
             Text("How was your day?", color = MoonTheme.customColors.logCardOnBg, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                moods.forEach { (id, moodIcon) ->
+                (1..5).forEach { id ->
                     val isSelected = selectedMood == id
-                    val moodColor = MoonIcons.Moods.getMoodColor(id)
+                    val moodColor = MoonIcons.Moods.getMoodColor(id, themeType)
+                    val moodVisual = MoonIcons.Moods.getMoodVisual(id, themeType)
                     Box(
                         modifier = Modifier.size(48.dp).clip(CircleShape)
                             .background(
@@ -358,9 +361,9 @@ private fun DailyMoodSection(
                             .clickable { onMoodSelected(id) },
                         contentAlignment = Alignment.Center
                     ) {
-                        if (moodIcon.drawableRes != null) {
+                        if (moodVisual.drawableRes != null) {
                             Image(
-                                painter = painterResource(id = moodIcon.drawableRes),
+                                painter = painterResource(id = moodVisual.drawableRes),
                                 contentDescription = null,
                                 modifier = Modifier.size(if (isSelected) 32.dp else 28.dp)
                             )

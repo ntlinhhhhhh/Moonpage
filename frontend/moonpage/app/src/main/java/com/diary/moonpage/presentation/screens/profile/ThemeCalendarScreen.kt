@@ -81,9 +81,17 @@ fun ThemeCalendarScreen(
     ThemePickerContent(
         availableThemes = listOf(
             Triple(MoonThemeType.DEFAULT, "Default Bean", Color(0xFFA6997E)),
-            Triple(MoonThemeType.BLUSHING, "Blushing Bean", Color(0xFFFFB7C5)),
-            Triple(MoonThemeType.KITTY, "Kitty Bean", Color(0xFFB7C2FF)),
-            Triple(MoonThemeType.SPROUT, "Sprout Bean", Color(0xFFA5D6A7)),
+            Triple(MoonThemeType.BLUSHING, "Blushing Bean", Color(0xFFFF7FA3)),
+            Triple(MoonThemeType.KITTY, "Kitty Bean", Color(0xFF8A9AFF)),
+            Triple(MoonThemeType.SPROUT, "Sprout Bean", Color(0xFF66BB6A)),
+            Triple(MoonThemeType.SUNNY, "Sunny Bean", Color(0xFFFFB300)),
+            Triple(MoonThemeType.SKY, "Sky Bean", Color(0xFF29B6F6)),
+            Triple(MoonThemeType.FOREST, "Forest Bean", Color(0xFF26A69A)),
+            Triple(MoonThemeType.COFFEE, "Coffee Bean", Color(0xFF8D6E63)),
+            Triple(MoonThemeType.LEMON, "Lemon Bean", Color(0xFFCDDC39)),
+            Triple(MoonThemeType.CHERRY, "Cherry Bean", Color(0xFFEF5350)),
+            Triple(MoonThemeType.LAVENDER, "Lavender Bean", Color(0xFFAB47BC)),
+            Triple(MoonThemeType.OCEAN, "Ocean Bean", Color(0xFF42A5F5)),
             Triple(MoonThemeType.MIDNIGHT, "Midnight Light", Color(0xFF1A1B26))
         ),
         currentThemeType = currentThemeType,

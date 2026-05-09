@@ -10,13 +10,19 @@ import javax.inject.Inject
 
 @HiltViewModel
 class StatisticsViewModel @Inject constructor(
-    private val repository: StatisticsRepository
+    private val repository: StatisticsRepository,
+    private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(StatisticsUiState())
     val uiState: StateFlow<StatisticsUiState> = _uiState.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            themePreferencesManager.themeType.collect { themeType ->
+                _uiState.update { it.copy(themeType = themeType) }
+            }
+        }
         loadStatistics()
     }
 

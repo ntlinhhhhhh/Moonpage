@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -102,19 +103,6 @@ fun CalendarScreenContent(
     }
 
     Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { onNavigateToDailyLog(LocalDate.now().toString()) },
-                containerColor = MoonIcons.Moods.getMoodColor(1),
-                shape = CircleShape
-            ) {
-                Image(
-                    painter = painterResource(id = MoonIcons.Moods.Good.drawableRes!!),
-                    contentDescription = "New Log",
-                    modifier = Modifier.size(32.dp)
-                )
-            }
-        },
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState, topPadding = 110.dp) }
     ) { paddingValues ->
@@ -127,7 +115,8 @@ fun CalendarScreenContent(
                 CalendarTopBar(
                     onFilterClick = { onEvent(CalendarUiEvent.OnFilterClick) },
                     onSettingsClick = onNavigateToSettings,
-                    onThemeClick = onNavigateToThemeCalendar
+                    onThemeClick = onNavigateToThemeCalendar,
+                    isFilterActive = uiState.filterMoodIds.isNotEmpty() || uiState.filterActivityIds.isNotEmpty()
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -146,6 +135,10 @@ fun CalendarScreenContent(
                     currentYearMonth = uiState.currentYearMonth,
                     selectedDate = uiState.selectedDate,
                     dailyLogs = uiState.dailyLogs,
+                    filterMoodIds = uiState.filterMoodIds,
+                    filterActivityIds = uiState.filterActivityIds,
+                    dynamicActivities = uiState.dynamicActivities,
+                    themeType = uiState.themeType,
                     onDateSelected = { date ->
                         if (date.isAfter(LocalDate.now())) {
                             showSnackbar("You cannot record for a future date!")
@@ -165,6 +158,7 @@ fun CalendarScreenContent(
                     selectedDate = uiState.selectedDate,
                     dailyLogs = uiState.dailyLogs,
                     dynamicActivities = uiState.dynamicActivities,
+                    themeType = uiState.themeType,
                     onEditLog = { date -> onNavigateToDailyLog(date.toString()) },
                     onDeleteLog = { date -> onEvent(CalendarUiEvent.OnDeleteLog(date)) },
                     onShareClick = { onEvent(CalendarUiEvent.OnShareClick) }
@@ -222,11 +216,15 @@ fun CalendarScreenContent(
             containerColor = Color.Transparent,
             dragHandle = null
         ) {
-            FilterScreen(
-                onDismiss = { onEvent(CalendarUiEvent.OnFilterDismiss) },
-                onSeeResults = {
-                    onEvent(CalendarUiEvent.OnFilterDismiss)
-                }
+            FilterBottomSheet(
+                selectedMoodIds = uiState.filterMoodIds,
+                selectedActivityIds = uiState.filterActivityIds,
+                dynamicActivities = uiState.dynamicActivities,
+                themeType = uiState.themeType,
+                onMoodToggled = { onEvent(CalendarUiEvent.OnFilterMoodToggled(it)) },
+                onActivityToggled = { onEvent(CalendarUiEvent.OnFilterActivityToggled(it)) },
+                onClearAll = { onEvent(CalendarUiEvent.OnClearFilters) },
+                onDismiss = { onEvent(CalendarUiEvent.OnFilterDismiss) }
             )
         }
     }
@@ -279,6 +277,10 @@ fun CalendarPager(
     currentYearMonth: java.time.YearMonth,
     selectedDate: LocalDate?,
     dailyLogs: Map<LocalDate, DailyLog>,
+    filterMoodIds: Set<Int>,
+    filterActivityIds: Set<String>,
+    dynamicActivities: List<com.diary.moonpage.domain.model.Activity>,
+    themeType: com.diary.moonpage.presentation.theme.MoonThemeType,
     onDateSelected: (LocalDate) -> Unit,
     onMonthChanged: (java.time.YearMonth) -> Unit
 ) {
@@ -345,17 +347,47 @@ fun CalendarPager(
                                 val isToday = date == today
                                 val logForDay = dailyLogs[date]
 
-                                val mv = if (logForDay != null) com.diary.moonpage.core.util.MoonIcons.Moods.getMoodVisual(logForDay.baseMoodId) else null
-                                val isLoggedToday = logForDay?.date == today.toString()
+                                val matchesMood = filterMoodIds.isEmpty() || (logForDay != null && filterMoodIds.contains(logForDay.baseMoodId))
+                                val matchesActivity = filterActivityIds.isEmpty() || (logForDay != null && logForDay.activityIds?.any { filterActivityIds.contains(it) } == true)
+                                
+                                val isFiltered = filterMoodIds.isNotEmpty() || filterActivityIds.isNotEmpty()
+                                val isMatch = matchesMood && matchesActivity
+                                val isDimmed = isFiltered && !isMatch
+
+                                // Determine what to show in the circle
+                                var moodColor: Color? = null
+                                var moodIcon: ImageVector? = null
+                                var moodDrawable: Int? = null
+
+                                if (logForDay != null) {
+                                    val mv = MoonIcons.Moods.getMoodVisual(logForDay.baseMoodId, themeType)
+                                    moodColor = mv.color
+                                    
+                                    if (filterActivityIds.isNotEmpty()) {
+                                        // Show activity icon if filtered by activities
+                                        val firstMatchedActivityId = logForDay.activityIds?.find { filterActivityIds.contains(it) }
+                                        val activity = dynamicActivities.find { it.id == firstMatchedActivityId }
+                                        if (activity != null) {
+                                            val activityIcon = MoonIcons.getIconForActivity(activity.name)
+                                            moodDrawable = activityIcon.drawableRes
+                                            moodIcon = activityIcon.vector
+                                        } else {
+                                            moodDrawable = mv.drawableRes
+                                        }
+                                    } else {
+                                        moodDrawable = mv.drawableRes
+                                    }
+                                }
 
                                 DayItem(
                                     day = day,
                                     isSelected = isSelected,
-                                    moodColor = mv?.color,
-                                    moodIcon = mv?.vector,
-                                    moodDrawable = mv?.drawableRes,
+                                    moodColor = moodColor,
+                                    moodIcon = moodIcon,
+                                    moodDrawable = moodDrawable,
                                     isToday = isToday,
-                                    isDimmed = logForDay != null && !isLoggedToday,
+                                    isDimmed = isDimmed,
+                                    themeType = themeType,
                                     onClick = { onDateSelected(date) }
                                 )
                             } else {
@@ -374,13 +406,14 @@ fun CalendarSelectedLogDetail(
     selectedDate: LocalDate?,
     dailyLogs: Map<LocalDate, DailyLog>,
     dynamicActivities: List<com.diary.moonpage.domain.model.Activity>,
+    themeType: com.diary.moonpage.presentation.theme.MoonThemeType,
     onEditLog: (LocalDate) -> Unit,
     onDeleteLog: (LocalDate) -> Unit,
     onShareClick: () -> Unit
 ) {
     val date = selectedDate ?: return
     val selectedLog = dailyLogs[date] ?: return
-    val mv = com.diary.moonpage.core.util.MoonIcons.Moods.getMoodVisual(selectedLog.baseMoodId)
+    val mv = com.diary.moonpage.core.util.MoonIcons.Moods.getMoodVisual(selectedLog.baseMoodId, themeType)
     val activityNames = selectedLog.activityIds?.mapNotNull { id ->
         dynamicActivities.find { it.id == id }?.name
     } ?: emptyList()
@@ -402,15 +435,13 @@ fun CalendarSelectedLogDetail(
 
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 IconButton(onClick = onShareClick) {
-                    Icon(Icons.Rounded.IosShare, contentDescription = "Share", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp
-))
+                    Icon(Icons.Rounded.IosShare, contentDescription = "Share", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp))
                 }
                 IconButton(onClick = { onEditLog(date) }) {
                     Icon(Icons.Rounded.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp))   
                 }
                 IconButton(onClick = { onDeleteLog(date) }) {
-                    Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp)
-)
+                    Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp))
                 }
             }
         }
@@ -423,7 +454,7 @@ fun CalendarSelectedLogDetail(
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
             ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp) // Reduced shadow
         ) {
             DayDetailArea(
                 date = date,
@@ -434,7 +465,6 @@ fun CalendarSelectedLogDetail(
                 noteSnippet = selectedLog.note,
                 activityNames = activityNames
             )
-
         }
     }
 }

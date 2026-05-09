@@ -2,6 +2,7 @@ package com.diary.moonpage.presentation.screens.calendar
 
 import com.diary.moonpage.domain.model.DailyLog
 import com.diary.moonpage.domain.model.Activity
+import com.diary.moonpage.presentation.theme.MoonThemeType
 import java.time.LocalDate
 
 data class DailyLogUiState(
@@ -22,5 +23,6 @@ data class DailyLogUiState(
     val showDatePicker: Boolean = false,
     val showOverwriteDialog: Boolean = false,
     val pendingDate: LocalDate? = null,
-    val snackbarMessage: String? = null
+    val snackbarMessage: String? = null,
+    val themeType: MoonThemeType = MoonThemeType.DEFAULT
 )

@@ -127,8 +127,112 @@ class StoreViewModel @Inject constructor(
                     type = ThemeType.THEME,
                     description = "Tiny sprouts growing on happy little beans.",
                     icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
-                    primaryColor = "#C2E5A0",
+                    primaryColor = "#66BB6A",
                     decoration = "SPROUT"
+                ),
+                Theme(
+                    id = "12",
+                    name = "Sunny Bean",
+                    collection = "Hello sunshine!",
+                    price = 80,
+                    thumbnailUrl = null,
+                    backgroundUrl = null,
+                    type = ThemeType.THEME,
+                    description = "Bright and cheerful yellow beans to light up your day.",
+                    icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
+                    primaryColor = "#FFB300",
+                    decoration = "SUNNY"
+                ),
+                Theme(
+                    id = "13",
+                    name = "Sky Bean",
+                    collection = "Up in the clouds",
+                    price = 80,
+                    thumbnailUrl = null,
+                    backgroundUrl = null,
+                    type = ThemeType.THEME,
+                    description = "Vibrant sky blue beans for a fresh journaling experience.",
+                    icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
+                    primaryColor = "#29B6F6",
+                    decoration = "SKY"
+                ),
+                Theme(
+                    id = "14",
+                    name = "Forest Bean",
+                    collection = "Nature's embrace",
+                    price = 90,
+                    thumbnailUrl = null,
+                    backgroundUrl = null,
+                    type = ThemeType.THEME,
+                    description = "Deep teal beans inspired by the tranquility of the forest.",
+                    icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
+                    primaryColor = "#26A69A",
+                    decoration = "FOREST"
+                ),
+                Theme(
+                    id = "15",
+                    name = "Coffee Bean",
+                    collection = "Morning brew",
+                    price = 90,
+                    thumbnailUrl = null,
+                    backgroundUrl = null,
+                    type = ThemeType.THEME,
+                    description = "Warm coffee-toned beans for those cozy journaling moments.",
+                    icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
+                    primaryColor = "#8D6E63",
+                    decoration = "COFFEE"
+                ),
+                Theme(
+                    id = "16",
+                    name = "Lemon Bean",
+                    collection = "Zesty life",
+                    price = 80,
+                    thumbnailUrl = null,
+                    backgroundUrl = null,
+                    type = ThemeType.THEME,
+                    description = "Fresh and zesty lemon beans for a bright day.",
+                    icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
+                    primaryColor = "#CDDC39",
+                    decoration = "LEMON"
+                ),
+                Theme(
+                    id = "17",
+                    name = "Cherry Bean",
+                    collection = "Sweet & Red",
+                    price = 100,
+                    thumbnailUrl = null,
+                    backgroundUrl = null,
+                    type = ThemeType.THEME,
+                    description = "Sweet cherry red beans to express your passion.",
+                    icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
+                    primaryColor = "#EF5350",
+                    decoration = "CHERRY"
+                ),
+                Theme(
+                    id = "18",
+                    name = "Lavender Bean",
+                    collection = "Calm Purple",
+                    price = 90,
+                    thumbnailUrl = null,
+                    backgroundUrl = null,
+                    type = ThemeType.THEME,
+                    description = "Soothing lavender beans for peaceful reflection.",
+                    icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
+                    primaryColor = "#AB47BC",
+                    decoration = "LAVENDER"
+                ),
+                Theme(
+                    id = "19",
+                    name = "Ocean Bean",
+                    collection = "Deep Blue Sea",
+                    price = 110,
+                    thumbnailUrl = null,
+                    backgroundUrl = null,
+                    type = ThemeType.THEME,
+                    description = "Deep ocean blue beans for your deepest thoughts.",
+                    icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
+                    primaryColor = "#42A5F5",
+                    decoration = "OCEAN"
                 ),
                 Theme(
                     id = "4",
@@ -274,6 +378,10 @@ class StoreViewModel @Inject constructor(
                 "2" -> MoonThemeType.KITTY
                 "3" -> MoonThemeType.SPROUT
                 "4" -> MoonThemeType.MIDNIGHT
+                "12" -> MoonThemeType.SUNNY
+                "13" -> MoonThemeType.SKY
+                "14" -> MoonThemeType.FOREST
+                "15" -> MoonThemeType.COFFEE
                 else -> MoonThemeType.DEFAULT
             }
             themePreferencesManager.setThemeType(themeType)

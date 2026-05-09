@@ -105,14 +105,21 @@ fun StatsCard(
 }
 
 @Composable
-fun MoodFlowChart(moodFlow: List<MoodFlowDto>, year: Int, month: Int, isMonthly: Boolean = true) {
-    val primaryColor = Color(0xFF66BB6A)
+fun MoodFlowChart(
+    moodFlow: List<MoodFlowDto>, 
+    year: Int, 
+    month: Int, 
+    isMonthly: Boolean = true,
+    themeType: MoonThemeType = MoonThemeType.DEFAULT
+) {
+    val shades = getThemeShades(themeType)
+    val primaryColor = MaterialTheme.colorScheme.primary
     val moodColors = listOf(
-        MoonMoodHappy,
-        MoonMoodGood,
-        MoonMoodNeutral,
-        MoonMoodSad,
-        MoonMoodAngry
+        shades[0],
+        shades[1],
+        shades[2],
+        shades[3],
+        shades[4]
     )
     
     Box(
@@ -181,33 +188,39 @@ fun MoodFlowChart(moodFlow: List<MoodFlowDto>, year: Int, month: Int, isMonthly:
 }
 
 @Composable
-fun MoodDistributionView(distribution: List<MoodDistributionDto>) {
+fun MoodDistributionView(
+    distribution: List<MoodDistributionDto>,
+    themeType: MoonThemeType = MoonThemeType.DEFAULT
+) {
     val moods = listOf(
-        MoonIcons.Moods.Happy,
-        MoonIcons.Moods.Good,
-        MoonIcons.Moods.Neutral,
-        MoonIcons.Moods.Sad,
-        MoonIcons.Moods.Angry
+        MoonIcons.Moods.getMoodVisual(1, themeType),
+        MoonIcons.Moods.getMoodVisual(2, themeType),
+        MoonIcons.Moods.getMoodVisual(3, themeType),
+        MoonIcons.Moods.getMoodVisual(4, themeType),
+        MoonIcons.Moods.getMoodVisual(5, themeType)
     )
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.Bottom) {
-            moods.forEach { mood ->
+            moods.forEachIndexed { index, mood ->
+                val moodId = index + 1
                 val dist = distribution.find { 
                     it.label.equals(mood.name, ignoreCase = true) ||
-                    (mood.name == "Happy" && it.label.equals("Rad", ignoreCase = true)) ||
-                    (mood.name == "Neutral" && it.label.equals("Meh", ignoreCase = true)) ||
-                    (mood.name == "Sad" && it.label.equals("Low", ignoreCase = true)) ||
-                    (mood.name == "Angry" && it.label.equals("Bad", ignoreCase = true))
+                    (moodId == 1 && it.label.equals("Rad", ignoreCase = true)) ||
+                    (moodId == 3 && it.label.equals("Meh", ignoreCase = true)) ||
+                    (moodId == 4 && it.label.equals("Low", ignoreCase = true)) ||
+                    (moodId == 5 && it.label.equals("Bad", ignoreCase = true))
                 }
                 val percentage = dist?.percentage ?: 0
                 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Image(
-                        painter = painterResource(id = mood.drawableRes!!),
-                        contentDescription = null,
-                        modifier = Modifier.size(if (percentage > 25) 64.dp else 52.dp)
-                    )
+                    if (mood.drawableRes != null) {
+                        Image(
+                            painter = painterResource(id = mood.drawableRes!!),
+                            contentDescription = null,
+                            modifier = Modifier.size(if (percentage > 25) 64.dp else 52.dp)
+                        )
+                    }
                     Spacer(modifier = Modifier.height(12.dp))
                     Surface(
                         shape = RoundedCornerShape(12.dp),
@@ -242,7 +255,10 @@ fun MoodDistributionView(distribution: List<MoodDistributionDto>) {
 }
 
 @Composable
-fun YearInBeansView(year: Int) {
+fun YearInBeansView(
+    year: Int,
+    themeType: MoonThemeType = MoonThemeType.DEFAULT
+) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = buildAnnotatedString {
@@ -287,7 +303,7 @@ fun YearInBeansView(year: Int) {
                         )
                         (1..12).forEach { month ->
                             // Giả lập màu sắc tâm trạng cho lưới
-                            val color = if ((month + day) % 2 == 0) MoonMoodHappy else MoonMoodGood
+                            val color = if ((month + day) % 2 == 0) MoonIcons.Moods.getMoodColor(1, themeType) else MoonIcons.Moods.getMoodColor(2, themeType)
                             Box(
                                 modifier = Modifier
                                     .padding(horizontal = 3.dp)
@@ -449,7 +465,8 @@ fun ActivityScoreCard(rank: Int, name: String, score: Double, modifier: Modifier
 }
 
 @Composable
-fun PremiumAnalysisSection() {
+fun PremiumAnalysisSection(themeType: MoonThemeType = MoonThemeType.DEFAULT) {
+    val shades = getThemeShades(themeType)
     Column(
         modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -516,13 +533,7 @@ fun PremiumAnalysisSection() {
                     .clip(RoundedCornerShape(18.dp))
                     .background(Color(0xFFF5F5F5))
             ) {
-                listOf(
-                    MoonMoodHappy.copy(alpha = 0.5f),
-                    MoonMoodGood.copy(alpha = 0.7f),
-                    MoonMoodNeutral.copy(alpha = 0.9f),
-                    MoonMoodSad.copy(alpha = 0.6f),
-                    MoonMoodAngry.copy(alpha = 0.8f)
-                ).forEach { color ->
+                shades.forEach { color ->
                     Box(modifier = Modifier.weight(1f).fillMaxHeight().background(color))
                 }
             }

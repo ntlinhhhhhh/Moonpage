@@ -18,7 +18,8 @@ import com.diary.moonpage.core.util.ActivityPreferencesManager
 @HiltViewModel
 class CalendarViewModel @Inject constructor(
     private val repository: DailyLogRepository,
-    private val activityPreferencesManager: ActivityPreferencesManager
+    private val activityPreferencesManager: ActivityPreferencesManager,
+    private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CalendarUiState())
@@ -28,6 +29,11 @@ class CalendarViewModel @Inject constructor(
         viewModelScope.launch {
             activityPreferencesManager.activities.collect { activities ->
                 _uiState.update { it.copy(dynamicActivities = activities) }
+            }
+        }
+        viewModelScope.launch {
+            themePreferencesManager.themeType.collect { themeType ->
+                _uiState.update { it.copy(themeType = themeType) }
             }
         }
         fetchLogsForMonth(_uiState.value.currentYearMonth)

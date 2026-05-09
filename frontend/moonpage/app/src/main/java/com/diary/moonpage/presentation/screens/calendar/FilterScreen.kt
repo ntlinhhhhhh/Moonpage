@@ -21,18 +21,24 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.presentation.theme.MoonTheme
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun FilterScreen(
     onDismiss: () -> Unit,
-    onSeeResults: () -> Unit
+    onSeeResults: () -> Unit,
+    mainViewModel: com.diary.moonpage.MainViewModel = hiltViewModel()
 ) {
+    val themeType by mainViewModel.themeType.collectAsState()
+    
     // Stateful logic for filters
     var selectedMood by remember { mutableStateOf<Int?>(null) }
     val selectedHobbies = remember { mutableStateListOf<String>() }
 
     FilterContent(
         selectedMood = selectedMood,
+        themeType = themeType,
         onMoodSelect = { selectedMood = it },
         onDismiss = onDismiss,
         onReset = {
@@ -46,6 +52,7 @@ fun FilterScreen(
 @Composable
 fun FilterContent(
     selectedMood: Int?,
+    themeType: com.diary.moonpage.presentation.theme.MoonThemeType,
     onMoodSelect: (Int) -> Unit,
     onDismiss: () -> Unit,
     onReset: () -> Unit,
@@ -89,11 +96,14 @@ fun FilterContent(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         repeat(5) { i ->
-                            val color = MoonIcons.Moods.getMoodColor(i + 1)
+                            val moodId = i + 1
+                            val color = MoonIcons.Moods.getMoodColor(moodId, themeType)
+                            val visual = MoonIcons.Moods.getMoodVisual(moodId, themeType)
                             MoodItem(
                                 color = color,
-                                isSelected = selectedMood == i,
-                                onClick = { onMoodSelect(i) }
+                                visual = visual,
+                                isSelected = selectedMood == moodId,
+                                onClick = { onMoodSelect(moodId) }
                             )
                         }
                     }
@@ -159,24 +169,22 @@ fun FilterSectionTitle(title: String) {
 }
 
 @Composable
-fun MoodItem(color: Color, isSelected: Boolean, onClick: () -> Unit) {
+fun MoodItem(color: Color, visual: com.diary.moonpage.core.util.MoonIcon, isSelected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .size(50.dp)
             .clip(CircleShape)
-            .background(color)
-            .clickable { onClick() }
-            .then(
-                if (isSelected) Modifier.background(color.copy(alpha = 0.7f)) else Modifier
-            ),
+            .background(if (isSelected) color else color.copy(alpha = 0.2f))
+            .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            imageVector = Icons.Rounded.SentimentSatisfied,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-            modifier = Modifier.size(30.dp)
-        )
+        if (visual.drawableRes != null) {
+            androidx.compose.foundation.Image(
+                painter = androidx.compose.ui.res.painterResource(id = visual.drawableRes),
+                contentDescription = null,
+                modifier = Modifier.size(32.dp)
+            )
+        }
     }
 }
 

@@ -270,15 +270,23 @@ fun ThemeCard(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        val shades = if (theme.decoration == "MOON") {
+            listOf(Color(0xFFFFF176), Color(0xFFFFEE58), Color(0xFFFFD54F), Color(0xFFFFB300), Color(0xFFFFA000))
+        } else {
+            getThemeShades(theme.decoration)
+        }
+
+        val isNewStyle = listOf("SUNNY", "SKY", "FOREST", "COFFEE", "LEMON", "CHERRY", "LAVENDER", "OCEAN", "SPROUT").contains(theme.decoration)
+        val previewBg = if (isNewStyle) shades[0]
+        else if (theme.primaryColor != null) Color(android.graphics.Color.parseColor(theme.primaryColor))
+        else MaterialTheme.colorScheme.background
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(160.dp)
                 .clip(RoundedCornerShape(24.dp))
-                .background(
-                    if (theme.primaryColor != null) Color(android.graphics.Color.parseColor(theme.primaryColor))
-                    else MaterialTheme.colorScheme.background
-                ),
+                .background(previewBg),
             contentAlignment = Alignment.Center
         ) {
             Row(
@@ -286,14 +294,6 @@ fun ThemeCard(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val shades = if (theme.decoration == "MOON") {
-                    listOf(
-                        Color(0xFFFFF176), Color(0xFFFFEE58), Color(0xFFFFD54F), Color(0xFFFFB300), Color(0xFFFFA000)
-                    )
-                } else {
-                    getThemeShades(theme.decoration)
-                }
-                
                 theme.icons.forEachIndexed { index, emotion ->
                     CuteBeanIcon(
                         emotion = emotion,
@@ -607,6 +607,30 @@ fun getThemeShades(decoration: String): List<Color> {
         "SPROUT" -> listOf(
             Color(0xFFF1F8E9), Color(0xFFDCEDC8), Color(0xFFC5E1A5), Color(0xFFAED581), Color(0xFF9CCC65)
         )
+        "SUNNY" -> listOf(
+            Color(0xFFFFF8E1), Color(0xFFFFECB3), Color(0xFFFFD54F), Color(0xFFFFCA28), Color(0xFFFFB300)
+        )
+        "SKY" -> listOf(
+            Color(0xFFE1F5FE), Color(0xFFB3E5FC), Color(0xFF81D4FA), Color(0xFF4FC3F7), Color(0xFF29B6F6)
+        )
+        "FOREST" -> listOf(
+            Color(0xFFE0F2F1), Color(0xFFB2DFDB), Color(0xFF80CBC4), Color(0xFF4DB6AC), Color(0xFF26A69A)
+        )
+        "COFFEE" -> listOf(
+            Color(0xFFEFEBE9), Color(0xFFD7CCC8), Color(0xFFBCAAA4), Color(0xFF8D6E63), Color(0xFF6D4C41)
+        )
+        "LEMON" -> listOf(
+            Color(0xFFF9FBE7), Color(0xFFF0F4C3), Color(0xFFE6EE9C), Color(0xFFDCE775), Color(0xFFCDDC39)
+        )
+        "CHERRY" -> listOf(
+            Color(0xFFFFEBEE), Color(0xFFFFCDD2), Color(0xFFEF9A9A), Color(0xFFE57373), Color(0xFFF44336)
+        )
+        "LAVENDER" -> listOf(
+            Color(0xFFF3E5F5), Color(0xFFE1BEE7), Color(0xFFCE93D8), Color(0xFFBA68C8), Color(0xFFAB47BC)
+        )
+        "OCEAN" -> listOf(
+            Color(0xFFE3F2FD), Color(0xFFBBDEFB), Color(0xFF90CAF9), Color(0xFF64B5F6), Color(0xFF2196F3)
+        )
         "BROWN" -> listOf(
             Color(0xFFEFEBE9), Color(0xFFD7CCC8), Color(0xFFBCAAA4), Color(0xFF8D6E63), Color(0xFF5D4037)
         )
@@ -620,7 +644,7 @@ fun getThemeShades(decoration: String): List<Color> {
             Color(0xFFE1F5FE), Color(0xFFB3E5FC), Color(0xFF81D4FA), Color(0xFF4FC3F7), Color(0xFF29B6F6)
         )
         else -> listOf(
-            Color(0xFFFAFAFA), Color(0xFFF5F5F5), Color(0xFFEEEEEE), Color(0xFFE0E0E0), Color(0xFFBDBDBD)
+            Color(0xFFE8E1DA), Color(0xFFD7CCC8), Color(0xFFBCAAA4), Color(0xFF8D6E63), Color(0xFF5D4037)
         )
     }
 }

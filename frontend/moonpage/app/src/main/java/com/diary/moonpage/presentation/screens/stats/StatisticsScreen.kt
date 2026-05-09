@@ -107,18 +107,18 @@ fun StatisticsScreenContent(
                 ) {
                     // Mood Flow Chart
                     StatsCard(title = "Mood Flow") {
-                        MoodFlowChart(stats?.moodFlow ?: emptyList(), uiState.selectedYear, uiState.selectedMonth, isMonthly = uiState.isMonthly)
+                        MoodFlowChart(stats?.moodFlow ?: emptyList(), uiState.selectedYear, uiState.selectedMonth, isMonthly = uiState.isMonthly, themeType = uiState.themeType)
                     }
 
                     // Mood Bar Chart
                     StatsCard(title = "Mood Bar") {
-                        MoodDistributionView(stats?.moodDistribution ?: emptyList())
+                        MoodDistributionView(stats?.moodDistribution ?: emptyList(), themeType = uiState.themeType)
                     }
 
                     if (!uiState.isMonthly) {
                         // Year in Beans (Annual only)
                         StatsCard(title = "Year in Beans") {
-                            YearInBeansView(uiState.selectedYear)
+                            YearInBeansView(uiState.selectedYear, themeType = uiState.themeType)
                         }
                     }
 
@@ -133,7 +133,7 @@ fun StatisticsScreenContent(
                     }
 
                     // Premium Section
-                    PremiumAnalysisSection()
+                    PremiumAnalysisSection(themeType = uiState.themeType)
 
                     Spacer(modifier = Modifier.height(32.dp))
                 }

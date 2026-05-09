@@ -39,12 +39,14 @@ import java.util.*
 import androidx.compose.ui.platform.LocalLocale
 import kotlinx.coroutines.launch
 import com.diary.moonpage.core.util.MoonIcons
+import com.diary.moonpage.presentation.theme.MoonThemeType
 
 @Composable
 fun CalendarTopBar(
     onFilterClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onThemeClick: () -> Unit = {},
+    isFilterActive: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -65,11 +67,21 @@ fun CalendarTopBar(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Eco,
-                    contentDescription = "App Icon",
+                    imageVector = Icons.Rounded.FilterList,
+                    contentDescription = "Filter",
                     tint = Color(0xFF4CAF50),
                     modifier = Modifier.size(24.dp)
                 )
+                if (isFilterActive) {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .align(Alignment.TopEnd)
+                            .offset(x = 2.dp, y = (-2).dp)
+                            .background(MaterialTheme.colorScheme.error, CircleShape)
+                            .border(2.dp, MaterialTheme.colorScheme.background, CircleShape)
+                    )
+                }
             }
             Spacer(modifier = Modifier.width(4.dp))
             Icon(
@@ -156,6 +168,7 @@ fun DayItem(
     moodDrawable: Int? = null,
     isToday: Boolean = false,
     isDimmed: Boolean = false,
+    themeType: com.diary.moonpage.presentation.theme.MoonThemeType = com.diary.moonpage.presentation.theme.MoonThemeType.DEFAULT,
     onClick: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -853,7 +866,8 @@ private fun ShareModeItem(
 fun ShareCalendarCard(
     yearMonth: YearMonth,
     dailyLogs: Map<LocalDate, com.diary.moonpage.domain.model.DailyLog>,
-    isSquare: Boolean = true
+    isSquare: Boolean = true,
+    themeType: MoonThemeType = MoonThemeType.DEFAULT
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val monthName = yearMonth.format(java.time.format.DateTimeFormatter.ofPattern("MMMM yyyy"))
@@ -923,18 +937,18 @@ fun ShareCalendarCard(
                                 val log = dailyLogs[date]
                                 val moodId = log?.baseMoodId ?: 0
 
-                                val moodVisual = MoonIcons.Moods.getMoodVisual(moodId)
+                                val moodVisual = if (moodId != 0) MoonIcons.Moods.getMoodVisual(moodId, themeType) else null
 
                                 Box(
                                     modifier = Modifier
                                         .size(if (isSquare) 80.dp else 100.dp)
                                         .background(
-                                            if (moodId != 0) moodVisual.color else colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                            moodVisual?.color ?: colorScheme.surfaceVariant.copy(alpha = 0.5f),
                                             CircleShape
                                         ),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    if (moodId != 0 && moodVisual.drawableRes != null) {
+                                    if (moodVisual != null && moodVisual.drawableRes != null) {
                                         Image(
                                             painter = painterResource(id = moodVisual.drawableRes),
                                             contentDescription = null,
@@ -1025,6 +1039,140 @@ fun CalendarSnackbarHost(snackbarHostState: SnackbarHostState) {
                 color = Color.White,
                 style = MaterialTheme.typography.bodyMedium
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FilterBottomSheet(
+    selectedMoodIds: Set<Int>,
+    selectedActivityIds: Set<String>,
+    dynamicActivities: List<com.diary.moonpage.domain.model.Activity>,
+    themeType: MoonThemeType = MoonThemeType.DEFAULT,
+    onMoodToggled: (Int) -> Unit,
+    onActivityToggled: (String) -> Unit,
+    onClearAll: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val cs = MaterialTheme.colorScheme
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = cs.surface,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .padding(top = 12.dp)
+                    .width(40.dp)
+                    .height(4.dp)
+                    .background(cs.onSurface.copy(alpha = 0.15f), CircleShape)
+            )
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 40.dp, top = 8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Filter Your Month",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                if (selectedMoodIds.isNotEmpty() || selectedActivityIds.isNotEmpty()) {
+                    TextButton(onClick = onClearAll) {
+                        Text("Clear All", color = cs.primary)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Moods Section
+            Text(
+                "Filter by Mood",
+                style = MaterialTheme.typography.titleSmall,
+                color = cs.onSurface.copy(alpha = 0.5f)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                val moods = listOf(1, 2, 3, 4, 5)
+                moods.forEach { moodId ->
+                    val isSelected = selectedMoodIds.contains(moodId)
+                    val visual = MoonIcons.Moods.getMoodVisual(moodId, themeType)
+                    Box(
+                        modifier = Modifier
+                            .size(52.dp)
+                            .clip(CircleShape)
+                            .background(if (isSelected) visual.color else visual.color.copy(alpha = 0.12f))
+                            .clickable { onMoodToggled(moodId) }
+                            .border(
+                                width = if (isSelected) 2.dp else 0.dp,
+                                color = if (isSelected) cs.onSurface.copy(alpha = 0.5f) else Color.Transparent,
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (visual.drawableRes != null) {
+                            Image(
+                                painter = painterResource(id = visual.drawableRes),
+                                contentDescription = visual.name,
+                                modifier = Modifier.size(34.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Activities Section
+            Text(
+                "Filter by Activities",
+                style = MaterialTheme.typography.titleSmall,
+                color = cs.onSurface.copy(alpha = 0.5f)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Box(modifier = Modifier.heightIn(max = 300.dp)) {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    item {
+                        com.diary.moonpage.presentation.screens.calendar.DailyLogGrid(
+                            items = dynamicActivities.filter { activity ->
+                                true 
+                            }.map { 
+                                com.diary.moonpage.presentation.screens.calendar.DailyActivity(
+                                    id = it.id,
+                                    label = it.name,
+                                    icon = MoonIcons.getIconForActivity(it.name)
+                                )
+                            },
+                            selectedIds = selectedActivityIds.toList(),
+                            onItemClick = onActivityToggled
+                        )
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Text("Show Results")
+            }
         }
     }
 }

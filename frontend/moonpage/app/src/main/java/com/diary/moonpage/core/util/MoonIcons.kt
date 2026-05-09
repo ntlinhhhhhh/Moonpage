@@ -50,32 +50,35 @@ object MoonIcons {
 
     // 0. Core Moods (DailyBean style)
     object Moods {
-        val Happy = MoonIcon(null, MoonMoodHappy, "Happy", R.drawable.very_happy)
-        val Good = MoonIcon(null, MoonMoodGood, "Good", R.drawable.happy) 
-        val Neutral = MoonIcon(null, MoonMoodNeutral, "Neutral", R.drawable.neutral) 
-        val Sad = MoonIcon(null, MoonMoodSad, "Sad", R.drawable.sad) 
-        val Angry = MoonIcon(null, MoonMoodAngry, "Angry", R.drawable.very_sad)
+        val Happy = MoonIcon(null, Color.Unspecified, "Happy", R.drawable.very_happy)
+        val Good = MoonIcon(null, Color.Unspecified, "Good", R.drawable.happy) 
+        val Neutral = MoonIcon(null, Color.Unspecified, "Neutral", R.drawable.neutral) 
+        val Sad = MoonIcon(null, Color.Unspecified, "Sad", R.drawable.sad) 
+        val Angry = MoonIcon(null, Color.Unspecified, "Angry", R.drawable.very_sad)
 
         @Composable
-        fun getMoodColor(level: Int): Color {
+        fun getMoodColor(level: Int, themeType: com.diary.moonpage.presentation.theme.MoonThemeType): Color {
+            val shades = com.diary.moonpage.presentation.theme.getThemeShades(themeType)
             return when (level) {
-                1 -> MoonMoodHappy
-                2 -> MoonMoodGood
-                3 -> MoonMoodNeutral
-                4 -> MoonMoodSad
-                5 -> MoonMoodAngry
-                else -> MoonMoodNeutral
+                1 -> shades[0]
+                2 -> shades[1]
+                3 -> shades[2]
+                4 -> shades[3]
+                5 -> shades[4]
+                else -> shades[2]
             }
         }
 
-        fun getMoodVisual(level: Int): MoonIcon {
+        @Composable
+        fun getMoodVisual(level: Int, themeType: com.diary.moonpage.presentation.theme.MoonThemeType): MoonIcon {
+            val color = getMoodColor(level, themeType)
             return when (level) {
-                1 -> Happy
-                2 -> Good
-                3 -> Neutral
-                4 -> Sad
-                5 -> Angry
-                else -> Neutral
+                1 -> Happy.copy(color = color)
+                2 -> Good.copy(color = color)
+                3 -> Neutral.copy(color = color)
+                4 -> Sad.copy(color = color)
+                5 -> Angry.copy(color = color)
+                else -> Neutral.copy(color = color)
             }
         }
     }

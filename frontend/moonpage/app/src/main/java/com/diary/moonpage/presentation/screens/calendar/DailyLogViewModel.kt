@@ -15,7 +15,8 @@ import java.io.File
 @HiltViewModel
 class DailyLogViewModel @Inject constructor(
     private val repository: DailyLogRepository,
-    private val activityPreferencesManager: ActivityPreferencesManager
+    private val activityPreferencesManager: ActivityPreferencesManager,
+    private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DailyLogUiState())
@@ -33,6 +34,11 @@ class DailyLogViewModel @Inject constructor(
         viewModelScope.launch {
             activityPreferencesManager.activities.collect { activities ->
                 _uiState.update { it.copy(dynamicActivities = activities) }
+            }
+        }
+        viewModelScope.launch {
+            themePreferencesManager.themeType.collect { themeType ->
+                _uiState.update { it.copy(themeType = themeType) }
             }
         }
     }
