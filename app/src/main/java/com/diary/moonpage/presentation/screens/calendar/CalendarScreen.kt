@@ -459,7 +459,7 @@ fun CalendarSelectedLogDetail(
                 .padding(horizontal = 16.dp),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface
+                containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.logCardBg
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp) // Reduced shadow
         ) {
@@ -470,7 +470,9 @@ fun CalendarSelectedLogDetail(
                 moodColor = mv.color,
                 moodLabel = mv.name,
                 noteSnippet = selectedLog.note,
-                activityNames = activityNames
+                activityNames = activityNames,
+                sleepHours = selectedLog.sleepHours,
+                isMenstruation = selectedLog.isMenstruation
             )
         }
     }

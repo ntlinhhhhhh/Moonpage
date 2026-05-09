@@ -483,13 +483,21 @@ fun DailyLogGrid(
                                     contentDescription = null,
                                     modifier = Modifier
                                         .size(28.dp),
-                                    colorFilter = if (isSelected) null else ColorFilter.tint(MoonTheme.customColors.logItemIconUnselected.copy(alpha = 0.4f))
+                                    colorFilter = if (isSelected) {
+                                        if (MoonTheme.customColors.logItemIconSelected != Color.Unspecified) ColorFilter.tint(MoonTheme.customColors.logItemIconSelected) else null
+                                    } else {
+                                        ColorFilter.tint(MoonTheme.customColors.logItemIconUnselected)
+                                    }
                                 )
                             } else if (item.icon.vector != null) {
                                 Icon(
                                     item.icon.vector,
                                     contentDescription = null,
-                                    tint = if (isSelected) item.icon.color else MoonTheme.customColors.logItemIconUnselected.copy(alpha = 0.4f),
+                                    tint = if (isSelected) {
+                                        if (MoonTheme.customColors.logItemIconSelected != Color.Unspecified) MoonTheme.customColors.logItemIconSelected else item.icon.color
+                                    } else {
+                                        MoonTheme.customColors.logItemIconUnselected
+                                    },
                                     modifier = Modifier.size(24.dp)
                                 )
                             }

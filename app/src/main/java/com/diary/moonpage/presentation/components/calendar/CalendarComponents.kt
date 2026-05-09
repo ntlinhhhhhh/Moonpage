@@ -155,6 +155,7 @@ fun CalendarHeader() {
             .fillMaxWidth()
             .padding(horizontal = 4.dp, vertical = 4.dp)
     ) {
+        val isDark = androidx.compose.foundation.isSystemInDarkTheme()
         daysOfWeek.forEach { day ->
             Text(
                 text = day,
@@ -162,7 +163,7 @@ fun CalendarHeader() {
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                color = if (isDark) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
             )
         }
     }
@@ -208,7 +209,7 @@ fun DayItem(
     }
 
     val isDark = isSystemInDarkTheme()
-    val emptyDayBg = if (isDark) com.diary.moonpage.core.theme.MoonDayCircleDark else colorScheme.surfaceVariant.copy(alpha = 0.7f)
+    val emptyDayBg = Color(0xFF505457)
 
     val circleBg = when {
         moodColor != null -> moodColor
@@ -269,7 +270,7 @@ fun DayItem(
             text = day.toString(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = if (isToday || isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = if (isSelected || isToday) colorScheme.primary else colorScheme.onSurface.copy(alpha = 0.6f)
+            color = if (isSelected || isToday) colorScheme.primary else if (isDark) colorScheme.onSurface.copy(alpha = 0.85f) else colorScheme.onSurface.copy(alpha = 0.6f)
         )
     }
 }
@@ -284,24 +285,27 @@ fun DayDetailArea(
     moodLabel: String,
     noteSnippet: String?,
     activityNames: List<String> = emptyList(),
+    sleepHours: Double? = null,
+    isMenstruation: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val cs = MaterialTheme.colorScheme
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 20.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .height(IntrinsicSize.Min)
+            .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 20.dp)
     ) {
         // --- Left: Mood and Date ---
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.width(60.dp)
+            modifier = Modifier.width(64.dp)
         ) {
             Box(
                 modifier = Modifier
-                    .size(52.dp)
+                    .size(56.dp)
                     .background(moodColor, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
@@ -309,61 +313,61 @@ fun DayDetailArea(
                     Image(
                         painter = painterResource(id = moodDrawable),
                         contentDescription = null,
-                        modifier = Modifier.size(34.dp)
+                        modifier = Modifier.size(36.dp)
                     )
                 } else if (moodIcon != null) {
                     Icon(
                         imageVector = moodIcon,
                         contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(30.dp)
+                        tint = Color.Black.copy(alpha = 0.7f),
+                        modifier = Modifier.size(32.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Surface(
-                color = cs.onSurface.copy(alpha = 0.08f),
+                color = if (isDark) Color(0xFF424242) else Color(0xFFE0E0E0),
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Text(
                     text = "${date.dayOfMonth} ${date.dayOfWeek.name.take(3).lowercase().replaceFirstChar { it.uppercase() }}",
                     style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = cs.onSurface.copy(alpha = 0.6f),
-                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
+                    fontWeight = FontWeight.SemiBold,
+                    color = cs.onSurface,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                     textAlign = TextAlign.Center,
-                    fontSize = 10.sp
+                    fontSize = 11.sp
                 )
             }
         }
 
         // --- Divider ---
-        Spacer(modifier = Modifier.width(10.dp))
+        Spacer(modifier = Modifier.width(16.dp))
         Box(
             modifier = Modifier
                 .width(1.dp)
-                .height(120.dp)
-                .background(cs.onSurface.copy(alpha = 0.05f))
+                .fillMaxHeight()
+                .background(cs.onSurface.copy(alpha = 0.1f))
         )
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(16.dp))
 
-        // --- Right: Activities ---
+        // --- Right: Activities and Info ---
         Column(modifier = Modifier.weight(1f)) {
             if (activityNames.isNotEmpty()) {
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
-                    maxItemsInEachRow = 4
+                    maxItemsInEachRow = 5
                 ) {
                     activityNames.forEach { name ->
                         val icon = MoonIcons.getIconForActivity(name)
                         Box(
                             modifier = Modifier
-                                .size(40.dp)
-                                .background(icon.color.copy(alpha = 0.12f), CircleShape),
+                                .size(42.dp)
+                                .background(if (isDark) Color(0xFFE8EAE2) else Color(0xFFF1F8E9), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             if (icon.drawableRes != null) {
@@ -377,7 +381,7 @@ fun DayDetailArea(
                                     imageVector = icon.vector,
                                     contentDescription = name,
                                     tint = icon.color,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(22.dp)
                                 )
                             }
                         }
@@ -386,14 +390,93 @@ fun DayDetailArea(
             }
 
             if (!noteSnippet.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = noteSnippet,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = cs.onSurface.copy(alpha = 0.5f),
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = cs.onSurface,
+                    fontSize = 15.sp
                 )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Stats Card
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.logItemBg
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    // Sleep
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 12.dp)) {
+                        Icon(Icons.Rounded.Nightlight, contentDescription = null, tint = Color(0xFFFFCA28), modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
+                        val sleepText = if (sleepHours != null && sleepHours > 0.0) {
+                            val hrs = sleepHours.toInt()
+                            val mins = ((sleepHours - hrs) * 60).toInt()
+                            if (mins == 0) "${hrs}h" else "${hrs}h ${mins}m"
+                        } else {
+                            "00:00 AM - 07:20 AM"
+                        }
+                        Text(sleepText, color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
+                    }
+                    
+                    // Exercise Placeholder
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 12.dp)) {
+                        Icon(Icons.Rounded.LocalFireDepartment, contentDescription = null, tint = Color(0xFFFF7043), modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text("Strength Training 28m", color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
+                    }
+
+                    // Menstruation
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 12.dp)) {
+                        Icon(Icons.Rounded.WaterDrop, contentDescription = null, tint = Color(0xFFF48FB1), modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(if (isMenstruation) "On day 3" else "Not started", color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
+                    }
+
+                    // Steps Placeholder
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Rounded.DirectionsWalk, contentDescription = null, tint = Color(0xFF64B5F6), modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text("4,077 steps", color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Music Card Placeholder
+            Card(
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.logItemBg
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFFE57373)), // Placeholder image background
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Rounded.MusicNote, contentDescription = null, tint = Color.White)
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text("Choosin' Texas", color = cs.onSurface, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text("Ella Langley", color = cs.onSurface.copy(alpha = 0.6f), fontSize = 12.sp)
+                    }
+                }
             }
         }
     }
@@ -473,6 +556,8 @@ fun DayDetailBottomSheet(
     moodLabel: String,
     noteSnippet: String?,
     activityNames: List<String> = emptyList(),
+    sleepHours: Double? = null,
+    isMenstruation: Boolean = false,
     onDismiss: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
@@ -508,7 +593,9 @@ fun DayDetailBottomSheet(
                     moodColor = moodColor,
                     moodLabel = moodLabel,
                     noteSnippet = noteSnippet,
-                    activityNames = activityNames
+                    activityNames = activityNames,
+                    sleepHours = sleepHours,
+                    isMenstruation = isMenstruation
                 )
             }
 

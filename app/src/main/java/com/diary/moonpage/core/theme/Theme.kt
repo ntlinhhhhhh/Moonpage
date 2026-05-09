@@ -20,6 +20,7 @@ data class MoonCustomColors(
     val logItemSelect: Color,
     val logItemAccent: Color,
     val logItemIconUnselected: Color,
+    val logItemIconSelected: Color,
     val logCardBg: Color,
     val logCardOnBg: Color,
     val snackbarBg: Color,
@@ -35,6 +36,7 @@ val LocalMoonCustomColors = staticCompositionLocalOf {
         logItemSelect = Color.Unspecified,
         logItemAccent = Color.Unspecified,
         logItemIconUnselected = Color.Unspecified,
+        logItemIconSelected = Color.Unspecified,
         logCardBg = Color.Unspecified,
         logCardOnBg = Color.Unspecified,
         snackbarBg = Color.Unspecified,
@@ -85,40 +87,40 @@ fun getThemeShades(themeType: MoonThemeType): List<Color> {
             Color(0xFFFFC3BB), Color(0xFFFF9F98), Color(0xFFF07063), Color(0xFFC24B42), Color(0xFFA03F38)
         )
         MoonThemeType.KITTY -> listOf(
-            Color(0xFF6C7CFF), Color(0xFF8A9AFF), Color(0xFFB4C0FF), Color(0xFFD4DBFF), Color(0xFFECEFFF)
+            Color(0xFFD6DFFF), Color(0xFFB3C2FF), Color(0xFF7A93FF), Color(0xFF536FE6), Color(0xFF3B54BF)
         )
         MoonThemeType.SPROUT -> listOf(
-            Color(0xFF4CAF50), Color(0xFF66BB6A), Color(0xFF98EE99), Color(0xFFC8E6C9), Color(0xFFE8F5E9)
+            Color(0xFFD4F0D6), Color(0xFFAAE0AF), Color(0xFF6EC276), Color(0xFF489E50), Color(0xFF307A37)
         )
         MoonThemeType.SUNNY -> listOf(
-            Color(0xFFFFA000), Color(0xFFFFB300), Color(0xFFFFD54F), Color(0xFFFFECB3), Color(0xFFFFF8E1)
+            Color(0xFFFFE6C2), Color(0xFFFFCD8F), Color(0xFFFAAA4B), Color(0xFFD68322), Color(0xFFA86010)
         )
         MoonThemeType.SKY -> listOf(
-            Color(0xFF039BE5), Color(0xFF29B6F6), Color(0xFF81D4FA), Color(0xFFB3E5FC), Color(0xFFE1F5FE)
+            Color(0xFFD1F2FF), Color(0xFFA3E5FF), Color(0xFF5CCBFA), Color(0xFF34A6D6), Color(0xFF1E82AB)
         )
         MoonThemeType.FOREST -> listOf(
-            Color(0xFF00897B), Color(0xFF26A69A), Color(0xFF80CBC4), Color(0xFFB2DFDB), Color(0xFFE0F2F1)
+            Color(0xFFD1EBE8), Color(0xFFA8D9D4), Color(0xFF6BB5AE), Color(0xFF44948D), Color(0xFF2B736D)
         )
         MoonThemeType.COFFEE -> listOf(
-            Color(0xFF6D4C41), Color(0xFF8D6E63), Color(0xFFA1887F), Color(0xFFD7CCC8), Color(0xFFEFEBE9)
+            Color(0xFFEBE2DD), Color(0xFFD6C6BC), Color(0xFFA68D81), Color(0xFF826659), Color(0xFF61483D)
         )
         MoonThemeType.LEMON -> listOf(
-            Color(0xFFAFB42B), Color(0xFFCDDC39), Color(0xFFE6EE9C), Color(0xFFF0F4C3), Color(0xFFF9FBE7)
+            Color(0xFFF4FAD2), Color(0xFFE8F2A0), Color(0xFFC8D65A), Color(0xFFA1AF35), Color(0xFF7B8721)
         )
         MoonThemeType.CHERRY -> listOf(
-            Color(0xFFE53935), Color(0xFFEF5350), Color(0xFFEF9A9A), Color(0xFFFFCDD2), Color(0xFFFFEBEE)
+            Color(0xFFFFD4D9), Color(0xFFFFA3AC), Color(0xFFEB606E), Color(0xFFC43543), Color(0xFF991D29)
         )
         MoonThemeType.LAVENDER -> listOf(
-            Color(0xFF8E24AA), Color(0xFFAB47BC), Color(0xFFCE93D8), Color(0xFFE1BEE7), Color(0xFFF3E5F5)
+            Color(0xFFF2DFFF), Color(0xFFE0B8FF), Color(0xFFB570EB), Color(0xFF9147C9), Color(0xFF702C9E)
         )
         MoonThemeType.OCEAN -> listOf(
-            Color(0xFF1E88E5), Color(0xFF42A5F5), Color(0xFF90CAF9), Color(0xFFBBDEFB), Color(0xFFE3F2FD)
+            Color(0xFFD6EBFF), Color(0xFFA8D3FF), Color(0xFF66AAEB), Color(0xFF4083C4), Color(0xFF26629E)
         )
         MoonThemeType.MIDNIGHT -> listOf(
-            Color(0xFFFBC02D), Color(0xFFFDD835), Color(0xFFFFEB3B), Color(0xFFFFF176), Color(0xFFFFF9C4)
+            Color(0xFFFFF7D1), Color(0xFFF5E69A), Color(0xFFD4C059), Color(0xFFA89532), Color(0xFF806F18)
         )
         else -> listOf( // Default Bean - Yellow Progression
-            Color(0xFFFFB300), Color(0xFFFFC107), Color(0xFFFFD54F), Color(0xFFFFE082), Color(0xFFFFF9C4)
+            Color(0xFFFFF2C2), Color(0xFFFFE18A), Color(0xFFFFC547), Color(0xFFDB9D1F), Color(0xFFA8730D)
         )
     }
 }
@@ -352,12 +354,13 @@ fun MoonPageTheme(
 
     val customColors = if (darkTheme) {
         MoonCustomColors(
-            logItemBg = Color(0xFF333333),
+            logItemBg = Color(0xFF404040),
             logItemSelect = colorScheme.primary.copy(alpha = 0.3f),
             logItemAccent = MoonLogItemAccentDark,
-            logItemIconUnselected = MoonUnselectedDark,
-            logCardBg = MoonCardBgDark,
-            logCardOnBg = MoonTextDarkNew,
+            logItemIconUnselected = Color(0xFFAEAEAE),
+            logItemIconSelected = colorScheme.primary,
+            logCardBg = Color(0xFF292929),
+            logCardOnBg = Color(0xFFE4E4E4),
             snackbarBg = Color(0xFF161921),
             snackbarOnBg = MoonTextLight,
             successColor = Color(0xFF66BB6A),
@@ -369,7 +372,8 @@ fun MoonPageTheme(
             logItemBg = Color(0xFFF0F2F5),
             logItemSelect = colorScheme.primary.copy(alpha = 0.15f),
             logItemAccent = MoonLogItemAccentLight,
-            logItemIconUnselected = MoonUnselectedLight,
+            logItemIconUnselected = MoonUnselectedLight.copy(alpha = 0.4f),
+            logItemIconSelected = Color.Unspecified,
             logCardBg = Color.White,
             logCardOnBg = MoonTextDark,
             snackbarBg = Color(0xFFE8E1DA),
