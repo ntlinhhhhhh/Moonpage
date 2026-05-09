@@ -35,4 +35,9 @@ object DatabaseModule {
     fun provideThemeDao(db: MoonPageDatabase): com.diary.moonpage.data.local.dao.ThemeDao {
         return db.themeDao()
     }
+
+    @Provides
+    fun provideStatisticsDao(db: MoonPageDatabase): com.diary.moonpage.data.local.dao.StatisticsDao {
+        return db.statisticsDao()
+    }
 }

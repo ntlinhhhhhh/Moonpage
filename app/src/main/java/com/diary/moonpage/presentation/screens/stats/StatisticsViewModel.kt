@@ -32,7 +32,8 @@ class StatisticsViewModel @Inject constructor(
             try {
                 val response = repository.getStatisticsSummary(
                     _uiState.value.selectedYear,
-                    _uiState.value.selectedMonth
+                    _uiState.value.selectedMonth,
+                    _uiState.value.isMonthly
                 )
                 if (response.isSuccessful && response.body() != null) {
                     val stats = response.body()!!
@@ -62,7 +63,9 @@ class StatisticsViewModel @Inject constructor(
     }
 
     fun setMonthly(isMonthly: Boolean) {
-        _uiState.update { it.copy(isMonthly = isMonthly) }
-        // For now, only monthly is implemented on backend
+        if (_uiState.value.isMonthly != isMonthly) {
+            _uiState.update { it.copy(isMonthly = isMonthly) }
+            loadStatistics()
+        }
     }
 }

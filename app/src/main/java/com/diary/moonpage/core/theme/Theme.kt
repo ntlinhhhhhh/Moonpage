@@ -27,7 +27,10 @@ data class MoonCustomColors(
     val snackbarOnBg: Color,
     val successColor: Color,
     val warningColor: Color,
-    val errorColor: Color
+    val errorColor: Color,
+    val popupBgColor: Color,
+    val cancelBtnBgColor: Color,
+    val cancelBtnTextColor: Color
 )
 
 val LocalMoonCustomColors = staticCompositionLocalOf {
@@ -43,7 +46,10 @@ val LocalMoonCustomColors = staticCompositionLocalOf {
         snackbarOnBg = Color.Unspecified,
         successColor = Color.Unspecified,
         warningColor = Color.Unspecified,
-        errorColor = Color.Unspecified
+        errorColor = Color.Unspecified,
+        popupBgColor = Color.Unspecified,
+        cancelBtnBgColor = Color.Unspecified,
+        cancelBtnTextColor = Color.Unspecified
     )
 }
 
@@ -132,217 +138,89 @@ fun MoonPageTheme(
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when (themeType) {
-        MoonThemeType.DEFAULT -> if (darkTheme) DarkColorScheme else LightColorScheme
-        MoonThemeType.SPROUT -> if (darkTheme) {
-            darkColorScheme(
-                primary = Color(0xFFB6E388),
-                onPrimary = Color.Black,
-                background = MoonBgDark,
-                surface = MoonSurfaceDark,
-                onBackground = MoonTextDarkNew,
-                onSurface = MoonTextDarkNew
-            )
-        } else {
-            lightColorScheme(
+    val colorScheme = if (darkTheme) {
+        DarkColorScheme 
+    } else {
+        when (themeType) {
+            MoonThemeType.DEFAULT -> LightColorScheme
+            MoonThemeType.SPROUT -> lightColorScheme(
                 primary = Color(0xFF66BB6A),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFF1F8E9)
             )
-        }
-        MoonThemeType.BLUSHING -> if (darkTheme) {
-            darkColorScheme(
-                primary = Color(0xFFECA79D),
-                onPrimary = Color(0xFF261B1C),
-                background = MoonBgDark,
-                surface = MoonSurfaceDark,
-                onBackground = MoonTextDarkNew,
-                onSurface = MoonTextDarkNew
-            )
-        } else {
-            lightColorScheme(
+            MoonThemeType.BLUSHING -> lightColorScheme(
                 primary = Color(0xFFD2847A),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFFFF0F3)
             )
-        }
-        MoonThemeType.KITTY -> if (darkTheme) {
-            darkColorScheme(
-                primary = Color(0xFFB7C2FF),
-                onPrimary = Color(0xFF1B1C26),
-                background = MoonBgDark,
-                surface = MoonSurfaceDark,
-                onBackground = MoonTextDarkNew,
-                onSurface = MoonTextDarkNew
-            )
-        } else {
-            lightColorScheme(
+            MoonThemeType.KITTY -> lightColorScheme(
                 primary = Color(0xFF8A9AFF),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFF0F3FF)
             )
-        }
-        MoonThemeType.SUNNY -> if (darkTheme) {
-            darkColorScheme(
-                primary = Color(0xFFFFD54F),
-                onPrimary = Color(0xFF26221B),
-                background = MoonBgDark,
-                surface = MoonSurfaceDark,
-                onBackground = MoonTextDarkNew,
-                onSurface = MoonTextDarkNew
-            )
-        } else {
-            lightColorScheme(
+            MoonThemeType.SUNNY -> lightColorScheme(
                 primary = Color(0xFFFFB300),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFFFF8E1)
             )
-        }
-        MoonThemeType.SKY -> if (darkTheme) {
-            darkColorScheme(
-                primary = Color(0xFF81D4FA),
-                onPrimary = Color(0xFF1B2426),
-                background = MoonBgDark,
-                surface = MoonSurfaceDark,
-                onBackground = MoonTextDarkNew,
-                onSurface = MoonTextDarkNew
-            )
-        } else {
-            lightColorScheme(
+            MoonThemeType.SKY -> lightColorScheme(
                 primary = Color(0xFF29B6F6),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFE1F5FE)
             )
-        }
-        MoonThemeType.FOREST -> if (darkTheme) {
-            darkColorScheme(
-                primary = Color(0xFF80CBC4),
-                onPrimary = Color(0xFF1B2625),
-                background = MoonBgDark,
-                surface = MoonSurfaceDark,
-                onBackground = MoonTextDarkNew,
-                onSurface = MoonTextDarkNew
-            )
-        } else {
-            lightColorScheme(
+            MoonThemeType.FOREST -> lightColorScheme(
                 primary = Color(0xFF26A69A),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFE0F2F1)
             )
-        }
-        MoonThemeType.COFFEE -> if (darkTheme) {
-            darkColorScheme(
-                primary = Color(0xFFD7CCC8),
-                onPrimary = Color(0xFF26211F),
-                background = MoonBgDark,
-                surface = MoonSurfaceDark,
-                onBackground = MoonTextDarkNew,
-                onSurface = MoonTextDarkNew
-            )
-        } else {
-            lightColorScheme(
+            MoonThemeType.COFFEE -> lightColorScheme(
                 primary = Color(0xFF8D6E63),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFEFEBE9)
             )
-        }
-        MoonThemeType.LEMON -> if (darkTheme) {
-            darkColorScheme(
-                primary = Color(0xFFD4E157),
-                onPrimary = Color(0xFF24261B),
-                background = MoonBgDark,
-                surface = MoonSurfaceDark,
-                onBackground = MoonTextDarkNew,
-                onSurface = MoonTextDarkNew
-            )
-        } else {
-            lightColorScheme(
+            MoonThemeType.LEMON -> lightColorScheme(
                 primary = Color(0xFFCDDC39),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFF9FBE7)
             )
-        }
-        MoonThemeType.CHERRY -> if (darkTheme) {
-            darkColorScheme(
-                primary = Color(0xFFEF9A9A),
-                onPrimary = Color(0xFF261B1B),
-                background = MoonBgDark,
-                surface = MoonSurfaceDark,
-                onBackground = MoonTextDarkNew,
-                onSurface = MoonTextDarkNew
-            )
-        } else {
-            lightColorScheme(
+            MoonThemeType.CHERRY -> lightColorScheme(
                 primary = Color(0xFFEF5350),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFFFEBEE)
             )
-        }
-        MoonThemeType.LAVENDER -> if (darkTheme) {
-            darkColorScheme(
-                primary = Color(0xFFCE93D8),
-                onPrimary = Color(0xFF241B26),
-                background = MoonBgDark,
-                surface = MoonSurfaceDark,
-                onBackground = MoonTextDarkNew,
-                onSurface = MoonTextDarkNew
-            )
-        } else {
-            lightColorScheme(
+            MoonThemeType.LAVENDER -> lightColorScheme(
                 primary = Color(0xFFAB47BC),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFF3E5F5)
             )
-        }
-        MoonThemeType.OCEAN -> if (darkTheme) {
-            darkColorScheme(
-                primary = Color(0xFF90CAF9),
-                onPrimary = Color(0xFF1B2126),
-                background = MoonBgDark,
-                surface = MoonSurfaceDark,
-                onBackground = MoonTextDarkNew,
-                onSurface = MoonTextDarkNew
-            )
-        } else {
-            lightColorScheme(
+            MoonThemeType.OCEAN -> lightColorScheme(
                 primary = Color(0xFF42A5F5),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFE3F2FD)
             )
-        }
-        MoonThemeType.MIDNIGHT -> if (darkTheme) {
-            darkColorScheme(
-                primary = Color(0xFFF0E68C),
-                onPrimary = Color.Black,
-                background = MoonBgDark,
-                surface = MoonSurfaceDark,
-                onBackground = MoonTextDarkNew,
-                onSurface = MoonTextDarkNew
-            )
-        } else {
-            lightColorScheme(
+            MoonThemeType.MIDNIGHT -> lightColorScheme(
                 primary = Color(0xFF1A1B26),
                 onPrimary = Color.White,
                 background = MoonBgLight,
@@ -365,7 +243,10 @@ fun MoonPageTheme(
             snackbarOnBg = MoonTextLight,
             successColor = Color(0xFF66BB6A),
             warningColor = Color(0xFFFFCA28),
-            errorColor = Color(0xFFEF5350)
+            errorColor = Color(0xFFEF5350),
+            popupBgColor = Color(0xFF2C2C2C),
+            cancelBtnBgColor = Color(0xFF454545),
+            cancelBtnTextColor = Color(0xFFE0E0E0)
         )
     } else {
         MoonCustomColors(
@@ -380,7 +261,10 @@ fun MoonPageTheme(
             snackbarOnBg = MoonTextDark,
             successColor = Color(0xFF4CAF50),
             warningColor = Color(0xFFFFC107),
-            errorColor = Color(0xFFF44336)
+            errorColor = Color(0xFFF44336),
+            popupBgColor = Color.White,
+            cancelBtnBgColor = Color(0xFFEBEBEB), // Slightly darker than White (0xFFF2F2F2 was too light)
+            cancelBtnTextColor = Color(0xFF616161) // Slightly darker than 0xFF757575
         )
     }
 

@@ -26,11 +26,17 @@ fun NavGraphBuilder.authGraph(
                 viewModel = authViewModel,
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToRegister = {
+                    // Clear all fields when navigating to Register
+                    authViewModel.clearAuthFields()
                     navController.navigate(Screen.Register.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
-                onNavigateToForgotPassword = { navController.navigate(Screen.ForgotPassword.route) },
+                onNavigateToForgotPassword = {
+                    // Preserve email typed in Login, clear only password fields
+                    authViewModel.prepareForgotPassword()
+                    navController.navigate(Screen.ForgotPassword.route)
+                },
                 onLoginSuccess = onLoginSuccess
             )
         }
@@ -38,8 +44,12 @@ fun NavGraphBuilder.authGraph(
         composable(Screen.Register.route) {
             RegisterRoute(
                 viewModel = authViewModel,
-                onNavigateBack = { navController.popBackStack() },
+                onNavigateBack = {
+                    authViewModel.clearAuthFields()
+                    navController.popBackStack()
+                },
                 onNavigateToLogin = {
+                    authViewModel.clearAuthFields()
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Register.route) { inclusive = true }
                     }
@@ -78,7 +88,7 @@ fun NavGraphBuilder.authGraph(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToLogin = {
                     navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
+                        popUpTo("auth_graph") { inclusive = false }
                     }
                 }
             )

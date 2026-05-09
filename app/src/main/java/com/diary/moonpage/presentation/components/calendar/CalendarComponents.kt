@@ -196,25 +196,16 @@ fun DayItem(
         return
     }
 
-    if (isFiltered && isDimmed) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 2.dp, vertical = 4.dp)
-        ) {
-            Box(modifier = Modifier.size(42.dp).align(Alignment.Center))
-            Spacer(modifier = Modifier.height(2.dp + 14.dp))
-        }
-        return
-    }
-
-    val isDark = isSystemInDarkTheme()
-    val emptyDayBg = Color(0xFF505457)
-
-    val circleBg = when {
-        moodColor != null -> moodColor
-        isSelected        -> Color.Transparent
-        else              -> emptyDayBg
+    // Robust check for dark mode based on current theme's background
+    val isActuallyDark = colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
+    val shades = com.diary.moonpage.core.theme.getThemeShades(themeType)
+    
+    // Logic: If it's a logged day that matches the filter (or no filter), show its mood color.
+    // Otherwise, show the default placeholder color (Fixed gray for Dark, Theme shade for Light).
+    val circleBg = if (moodColor != null && (!isFiltered || !isDimmed)) {
+        moodColor
+    } else {
+        if (isActuallyDark) Color(0xFF505457) else shades[0].copy(alpha = 0.4f)
     }
 
     val animatedBg by animateColorAsState(
@@ -237,30 +228,29 @@ fun DayItem(
                 .clickable { onClick() }
                 .then(
                     when {
-                        isSelected && moodColor == null ->
-                            Modifier.border(2.dp, colorScheme.primary, CircleShape)
-                        isToday && moodColor == null ->
-                            Modifier.border(2.dp, colorScheme.primary, CircleShape)
+                        isSelected -> Modifier.border(2.dp, colorScheme.primary, CircleShape)
+                        isToday -> Modifier.border(2.dp, colorScheme.primary.copy(alpha = 0.5f), CircleShape)
                         else -> Modifier
                     }
                 ),
             contentAlignment = Alignment.Center
         ) {
-            if (moodDrawable != null) {
-                Image(
-                    painter = painterResource(id = moodDrawable),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxSize(0.75f)
-                        .then(if (isDimmed) Modifier.alpha(0.55f) else Modifier)
-                )
-            } else if (moodIcon != null) {
-                Icon(
-                    imageVector = moodIcon,
-                    contentDescription = null,
-                    tint = Color.Black.copy(alpha = if (isDimmed) 0.3f else 0.55f),
-                    modifier = Modifier.fillMaxSize(0.52f)
-                )
+            if (moodColor != null && (!isFiltered || !isDimmed)) {
+                if (moodDrawable != null) {
+                    Image(
+                        painter = painterResource(id = moodDrawable),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxSize(0.75f)
+                    )
+                } else if (moodIcon != null) {
+                    Icon(
+                        imageVector = moodIcon,
+                        contentDescription = null,
+                        tint = Color.Black.copy(alpha = 0.55f),
+                        modifier = Modifier.fillMaxSize(0.52f)
+                    )
+                }
             }
         }
 
@@ -270,7 +260,15 @@ fun DayItem(
             text = day.toString(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = if (isToday || isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = if (isSelected || isToday) colorScheme.primary else if (isDark) colorScheme.onSurface.copy(alpha = 0.85f) else colorScheme.onSurface.copy(alpha = 0.6f)
+            color = if (isFiltered && isDimmed) {
+                colorScheme.onSurface.copy(alpha = 0.2f)
+            } else if (isSelected || isToday) {
+                colorScheme.primary
+            } else if (isSystemInDarkTheme()) {
+                colorScheme.onSurface.copy(alpha = 0.85f)
+            } else {
+                colorScheme.onSurface.copy(alpha = 0.6f)
+            }
         )
     }
 }
@@ -367,7 +365,10 @@ fun DayDetailArea(
                         Box(
                             modifier = Modifier
                                 .size(42.dp)
-                                .background(if (isDark) Color(0xFFE8EAE2) else Color(0xFFF1F8E9), CircleShape),
+                                .background(
+                                    if (isDark) Color(0xFF404040) else com.diary.moonpage.core.theme.MoonTheme.customColors.logItemSelect, 
+                                    CircleShape
+                                ),
                             contentAlignment = Alignment.Center
                         ) {
                             if (icon.drawableRes != null) {
@@ -645,12 +646,13 @@ fun DayDetailBottomSheet(
 fun MonthYearPickerDialog(
     currentYearMonth: YearMonth,
     onConfirm: (Int, Int) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    showMonth: Boolean = true
 ) {
     val currentYear = java.time.LocalDate.now().year
     val years = remember { (2000..currentYear + 10).map { it.toString() } }
     val months = remember { (1..12).map {
-        java.time.Month.of(it).getDisplayName(TextStyle.FULL, Locale.getDefault()).take(3)
+        java.time.Month.of(it).getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.getDefault()).take(3)
     } }
 
     var tempYear by remember { mutableIntStateOf(currentYearMonth.year) }
@@ -667,7 +669,7 @@ fun MonthYearPickerDialog(
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp),
             shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surface,
+            color = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor,
             tonalElevation = 6.dp
         ) {
             Column(
@@ -677,7 +679,7 @@ fun MonthYearPickerDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Select date",
+                    text = if (showMonth) "Select date" else "Select year",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -715,18 +717,20 @@ fun MonthYearPickerDialog(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Box(modifier = Modifier.weight(1f)) {
-                            WheelPicker(
-                                items = months,
-                                initialValue = java.time.Month.of(tempMonth).getDisplayName(TextStyle.FULL, Locale.getDefault()).take(3),
-                                onItemSelected = { monthName ->
-                                    val monthIndex = months.indexOf(monthName)
-                                    if (monthIndex != -1) tempMonth = monthIndex + 1
-                                },
-                                isCircular = true,
-                                itemHeight = itemHeight,
-                                showLines = false
-                            )
+                        if (showMonth) {
+                            Box(modifier = Modifier.weight(1f)) {
+                                WheelPicker(
+                                    items = months,
+                                    initialValue = java.time.Month.of(tempMonth).getDisplayName(java.time.format.TextStyle.FULL, LocalLocale.current.platformLocale).take(3),
+                                    onItemSelected = { monthName ->
+                                        val monthIndex = months.indexOf(monthName)
+                                        if (monthIndex != -1) tempMonth = monthIndex + 1
+                                    },
+                                    isCircular = true,
+                                    itemHeight = itemHeight,
+                                    showLines = false
+                                )
+                            }
                         }
 
                         Box(modifier = Modifier.weight(1f)) {
@@ -755,8 +759,8 @@ fun MonthYearPickerDialog(
                         modifier = Modifier.weight(1f).height(48.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            contentColor = MaterialTheme.colorScheme.onSurface
+                            containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnBgColor,
+                            contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor
                         ),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
                     ) {
@@ -766,9 +770,9 @@ fun MonthYearPickerDialog(
                         onClick = { onConfirm(tempYear, tempMonth) },
                         modifier = Modifier.weight(1f).height(48.dp),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
-                        Text("OK", fontWeight = FontWeight.Bold, color = Color.White)
+                        Text("OK", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
                     }
                 }
             }
@@ -865,38 +869,6 @@ private fun WheelPicker(
                 }
             }
         }
-
-        // Top click area (scroll up)
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth()
-                .height(itemHeight)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
-                    coroutineScope.launch {
-                        listState.animateScrollToItem(listState.firstVisibleItemIndex - 1)
-                    }
-                }
-        )
-
-        // Bottom click area (scroll down)
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .height(itemHeight)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
-                    coroutineScope.launch {
-                        listState.animateScrollToItem(listState.firstVisibleItemIndex + 1)
-                    }
-                }
-        )
     }
 }
 

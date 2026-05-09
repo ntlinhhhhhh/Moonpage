@@ -235,9 +235,7 @@ fun MomentCameraScreenContent(
         }
     }
 
-    Scaffold(
-        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState) }
-    ) { paddingValues ->
+    Scaffold() { paddingValues ->
         Box(modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)) {
@@ -345,19 +343,21 @@ fun MomentCameraScreenContent(
             if (showGpsDialog) {
                 AlertDialog(
                     onDismissRequest = { showGpsDialog = false },
+                    containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor,
                     title = { Text("Location Services Off") },
                     text = { Text("Please enable Location Services to add your location.") },
                     confirmButton = {
                         TextButton(onClick = {
                             showGpsDialog = false
                             context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-                        }) { Text("Open Settings") }
+                        }, colors = androidx.compose.material3.ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)) { Text("Open Settings") }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showGpsDialog = false }) { Text("Cancel") }
+                        TextButton(onClick = { showGpsDialog = false }, colors = androidx.compose.material3.ButtonDefaults.textButtonColors(contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor)) { Text("Cancel") }
                     }
                 )
             }
+            MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 }

@@ -16,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
@@ -70,9 +72,16 @@ fun UsernameBottomSheetContent(
     val colorScheme = MaterialTheme.colorScheme
     val isChanged = text != currentUsername && text.isNotBlank()
 
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = {
+                    focusManager.clearFocus()
+                })
+            }
             .navigationBarsPadding()
             .imePadding()
             .padding(bottom = 24.dp)
@@ -361,38 +370,6 @@ private fun BirthdayWheelCircular(
                 }
             }
         }
-
-        // Tap area above
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth()
-                .height(itemHeight)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
-                    coroutineScope.launch {
-                        listState.animateScrollToItem(listState.firstVisibleItemIndex - 1)
-                    }
-                }
-        )
-
-        // Tap area below
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .height(itemHeight)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
-                    coroutineScope.launch {
-                        listState.animateScrollToItem(listState.firstVisibleItemIndex + 1)
-                    }
-                }
-        )
     }
 }
 

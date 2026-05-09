@@ -112,9 +112,9 @@ fun ForgotPasswordScreenContent(
     }
 
     Scaffold(
-        snackbarHost = { MoonSnackbarHost(hostState = snackBarHostState) },
         containerColor = screenBgColor
     ) { paddingValues ->
+        Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -246,6 +246,8 @@ fun ForgotPasswordScreenContent(
             ) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
+        }
+        MoonSnackbarHost(hostState = snackBarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 }

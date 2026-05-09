@@ -26,6 +26,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -113,7 +115,14 @@ fun DailyLogScreenContent(
         }
     }
 
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+
     Scaffold(
+        modifier = Modifier.pointerInput(Unit) {
+            detectTapGestures(onTap = {
+                focusManager.clearFocus()
+            })
+        },
         topBar = {
             DailyLogTopBar(
                 date = uiState.date,
@@ -129,9 +138,9 @@ fun DailyLogScreenContent(
                 selectedMood = uiState.selectedMood
             )
         },
-        containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState) }
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
+        Box(modifier = Modifier.fillMaxSize()) {
         DailyLogMainContent(
             modifier = Modifier.padding(paddingValues),
             uiState = uiState,
@@ -140,6 +149,9 @@ fun DailyLogScreenContent(
             onNavigateToMenstrualCycle = onNavigateToMenstrualCycle,
             onNavigateToDailyPhoto = onNavigateToDailyPhoto
         )
+        
+        MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
+        }
     }
 
     if (uiState.showExitDialog) {
@@ -622,12 +634,12 @@ private fun DailyPhotoSection(photos: List<String>, onPhotoClick: () -> Unit) {
 @Composable
 private fun DailyLogExitDialog(onDismiss: () -> Unit, onExit: () -> Unit) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+        Surface(shape = RoundedCornerShape(20.dp), color = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
             Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(text = "Changes have not been saved.", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(32.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurface), shape = RoundedCornerShape(12.dp)) { Text("Cancel", fontWeight = FontWeight.Bold) }
+                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnBgColor, contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor), shape = RoundedCornerShape(12.dp)) { Text("Cancel", fontWeight = FontWeight.Bold) }
                     Button(onClick = onExit, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary), shape = RoundedCornerShape(12.dp)) { Text("Exit", fontWeight = FontWeight.Bold) }
                 }
             }
@@ -638,7 +650,7 @@ private fun DailyLogExitDialog(onDismiss: () -> Unit, onExit: () -> Unit) {
 @Composable
 private fun DailyLogOverwriteDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxWidth().padding(horizontal = 28.dp)) {
+        Surface(shape = RoundedCornerShape(24.dp), color = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor, modifier = Modifier.fillMaxWidth().padding(horizontal = 28.dp)) {
             Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(Icons.Rounded.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(48.dp))
                 Spacer(modifier = Modifier.height(16.dp))
@@ -647,7 +659,7 @@ private fun DailyLogOverwriteDialog(onDismiss: () -> Unit, onConfirm: () -> Unit
                 Text(text = "There is already a record for this day. Do you want to overwrite it?", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(32.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    TextButton(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp)) { Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnBgColor, contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor), shape = RoundedCornerShape(12.dp)) { Text("Cancel", fontWeight = FontWeight.Bold) }
                     Button(onClick = onConfirm, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError), shape = RoundedCornerShape(12.dp)) { Text("Overwrite", fontWeight = FontWeight.Bold) }
                 }
             }
@@ -666,7 +678,7 @@ fun DailyLogDatePickerDialog(initialDate: LocalDate, onDateSelected: (LocalDate)
     val scope = rememberCoroutineScope()
 
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
+        Surface(shape = RoundedCornerShape(28.dp), color = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor, modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
             Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("Which day is this record for?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(vertical = 16.dp))
                 Row(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -695,7 +707,7 @@ fun DailyLogDatePickerDialog(initialDate: LocalDate, onDateSelected: (LocalDate)
                 }
                 Spacer(modifier = Modifier.height(24.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(52.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurface), shape = RoundedCornerShape(12.dp)) { Text("Cancel", fontWeight = FontWeight.Bold) }
+                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(52.dp), colors = ButtonDefaults.buttonColors(containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnBgColor, contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor), shape = RoundedCornerShape(12.dp)) { Text("Cancel", fontWeight = FontWeight.Bold) }
                     Button(onClick = { onDateSelected(selectedDateInPicker) }, modifier = Modifier.weight(1f).height(52.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary), shape = RoundedCornerShape(12.dp)) { Text("OK", fontWeight = FontWeight.Bold) }
                 }
             }

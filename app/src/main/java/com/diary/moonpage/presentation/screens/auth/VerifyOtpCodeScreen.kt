@@ -9,7 +9,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.MailOutline
 import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -34,7 +33,7 @@ import com.diary.moonpage.presentation.components.auth.AuthFooter
 import com.diary.moonpage.presentation.components.auth.AuthHeader
 import com.diary.moonpage.presentation.components.core.buttons.MoonPrimaryButton
 import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
-import com.diary.moonpage.presentation.components.core.inputs.MoonTextField
+import com.diary.moonpage.presentation.components.core.inputs.MoonOtpField
 import com.diary.moonpage.presentation.components.core.navigation.TopCircularIcon
 import com.diary.moonpage.core.theme.*
 import kotlinx.coroutines.flow.Flow
@@ -104,9 +103,9 @@ fun VerifyOtpCodeScreenContent(
     }
 
     Scaffold(
-        snackbarHost = { MoonSnackbarHost(hostState = snackBarHostState) },
         containerColor = screenBgColor
     ) { paddingValues ->
+        Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -162,13 +161,10 @@ fun VerifyOtpCodeScreenContent(
                     modifier = Modifier.padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    MoonTextField(
-                        value = uiState.otpCodeInput,
-                        onValueChange = onOtpCodeChange,
+                    MoonOtpField(
                         label = "Verification Code",
-                        placeholderText = "6-digit code",
-                        iconVector = Icons.Outlined.MailOutline,
-                        errorText = uiState.otpCodeError,
+                        otpText = uiState.otpCodeInput,
+                        onOtpTextChange = onOtpCodeChange,
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number,
                             imeAction = ImeAction.Done
@@ -212,6 +208,8 @@ fun VerifyOtpCodeScreenContent(
             ) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
+        }
+        MoonSnackbarHost(hostState = snackBarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 }

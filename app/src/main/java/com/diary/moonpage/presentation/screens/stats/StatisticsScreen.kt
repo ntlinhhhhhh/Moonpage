@@ -148,7 +148,8 @@ fun StatisticsScreenContent(
                 onMonthChange(year, month)
                 showDatePicker = false
             },
-            onDismiss = { showDatePicker = false }
+            onDismiss = { showDatePicker = false },
+            showMonth = uiState.isMonthly
         )
     }
 }

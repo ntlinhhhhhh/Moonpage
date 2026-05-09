@@ -103,8 +103,7 @@ fun CalendarScreenContent(
     }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState, topPadding = 110.dp) }
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             Column(
@@ -165,6 +164,7 @@ fun CalendarScreenContent(
 
                 Spacer(modifier = Modifier.height(100.dp))
             }
+            MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 
@@ -209,9 +209,11 @@ fun CalendarScreenContent(
     }
 
     if (uiState.showFilterSheet) {
-        androidx.compose.ui.window.Dialog(
+        @OptIn(ExperimentalMaterial3Api::class)
+        ModalBottomSheet(
             onDismissRequest = { onEvent(CalendarUiEvent.OnFilterDismiss) },
-            properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+            containerColor = MaterialTheme.colorScheme.background,
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
         ) {
             FilterScreen(
                 currentFilter = uiState.selectedFilter,
@@ -456,12 +458,12 @@ fun CalendarSelectedLogDetail(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
                 containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.logCardBg
             ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp) // Reduced shadow
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             DayDetailArea(
                 date = date,

@@ -19,6 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -41,150 +42,160 @@ fun FilterScreen(
     themeType: com.diary.moonpage.core.theme.MoonThemeType = com.diary.moonpage.core.theme.MoonThemeType.DEFAULT
 ) {
     var selectedItem by remember { mutableStateOf<FilterItem?>(currentFilter) }
+    val isAnySelected = selectedItem != null
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(if (isDark) MaterialTheme.colorScheme.background else Color.White)
+            .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp)
-        ) {
-            // Header
-            Box(modifier = Modifier.fillMaxWidth()) {
-                IconButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.align(Alignment.CenterStart)
-                ) {
-                    Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back")
-                }
-                Text(
-                    text = "When did I record...",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Selection Display Box
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .align(Alignment.CenterHorizontally)
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), RoundedCornerShape(24.dp))
-                    .border(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(24.dp)),
-                contentAlignment = Alignment.Center
+        // Header
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text = "When did I record...",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = if (isDark) Color.White else Color.Black,
+                modifier = Modifier.align(Alignment.Center)
+            )
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier.align(Alignment.CenterEnd)
             ) {
-                if (selectedItem == null) {
-                    Icon(
-                        Icons.Rounded.Search,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
-                        modifier = Modifier.size(40.dp)
-                    )
-                } else {
+                Icon(Icons.Rounded.Close, contentDescription = "Close", tint = if (isDark) Color.White else Color.Black)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Selection Display Box (Pill)
+        Box(
+            modifier = Modifier
+                .height(56.dp)
+                .defaultMinSize(minWidth = 120.dp)
+                .align(Alignment.CenterHorizontally)
+                .background(if (isDark) Color(0xFF333333) else Color(0xFFF2F2F2), RoundedCornerShape(28.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            if (selectedItem == null) {
+                // Empty pill
+                Spacer(modifier = Modifier.width(120.dp))
+            } else {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                ) {
                     SelectedItemDisplay(selectedItem!!, themeType)
                 }
             }
+        }
 
-            Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(32.dp)
-            ) {
-                item {
-                    // Mood Section
-                    FilterSectionTitle("Mood")
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        (1..5).forEach { moodId ->
-                            val visual = MoonIcons.Moods.getMoodVisual(moodId, themeType)
-                            val isSelected = (selectedItem as? FilterItem.Mood)?.id == moodId
-                            MoodFilterItem(
-                                visual = visual,
-                                isSelected = isSelected,
-                                onClick = { selectedItem = FilterItem.Mood(moodId) }
-                            )
-                        }
+        LazyColumn(
+            modifier = Modifier.weight(1f, fill = false),
+            verticalArrangement = Arrangement.spacedBy(32.dp)
+        ) {
+            item {
+                // Mood Section
+                FilterSectionTitle("Mood")
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    (1..5).forEach { moodId ->
+                        val visual = MoonIcons.Moods.getMoodVisual(moodId, themeType)
+                        val isSelected = (selectedItem as? FilterItem.Mood)?.id == moodId
+                        MoodFilterItem(
+                            visual = visual,
+                            isSelected = isSelected,
+                            isAnySelected = isAnySelected,
+                            onClick = { selectedItem = FilterItem.Mood(moodId) }
+                        )
                     }
                 }
+            }
 
-                item {
-                    // Grouped Activities Section
-                    val groupedActivities = dynamicActivities.groupBy { it.category }
-                    Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
-                        groupedActivities.forEach { (category, activities) ->
-                            Column {
-                                FilterSectionTitle(category.ifBlank { "Activities" })
-                                val activityItems = activities.map { 
-                                    FilterItem.Activity(it.id, it.name)
-                                }
-                                ActivityFilterGrid(
-                                    items = activityItems,
-                                    selectedId = (selectedItem as? FilterItem.Activity)?.id,
-                                    onItemClick = { selectedItem = it }
-                                )
+            item {
+                // Grouped Activities Section
+                val groupedActivities = dynamicActivities.groupBy { it.category }
+                Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
+                    groupedActivities.forEach { (category, activities) ->
+                        Column {
+                            FilterSectionTitle(category.ifBlank { "Activities" })
+                            val activityItems = activities.map { 
+                                FilterItem.Activity(it.id, it.name)
                             }
-                        }
-                    }
-                }
-
-                item {
-                    // Special Section
-                    FilterSectionTitle("Special")
-                    val specials = listOf(
-                        FilterItem.Special("music", "Music", Icons.Rounded.MusicNote),
-                        FilterItem.Special("sleep", "Sleep", Icons.Rounded.Bedtime),
-                        FilterItem.Special("sleep_long", "6-8h Sleep", Icons.Rounded.Timer),
-                        FilterItem.Special("menstruation", "Menstruation", Icons.Rounded.WaterDrop)
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        specials.forEach { special ->
-                            val isSelected = (selectedItem as? FilterItem.Special)?.id == special.id
-                            SpecialFilterItem(
-                                item = special,
-                                isSelected = isSelected,
-                                onClick = { selectedItem = special }
+                            ActivityFilterGrid(
+                                items = activityItems,
+                                selectedId = (selectedItem as? FilterItem.Activity)?.id,
+                                isAnySelected = isAnySelected,
+                                onItemClick = { selectedItem = it }
                             )
                         }
                     }
                 }
             }
 
-            // Bottom Buttons
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            item {
+                // Special Section
+                FilterSectionTitle("Special")
+                val specials = listOf(
+                    FilterItem.Special("music", "Music", Icons.Rounded.MusicNote),
+                    FilterItem.Special("sleep", "Sleep", Icons.Rounded.Bedtime),
+                    FilterItem.Special("sleep_long", "6-8h of sleep", Icons.Rounded.Timer),
+                    FilterItem.Special("menstruation", "Menstruation", Icons.Rounded.WaterDrop)
+                )
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    specials.forEach { special ->
+                        val isSelected = (selectedItem as? FilterItem.Special)?.id == special.id
+                        SpecialFilterItem(
+                            item = special,
+                            isSelected = isSelected,
+                            isAnySelected = isAnySelected,
+                            onClick = { selectedItem = special }
+                        )
+                    }
+                }
+            }
+        }
+
+        // Bottom Buttons
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Button(
+                onClick = { selectedItem = null },
+                modifier = Modifier.weight(1f).height(56.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnBgColor,
+                    contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor
+                ),
+                shape = RoundedCornerShape(16.dp),
+                elevation = ButtonDefaults.buttonElevation(0.dp)
             ) {
-                Button(
-                    onClick = { selectedItem = null },
-                    modifier = Modifier.weight(1f).height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = ButtonDefaults.buttonElevation(0.dp)
-                ) {
-                    Text("Reset", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
-                }
-                Button(
-                    onClick = { onSeeResults(selectedItem) },
-                    modifier = Modifier.weight(1.5f).height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = ButtonDefaults.buttonElevation(0.dp)
-                ) {
-                    Text("See results", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)
-                }
+                Text("Reset", fontWeight = FontWeight.Bold)
+            }
+            Button(
+                onClick = { onSeeResults(selectedItem) },
+                modifier = Modifier.weight(1.5f).height(56.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                shape = RoundedCornerShape(16.dp),
+                elevation = ButtonDefaults.buttonElevation(0.dp)
+            ) {
+                Text("See results", fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -192,41 +203,64 @@ fun FilterScreen(
 
 @Composable
 fun SelectedItemDisplay(item: FilterItem, themeType: com.diary.moonpage.core.theme.MoonThemeType) {
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val textColor = if (isDark) Color.White else Color.Black
+
     when (item) {
         is FilterItem.Mood -> {
             val visual = MoonIcons.Moods.getMoodVisual(item.id, themeType)
-            if (visual.drawableRes != null) {
-                Image(
-                    painter = painterResource(id = visual.drawableRes),
-                    contentDescription = null,
-                    modifier = Modifier.size(60.dp)
-                )
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(visual.color),
+                contentAlignment = Alignment.Center
+            ) {
+                if (visual.drawableRes != null) {
+                    Image(
+                        painter = painterResource(id = visual.drawableRes),
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
             }
         }
         is FilterItem.Activity -> {
             val icon = MoonIcons.getIconForActivity(item.name)
-            if (icon.drawableRes != null) {
-                Image(
-                    painter = painterResource(id = icon.drawableRes),
-                    contentDescription = null,
-                    modifier = Modifier.size(60.dp)
-                )
-            } else if (icon.vector != null) {
-                Icon(
-                    icon.vector,
-                    contentDescription = null,
-                    tint = icon.color,
-                    modifier = Modifier.size(50.dp)
-                )
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(if (isDark) Color(0xFF404040) else MoonTheme.customColors.logItemSelect),
+                contentAlignment = Alignment.Center
+            ) {
+                if (icon.drawableRes != null) {
+                    Image(
+                        painter = painterResource(id = icon.drawableRes),
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
+                    )
+                } else if (icon.vector != null) {
+                    Icon(
+                        icon.vector,
+                        contentDescription = null,
+                        tint = icon.color,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
             }
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(item.name, color = textColor, fontWeight = FontWeight.Bold)
         }
         is FilterItem.Special -> {
             Icon(
                 item.icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(50.dp)
+                tint = com.diary.moonpage.core.theme.MoonTheme.customColors.successColor,
+                modifier = Modifier.size(24.dp)
             )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(item.name, color = textColor, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -246,13 +280,20 @@ fun FilterSectionTitle(title: String) {
 fun MoodFilterItem(
     visual: com.diary.moonpage.core.util.MoonIcon,
     isSelected: Boolean,
+    isAnySelected: Boolean,
     onClick: () -> Unit
 ) {
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val dimmedBg = if (isDark) Color(0xFF404040) else Color(0xFFE0E0E0)
+    val dimmedAlpha = 0.3f
+
+    val bg = if (!isAnySelected || isSelected) visual.color else dimmedBg
+
     Box(
         modifier = Modifier
             .size(56.dp)
             .clip(CircleShape)
-            .background(if (isSelected) visual.color.copy(alpha = 0.2f) else Color.Transparent)
+            .background(bg)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
@@ -263,7 +304,9 @@ fun MoodFilterItem(
             Image(
                 painter = painterResource(id = visual.drawableRes),
                 contentDescription = null,
-                modifier = Modifier.size(if (isSelected) 44.dp else 40.dp)
+                modifier = Modifier
+                    .size(40.dp)
+                    .then(if (isAnySelected && !isSelected) Modifier.alpha(dimmedAlpha) else Modifier)
             )
         }
     }
@@ -273,25 +316,38 @@ fun MoodFilterItem(
 fun SpecialFilterItem(
     item: FilterItem.Special,
     isSelected: Boolean,
+    isAnySelected: Boolean,
     onClick: () -> Unit
 ) {
-    Box(
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val activeBg = if (isSelected) MoonTheme.customColors.logItemSelect else if (isDark) Color(0xFF292929) else Color.White
+    val dimmedBg = if (isDark) Color(0xFF404040) else Color(0xFFE0E0E0)
+    
+    val bg = if (!isAnySelected) activeBg else if (isSelected) activeBg else dimmedBg
+    val iconTint = if (!isAnySelected) MaterialTheme.colorScheme.onSurface else if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+    val textTint = if (!isAnySelected) MaterialTheme.colorScheme.onSurface else if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+
+    Row(
         modifier = Modifier
-            .size(56.dp)
-            .clip(CircleShape)
-            .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+            .height(48.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .background(bg)
+            .then(if (isSelected) Modifier.border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), RoundedCornerShape(24.dp)) else Modifier)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
-            ) { onClick() },
-        contentAlignment = Alignment.Center
+            ) { onClick() }
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             item.icon,
             contentDescription = item.name,
-            tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(28.dp)
+            tint = iconTint,
+            modifier = Modifier.size(20.dp)
         )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(item.name, color = textTint, fontWeight = FontWeight.Medium, fontSize = 14.sp)
     }
 }
 
@@ -300,8 +356,14 @@ fun SpecialFilterItem(
 fun ActivityFilterGrid(
     items: List<FilterItem.Activity>,
     selectedId: String?,
+    isAnySelected: Boolean,
     onItemClick: (FilterItem.Activity) -> Unit
 ) {
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val activeBg = MoonTheme.customColors.logItemBg
+    val selectedBg = MoonTheme.customColors.logItemSelect
+    val dimmedBg = if (isDark) Color(0xFF404040) else Color(0xFFE0E0E0)
+
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -310,11 +372,14 @@ fun ActivityFilterGrid(
         items.forEach { item ->
             val isSelected = item.id == selectedId
             val icon = MoonIcons.getIconForActivity(item.name)
+            
+            val bg = if (isSelected) selectedBg else if (!isAnySelected) activeBg else dimmedBg
+            
             Box(
                 modifier = Modifier
                     .size(52.dp)
                     .clip(CircleShape)
-                    .background(if (isSelected) icon.color.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                    .background(bg)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
@@ -325,13 +390,15 @@ fun ActivityFilterGrid(
                     Image(
                         painter = painterResource(id = icon.drawableRes),
                         contentDescription = item.name,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier
+                            .size(32.dp)
+                            .then(if (isAnySelected && !isSelected) Modifier.alpha(0.3f) else Modifier)
                     )
                 } else if (icon.vector != null) {
                     Icon(
                         icon.vector,
                         contentDescription = item.name,
-                        tint = if (isSelected) icon.color else MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = if (isAnySelected && !isSelected) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f) else icon.color,
                         modifier = Modifier.size(24.dp)
                     )
                 }

@@ -144,9 +144,7 @@ fun MomentHistoryScreenContent(
         }
     }
 
-    Scaffold(
-        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState) }
-    ) { paddingValues ->
+    Scaffold() { paddingValues ->
         Box(
             modifier = modifier
                 .fillMaxSize()
@@ -309,6 +307,8 @@ fun MomentHistoryScreenContent(
                     }
                 }
             }
+            
+            MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 }

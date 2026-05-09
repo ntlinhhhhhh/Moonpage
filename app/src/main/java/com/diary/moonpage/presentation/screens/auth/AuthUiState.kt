@@ -11,6 +11,7 @@ data class AuthUiState (
 
     val savedEmailForOtp: String = "",
     val resetToken: String = "",
+    val prefillPassword: String = "", // Only set after successful register to auto-fill login
 
 
     val emailError: UiText? = null,

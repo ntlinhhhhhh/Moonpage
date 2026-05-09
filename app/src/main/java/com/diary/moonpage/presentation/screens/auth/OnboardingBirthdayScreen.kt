@@ -292,37 +292,5 @@ fun InfiniteWheelColumn(
                 }
             }
         }
-
-        // Tap area above center
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth()
-                .height(itemHeight)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
-                    coroutineScope.launch {
-                        listState.animateScrollToItem(listState.firstVisibleItemIndex - 1)
-                    }
-                }
-        )
-
-        // Tap area below center
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .height(itemHeight)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
-                    coroutineScope.launch {
-                        listState.animateScrollToItem(listState.firstVisibleItemIndex + 1)
-                    }
-                }
-        )
     }
 }

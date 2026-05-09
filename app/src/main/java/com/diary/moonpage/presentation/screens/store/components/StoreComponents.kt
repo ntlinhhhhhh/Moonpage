@@ -470,7 +470,7 @@ fun ConfirmPurchaseDialog(
     Dialog(onDismissRequest = onCancel) {
         Surface(
             shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surface,
+            color = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor,
             tonalElevation = 6.dp,
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -522,10 +522,14 @@ fun ConfirmPurchaseDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    OutlinedButton(
+                    Button(
                         onClick = onCancel,
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(24.dp)
+                        shape = RoundedCornerShape(24.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnBgColor,
+                            contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor
+                        )
                     ) {
                         Text("Cancel")
                     }
@@ -592,7 +596,7 @@ fun PurchaseSuccessDialog(
             )
         },
         shape = RoundedCornerShape(24.dp),
-        containerColor = MaterialTheme.colorScheme.surface
+        containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor
     )
 }
 

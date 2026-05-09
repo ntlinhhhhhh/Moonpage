@@ -148,9 +148,9 @@ fun ThemeDetailScreen(
                 }
             }
         },
-        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState) },
         containerColor = backgroundColor
     ) { paddingValues ->
+        Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -222,6 +222,8 @@ fun ThemeDetailScreen(
                 themeName = uiState.purchasedTheme?.name ?: "",
                 onDismiss = { viewModel.dismissDialog() }
             )
+        }
+        MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 }

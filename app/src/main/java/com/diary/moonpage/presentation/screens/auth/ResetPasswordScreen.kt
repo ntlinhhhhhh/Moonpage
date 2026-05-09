@@ -38,10 +38,8 @@ import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import com.diary.moonpage.presentation.components.core.inputs.MoonTextField
 import com.diary.moonpage.presentation.components.core.navigation.TopCircularIcon
 import com.diary.moonpage.core.theme.*
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
 
 @Composable
 fun ResetPasswordScreen(
@@ -52,11 +50,21 @@ fun ResetPasswordScreen(
     onNavigateToLogin: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackBarHostState = remember { SnackbarHostState() }
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collect { event ->
             when (event) {
                 AuthUiEvent.NavigateToLogin -> onNavigateToLogin()
+                is AuthUiEvent.ResetPasswordSuccess -> {
+                    snackBarHostState.currentSnackbarData?.dismiss()
+                    snackBarHostState.showSnackbar(event.message)
+                }
+                is AuthUiEvent.ShowSnackBar -> {
+                    snackBarHostState.currentSnackbarData?.dismiss()
+                    snackBarHostState.showSnackbar(event.message.asString(context))
+                }
                 else -> Unit
             }
         }
@@ -64,10 +72,10 @@ fun ResetPasswordScreen(
 
     ResetPasswordScreenContent(
         uiState = uiState,
-        uiEvent = viewModel.uiEvent,
+        snackBarHostState = snackBarHostState,
         onPasswordChange = viewModel::onPasswordChange,
         onConfirmPasswordChange = viewModel::onConfirmPasswordChange,
-        onResetClick = viewModel::resetPassword,
+        onResetClick = { viewModel.resetPassword(email, resetToken) },
         onNavigateBack = onNavigateBack,
         onNavigateToLogin = onNavigateToLogin
     )
@@ -76,7 +84,7 @@ fun ResetPasswordScreen(
 @Composable
 fun ResetPasswordScreenContent(
     uiState: AuthUiState,
-    uiEvent: Flow<AuthUiEvent>,
+    snackBarHostState: SnackbarHostState = remember { SnackbarHostState() },
     onPasswordChange: (String) -> Unit,
     onConfirmPasswordChange: (String) -> Unit,
     onResetClick: () -> Unit,
@@ -84,31 +92,18 @@ fun ResetPasswordScreenContent(
     onNavigateToLogin: () -> Unit
 ) {
     val scrollState = rememberScrollState()
-    val snackBarHostState = remember { SnackbarHostState() }
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
-    val context = LocalContext.current
 
     val screenBgColor = MaterialTheme.colorScheme.background
     val textColor = MaterialTheme.colorScheme.onBackground
     val cardBgColor = MaterialTheme.colorScheme.surface
     val iconColor = MaterialTheme.colorScheme.onBackground
 
-    LaunchedEffect(Unit) {
-        uiEvent.collect { event ->
-            if (event is AuthUiEvent.ShowSnackBar) {
-                launch {
-                    snackBarHostState.currentSnackbarData?.dismiss()
-                    snackBarHostState.showSnackbar(event.message.asString(context))
-                }
-            }
-        }
-    }
-
     Scaffold(
-        snackbarHost = { MoonSnackbarHost(hostState = snackBarHostState) },
         containerColor = screenBgColor
     ) { paddingValues ->
+        Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -232,6 +227,8 @@ fun ResetPasswordScreenContent(
             ) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
+        }
+        MoonSnackbarHost(hostState = snackBarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 }

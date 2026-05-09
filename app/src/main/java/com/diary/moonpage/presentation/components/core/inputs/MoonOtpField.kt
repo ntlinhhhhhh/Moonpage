@@ -82,7 +82,7 @@ fun OtpInputField(
                 repeat(otpCount) { index ->
                     val char = when {
                         index >= otpText.length -> ""
-                        else -> "â€¢"
+                        else -> "●"
                     }
                     Box(
                         modifier = Modifier

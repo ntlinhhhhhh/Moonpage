@@ -118,10 +118,10 @@ fun AccountScreen(
         )
     }
 
-    Scaffold(
-        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState, topPadding = 105.dp) },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background
+        ) { padding ->
         Box(modifier = Modifier.padding(padding)) {
             AccountScreenContent(
                 username = user?.name ?: "",
@@ -152,6 +152,8 @@ fun AccountScreen(
                 }
             }
         }
+        }
+        MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
     }
 
     if (currentBottomSheet != BottomSheetType.NONE) {
@@ -246,8 +248,8 @@ fun LogoutConfirmationDialog(
                 .fillMaxWidth(0.88f)
                 .wrapContentHeight(),
             shape = RoundedCornerShape(20.dp),
-            color = colorScheme.surface,
-            tonalElevation = 6.dp
+            color = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor,
+            tonalElevation = 0.dp
         ) {
             Column(
                 modifier = Modifier.padding(28.dp),
@@ -296,8 +298,8 @@ fun LogoutConfirmationDialog(
                         modifier = Modifier.weight(1f).height(52.dp),
                         shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = colorScheme.surfaceVariant,
-                            contentColor = colorScheme.onSurface
+                            containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnBgColor,
+                            contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor
                         ),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
                     ) {
@@ -359,9 +361,9 @@ fun AccountScreenContent(
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
-    Scaffold(
-        containerColor = colorScheme.background,
-        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState, topPadding = 105.dp) },
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            containerColor = colorScheme.background,
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -506,6 +508,8 @@ fun AccountScreenContent(
 
             Spacer(modifier = Modifier.height(48.dp))
         }
+        }
+        MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
     }
 }
 

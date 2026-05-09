@@ -121,7 +121,6 @@ fun LoginScreen(
     }
 
     Scaffold(
-        snackbarHost = { MoonSnackbarHost(hostState = snackBarHostState) },
         containerColor = screenBgColor,
         contentWindowInsets = WindowInsets.systemBars
     ) { paddingValues ->
@@ -293,6 +292,7 @@ fun LoginScreen(
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             }
+            MoonSnackbarHost(hostState = snackBarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 }

@@ -181,7 +181,14 @@ class AuthViewModel @Inject constructor (
                 val result: Result<User> = registerUseCase(request)
 
                 result.onSuccess {
-                    _uiState.update { it.copy(isLoading = false) }
+                    // After register: pre-fill both email + password for Login screen
+                    _uiState.update {
+                        AuthUiState(
+                            emailInput = state.emailInput,
+                            passwordInput = state.passwordInput,
+                            prefillPassword = state.passwordInput
+                        )
+                    }
                     _uiEvent.send(AuthUiEvent.RegisterSuccess("Registration successful. Please log in."))
                 }.onFailure { exception ->
                     _uiState.update { it.copy(isLoading = false) }
@@ -240,7 +247,16 @@ class AuthViewModel @Inject constructor (
             val result = forgotPasswordUseCase(emailInput)
 
             result.onSuccess {
-                _uiState.update { it.copy(isLoading = false, savedEmailForOtp = emailInput) }
+                // Save email for OTP flow, clear password fields to avoid confusion
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        savedEmailForOtp = emailInput,
+                        passwordInput = "",
+                        confirmPasswordInput = "",
+                        passwordError = null
+                    )
+                }
                 _uiEvent.send(AuthUiEvent.NavigateToVerifyOtp(emailInput))
             }.onFailure { exception ->
                 _uiState.update { it.copy(isLoading = false) }
@@ -277,11 +293,9 @@ class AuthViewModel @Inject constructor (
         }
     }
 
-    fun resetPassword() {
+    fun resetPassword(email: String, resetToken: String) {
         viewModelScope.launch {
             val state = uiState.value
-            val email = state.savedEmailForOtp
-            val resetToken = state.resetToken
             val newPassword = state.passwordInput
 
             val passwordResult = validatePassword.execute(newPassword)
@@ -304,22 +318,41 @@ class AuthViewModel @Inject constructor (
             val result = resetPasswordUseCase(email, resetToken, newPassword)
 
             result.onSuccess {
+                // Keep only email for Login pre-fill, clear everything else
                 _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        passwordInput = "",
-                        confirmPasswordInput = "",
-                        otpCodeInput = "",
-                        resetToken = "",
-                        emailInput = it.savedEmailForOtp
+                    AuthUiState(
+                        emailInput = email,
+                        prefillPassword = "" // Do NOT pre-fill password after reset
                     )
                 }
-                _uiEvent.send(AuthUiEvent.ResetPasswordSuccess("Password reset successful! Please login."))
+                // Navigate immediately without waiting for snackbar
                 _uiEvent.send(AuthUiEvent.NavigateToLogin)
             }.onFailure { exception ->
                 _uiState.update { it.copy(isLoading = false) }
                 handleAuthError(exception.message)
             }
+        }
+    }
+
+    /** Called when navigating TO ForgotPassword from Login, to pre-fill email if already typed */
+    fun prepareForgotPassword() {
+        val currentEmail = uiState.value.emailInput
+        // Clear password fields but preserve the email the user may have typed in Login
+        _uiState.update {
+            it.copy(
+                passwordInput = "",
+                confirmPasswordInput = "",
+                passwordError = null,
+                confirmPasswordError = null,
+                prefillPassword = ""
+            )
+        }
+    }
+
+    /** Called when navigating away from screens to clear form fields */
+    fun clearAuthFields() {
+        _uiState.update {
+            AuthUiState() // Full reset
         }
     }
 

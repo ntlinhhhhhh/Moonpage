@@ -47,9 +47,8 @@ fun StoreScreen(
         }
     }
 
-    Scaffold(
-        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState) }
-    ) { paddingValues ->
+    Scaffold() { paddingValues ->
+        Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -108,6 +107,8 @@ fun StoreScreen(
                     )
                 }
             }
+            }
+            MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 

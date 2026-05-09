@@ -142,7 +142,7 @@ fun MoodFlowChart(
             }
         }
 
-        Column(modifier = Modifier.fillMaxSize().padding(start = 35.dp)) {
+        Column(modifier = Modifier.fillMaxSize().padding(start = 35.dp, end = 10.dp)) {
             val gridColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
             Canvas(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 val width = size.width
@@ -162,11 +162,28 @@ fun MoodFlowChart(
 
                 if (moodFlow.isNotEmpty()) {
                     val path = Path()
-                    val dx = width / (if (isMonthly) 30 else 11).coerceAtLeast(1)
+                    // If monthly, we show days. Max days in month is 31.
+                    // If annual, we show months. 12 months.
+                    val maxSlots = if (isMonthly) {
+                        YearMonth.of(year, month).lengthOfMonth() - 1
+                    } else {
+                        11
+                    }
+                    
+                    val dx = if (maxSlots > 0) width / maxSlots else 0f
                     
                     moodFlow.forEachIndexed { index, item ->
-                        val x = index * dx
+                        // Try to parse day from date string "yyyy-MM-dd"
+                        val dayOfMonth = try {
+                            val parts = item.date.split("-")
+                            if (isMonthly) parts.last().toInt() - 1 else parts[1].toInt() - 1
+                        } catch (e: Exception) {
+                            index
+                        }
+                        
+                        val x = (dayOfMonth * dx).coerceIn(0f, width)
                         val y = height * (item.moodId - 1).coerceIn(0, 4) / 4f
+                        
                         if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
                         drawCircle(color = primaryColor, radius = 4.dp.toPx(), center = androidx.compose.ui.geometry.Offset(x, y))
                     }
@@ -178,8 +195,8 @@ fun MoodFlowChart(
             Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                 val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
                 if (isMonthly) {
-                    val nextMonth = if (month == 12) 1 else month + 1
-                    listOf("$month/1", "$month/6", "$month/11", "$month/16", "$month/21", "$month/26", "$nextMonth/1").forEach {
+                    val daysInMonth = YearMonth.of(year, month).lengthOfMonth()
+                    listOf("1", "6", "11", "16", "21", "26", daysInMonth.toString()).forEach {
                         Text(it, fontSize = 12.sp, color = labelColor)
                     }
                 } else {

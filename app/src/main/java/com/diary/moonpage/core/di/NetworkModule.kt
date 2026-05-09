@@ -63,7 +63,7 @@ object NetworkModule {
     @Singleton
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("https://moonpage.duckdns.org/")
+            .baseUrl("https://hieu-wikipedia.io.vn/")
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
