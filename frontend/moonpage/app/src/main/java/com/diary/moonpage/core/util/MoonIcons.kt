@@ -262,62 +262,65 @@ object MoonIcons {
 @Preview(showBackground = true)
 @Composable
 fun MoonIconsPreview() {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = Color(0xFFF5F5F5)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                "Moon Page Icons Preview",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-            
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 80.dp),
-                contentPadding = PaddingValues(8.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(MoonIcons.getAllIcons()) { icon ->
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color.White)
-                            .padding(8.dp)
-                    ) {
-                        Box(
+    com.diary.moonpage.presentation.theme.MoonPageTheme {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    "Moon Page Icons Preview",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 80.dp),
+                    contentPadding = PaddingValues(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(MoonIcons.getAllIcons()) { icon ->
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
-                                .size(48.dp)
-                                .clip(CircleShape)
-                                .background(icon.color.copy(alpha = 0.15f)),
-                            contentAlignment = Alignment.Center
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surface)
+                                .padding(8.dp)
                         ) {
-                            if (icon.drawableRes != null) {
-                                Image(
-                                    painter = painterResource(id = icon.drawableRes),
-                                    contentDescription = icon.name,
-                                    modifier = Modifier.size(32.dp)
-                                )
-                            } else if (icon.vector != null) {
-                                Icon(
-                                    imageVector = icon.vector,
-                                    contentDescription = icon.name,
-                                    tint = icon.color,
-                                    modifier = Modifier.size(28.dp)
-                                )
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .background(icon.color.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (icon.drawableRes != null) {
+                                    Image(
+                                        painter = painterResource(id = icon.drawableRes),
+                                        contentDescription = icon.name,
+                                        modifier = Modifier.size(32.dp)
+                                    )
+                                } else if (icon.vector != null) {
+                                    Icon(
+                                        imageVector = icon.vector,
+                                        contentDescription = icon.name,
+                                        tint = icon.color,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
                             }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = icon.name,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1
+                            )
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = icon.name,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.Gray,
-                            maxLines = 1
-                        )
                     }
                 }
             }

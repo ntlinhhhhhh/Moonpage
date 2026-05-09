@@ -14,5 +14,7 @@ data class CalendarUiState(
     val snackbarMessage: String? = null,
     val showMonthPicker: Boolean = false,
     val showFilterSheet: Boolean = false,
-    val showShareSheet: Boolean = false
+    val showShareSheet: Boolean = false,
+    val filterMoodIds: Set<Int> = emptySet(),
+    val filterActivityIds: Set<String> = emptySet()
 )

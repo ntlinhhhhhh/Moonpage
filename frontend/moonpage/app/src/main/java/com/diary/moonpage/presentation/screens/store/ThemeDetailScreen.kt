@@ -29,6 +29,7 @@ import androidx.compose.ui.window.Dialog
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.domain.model.ThemeType
 import com.diary.moonpage.presentation.components.core.buttons.MoonPrimaryButton
+import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import com.diary.moonpage.presentation.screens.store.components.*
 import com.diary.moonpage.presentation.theme.*
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -44,12 +45,21 @@ fun ThemeDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val theme = uiState.selectedThemeDetail
+    val snackbarHostState = remember { SnackbarHostState() }
 
     if (theme == null) {
         LaunchedEffect(Unit) {
             onNavigateBack()
         }
         return
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.uiEffect.collect { effect ->
+            if (effect is StoreUiEffect.ShowSnackBar) {
+                snackbarHostState.showSnackbar(effect.message)
+            }
+        }
     }
 
     val backgroundColor = MaterialTheme.colorScheme.background
@@ -138,6 +148,7 @@ fun ThemeDetailScreen(
                 }
             }
         },
+        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState) },
         containerColor = backgroundColor
     ) { paddingValues ->
         Column(

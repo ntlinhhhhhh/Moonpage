@@ -532,7 +532,7 @@ fun MonthYearPickerDialog(
 
     var tempYear by remember { mutableIntStateOf(currentYearMonth.year) }
     var tempMonth by remember { mutableIntStateOf(currentYearMonth.monthValue) }
-    
+
     val itemHeight = 44.dp
 
     androidx.compose.ui.window.Dialog(
@@ -668,16 +668,16 @@ private fun WheelPicker(
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
     val count = items.size
-    
+
     val initialIndex = items.indexOf(initialValue).coerceAtLeast(0)
     val startIndex = if (isCircular) PICKER_INFINITE_MULTIPLIER / 2 * count + initialIndex else initialIndex
-    
+
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = startIndex)
     val snapFlingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
 
     val selectedRealIndex by remember {
-        derivedStateOf { 
-            if (isCircular) listState.firstVisibleItemIndex % count 
+        derivedStateOf {
+            if (isCircular) listState.firstVisibleItemIndex % count
             else listState.firstVisibleItemIndex.coerceIn(0, items.lastIndex)
         }
     }
@@ -726,7 +726,7 @@ private fun WheelPicker(
             items(totalItems) { index ->
                 val realIndex = if (isCircular) index % count else index
                 val isSelected = index == listState.firstVisibleItemIndex
-                
+
                 Box(
                     modifier = Modifier
                         .height(itemHeight)
@@ -857,7 +857,7 @@ fun ShareCalendarCard(
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val monthName = yearMonth.format(java.time.format.DateTimeFormatter.ofPattern("MMMM yyyy"))
-    
+
     Box(
         modifier = Modifier
             .size(if (isSquare) 1080.dp else 1080.dp, if (isSquare) 1080.dp else 1920.dp)
@@ -882,14 +882,14 @@ fun ShareCalendarCard(
                 fontWeight = FontWeight.Bold,
                 fontSize = if (isSquare) 32.sp else 40.sp
             )
-            
+
             Spacer(modifier = Modifier.height(if (isSquare) 48.dp else 80.dp))
-            
+
             // Simplified Calendar Grid
             val firstDay = yearMonth.atDay(1)
             val firstDayOffset = if (firstDay.dayOfWeek == java.time.DayOfWeek.SUNDAY) 0 else firstDay.dayOfWeek.value
             val daysInMonth = yearMonth.lengthOfMonth()
-            
+
             val daysOfWeek = listOf("S", "M", "T", "W", "T", "F", "S")
             Row(modifier = Modifier.fillMaxWidth()) {
                 daysOfWeek.forEach { day ->
@@ -903,12 +903,12 @@ fun ShareCalendarCard(
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             val totalCells = firstDayOffset + daysInMonth
             val rows = (totalCells + 6) / 7
-            
+
             for (rowIndex in 0 until rows) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -922,9 +922,9 @@ fun ShareCalendarCard(
                                 val date = yearMonth.atDay(dayNum)
                                 val log = dailyLogs[date]
                                 val moodId = log?.baseMoodId ?: 0
-                                
+
                                 val moodVisual = MoonIcons.Moods.getMoodVisual(moodId)
-                                
+
                                 Box(
                                     modifier = Modifier
                                         .size(if (isSquare) 80.dp else 100.dp)
@@ -957,7 +957,7 @@ fun ShareCalendarCard(
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }
-            
+
             if (!isSquare) {
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
@@ -968,7 +968,7 @@ fun ShareCalendarCard(
                 )
             }
         }
-        
+
         // Footer/Watermark
         if (isSquare) {
             Text(

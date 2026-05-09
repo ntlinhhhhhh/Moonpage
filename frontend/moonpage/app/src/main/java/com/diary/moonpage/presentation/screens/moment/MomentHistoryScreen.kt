@@ -27,6 +27,7 @@ import androidx.compose.ui.layout.ContentScale
 import kotlinx.coroutines.launch
 import com.diary.moonpage.presentation.theme.MoonPageTheme
 import com.diary.moonpage.domain.model.Moment
+import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import com.diary.moonpage.presentation.components.moment.MomentFeedItem
 import com.diary.moonpage.presentation.components.moment.CaptureButton
 
@@ -45,12 +46,13 @@ fun MomentHistoryScreen(
     val profileState by profileViewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
             when (effect) {
                 is MomentUiEffect.ShowSnackBar -> {
-                    android.widget.Toast.makeText(context, effect.message.asString(context), android.widget.Toast.LENGTH_SHORT).show()
+                    snackbarHostState.showSnackbar(effect.message.asString(context))
                 }
                 is MomentUiEffect.ShareMoment -> {
                     coroutineScope.launch {
@@ -62,7 +64,7 @@ fun MomentHistoryScreen(
                             val bitmap = (result.drawable as android.graphics.drawable.BitmapDrawable).bitmap
                             com.diary.moonpage.core.util.ImageUtils.shareImage(context, bitmap, "Share Moment")
                         } else {
-                            android.widget.Toast.makeText(context, "Failed to load image for sharing", android.widget.Toast.LENGTH_SHORT).show()
+                            snackbarHostState.showSnackbar("Failed to load image for sharing")
                         }
                     }
                 }
@@ -85,6 +87,7 @@ fun MomentHistoryScreen(
         onShare = { moment -> viewModel.onEvent(MomentUiEvent.ShareMoment(moment.imageUrl)) },
         onDownload = { moment -> viewModel.onEvent(MomentUiEvent.DownloadMoment(moment.imageUrl)) },
         onDelete = { moment -> viewModel.onEvent(MomentUiEvent.DeleteMoment(moment.id)) },
+        snackbarHostState = snackbarHostState,
         avatarUrl = profileState.user?.avatarUrl,
         localAvatarPath = profileState.localAvatarPath ?: profileState.tempAvatarPath
     )
@@ -103,6 +106,7 @@ fun MomentHistoryScreenContent(
     onShare: (Moment) -> Unit = {},
     onDownload: (Moment) -> Unit = {},
     onDelete: (Moment) -> Unit = {},
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     avatarUrl: String? = null,
     localAvatarPath: String? = null,
     modifier: Modifier = Modifier
@@ -140,163 +144,168 @@ fun MomentHistoryScreenContent(
         }
     }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(bgColor)
-    ) {
-        if (sortedMoments.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No moments yet", color = onBgColor.copy(alpha = 0.6f))
-            }
-        } else {
-            VerticalPager(
-                state = feedPagerState,
-                modifier = Modifier.fillMaxSize(),
-                beyondViewportPageCount = 2 
-            ) { index ->
-                val moment = sortedMoments[index]
-                MomentFeedItem(
-                    moment = moment, 
-                    localPath = localPaths[moment.imageUrl],
-                    avatarUrl = avatarUrl,
-                    localAvatarPath = localAvatarPath
-                )
-            }
-        }
-
-        // Header
+    Scaffold(
+        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState) }
+    ) { paddingValues ->
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(horizontal = 24.dp, vertical = 16.dp)
-                .height(56.dp)
+            modifier = modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(bgColor)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(onBgColor.copy(alpha = 0.15f))
-                    .align(Alignment.CenterStart),
-                contentAlignment = Alignment.Center
-            ) {
-                AsyncImage(
-                    model = localAvatarPath ?: avatarUrl,
-                    contentDescription = "Avatar",
+            if (sortedMoments.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No moments yet", color = onBgColor.copy(alpha = 0.6f))
+                }
+            } else {
+                VerticalPager(
+                    state = feedPagerState,
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
+                    beyondViewportPageCount = 2 
+                ) { index ->
+                    val moment = sortedMoments[index]
+                    MomentFeedItem(
+                        moment = moment, 
+                        localPath = localPaths[moment.imageUrl],
+                        avatarUrl = avatarUrl,
+                        localAvatarPath = localAvatarPath
+                    )
+                }
             }
-        }
 
-        // Bottom Bar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 40.dp, vertical = 40.dp)
-                .align(Alignment.BottomCenter),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+            // Header
             Box(
                 modifier = Modifier
-                    .size(52.dp)
-                    .clip(CircleShape)
-                    .background(onBgColor.copy(alpha = 0.1f))
-                    .clickable { onNavigateToGallery() },
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
+                    .height(56.dp)
             ) {
-                Icon(Icons.Rounded.GridView, null, tint = onBgColor, modifier = Modifier.size(28.dp))
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(onBgColor.copy(alpha = 0.15f))
+                        .align(Alignment.CenterStart),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AsyncImage(
+                        model = localAvatarPath ?: avatarUrl,
+                        contentDescription = "Avatar",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
             }
 
-            CaptureButton(onClick = onBackToCamera)
-
-            if (sortedMoments.isNotEmpty()) {
+            // Bottom Bar
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 40.dp, vertical = 40.dp)
+                    .align(Alignment.BottomCenter),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Box(
                     modifier = Modifier
                         .size(52.dp)
                         .clip(CircleShape)
                         .background(onBgColor.copy(alpha = 0.1f))
-                        .clickable { showMenu = true },
+                        .clickable { onNavigateToGallery() },
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Rounded.MoreHoriz, null, tint = onBgColor, modifier = Modifier.size(28.dp))
+                    Icon(Icons.Rounded.GridView, null, tint = onBgColor, modifier = Modifier.size(28.dp))
                 }
-            } else {
-                Spacer(modifier = Modifier.size(52.dp))
-            }
-        }
 
-        if (showMenu) {
-            @OptIn(ExperimentalMaterial3Api::class)
-            ModalBottomSheet(
-                onDismissRequest = { showMenu = false }
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 32.dp, top = 8.dp)
+                CaptureButton(onClick = onBackToCamera)
+
+                if (sortedMoments.isNotEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .size(52.dp)
+                            .clip(CircleShape)
+                            .background(onBgColor.copy(alpha = 0.1f))
+                            .clickable { showMenu = true },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Rounded.MoreHoriz, null, tint = onBgColor, modifier = Modifier.size(28.dp))
+                    }
+                } else {
+                    Spacer(modifier = Modifier.size(52.dp))
+                }
+            }
+
+            if (showMenu) {
+                @OptIn(ExperimentalMaterial3Api::class)
+                ModalBottomSheet(
+                    onDismissRequest = { showMenu = false }
                 ) {
-                    Row(
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { 
-                                showMenu = false
-                                if (sortedMoments.isNotEmpty()) {
-                                    onShare(sortedMoments[feedPagerState.currentPage])
+                            .padding(bottom = 32.dp, top = 8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { 
+                                    showMenu = false
+                                    if (sortedMoments.isNotEmpty()) {
+                                        onShare(sortedMoments[feedPagerState.currentPage])
+                                    }
                                 }
-                            }
-                            .padding(horizontal = 24.dp, vertical = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Rounded.Share, null, tint = onBgColor)
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Text("Share", color = onBgColor, fontSize = 16.sp)
-                    }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { 
-                                showMenu = false
-                                if (sortedMoments.isNotEmpty()) {
-                                    onDownload(sortedMoments[feedPagerState.currentPage])
+                                .padding(horizontal = 24.dp, vertical = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Rounded.Share, null, tint = onBgColor)
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text("Share", color = onBgColor, fontSize = 16.sp)
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { 
+                                    showMenu = false
+                                    if (sortedMoments.isNotEmpty()) {
+                                        onDownload(sortedMoments[feedPagerState.currentPage])
+                                    }
                                 }
-                            }
-                            .padding(horizontal = 24.dp, vertical = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Rounded.Download, null, tint = onBgColor)
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Text("Download", color = onBgColor, fontSize = 16.sp)
-                    }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { 
-                                showMenu = false
-                                if (sortedMoments.isNotEmpty()) {
-                                    onDelete(sortedMoments[feedPagerState.currentPage])
+                                .padding(horizontal = 24.dp, vertical = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Rounded.Download, null, tint = onBgColor)
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text("Download", color = onBgColor, fontSize = 16.sp)
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { 
+                                    showMenu = false
+                                    if (sortedMoments.isNotEmpty()) {
+                                        onDelete(sortedMoments[feedPagerState.currentPage])
+                                    }
                                 }
-                            }
-                            .padding(horizontal = 24.dp, vertical = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Rounded.Delete, null, tint = MaterialTheme.colorScheme.error)
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Text("Delete", color = MaterialTheme.colorScheme.error, fontSize = 16.sp)
-                    }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { showMenu = false }
-                            .padding(horizontal = 24.dp, vertical = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Rounded.Close, null, tint = onBgColor)
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Text("Cancel", color = onBgColor, fontSize = 16.sp)
+                                .padding(horizontal = 24.dp, vertical = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Rounded.Delete, null, tint = MaterialTheme.colorScheme.error)
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text("Delete", color = MaterialTheme.colorScheme.error, fontSize = 16.sp)
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showMenu = false }
+                                .padding(horizontal = 24.dp, vertical = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Rounded.Close, null, tint = onBgColor)
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text("Cancel", color = onBgColor, fontSize = 16.sp)
+                        }
                     }
                 }
             }

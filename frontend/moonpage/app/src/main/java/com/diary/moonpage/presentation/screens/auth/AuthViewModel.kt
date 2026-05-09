@@ -78,7 +78,9 @@ class AuthViewModel @Inject constructor (
 
     fun loadInitialAppResources(onComplete: () -> Unit) {
         viewModelScope.launch {
-            _uiState.update { it.copy(loadingProgress = 0f) }
+            // Start with a small progress so it's not empty at first
+            val initialProgress = 0.15f
+            _uiState.update { it.copy(loadingProgress = initialProgress) }
             
             val jobs = listOf(
                 async { userRepository.getCurrentUser() },
@@ -86,7 +88,8 @@ class AuthViewModel @Inject constructor (
                 async { activityRepository.syncActivities() }
             )
 
-            val step = 1f / jobs.size
+            val remainingProgress = 1f - initialProgress
+            val step = remainingProgress / jobs.size
             jobs.forEach { job ->
                 job.await()
                 _uiState.update { it.copy(loadingProgress = (it.loadingProgress + step).coerceAtMost(1f)) }

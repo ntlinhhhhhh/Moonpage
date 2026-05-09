@@ -37,7 +37,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.core.util.MoonIcon
 import com.diary.moonpage.core.util.MoonIcons
-import com.diary.moonpage.presentation.components.calendar.CalendarSnackbarHost
+import androidx.compose.ui.graphics.ColorFilter
+import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
+import com.diary.moonpage.presentation.theme.MoonTheme
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -97,7 +99,6 @@ fun DailyLogScreenContent(
     checkLogExists: (LocalDate, (Boolean) -> Unit) -> Unit,
     setPendingDate: (LocalDate) -> Unit
 ) {
-    val colorScheme = MaterialTheme.colorScheme
     val snackbarHostState = remember { SnackbarHostState() }
     val hasChanges = remember(uiState) {
         uiState.selectedMood != null || uiState.selectedActivities.isNotEmpty() || uiState.noteText.isNotBlank()
@@ -126,8 +127,8 @@ fun DailyLogScreenContent(
                 onSaveClick = { onEvent(DailyLogUiEvent.OnSaveClick) }
             )
         },
-        containerColor = Color(0xFFF7F7F2),
-        snackbarHost = { CalendarSnackbarHost(snackbarHostState = snackbarHostState) }
+        containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState) }
     ) { paddingValues ->
         DailyLogMainContent(
             modifier = Modifier.padding(paddingValues),
@@ -179,14 +180,13 @@ private fun DailyLogTopBar(
     onBackClick: () -> Unit,
     onDateClick: () -> Unit
 ) {
-    val colorScheme = MaterialTheme.colorScheme
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onBackClick) {
-            Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back", tint = Color.Black)
+            Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
         }
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -200,12 +200,12 @@ private fun DailyLogTopBar(
                 text = date.format(formatter),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black
+                color = MaterialTheme.colorScheme.onSurface
             )
-            Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null, tint = Color.Black)
+            Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
         }
         IconButton(onClick = {}) {
-            Icon(Icons.Rounded.Settings, contentDescription = "Settings", tint = Color.Black)
+            Icon(Icons.Rounded.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onSurface)
         }
     }
 }
@@ -215,22 +215,29 @@ private fun DailyLogBottomBar(
     isLoading: Boolean,
     onSaveClick: () -> Unit
 ) {
-    Box(modifier = Modifier.background(Color.White).fillMaxWidth()) {
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 2.dp,
+        modifier = Modifier.fillMaxWidth()
+    ) {
         Button(
             onClick = onSaveClick,
             modifier = Modifier.fillMaxWidth().padding(16.dp).height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ),
             shape = RoundedCornerShape(16.dp),
             enabled = !isLoading
         ) {
             if (isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onPrimary,
                     strokeWidth = 3.dp
                 )
             } else {
-                Text("Done", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text("Done", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -333,11 +340,11 @@ private fun DailyMoodSection(
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
-            Text("How was your day?", color = Color.Black, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
+            Text("How was your day?", color = MoonTheme.customColors.logCardOnBg, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 moods.forEach { (id, moodIcon) ->
                     val isSelected = selectedMood == id
@@ -367,18 +374,18 @@ private fun DailyMoodSection(
 
 @Composable
 private fun DailyMusicSection(musicTitle: String?, onMusicClick: () -> Unit) {
-    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White), modifier = Modifier.fillMaxWidth()) {
+    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Music", fontWeight = FontWeight.Bold, color = Color.Black)
-                Text("Link account", fontSize = 12.sp, color = Color.Gray)
+                Text("Music", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
+                Text("Link account", fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
             }
-            Spacer(modifier = Modifier.height(12.dp))
-            Surface(color = Color(0xFFF5F5F5), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().clickable { onMusicClick() }) {
-                Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Rounded.MusicNote, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Gray)
+            Spacer(modifier = Modifier.height(10.dp))
+            Surface(color = MoonTheme.customColors.logItemBg, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().clickable { onMusicClick() }) {
+                Row(modifier = Modifier.padding(10.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Rounded.MusicNote, contentDescription = null, modifier = Modifier.size(16.dp), tint = MoonTheme.customColors.logCardOnBg)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(musicTitle ?: "Add a song", fontSize = 14.sp, color = Color.Gray)
+                    Text(musicTitle ?: "Add a song", fontSize = 12.sp, color = MoonTheme.customColors.logCardOnBg)
                 }
             }
         }
@@ -397,7 +404,7 @@ fun DailyActivitySection(
 
     Card(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
@@ -414,15 +421,16 @@ fun DailyActivitySection(
             ) {
                 Text(
                     title,
-                    color = Color.Black,
+                    color = MoonTheme.customColors.logCardOnBg,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
                 )
                 Icon(
                     Icons.Rounded.KeyboardArrowDown,
                     contentDescription = null,
-                    tint = Color.Gray,
-                    modifier = Modifier.rotate(rotation)
+                    tint = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.6f),
+                    modifier = Modifier.rotate(rotation).size(20.dp)
                 )
             }
 
@@ -432,7 +440,7 @@ fun DailyActivitySection(
                 exit = fadeOut() + shrinkVertically()
             ) {
                 Column {
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     DailyLogGrid(items = items, selectedIds = selectedIds, onItemClick = onItemClick)
                 }
             }
@@ -448,7 +456,7 @@ fun DailyLogGrid(
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items.chunked(4).forEach { rowItems ->
             Row(
@@ -459,13 +467,13 @@ fun DailyLogGrid(
                     val isSelected = selectedIds.contains(item.id)
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.width(72.dp)
+                        modifier = Modifier.width(68.dp)
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(56.dp)
+                                .size(48.dp)
                                 .clip(CircleShape)
-                                .background(if (isSelected) Color(0xFFEFEBE9) else Color(0xFFF5F5F5))
+                                .background(if (isSelected) MoonTheme.customColors.logItemSelect else MoonTheme.customColors.logItemBg)
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = ripple()
@@ -477,34 +485,33 @@ fun DailyLogGrid(
                                     painter = painterResource(id = item.icon.drawableRes),
                                     contentDescription = null,
                                     modifier = Modifier
-                                        .size(32.dp)
-                                        .alpha(if (isSelected) 1f else 0.4f)
+                                        .size(24.dp),
+                                    colorFilter = if (isSelected) null else ColorFilter.tint(MoonTheme.customColors.logItemIconUnselected.copy(alpha = 0.4f))
                                 )
                             } else if (item.icon.vector != null) {
                                 Icon(
                                     item.icon.vector,
                                     contentDescription = null,
-                                    tint = if (isSelected) item.icon.color else Color.Gray.copy(alpha = 0.5f),
-                                    modifier = Modifier.size(28.dp)
+                                    tint = if (isSelected) item.icon.color else MoonTheme.customColors.logItemIconUnselected.copy(alpha = 0.4f),
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             item.label,
-                            color = if (isSelected) Color.Black else Color.Gray,
+                            color = MoonTheme.customColors.logCardOnBg.copy(alpha = if (isSelected) 1f else 0.7f),
                             style = MaterialTheme.typography.bodySmall,
-                            fontSize = 11.sp,
+                            fontSize = 10.sp,
                             maxLines = 1,
                             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                             textAlign = TextAlign.Center
                         )
                     }
                 }
-                // Fill remaining space in the row if less than 4 items
                 if (rowItems.size < 4) {
                     repeat(4 - rowItems.size) {
-                        Spacer(modifier = Modifier.width(72.dp))
+                        Spacer(modifier = Modifier.width(68.dp))
                     }
                 }
             }
@@ -514,18 +521,18 @@ fun DailyLogGrid(
 
 @Composable
 private fun DailySleepSection(sleepHours: Float) {
-    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White), modifier = Modifier.fillMaxWidth()) {
+    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Sleep", fontWeight = FontWeight.Bold, color = Color.Black)
-                Text("Import", fontSize = 12.sp, color = Color.Gray)
+                Text("Sleep", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
+                Text("Import", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
             }
             Spacer(modifier = Modifier.height(12.dp))
-            Surface(color = Color(0xFFF5F5F5), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+            Surface(color = MoonTheme.customColors.logItemBg, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
                 Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Rounded.Bedtime, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Gray)
+                    Icon(Icons.Rounded.Bedtime, contentDescription = null, modifier = Modifier.size(16.dp), tint = MoonTheme.customColors.logCardOnBg)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Record your sleep", fontSize = 14.sp, color = Color.Gray)
+                    Text("Record your sleep", fontSize = 14.sp, color = MoonTheme.customColors.logCardOnBg)
                 }
             }
         }
@@ -534,31 +541,31 @@ private fun DailySleepSection(sleepHours: Float) {
 
 @Composable
 private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean) -> Unit, onMenstrualClick: () -> Unit) {
-    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White), modifier = Modifier.fillMaxWidth().clickable { onMenstrualClick() }) {
+    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth().clickable { onMenstrualClick() }) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Menstruation", fontWeight = FontWeight.Bold, color = Color.Black)
+            Text("Menstruation", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
             Spacer(modifier = Modifier.height(16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.CenterVertically) {
                 repeat(5) { i ->
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("5/${6+i}", fontSize = 10.sp, color = Color.Gray)
+                        Text("5/${6+i}", fontSize = 10.sp, color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.7f))
                         Spacer(modifier = Modifier.height(8.dp))
                         Box(
                             modifier = Modifier.size(40.dp).clip(CircleShape)
-                                .background(if (i == 2 && isMenstruation) Color(0xFFE0E0E0) else Color(0xFFF5F5F5))
+                                .background(if (i == 2 && isMenstruation) MoonTheme.customColors.logItemAccent else MoonTheme.customColors.logItemBg)
                                 .clickable { if (i == 2) onToggle(!isMenstruation) },
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Rounded.WaterDrop, contentDescription = null, tint = if (i == 2 && isMenstruation) Color.Gray else Color.LightGray)
+                            Icon(Icons.Rounded.WaterDrop, contentDescription = null, tint = if (i == 2 && isMenstruation) MoonTheme.customColors.logCardOnBg else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.4f))
                         }
                     }
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Rounded.WaterDrop, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.Gray)
+                Icon(Icons.Rounded.WaterDrop, contentDescription = null, modifier = Modifier.size(14.dp), tint = MoonTheme.customColors.logCardOnBg)
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("On day 60 of cycle", fontSize = 12.sp, color = Color.Gray)
+                Text("On day 60 of cycle", fontSize = 12.sp, color = MoonTheme.customColors.logCardOnBg)
             }
         }
     }
@@ -566,15 +573,23 @@ private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean
 
 @Composable
 private fun DailyNoteSection(noteText: String, onNoteChanged: (String) -> Unit) {
-    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White), modifier = Modifier.fillMaxWidth()) {
+    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Today's note", fontWeight = FontWeight.Bold, color = Color.Black)
+            Text("Today's note", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
             Spacer(modifier = Modifier.height(12.dp))
-            Surface(color = Color(0xFFF5F5F5), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+            Surface(color = MoonTheme.customColors.logItemBg, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = noteText, onValueChange = onNoteChanged, modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
-                    placeholder = { Text("Write here...", color = Color.Gray, fontSize = 14.sp) },
-                    colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent, focusedBorderColor = Color.Transparent, unfocusedBorderColor = Color.Transparent, cursorColor = Color.Black),
+                    placeholder = { Text("Write here...", color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 14.sp) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color.Transparent,
+                        cursorColor = MoonTheme.customColors.logCardOnBg,
+                        focusedTextColor = MoonTheme.customColors.logCardOnBg,
+                        unfocusedTextColor = MoonTheme.customColors.logCardOnBg
+                    ),
                     shape = RoundedCornerShape(12.dp), maxLines = 5
                 )
             }
@@ -584,15 +599,15 @@ private fun DailyNoteSection(noteText: String, onNoteChanged: (String) -> Unit) 
 
 @Composable
 private fun DailyPhotoSection(photos: List<String>, onPhotoClick: () -> Unit) {
-    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White), modifier = Modifier.fillMaxWidth()) {
+    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Today's photo", fontWeight = FontWeight.Bold, color = Color.Black)
+            Text("Today's photo", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
             Spacer(modifier = Modifier.height(12.dp))
-            Surface(color = Color(0xFFF5F5F5), shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().aspectRatio(1f).clickable { onPhotoClick() }) {
+            Surface(color = MoonTheme.customColors.logItemBg, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().aspectRatio(1f).clickable { onPhotoClick() }) {
                 Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Rounded.CameraAlt, contentDescription = null, modifier = Modifier.size(48.dp), tint = Color.LightGray)
+                    Icon(Icons.Rounded.CameraAlt, contentDescription = null, modifier = Modifier.size(48.dp), tint = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.4f))
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text("Select up to 3 photos", color = Color.Gray, fontSize = 14.sp)
+                    Text("Select up to 3 photos", color = MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
                 }
             }
         }
@@ -602,13 +617,13 @@ private fun DailyPhotoSection(photos: List<String>, onPhotoClick: () -> Unit) {
 @Composable
 private fun DailyLogExitDialog(onDismiss: () -> Unit, onExit: () -> Unit) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(shape = RoundedCornerShape(20.dp), color = Color.White, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+        Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
             Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = "Changes have not been saved.", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.Black, textAlign = TextAlign.Center)
+                Text(text = "Changes have not been saved.", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(32.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF5F5F5), contentColor = Color.Black), shape = RoundedCornerShape(12.dp)) { Text("Cancel", fontWeight = FontWeight.Bold) }
-                    Button(onClick = onExit, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)), shape = RoundedCornerShape(12.dp)) { Text("Exit", fontWeight = FontWeight.Bold, color = Color.White) }
+                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurface), shape = RoundedCornerShape(12.dp)) { Text("Cancel", fontWeight = FontWeight.Bold) }
+                    Button(onClick = onExit, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary), shape = RoundedCornerShape(12.dp)) { Text("Exit", fontWeight = FontWeight.Bold) }
                 }
             }
         }
@@ -618,17 +633,17 @@ private fun DailyLogExitDialog(onDismiss: () -> Unit, onExit: () -> Unit) {
 @Composable
 private fun DailyLogOverwriteDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(shape = RoundedCornerShape(24.dp), color = Color.White, modifier = Modifier.fillMaxWidth().padding(horizontal = 28.dp)) {
+        Surface(shape = RoundedCornerShape(24.dp), color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxWidth().padding(horizontal = 28.dp)) {
             Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(Icons.Rounded.Warning, contentDescription = null, tint = Color(0xFFE57373), modifier = Modifier.size(48.dp))
+                Icon(Icons.Rounded.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(48.dp))
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(text = "Data already exists", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.Black)
+                Text(text = "Data already exists", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(modifier = Modifier.height(12.dp))
-                Text(text = "There is already a record for this day. Do you want to overwrite it?", style = MaterialTheme.typography.bodyMedium, color = Color.Gray, textAlign = TextAlign.Center)
+                Text(text = "There is already a record for this day. Do you want to overwrite it?", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(32.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    TextButton(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp)) { Text("Cancel", color = Color.Gray) }
-                    Button(onClick = onConfirm, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)), shape = RoundedCornerShape(12.dp)) { Text("Overwrite", color = Color.White, fontWeight = FontWeight.Bold) }
+                    TextButton(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp)) { Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    Button(onClick = onConfirm, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError), shape = RoundedCornerShape(12.dp)) { Text("Overwrite", fontWeight = FontWeight.Bold) }
                 }
             }
         }
@@ -646,18 +661,18 @@ fun DailyLogDatePickerDialog(initialDate: LocalDate, onDateSelected: (LocalDate)
     val scope = rememberCoroutineScope()
 
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(shape = RoundedCornerShape(28.dp), color = Color.White, modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)) {
+        Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
             Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Which day is this record for?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color.Black, modifier = Modifier.padding(vertical = 16.dp))
+                Text("Which day is this record for?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(vertical = 16.dp))
                 Row(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     val currentPageMonth = baseYearMonth.plusMonths((pagerState.currentPage - initialPage).toLong())
-                    Text(text = currentPageMonth.format(DateTimeFormatter.ofPattern("MMM yyyy")), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color.Black)
+                    Text(text = currentPageMonth.format(DateTimeFormatter.ofPattern("MMM yyyy")), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                     Row {
-                        IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } }) { Icon(Icons.Rounded.KeyboardArrowLeft, contentDescription = null, tint = Color(0xFF4CAF50)) }
-                        IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } }) { Icon(Icons.Rounded.KeyboardArrowRight, contentDescription = null, tint = Color(0xFF4CAF50)) }
+                        IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } }) { Icon(Icons.Rounded.KeyboardArrowLeft, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
+                        IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } }) { Icon(Icons.Rounded.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
                     }
                 }
-                HorizontalPager(state = pagerState, modifier = Modifier.fillMaxWidth().height(240.dp)) { page ->
+                HorizontalPager(state = pagerState, modifier = Modifier.fillMaxWidth().height(260.dp)) { page ->
                     val offset = page - initialPage
                     val pageYearMonth = baseYearMonth.plusMonths(offset.toLong())
                     val daysInMonth = (1..pageYearMonth.lengthOfMonth()).toList()
@@ -667,16 +682,16 @@ fun DailyLogDatePickerDialog(initialDate: LocalDate, onDateSelected: (LocalDate)
                         items(daysInMonth) { day ->
                             val date = pageYearMonth.atDay(day)
                             val isSelected = date == selectedDateInPicker
-                            Box(modifier = Modifier.aspectRatio(1f).clip(CircleShape).background(if (isSelected) Color(0xFF4CAF50) else Color.Transparent).clickable(enabled = !date.isAfter(LocalDate.now())) { selectedDateInPicker = date }, contentAlignment = Alignment.Center) {
-                                Text(text = day.toString(), color = if (isSelected) Color.White else if (date.isAfter(LocalDate.now())) Color.LightGray else Color.Black, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
+                            Box(modifier = Modifier.aspectRatio(1f).clip(CircleShape).background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent).clickable(enabled = !date.isAfter(LocalDate.now())) { selectedDateInPicker = date }, contentAlignment = Alignment.Center) {
+                                Text(text = day.toString(), color = if (isSelected) MaterialTheme.colorScheme.onPrimary else if (date.isAfter(LocalDate.now())) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f) else MaterialTheme.colorScheme.onSurface, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
                             }
                         }
                     }
                 }
                 Spacer(modifier = Modifier.height(24.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF5F5F5), contentColor = Color.Black), shape = RoundedCornerShape(12.dp)) { Text("Cancel") }
-                    Button(onClick = { onDateSelected(selectedDateInPicker) }, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)), shape = RoundedCornerShape(12.dp)) { Text("OK", color = Color.White) }
+                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(52.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurface), shape = RoundedCornerShape(12.dp)) { Text("Cancel", fontWeight = FontWeight.Bold) }
+                    Button(onClick = { onDateSelected(selectedDateInPicker) }, modifier = Modifier.weight(1f).height(52.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary), shape = RoundedCornerShape(12.dp)) { Text("OK", fontWeight = FontWeight.Bold) }
                 }
             }
         }

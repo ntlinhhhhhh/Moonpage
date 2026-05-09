@@ -30,13 +30,19 @@ val MoonDotInactive = Color(0xFFE8E1DA)
 val MoonErrorLight = Color(0xFFD32F2F)
 val MoonErrorDark = Color(0xFFFFB4AB)
 
+// Daily Log Colors
+val MoonLogItemBgLight = Color(0xFFF5F5F5)
+ val MoonLogItemSelectLight = Color(0xFFEFEBE9)
+ val MoonLogItemBgDark = Color(0xFF8F8F8F)
+ val MoonLogItemSelectDark = Color(0xFFE0E0E0)
+
 // Full Green Theme Colors (Based on the image)
-val MoonGreenPrimary = Color(0xFFA5D6A7)      // Main Green (Done button, Share button, Year text)
-val MoonGreenSecondary = Color(0xFFB9D9A5)    // Icon Green (Smiley face, selected month icon)
-val MoonGreenTertiary = Color(0xFFE9F5E9)     // Light Green (Download button bg, Selected month card bg)
-val MoonGreenBg = Color(0xFFFFFFFF)           // White background
-val MoonGreenSurface = Color(0xFFF7F7F7)      // Light grey/green for unselected cards
-val MoonGreenTextPrimary = Color(0xFF212121)  // Dark text for main content
-val MoonGreenTextSecondary = Color(0xFF757575)// Grey text for labels/secondary info
-val MoonGreenLogout = Color(0xFFFF7043)       // Logout button text color
-val MoonGreenIconBg = Color(0xFFAAAAAA)       // Grey icon background (e.g. edit avatar)
+val MoonGreenPrimary = Color(0xFFA5D6A7)
+ val MoonGreenSecondary = Color(0xFFB9D9A5)
+ val MoonGreenTertiary = Color(0xFFE9F5E9)
+ val MoonGreenBg = Color(0xFFFFFFFF)
+ val MoonGreenSurface = Color(0xFFF7F7F7)
+ val MoonGreenTextPrimary = Color(0xFF212121)
+ val MoonGreenTextSecondary = Color(0xFF757575)
+ val MoonGreenLogout = Color(0xFFFF7043)
+val MoonGreenIconBg = Color(0xFFAAAAAA)

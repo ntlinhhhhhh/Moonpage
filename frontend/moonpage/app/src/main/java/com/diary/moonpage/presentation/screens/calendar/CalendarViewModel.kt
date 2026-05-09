@@ -74,6 +74,25 @@ class CalendarViewModel @Inject constructor(
             is CalendarUiEvent.OnShareModeSelected -> {
                 _uiState.update { it.copy(showShareSheet = false) }
             }
+            is CalendarUiEvent.OnFilterMoodToggled -> {
+                _uiState.update { currentState ->
+                    val newFilters = currentState.filterMoodIds.toMutableSet()
+                    if (newFilters.contains(event.moodId)) newFilters.remove(event.moodId)
+                    else newFilters.add(event.moodId)
+                    currentState.copy(filterMoodIds = newFilters)
+                }
+            }
+            is CalendarUiEvent.OnFilterActivityToggled -> {
+                _uiState.update { currentState ->
+                    val newFilters = currentState.filterActivityIds.toMutableSet()
+                    if (newFilters.contains(event.activityId)) newFilters.remove(event.activityId)
+                    else newFilters.add(event.activityId)
+                    currentState.copy(filterActivityIds = newFilters)
+                }
+            }
+            CalendarUiEvent.OnClearFilters -> {
+                _uiState.update { it.copy(filterMoodIds = emptySet(), filterActivityIds = emptySet()) }
+            }
             CalendarUiEvent.DismissMessage -> {
                 _uiState.update { it.copy(snackbarMessage = null) }
             }
@@ -93,9 +112,10 @@ class CalendarViewModel @Inject constructor(
             repository.getDailyLogsByMonth(yearMonthStr).collect { logs ->
                 val logsMap = logs.associateBy { LocalDate.parse(it.date) }
                 _uiState.update { currentState ->
-                    val currentMap = currentState.dailyLogs.toMutableMap()
-                    currentMap.putAll(logsMap)
-                    currentState.copy(dailyLogs = currentMap, isLoading = false)
+                    // Instead of putAll which keeps old entries, we want to update the month's data
+                    // However, to keep it simple and reactive, we'll just use the new logs from the repository
+                    // If the repository is the source of truth, this map should be correct.
+                    currentState.copy(dailyLogs = logsMap, isLoading = false)
                 }
             }
         }
@@ -104,8 +124,12 @@ class CalendarViewModel @Inject constructor(
     private fun deleteDailyLog(date: LocalDate) {
         viewModelScope.launch {
             repository.deleteDailyLog(date.toString()).onSuccess {
+                // Remove the deleted log from the local state immediately for instant feedback
+                _uiState.update { currentState ->
+                    val newLogs = currentState.dailyLogs.filterKeys { it != date }
+                    currentState.copy(dailyLogs = newLogs, selectedDate = null, snackbarMessage = "Record deleted successfully!")
+                }
                 refreshLogs()
-                _uiState.update { it.copy(snackbarMessage = "Record deleted successfully!", selectedDate = null) }
             }.onFailure { exception ->
                 _uiState.update { it.copy(snackbarMessage = exception.message ?: "Failed to delete log") }
             }

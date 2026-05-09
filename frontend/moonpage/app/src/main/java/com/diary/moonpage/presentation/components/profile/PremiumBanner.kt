@@ -17,8 +17,8 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun PremiumBanner() {
-    val bannerBg = Color(0xFFA5D6A7) // A soft green
-    val onBanner = Color.White
+    val bannerBg = MaterialTheme.colorScheme.primary
+    val onBanner = MaterialTheme.colorScheme.onPrimary
 
     Card(
         modifier = Modifier
@@ -35,7 +35,7 @@ fun PremiumBanner() {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Surface(
-                    color = Color.White.copy(alpha = 0.3f),
+                    color = onBanner.copy(alpha = 0.3f),
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
@@ -81,7 +81,7 @@ fun PremiumBanner() {
                 modifier = Modifier
                     .size(80.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color.White.copy(alpha = 0.2f)),
+                    .background(onBanner.copy(alpha = 0.2f)),
                 contentAlignment = Alignment.Center
             ) {
                 Text("Icon", color = onBanner)

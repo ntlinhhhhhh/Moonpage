@@ -34,7 +34,7 @@ fun MenstrualCycleScreen(
                 )
             }
         },
-        containerColor = Color(0xFFF7F7F2)
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(
             modifier = Modifier

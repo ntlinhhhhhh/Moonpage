@@ -9,7 +9,28 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalContext import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.CompositionLocalProvider
+
+@Immutable
+data class MoonCustomColors(
+    val logItemBg: Color,
+    val logItemSelect: Color
+)
+
+val LocalMoonCustomColors = staticCompositionLocalOf {
+    MoonCustomColors(
+        logItemBg = Color.Unspecified,
+        logItemSelect = Color.Unspecified
+    )
+}
+
+object MoonTheme {
+    val customColors: MoonCustomColors
+        @Composable
+        get() = LocalMoonCustomColors.current
+}
 
 private val DarkColorScheme = darkColorScheme(
     primary = MoonActionDark,
@@ -81,11 +102,30 @@ fun MoonPageTheme(
         else -> LightColorScheme
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    val customColors = when (themeType) {
+        MoonThemeType.DARK -> MoonCustomColors(
+            logItemBg = MoonLogItemBgDark,
+            logItemSelect = MoonLogItemSelectDark
+        )
+        MoonThemeType.GREEN -> MoonCustomColors(
+            logItemBg = MoonGreenSurface,
+            logItemSelect = MoonGreenSecondary.copy(alpha = 0.3f)
+        )
+        else -> MoonCustomColors(
+            logItemBg = MoonLogItemBgLight,
+            logItemSelect = MoonLogItemSelectLight
+        )
+    }
+
+    CompositionLocalProvider(
+        LocalMoonCustomColors provides customColors
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            content = content
+        )
+    }
 }
 
 /**

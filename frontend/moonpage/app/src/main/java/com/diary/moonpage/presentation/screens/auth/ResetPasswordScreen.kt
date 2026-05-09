@@ -33,6 +33,7 @@ import com.diary.moonpage.R
 import com.diary.moonpage.presentation.components.auth.AuthFooter
 import com.diary.moonpage.presentation.components.auth.AuthHeader
 import com.diary.moonpage.presentation.components.core.buttons.MoonPrimaryButton
+import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import com.diary.moonpage.presentation.components.core.inputs.MoonTextField
 import com.diary.moonpage.presentation.components.core.navigation.TopCircularIcon
 import com.diary.moonpage.presentation.theme.*
@@ -104,7 +105,7 @@ fun ResetPasswordScreenContent(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
+        snackbarHost = { MoonSnackbarHost(hostState = snackBarHostState) },
         containerColor = screenBgColor
     ) { paddingValues ->
         Column(

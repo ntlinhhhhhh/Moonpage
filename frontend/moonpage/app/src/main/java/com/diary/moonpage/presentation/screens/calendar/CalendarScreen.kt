@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalView
 import com.diary.moonpage.core.util.ComposeCaptureUtils
 import com.diary.moonpage.core.util.ImageUtils
 import com.diary.moonpage.presentation.components.calendar.*
+import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -115,7 +116,7 @@ fun CalendarScreenContent(
             }
         },
         containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { CalendarSnackbarHost(snackbarHostState = snackbarHostState) }
+        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState, topPadding = 110.dp) }
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             Column(
@@ -189,7 +190,7 @@ fun CalendarScreenContent(
                 coroutineScope.launch {
                     val width = 1080
                     val height = if (isSquare) 1080 else 1920
-                    
+
                     ComposeCaptureUtils.captureComposable(
                         view = view,
                         content = {
@@ -401,13 +402,15 @@ fun CalendarSelectedLogDetail(
 
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 IconButton(onClick = onShareClick) {
-                    Icon(Icons.Rounded.IosShare, contentDescription = "Share", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp))
+                    Icon(Icons.Rounded.IosShare, contentDescription = "Share", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp
+))
                 }
                 IconButton(onClick = { onEditLog(date) }) {
-                    Icon(Icons.Rounded.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp))
+                    Icon(Icons.Rounded.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp))   
                 }
                 IconButton(onClick = { onDeleteLog(date) }) {
-                    Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp))
+                    Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp)
+)
                 }
             }
         }
@@ -416,7 +419,7 @@ fun CalendarSelectedLogDetail(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
             ),
@@ -435,4 +438,3 @@ fun CalendarSelectedLogDetail(
         }
     }
 }
-

@@ -19,6 +19,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.diary.moonpage.core.util.MoonIcons
+import com.diary.moonpage.presentation.theme.MoonTheme
 
 @Composable
 fun FilterScreen(
@@ -86,15 +88,12 @@ fun FilterContent(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        val moods = listOf(
-                            Color(0xFFFFE599), Color(0xFFC1E1C1), Color(0xFF76BA99),
-                            Color(0xFF4E944F), Color(0xFF555555)
-                        )
-                        moods.forEachIndexed { index, color ->
+                        repeat(5) { i ->
+                            val color = MoonIcons.Moods.getMoodColor(i + 1)
                             MoodItem(
                                 color = color,
-                                isSelected = selectedMood == index,
-                                onClick = { onMoodSelect(index) }
+                                isSelected = selectedMood == i,
+                                onClick = { onMoodSelect(i) }
                             )
                         }
                     }
@@ -131,18 +130,18 @@ fun FilterContent(
                 Button(
                     onClick = onReset,
                     modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF1F3F4)),
+                    colors = ButtonDefaults.buttonColors(containerColor = MoonTheme.customColors.logItemBg),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Reset", color = Color.Gray)
+                    Text("Reset", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Button(
                     onClick = onSeeResults,
                     modifier = Modifier.weight(2f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF76BA99)),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("See results", color = Color.White)
+                    Text("See results", color = MaterialTheme.colorScheme.onPrimary)
                 }
             }
         }
@@ -154,7 +153,7 @@ fun FilterSectionTitle(title: String) {
     Text(
         text = title,
         style = MaterialTheme.typography.bodyMedium,
-        color = Color.Gray,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(bottom = 12.dp)
     )
 }
@@ -175,7 +174,7 @@ fun MoodItem(color: Color, isSelected: Boolean, onClick: () -> Unit) {
         Icon(
             imageVector = Icons.Rounded.SentimentSatisfied,
             contentDescription = null,
-            tint = Color.Black.copy(alpha = 0.5f),
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
             modifier = Modifier.size(30.dp)
         )
     }
@@ -194,13 +193,13 @@ fun FlowRow(icons: List<ImageVector>) {
                 modifier = Modifier
                     .size(50.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFF1F3F4)),
+                    .background(MoonTheme.customColors.logItemBg),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = Color.Gray,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(24.dp)
                 )
             }

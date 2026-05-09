@@ -21,9 +21,6 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
-/**
- * Stateful Component
- */
 @Composable
 fun StatisticsScreen(
     viewModel: StatisticsViewModel = hiltViewModel()
@@ -37,9 +34,6 @@ fun StatisticsScreen(
     )
 }
 
-/**
- * Stateless Component
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatisticsScreenContent(
@@ -57,104 +51,89 @@ fun StatisticsScreenContent(
 
     Scaffold(
         topBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White)
+            Surface(
+                color = Color(0xFFF9FBF9),
+                tonalElevation = 0.dp
             ) {
-                CenterAlignedTopAppBar(
-                    title = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    CenterAlignedTopAppBar(
+                        title = { Text("Report", fontWeight = FontWeight.Bold, color = Color(0xFF424242)) },
+                        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        TabItem("Monthly", uiState.isMonthly, onClick = { onTabChange(true) })
+                        TabItem("Annual", !uiState.isMonthly, onClick = { onTabChange(false) })
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .clip(MaterialTheme.shapes.small)
+                            .clickable { showDatePicker = true }
+                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val date = LocalDate.of(uiState.selectedYear, uiState.selectedMonth, 1)
                         Text(
-                            "Report",
+                            text = if (uiState.isMonthly) date.format(DateTimeFormatter.ofPattern("MMM yyyy")) else uiState.selectedYear.toString(),
                             fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleLarge
+                            fontSize = 18.sp,
+                            color = Color(0xFF424242)
                         )
-                    },
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = Color.White
-                    )
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    TabItem("Monthly", uiState.isMonthly, onClick = { onTabChange(true) })
-                    TabItem("Annual", !uiState.isMonthly, onClick = { onTabChange(false) })
+                        Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null, tint = Color.Gray)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .clip(MaterialTheme.shapes.small)
-                        .clickable { showDatePicker = true }
-                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val date = LocalDate.of(uiState.selectedYear, uiState.selectedMonth, 1)
-                    Text(
-                        text = if (uiState.isMonthly) date.format(DateTimeFormatter.ofPattern("MMM yyyy")) else uiState.selectedYear.toString(),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = Color.Black
-                    )
-                    Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null, tint = Color.Black)
-                }
-                Spacer(modifier = Modifier.height(16.dp))
             }
         },
-        containerColor = Color(0xFFF7F7F2)
+        containerColor = Color(0xFFF9FBF9)
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             if (uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFF4CAF50))
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color(0xFF66BB6A))
             } else {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .verticalScroll(scrollState)
                         .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
-                    if (uiState.isMonthly) {
-                        // Monthly Sections
-                        StatsCard(title = "Mood Flow") {
-                            MoodFlowChart(stats?.moodFlow ?: emptyList(), uiState.selectedYear, uiState.selectedMonth, isMonthly = true)
-                        }
+                    // Mood Flow Chart
+                    StatsCard(title = "Mood Flow") {
+                        MoodFlowChart(stats?.moodFlow ?: emptyList(), uiState.selectedYear, uiState.selectedMonth, isMonthly = uiState.isMonthly)
+                    }
 
-                        StatsCard(title = "Mood Bar") {
-                            MoodDistributionView(stats?.moodDistribution ?: emptyList())
-                        }
+                    // Mood Bar Chart
+                    StatsCard(title = "Mood Bar") {
+                        MoodDistributionView(stats?.moodDistribution ?: emptyList())
+                    }
 
-                        StatsCard(title = "Frequently Recorded") {
-                            FrequentlyRecordedView(frequentlyRecorded)
-                        }
-
-                        StatsCard(title = "Best & Worst") {
-                            BestAndWorstView(bestActivities, worstActivities)
-                        }
-                    } else {
-                        // Annual Sections
-                        StatsCard(title = "Mood Flow") {
-                            // In annual view, mood flow could be aggregated by month
-                            MoodFlowChart(emptyList(), uiState.selectedYear, uiState.selectedMonth, isMonthly = false)
-                        }
-
-                        StatsCard(title = "Mood Bar") {
-                            MoodDistributionView(stats?.moodDistribution ?: emptyList())
-                        }
-
+                    if (!uiState.isMonthly) {
+                        // Year in Beans (Annual only)
                         StatsCard(title = "Year in Beans") {
-                            // Placeholder data for Year in Beans
-                            YearInBeansView(uiState.selectedYear, emptyMap())
-                        }
-
-                        StatsCard(title = "Frequently Recorded") {
-                            FrequentlyRecordedView(frequentlyRecorded)
+                            YearInBeansView(uiState.selectedYear)
                         }
                     }
+
+                    // Frequently Recorded
+                    StatsCard(title = "Frequently Recorded", actionText = "More") {
+                        FrequentlyRecordedView(frequentlyRecorded)
+                    }
+
+                    // Best & Worst
+                    StatsCard(title = "Best & Worst", actionText = "More") {
+                        BestAndWorstView(bestActivities, worstActivities)
+                    }
+
+                    // Premium Section
+                    PremiumAnalysisSection()
 
                     Spacer(modifier = Modifier.height(32.dp))
                 }

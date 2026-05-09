@@ -27,12 +27,25 @@ class MainViewModel @Inject constructor(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = MoonThemeType.LIGHT
+            initialValue = MoonThemeType.DEFAULT
+        )
+
+    val isDarkMode: StateFlow<Boolean?> = themePreferencesManager.isDarkMode
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
         )
 
     fun setTheme(theme: MoonThemeType) {
         viewModelScope.launch {
             themePreferencesManager.setThemeType(theme)
+        }
+    }
+
+    fun setDarkMode(isDark: Boolean?) {
+        viewModelScope.launch {
+            themePreferencesManager.setDarkMode(isDark)
         }
     }
 }

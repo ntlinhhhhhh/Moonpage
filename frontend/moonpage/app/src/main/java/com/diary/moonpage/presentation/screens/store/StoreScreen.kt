@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -24,6 +25,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.domain.model.ThemeType
+import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import com.diary.moonpage.presentation.screens.store.components.*
 import com.diary.moonpage.presentation.theme.*
 
@@ -35,62 +37,76 @@ fun StoreScreen(
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        StoreTopBar(
-            coins = uiState.userCoins,
-            onMenuClick = onNavigateBack
-        )
+    LaunchedEffect(Unit) {
+        viewModel.uiEffect.collect { effect ->
+            if (effect is StoreUiEffect.ShowSnackBar) {
+                snackbarHostState.showSnackbar(effect.message)
+            }
+        }
+    }
 
-        StoreTabs(
-            selectedIndex = uiState.selectedTabIndex,
-            onTabSelected = { viewModel.onTabSelected(it) }
-        )
+    Scaffold(
+        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState) }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            StoreTopBar(
+                coins = uiState.userCoins,
+                onMenuClick = onNavigateBack
+            )
 
-        AnimatedContent(
-            targetState = uiState.selectedTabIndex,
-            transitionSpec = {
-                val slideSpec = tween<IntOffset>(300)
-                if (targetState > initialState) {
-                    (slideInHorizontally(animationSpec = slideSpec) { it } + fadeIn()).togetherWith(
-                        slideOutHorizontally(animationSpec = slideSpec) { -it } + fadeOut()
+            StoreTabs(
+                selectedIndex = uiState.selectedTabIndex,
+                onTabSelected = { viewModel.onTabSelected(it) }
+            )
+
+            AnimatedContent(
+                targetState = uiState.selectedTabIndex,
+                transitionSpec = {
+                    val slideSpec = tween<IntOffset>(300)
+                    if (targetState > initialState) {
+                        (slideInHorizontally(animationSpec = slideSpec) { it } + fadeIn()).togetherWith(
+                            slideOutHorizontally(animationSpec = slideSpec) { -it } + fadeOut()
+                        )
+                    } else {
+                        (slideInHorizontally(animationSpec = slideSpec) { -it } + fadeIn()).togetherWith(
+                            slideOutHorizontally(animationSpec = slideSpec) { it } + fadeOut()
+                        )
+                    }.using(SizeTransform(clip = false))
+                },
+                label = "TabAnimation"
+            ) { targetIndex ->
+                when (targetIndex) {
+                    0 -> HomeTabContent(
+                        themes = uiState.themes,
+                        onThemeClick = {
+                            viewModel.selectTheme(it)
+                            onNavigateToDetail()
+                        },
+                        onViewAllClick = { viewModel.onTabSelected(2) }
                     )
-                } else {
-                    (slideInHorizontally(animationSpec = slideSpec) { -it } + fadeIn()).togetherWith(
-                        slideOutHorizontally(animationSpec = slideSpec) { it } + fadeOut()
+                    1 -> MyThemeTabContent(
+                        ownedThemes = uiState.ownedThemes,
+                        onThemeClick = {
+                            viewModel.selectTheme(it)
+                            onNavigateToDetail()
+                        },
+                        onExploreMore = { viewModel.onTabSelected(0) }
                     )
-                }.using(SizeTransform(clip = false))
-            },
-            label = "TabAnimation"
-        ) { targetIndex ->
-            when (targetIndex) {
-                0 -> HomeTabContent(
-                    themes = uiState.themes,
-                    onThemeClick = {
-                        viewModel.selectTheme(it)
-                        onNavigateToDetail()
-                    },
-                    onViewAllClick = { viewModel.onTabSelected(2) }
-                )
-                1 -> MyThemeTabContent(
-                    ownedThemes = uiState.ownedThemes,
-                    onThemeClick = {
-                        viewModel.selectTheme(it)
-                        onNavigateToDetail()
-                    },
-                    onExploreMore = { viewModel.onTabSelected(0) }
-                )
-                2 -> CollectionsTabContent(
-                    themes = uiState.themes,
-                    onThemeClick = {
-                        viewModel.selectTheme(it)
-                        onNavigateToDetail()
-                    }
-                )
+                    2 -> CollectionsTabContent(
+                        themes = uiState.themes,
+                        onThemeClick = {
+                            viewModel.selectTheme(it)
+                            onNavigateToDetail()
+                        }
+                    )
+                }
             }
         }
     }
@@ -102,7 +118,6 @@ fun StoreScreen(
         )
     }
 }
-
 @Composable
 fun StoreTabs(
     selectedIndex: Int,

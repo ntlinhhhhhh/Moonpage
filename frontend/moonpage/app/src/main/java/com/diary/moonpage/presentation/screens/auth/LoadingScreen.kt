@@ -112,7 +112,7 @@ fun LoadingScreen(
                     .clip(RoundedCornerShape(4.dp)),
                 color = MaterialTheme.colorScheme.primary, 
                 trackColor = MaterialTheme.colorScheme.surfaceVariant, 
-                strokeCap = androidx.compose.ui.graphics.StrokeCap.Butt
+                strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
             )
 
             Spacer(modifier = Modifier.height(8.dp))

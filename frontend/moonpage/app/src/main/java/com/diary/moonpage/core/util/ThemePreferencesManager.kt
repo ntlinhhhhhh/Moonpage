@@ -21,20 +21,35 @@ class ThemePreferencesManager @Inject constructor(
 ) {
     companion object {
         private val THEME_TYPE_KEY = stringPreferencesKey("theme_type")
+        private val DARK_MODE_KEY = androidx.datastore.preferences.core.booleanPreferencesKey("dark_mode")
     }
 
     val themeType: Flow<MoonThemeType> = context.themeDataStore.data.map { prefs ->
-        val themeName = prefs[THEME_TYPE_KEY] ?: MoonThemeType.LIGHT.name
+        val themeName = prefs[THEME_TYPE_KEY] ?: MoonThemeType.DEFAULT.name
         try {
             MoonThemeType.valueOf(themeName)
         } catch (e: Exception) {
-            MoonThemeType.LIGHT
+            MoonThemeType.DEFAULT
         }
+    }
+
+    val isDarkMode: Flow<Boolean?> = context.themeDataStore.data.map { prefs ->
+        prefs[DARK_MODE_KEY]
     }
 
     suspend fun setThemeType(themeType: MoonThemeType) {
         context.themeDataStore.edit { prefs ->
             prefs[THEME_TYPE_KEY] = themeType.name
+        }
+    }
+
+    suspend fun setDarkMode(isDark: Boolean?) {
+        context.themeDataStore.edit { prefs ->
+            if (isDark == null) {
+                prefs.remove(DARK_MODE_KEY)
+            } else {
+                prefs[DARK_MODE_KEY] = isDark
+            }
         }
     }
 }

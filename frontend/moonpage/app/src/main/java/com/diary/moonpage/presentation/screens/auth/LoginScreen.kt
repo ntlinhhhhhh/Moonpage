@@ -39,6 +39,7 @@ import com.diary.moonpage.presentation.components.auth.AuthFooter
 import com.diary.moonpage.presentation.components.auth.AuthHeader
 import com.diary.moonpage.presentation.components.auth.SocialLoginButton
 import com.diary.moonpage.presentation.components.core.buttons.MoonPrimaryButton
+import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import com.diary.moonpage.presentation.components.core.inputs.MoonTextField
 import com.diary.moonpage.presentation.components.core.layout.MoonDivider
 import com.diary.moonpage.presentation.theme.MoonPageTheme
@@ -119,7 +120,7 @@ fun LoginScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
+        snackbarHost = { MoonSnackbarHost(hostState = snackBarHostState) },
         containerColor = screenBgColor,
         contentWindowInsets = WindowInsets.systemBars
     ) { paddingValues ->

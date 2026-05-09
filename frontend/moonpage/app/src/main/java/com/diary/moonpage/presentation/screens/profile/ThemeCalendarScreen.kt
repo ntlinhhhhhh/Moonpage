@@ -1,5 +1,6 @@
 package com.diary.moonpage.presentation.screens.profile
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -73,20 +74,22 @@ fun ThemeCalendarScreen(
     onNavigateBack: () -> Unit,
     mainViewModel: MainViewModel = hiltViewModel()
 ) {
-    val currentAppTheme by mainViewModel.themeType.collectAsState()
-    var selectedBeanThemeId by remember { mutableStateOf("basic") }
+    val currentThemeType by mainViewModel.themeType.collectAsState()
+    val isDarkModePref by mainViewModel.isDarkMode.collectAsState()
+    val isDark = isDarkModePref ?: androidx.compose.foundation.isSystemInDarkTheme()
 
     ThemePickerContent(
-        appThemes = listOf(
-            Triple(MoonThemeType.LIGHT, "Light Mode", Icons.Rounded.LightMode),
-            Triple(MoonThemeType.DARK, "Dark Mode", Icons.Rounded.DarkMode),
-            Triple(MoonThemeType.GREEN, "Green Mode", Icons.Rounded.Eco)
+        availableThemes = listOf(
+            Triple(MoonThemeType.DEFAULT, "Default Bean", Color(0xFFA6997E)),
+            Triple(MoonThemeType.BLUSHING, "Blushing Bean", Color(0xFFFFB7C5)),
+            Triple(MoonThemeType.KITTY, "Kitty Bean", Color(0xFFB7C2FF)),
+            Triple(MoonThemeType.SPROUT, "Sprout Bean", Color(0xFFA5D6A7)),
+            Triple(MoonThemeType.MIDNIGHT, "Midnight Light", Color(0xFF1A1B26))
         ),
-        currentAppTheme = currentAppTheme,
-        onAppThemeSelected = { mainViewModel.setTheme(it) },
-        beanThemes = beanThemes,
-        selectedBeanThemeId = selectedBeanThemeId,
-        onBeanThemeSelected = { selectedBeanThemeId = it },
+        currentThemeType = currentThemeType,
+        isDarkMode = isDark,
+        onThemeSelected = { mainViewModel.setTheme(it) },
+        onDarkModeToggled = { mainViewModel.setDarkMode(it) },
         onApply = { onNavigateBack() },
         onNavigateBack = onNavigateBack
     )
@@ -95,12 +98,11 @@ fun ThemeCalendarScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThemePickerContent(
-    appThemes: List<Triple<MoonThemeType, String, ImageVector>>,
-    currentAppTheme: MoonThemeType,
-    onAppThemeSelected: (MoonThemeType) -> Unit,
-    beanThemes: List<BeanThemePack>,
-    selectedBeanThemeId: String,
-    onBeanThemeSelected: (String) -> Unit,
+    availableThemes: List<Triple<MoonThemeType, String, Color>>,
+    currentThemeType: MoonThemeType,
+    isDarkMode: Boolean,
+    onThemeSelected: (MoonThemeType) -> Unit,
+    onDarkModeToggled: (Boolean) -> Unit,
     onApply: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
@@ -129,7 +131,7 @@ fun ThemePickerContent(
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Text("Done", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("Done", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onPrimary)
                 }
             }
         }
@@ -139,46 +141,82 @@ fun ThemePickerContent(
             verticalArrangement = Arrangement.spacedBy(20.dp),
             contentPadding = PaddingValues(vertical = 16.dp)
         ) {
-            // Section 1: App Theme (Light, Dark, Green)
+            // Section 1: Dark Mode Toggle
             item {
                 Text(
-                    "App Appearance",
+                    "Appearance",
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    appThemes.forEach { (type, name, icon) ->
-                        val isSelected = currentAppTheme == type
-                        AppThemeItem(
-                            name = name,
-                            icon = icon,
-                            isSelected = isSelected,
-                            modifier = Modifier.weight(1f),
-                            onClick = { onAppThemeSelected(type) }
+                    Row(
+                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                if (isDarkMode) Icons.Rounded.DarkMode else Icons.Rounded.LightMode,
+                                null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text("Dark Mode", fontWeight = FontWeight.SemiBold)
+                        }
+                        Switch(
+                            checked = isDarkMode,
+                            onCheckedChange = onDarkModeToggled,
+                            colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.primary)
                         )
                     }
                 }
             }
 
-            // Section 2: Bean Style
+            // Section 2: Bean Themes
             item {
                 Text(
-                    "Bean Style",
+                    "Bean Themes",
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                 )
             }
 
-            items(beanThemes) { theme ->
-                BeanThemeCard(
-                    theme = theme,
-                    isSelected = theme.id == selectedBeanThemeId,
-                    onClick = { onBeanThemeSelected(theme.id) }
-                )
+            items(availableThemes) { (type, name, color) ->
+                val isSelected = currentThemeType == type
+                Card(
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).clickable { onThemeSelected(type) },
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isSelected) color.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                    ),
+                    border = if (isSelected) BorderStroke(2.dp, color) else null
+                ) {
+                    Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier.size(48.dp).background(color.copy(alpha = 0.2f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Rounded.Circle, null, tint = color, modifier = Modifier.size(24.dp))
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
+                            Text(
+                                if (type == MoonThemeType.DEFAULT) "Classic moon beans" else "Custom colored beans",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+                        if (isSelected) {
+                            Icon(Icons.Rounded.CheckCircle, null, tint = color)
+                        }
+                    }
+                }
             }
         }
     }

@@ -23,8 +23,13 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val themeType by mainViewModel.themeType.collectAsState()
-            
-            MoonPageTheme(themeType = themeType) {
+            val isDarkModePref by mainViewModel.isDarkMode.collectAsState()
+            val isDark = isDarkModePref ?: androidx.compose.foundation.isSystemInDarkTheme()
+
+            MoonPageTheme(
+                themeType = themeType,
+                darkTheme = isDark
+            ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background

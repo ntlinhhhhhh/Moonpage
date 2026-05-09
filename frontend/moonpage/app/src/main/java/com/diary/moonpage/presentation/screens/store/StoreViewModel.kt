@@ -8,6 +8,7 @@ import com.diary.moonpage.domain.usecase.theme.BuyThemeUseCase
 import com.diary.moonpage.domain.usecase.theme.GetOwnedThemesUseCase
 import com.diary.moonpage.domain.usecase.theme.GetThemesUseCase
 import com.diary.moonpage.domain.usecase.theme.SetActiveThemeUseCase
+import com.diary.moonpage.presentation.theme.MoonThemeType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
@@ -19,7 +20,8 @@ class StoreViewModel @Inject constructor(
     private val getThemesUseCase: GetThemesUseCase,
     private val getOwnedThemesUseCase: GetOwnedThemesUseCase,
     private val buyThemeUseCase: BuyThemeUseCase,
-    private val setActiveThemeUseCase: SetActiveThemeUseCase
+    private val setActiveThemeUseCase: SetActiveThemeUseCase,
+    private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(StoreUiState())
@@ -267,6 +269,15 @@ class StoreViewModel @Inject constructor(
                     selectedThemeDetail = updatedDetail
                 )
             }
+            val themeType = when (themeId) {
+                "1" -> MoonThemeType.BLUSHING
+                "2" -> MoonThemeType.KITTY
+                "3" -> MoonThemeType.SPROUT
+                "4" -> MoonThemeType.MIDNIGHT
+                else -> MoonThemeType.DEFAULT
+            }
+            themePreferencesManager.setThemeType(themeType)
+            
             _uiEffect.send(StoreUiEffect.ThemeActivated)
             _uiEffect.send(StoreUiEffect.ShowSnackBar("Theme activated!"))
         }

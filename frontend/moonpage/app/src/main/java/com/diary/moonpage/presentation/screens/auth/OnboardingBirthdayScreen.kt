@@ -99,10 +99,10 @@ fun OnboardingBirthdayScreen(
                         .height(6.dp)
                         .padding(horizontal = 8.dp),
                     color = colorScheme.primary,
-                    trackColor = colorScheme.primary.copy(alpha = 0.2f),
+                    trackColor = colorScheme.surfaceVariant,
                     strokeCap = StrokeCap.Round
                 )
-                Spacer(modifier = Modifier.width(48.dp)) // Căn phải thay cho nút Skip
+                Spacer(modifier = Modifier.width(48.dp))
             }
 
             // ── Content ──────────────────────────────────────────────────────
@@ -137,7 +137,7 @@ fun OnboardingBirthdayScreen(
                 Text(
                     text = "We'll recommend content for your age group\nand send you a gift! 🎁",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = colorScheme.onBackground.copy(alpha = 0.55f),
+                    color = colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                     lineHeight = 20.sp
                 )
@@ -152,16 +152,16 @@ fun OnboardingBirthdayScreen(
                 // ── Date picker ───────────────────────────────────────────────
                 val DAYS = remember(daysInMonth) { (1..daysInMonth).map { it.toString() } }
 
-                Box(modifier = Modifier.fillMaxWidth()) {
+                Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
                     // Center selection highlight
                     Box(
                         modifier = Modifier
                             .align(Alignment.Center)
                             .fillMaxWidth()
-                            .height(48.dp)
+                            .height(52.dp)
                             .background(
-                                colorScheme.primary.copy(alpha = 0.12f),
-                                RoundedCornerShape(12.dp)
+                                colorScheme.primaryContainer.copy(alpha = 0.3f),
+                                RoundedCornerShape(14.dp)
                             )
                     )
 
@@ -170,28 +170,29 @@ fun OnboardingBirthdayScreen(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Month – circular
+                        // Month
                         InfiniteWheelColumn(
                             items = MONTHS,
                             initialIndex = selectedMonthIndex,
                             onIndexChange = { selectedMonthIndex = it },
-                            modifier = Modifier.width(90.dp)
+                            modifier = Modifier.weight(1.2f),
+                            itemHeight = 52.dp
                         )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        // Day – circular, respects daysInMonth
+                        // Day
                         InfiniteWheelColumn(
                             items = DAYS,
-                            initialIndex = selectedDayIndex.coerceAtMost(daysInMonth - 1),
+                            initialIndex = selectedDayIndex.coerceAtLeast(0).coerceAtMost(daysInMonth - 1),
                             onIndexChange = { selectedDayIndex = it },
-                            modifier = Modifier.width(70.dp)
+                            modifier = Modifier.weight(1f),
+                            itemHeight = 52.dp
                         )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        // Year – circular
+                        // Year
                         InfiniteWheelColumn(
                             items = YEARS,
                             initialIndex = selectedYearIndex,
                             onIndexChange = { selectedYearIndex = it },
-                            modifier = Modifier.width(90.dp)
+                            modifier = Modifier.weight(1.2f),
+                            itemHeight = 52.dp
                         )
                     }
                 }
@@ -250,7 +251,9 @@ fun InfiniteWheelColumn(
     val snapFling = rememberSnapFlingBehavior(lazyListState = listState)
 
     val selectedRealIndex by remember {
-        derivedStateOf { listState.firstVisibleItemIndex % count }
+        derivedStateOf { 
+            if (count > 0) listState.firstVisibleItemIndex % count else 0
+        }
     }
 
     LaunchedEffect(selectedRealIndex) {
@@ -279,11 +282,11 @@ fun InfiniteWheelColumn(
                     Text(
                         text = items[realIndex],
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                        fontSize = if (isSelected) 18.sp else 14.sp,
+                        fontSize = if (isSelected) 20.sp else 16.sp,
                         color = if (isSelected)
-                            colorScheme.onBackground
+                            colorScheme.onSurface
                         else
-                            colorScheme.onBackground.copy(alpha = 0.35f),
+                            colorScheme.onSurface.copy(alpha = 0.35f),
                         textAlign = TextAlign.Center
                     )
                 }

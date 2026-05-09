@@ -34,6 +34,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.R
+import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import com.diary.moonpage.presentation.components.profile.*
 import com.diary.moonpage.presentation.theme.MoonPageTheme
 import kotlinx.coroutines.launch
@@ -119,7 +120,7 @@ fun AccountScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState, topPadding = 105.dp) },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Box(modifier = Modifier.padding(padding)) {
@@ -361,7 +362,7 @@ fun AccountScreenContent(
 
     Scaffold(
         containerColor = colorScheme.background,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState, topPadding = 105.dp) },
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
