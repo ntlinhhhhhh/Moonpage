@@ -148,82 +148,84 @@ fun ThemeDetailScreen(
                 }
             }
         },
+        snackbarHost = { 
+            MoonSnackbarHost(hostState = snackbarHostState) 
+        },
         containerColor = backgroundColor
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = theme.name,
-                style = MaterialTheme.typography.headlineLarge,
-                color = onBackground,
-                textAlign = TextAlign.Center
-            )
+                Text(
+                    text = theme.name,
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = onBackground,
+                    textAlign = TextAlign.Center
+                )
 
-            Text(
-                text = theme.description ?: "Experience the beauty of this unique set.",
-                style = MaterialTheme.typography.bodyLarge,
-                color = onBackground.copy(alpha = 0.6f),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(vertical = 12.dp)
-            )
+                Text(
+                    text = theme.description ?: "Experience the beauty of this unique set.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = onBackground.copy(alpha = 0.6f),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(vertical = 12.dp)
+                )
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-            ThemeCalendarPreview(theme = theme)
+                ThemeCalendarPreview(theme = theme)
 
-            Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-            MoonPrimaryButton(
-                text = if (theme.isOwned) "Activate" else "Buy for ${theme.price} $",
-                onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    if (theme.isOwned) {
-                        viewModel.activateTheme(theme.id)
-                    } else {
-                        viewModel.initiatePurchase(theme)
-                    }
-                },
-                containerColor = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(horizontal = 12.dp)
-            )
+                MoonPrimaryButton(
+                    text = if (theme.isOwned) "Activate" else "Buy for ${theme.price} $",
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        if (theme.isOwned) {
+                            viewModel.activateTheme(theme.id)
+                        } else {
+                            viewModel.initiatePurchase(theme)
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(horizontal = 12.dp)
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = "INCLUDES: CALENDAR ICONS, PREMIUM BACKGROUND, CUSTOM UI TONES",
-                style = MaterialTheme.typography.labelSmall,
-                color = onBackground.copy(alpha = 0.5f),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
+                Text(
+                    text = "INCLUDES: CALENDAR ICONS, PREMIUM BACKGROUND, CUSTOM UI TONES",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = onBackground.copy(alpha = 0.5f),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-            Spacer(modifier = Modifier.height(32.dp))
-        }
+                Spacer(modifier = Modifier.height(32.dp))
+            }
 
-        if (uiState.showConfirmPurchaseDialog && uiState.themeToPurchase != null) {
-            ConfirmPurchaseDialog(
-                theme = uiState.themeToPurchase!!,
-                onConfirm = { viewModel.buyTheme(uiState.themeToPurchase!!) },
-                onCancel = { viewModel.cancelPurchase() }
-            )
-        }
+            if (uiState.showConfirmPurchaseDialog && uiState.themeToPurchase != null) {
+                ConfirmPurchaseDialog(
+                    theme = uiState.themeToPurchase!!,
+                    onConfirm = { viewModel.buyTheme(uiState.themeToPurchase!!) },
+                    onCancel = { viewModel.cancelPurchase() }
+                )
+            }
 
-        if (uiState.showPurchaseSuccessDialog && uiState.purchasedTheme != null) {
-            PurchaseSuccessDialog(
-                themeName = uiState.purchasedTheme?.name ?: "",
-                onDismiss = { viewModel.dismissDialog() }
-            )
-        }
-        MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
+            if (uiState.showPurchaseSuccessDialog && uiState.purchasedTheme != null) {
+                PurchaseSuccessDialog(
+                    themeName = uiState.purchasedTheme?.name ?: "",
+                    onDismiss = { viewModel.dismissDialog() }
+                )
+            }
         }
     }
 }

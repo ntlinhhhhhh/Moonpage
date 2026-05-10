@@ -47,78 +47,77 @@ fun StoreScreen(
         }
     }
 
-    Scaffold() { paddingValues ->
+    Scaffold(
+        snackbarHost = { 
+            MoonSnackbarHost(hostState = snackbarHostState) 
+        }
+    ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.background)
-        ) {
-            StoreTopBar(
-                coins = uiState.userCoins,
-                onMenuClick = onNavigateBack,
-                onDoneClick = if (uiState.temporarySelectedThemeId != null) {
-                    { viewModel.applyTheme() }
-                } else null
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                StoreTopBar(
+                    coins = uiState.userCoins,
+                    onMenuClick = onNavigateBack,
+                    onDoneClick = if (uiState.temporarySelectedThemeId != null) {
+                        { viewModel.applyTheme() }
+                    } else null
+                )
 
-            StoreTabs(
-                selectedIndex = uiState.selectedTabIndex,
-                onTabSelected = { viewModel.onTabSelected(it) }
-            )
+                StoreTabs(
+                    selectedIndex = uiState.selectedTabIndex,
+                    onTabSelected = { viewModel.onTabSelected(it) }
+                )
 
-            AnimatedContent(
-                targetState = uiState.selectedTabIndex,
-                transitionSpec = {
-                    val slideSpec = tween<IntOffset>(300)
-                    if (targetState > initialState) {
-                        (slideInHorizontally(animationSpec = slideSpec) { it } + fadeIn()).togetherWith(
-                            slideOutHorizontally(animationSpec = slideSpec) { -it } + fadeOut()
+                AnimatedContent(
+                    targetState = uiState.selectedTabIndex,
+                    transitionSpec = {
+                        val slideSpec = tween<IntOffset>(300)
+                        if (targetState > initialState) {
+                            (slideInHorizontally(animationSpec = slideSpec) { it } + fadeIn()).togetherWith(
+                                slideOutHorizontally(animationSpec = slideSpec) { -it } + fadeOut()
+                            )
+                        } else {
+                            (slideInHorizontally(animationSpec = slideSpec) { -it } + fadeIn()).togetherWith(
+                                slideOutHorizontally(animationSpec = slideSpec) { it } + fadeOut()
+                            )
+                        }.using(SizeTransform(clip = false))
+                    },
+                    label = "TabAnimation"
+                ) { targetIndex ->
+                    when (targetIndex) {
+                        0 -> HomeTabContent(
+                            themes = uiState.themes,
+                            selectedCategory = uiState.selectedCategory,
+                            onCategoryClick = { viewModel.onCategorySelected(it) },
+                            onThemeClick = {
+                                viewModel.selectTheme(it)
+                                onNavigateToDetail()
+                            },
+                            onViewAllClick = { viewModel.onTabSelected(2) }
                         )
-                    } else {
-                        (slideInHorizontally(animationSpec = slideSpec) { -it } + fadeIn()).togetherWith(
-                            slideOutHorizontally(animationSpec = slideSpec) { it } + fadeOut()
-                        )
-                    }.using(SizeTransform(clip = false))
-                },
-                label = "TabAnimation"
-            ) { targetIndex ->
-                when (targetIndex) {
-                    0 -> HomeTabContent(
-                        themes = uiState.themes,
-                        selectedCategory = uiState.selectedCategory,
-                        onCategoryClick = { viewModel.onCategorySelected(it) },
-                        onThemeClick = {
-                            viewModel.selectTheme(it)
-                            onNavigateToDetail()
-                        },
-                        onViewAllClick = { viewModel.onTabSelected(2) }
-                    )
-                    1 -> MyThemeTabContent(
-                        ownedThemes = uiState.ownedThemes,
-                        temporarySelectedId = uiState.temporarySelectedThemeId,
-                        onThemeClick = { theme ->
-                            if (theme.isActive) {
+                        1 -> MyThemeTabContent(
+                            ownedThemes = uiState.ownedThemes,
+                            temporarySelectedId = uiState.temporarySelectedThemeId,
+                            onThemeClick = { theme ->
                                 viewModel.selectTheme(theme)
                                 onNavigateToDetail()
-                            } else {
-                                viewModel.selectThemeTemporarily(theme.id)
+                            },
+                            onExploreMore = { viewModel.onTabSelected(0) }
+                        )
+                        2 -> CollectionsTabContent(
+                            themes = uiState.themes,
+                            onThemeClick = {
+                                viewModel.selectTheme(it)
+                                onNavigateToDetail()
                             }
-                        },
-                        onExploreMore = { viewModel.onTabSelected(0) }
-                    )
-                    2 -> CollectionsTabContent(
-                        themes = uiState.themes,
-                        onThemeClick = {
-                            viewModel.selectTheme(it)
-                            onNavigateToDetail()
-                        }
-                    )
+                        )
+                    }
                 }
             }
-            }
-            MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 
@@ -313,6 +312,7 @@ fun MyThemeTabContent(
             ThemeCard(
                 theme = theme, 
                 isSelected = theme.id == temporarySelectedId,
+                showSelectionIndicator = false,
                 onClick = { onThemeClick(theme) }
             )
         }

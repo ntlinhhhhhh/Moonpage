@@ -94,6 +94,9 @@ fun CalendarScreenContent(
     val currentMonthName = remember(uiState.currentYearMonth) { uiState.currentYearMonth.format(monthFormatter) }
     val view = LocalView.current
     val coroutineScope = rememberCoroutineScope()
+    
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    var dateToDelete by remember { mutableStateOf<LocalDate?>(null) }
 
     LaunchedEffect(uiState.snackbarMessage) {
         uiState.snackbarMessage?.let {
@@ -158,7 +161,10 @@ fun CalendarScreenContent(
                     dynamicActivities = uiState.dynamicActivities,
                     themeType = uiState.themeType,
                     onEditLog = { date -> onNavigateToDailyLog(date.toString()) },
-                    onDeleteLog = { date -> onEvent(CalendarUiEvent.OnDeleteLog(date)) },
+                    onDeleteLog = { date -> 
+                        dateToDelete = date
+                        showDeleteConfirmDialog = true
+                    },
                     onShareClick = { onEvent(CalendarUiEvent.OnShareClick) }
                 )
 
@@ -226,6 +232,62 @@ fun CalendarScreenContent(
             )
         }
     }
+
+    if (showDeleteConfirmDialog && dateToDelete != null) {
+        DeleteConfirmDialog(
+            onConfirm = {
+                onEvent(CalendarUiEvent.OnDeleteLog(dateToDelete!!))
+                showDeleteConfirmDialog = false
+                dateToDelete = null
+            },
+            onDismiss = {
+                showDeleteConfirmDialog = false
+                dateToDelete = null
+            }
+        )
+    }
+}
+
+@Composable
+fun DeleteConfirmDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Delete Moment",
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleLarge
+            )
+        },
+        text = {
+            Text(
+                text = "Are you sure you want to delete this moment? This action cannot be undone.",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("Delete")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        },
+        containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor,
+        shape = RoundedCornerShape(24.dp)
+    )
 }
 
 @Composable

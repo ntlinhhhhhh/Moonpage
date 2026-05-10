@@ -76,27 +76,55 @@ class AuthViewModel @Inject constructor (
         return onboardingPrefsManager.checkOnboardingCompleted(userId)
     }
 
+    private var isResourcesLoading = false
+
     fun loadInitialAppResources(onComplete: () -> Unit) {
-        viewModelScope.launch {
-            // Start with a small progress so it's not empty at first
-            val initialProgress = 0.15f
-            _uiState.update { it.copy(loadingProgress = initialProgress) }
-            
-            val jobs = listOf(
-                async { userRepository.getCurrentUser() },
-                async { userRepository.getMyThemes() },
-                async { activityRepository.syncActivities() }
-            )
-
-            val remainingProgress = 1f - initialProgress
-            val step = remainingProgress / jobs.size
-            jobs.forEach { job ->
-                job.await()
-                _uiState.update { it.copy(loadingProgress = (it.loadingProgress + step).coerceAtMost(1f)) }
+        // If already loading, wait for it to finish and then call onComplete
+        if (isResourcesLoading) {
+            viewModelScope.launch {
+                _uiState.map { it.loadingProgress }.filter { it >= 1f }.first()
+                onComplete()
             }
-
-            _uiState.update { it.copy(loadingProgress = 1f) }
+            return
+        }
+        
+        // If already loaded successfully in a previous call
+        if (_uiState.value.loadingProgress >= 1f) {
             onComplete()
+            return
+        }
+
+        isResourcesLoading = true
+        viewModelScope.launch {
+            try {
+                // Start with a small progress so it's not empty at first
+                val initialProgress = 0.15f
+                _uiState.update { it.copy(loadingProgress = initialProgress) }
+                
+                val jobs = listOf(
+                    async { userRepository.getCurrentUser() },
+                    async { userRepository.getMyThemes() },
+                    async { activityRepository.syncActivities() }
+                )
+
+                val remainingProgress = 1f - initialProgress
+                val step = remainingProgress / jobs.size
+                jobs.forEach { job ->
+                    try {
+                        job.await()
+                    } catch (e: Exception) {
+                        // Log error but continue loading other resources
+                        e.printStackTrace()
+                    }
+                    _uiState.update { it.copy(loadingProgress = (it.loadingProgress + step).coerceAtMost(1f)) }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _uiState.update { it.copy(loadingProgress = 1f) }
+                isResourcesLoading = false
+                onComplete()
+            }
         }
     }
 

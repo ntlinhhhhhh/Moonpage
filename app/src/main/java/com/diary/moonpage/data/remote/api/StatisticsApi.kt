@@ -11,4 +11,7 @@ interface StatisticsApi {
         @Query("year") year: Int,
         @Query("month") month: Int
     ): Response<StatisticsResponse>
+
+    @GET("api/statistics/summary")
+    suspend fun getGlobalSummary(): Response<StatisticsResponse>
 }

@@ -22,7 +22,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -47,6 +48,27 @@ class ProfileViewModel @Inject constructor(
 
         loadProfile(forceRefresh = false)
         loadMyThemes()
+        loadStatistics()
+    }
+
+    fun loadStatistics() {
+        viewModelScope.launch {
+            try {
+                val response = statisticsRepository.getGlobalSummary()
+                if (response.isSuccessful && response.body() != null) {
+                    val stats = response.body()!!
+                    _uiState.update { it.copy(
+                        totalLogs = stats.totalLogs,
+                        totalPhotos = stats.totalPhotos
+                    ) }
+                } else {
+                    val errorMsg = response.errorBody()?.string() ?: "Unknown error"
+                    android.util.Log.e("ProfileViewModel", "Stats failed: $errorMsg")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("ProfileViewModel", "Stats exception", e)
+            }
+        }
     }
 
     fun onEvent(event: ProfileUiEvent) {
@@ -70,6 +92,7 @@ class ProfileViewModel @Inject constructor(
             userRepository.getCurrentUser()
                 .onSuccess { user ->
                     _uiState.update { it.copy(user = user, isLoading = false) }
+                    loadStatistics()
                 }
                 .onFailure { e ->
                     _uiState.update { it.copy(error = e.message, isLoading = false) }

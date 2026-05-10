@@ -7,6 +7,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import com.diary.moonpage.presentation.navigation.Screen
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 fun NavController.navigateToCalendar(navOptions: NavOptions? = null) {
     this.navigate(Screen.Calendar.route, navOptions)
@@ -19,8 +20,10 @@ fun NavGraphBuilder.calendarScreen(
 ) {
     composable(route = Screen.Calendar.route) { backStackEntry ->
         val savedStateHandle = backStackEntry.savedStateHandle
-        val createdLogDate by savedStateHandle.getStateFlow<String?>("created_log_date", null).collectAsState()
-        val logSavedMessage by savedStateHandle.getStateFlow<String?>("logSavedMessage", null).collectAsState()
+        // Use collectAsStateWithLifecycle to ensure we respect the NavBackStackEntry's lifecycle.
+        // This prevents IllegalStateException when the entry is being destroyed.
+        val createdLogDate by savedStateHandle.getStateFlow<String?>("created_log_date", null).collectAsStateWithLifecycle()
+        val logSavedMessage by savedStateHandle.getStateFlow<String?>("logSavedMessage", null).collectAsStateWithLifecycle()
 
         CalendarScreen(
             createdLogDate = createdLogDate,

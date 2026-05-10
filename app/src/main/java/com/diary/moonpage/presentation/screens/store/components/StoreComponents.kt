@@ -115,20 +115,10 @@ fun StoreTopBar(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 8.dp),
+            .height(64.dp)
+            .padding(horizontal = 16.dp),
         contentAlignment = Alignment.Center
     ) {
-        IconButton(
-            onClick = onMenuClick,
-            modifier = Modifier.align(Alignment.CenterStart)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
-                tint = MaterialTheme.colorScheme.onBackground
-            )
-        }
-
         Text(
             text = "Store",
             style = MaterialTheme.typography.titleLarge,
@@ -150,7 +140,7 @@ fun StoreTopBar(
                 )
             ) {
                 Text(
-                    text = "Done",
+                    text = "Activate",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -165,44 +155,39 @@ fun StoreTopBar(
                     .align(Alignment.CenterEnd)
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 12.dp),
+                    modifier = Modifier.padding(horizontal = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(18.dp)
+                            .size(16.dp)
                             .background(MaterialTheme.colorScheme.primary, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "$",
-                            modifier = Modifier.offset(y = (-0.8).dp),
                             color = MaterialTheme.colorScheme.onPrimary,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center,
-                            style = TextStyle(
-                                platformStyle = PlatformTextStyle(includeFontPadding = false)
-                            )
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
                         )
                     }
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "$coins Coins",
+                        text = "$coins",
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 12.sp
+                        fontSize = 11.sp
                     )
                 }
             }
         }
     }
 }
-
 @Composable
 fun ThemeCard(
     theme: Theme,
     isSelected: Boolean = false,
+    showSelectionIndicator: Boolean = true,
     onClick: () -> Unit
 ) {
     val onSurface = MaterialTheme.colorScheme.onBackground
@@ -221,22 +206,22 @@ fun ThemeCard(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                 val shades = getThemeShades(theme)
-                Box(contentAlignment = Alignment.BottomEnd) {
-                    CuteBeanIcon(
-                        modifier = Modifier.size(36.dp),
-                        emotion = if (isSelected) "VERY_HAPPY" else "NEUTRAL",
-                        decoration = theme.decoration,
-                        color = shades.getOrElse(if (isSelected) 4 else 2) { Color.LightGray }
-                    )
-                    if (isSelected) {
-                        Surface(
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(12.dp).offset(x = 2.dp, y = 2.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text(text = "✓", color = Color.White, fontSize = 8.sp, fontWeight = FontWeight.Bold)
-                            }
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(contentAlignment = Alignment.BottomEnd) {
+                        CuteBeanIcon(
+                            modifier = Modifier.size(36.dp),
+                            emotion = if (isSelected) "VERY_HAPPY" else "NEUTRAL",
+                            decoration = theme.decoration,
+                            color = shades.getOrElse(if (isSelected) 4 else 2) { Color.LightGray }
+                        )
+                        if (isSelected && showSelectionIndicator) {
+                            // Tick is removed as per user request to "bỏ hết các tick"
                         }
                     }
                 }
@@ -480,21 +465,11 @@ fun CurrentThemeCard(theme: Theme) {
             Box(contentAlignment = Alignment.BottomEnd) {
                 CuteBeanIcon(
                     modifier = Modifier.size(48.dp),
-                    emotion = "HAPPY",
+                    emotion = "VERY_HAPPY",
                     decoration = theme.decoration,
-                    color = shades.getOrElse(3) { MaterialTheme.colorScheme.primary }
+                    color = shades.getOrElse(4) { MaterialTheme.colorScheme.primary }
                 )
-                if (theme.id != com.diary.moonpage.core.util.ThemeConstants.DEFAULT_THEME_ID) {
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(16.dp).offset(x = 4.dp, y = 4.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(text = "✓", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
+                // Tick is removed as per user request to "bỏ hết các tick khi theme ấy activate đi"
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column {
@@ -707,6 +682,9 @@ fun getThemeShades(theme: Theme): List<Color> {
         )
         "MOON" -> listOf(
             Color(0xFFFFF176), Color(0xFFFFEE58), Color(0xFFFFD54F), Color(0xFFFFB300), Color(0xFFFFA000)
+        )
+        "AUTUMN" -> listOf(
+            Color(0xFFFDF5E6), Color(0xFFF5DEB3), Color(0xFFDEB887), Color(0xFFE67E22), Color(0xFFD35400)
         )
         else -> listOf(
             Color(0xFFE8E1DA), Color(0xFFD7CCC8), Color(0xFFBCAAA4), Color(0xFF8D6E63), Color(0xFF5D4037)

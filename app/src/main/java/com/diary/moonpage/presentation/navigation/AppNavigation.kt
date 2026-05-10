@@ -332,7 +332,8 @@ fun AppNavigation() {
                         onNavigateToPhotos = { navController.navigate(Screen.Gallery.route) },
                         onNavigateToThemeCalendar = { navController.navigate(Screen.ThemeCalendar.route) },
                         onNavigateToWidgets = { navController.navigate(Screen.Widgets.route) },
-                        onNavigateToInviteFriend = { navController.navigate(Screen.InviteFriend.route) }
+                        onNavigateToInviteFriend = { navController.navigate(Screen.InviteFriend.route) },
+                        onNavigateToStats = { navController.navigate(Screen.Stats.route) }
                     )
                 }
             }

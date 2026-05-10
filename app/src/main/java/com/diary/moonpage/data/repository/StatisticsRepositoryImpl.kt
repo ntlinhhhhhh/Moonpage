@@ -35,4 +35,12 @@ class StatisticsRepositoryImpl @Inject constructor(
             throw e
         }
     }
+
+    override suspend fun getGlobalSummary(): Response<StatisticsResponse> {
+        return try {
+            statisticsApi.getGlobalSummary()
+        } catch (e: Exception) {
+            throw e
+        }
+    }
 }

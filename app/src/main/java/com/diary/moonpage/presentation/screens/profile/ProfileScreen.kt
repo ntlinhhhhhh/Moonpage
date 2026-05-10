@@ -31,13 +31,15 @@ fun ProfileScreen(
     onNavigateToPhotos: () -> Unit,
     onNavigateToThemeCalendar: () -> Unit,
     onNavigateToWidgets: () -> Unit,
-    onNavigateToInviteFriend: () -> Unit
+    onNavigateToInviteFriend: () -> Unit,
+    onNavigateToStats: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.loadProfile()
         viewModel.loadMyThemes()
+        viewModel.loadStatistics()
     }
 
     if (uiState.isLoading && uiState.user == null) {
@@ -49,15 +51,16 @@ fun ProfileScreen(
             userId = uiState.user?.id?.take(8) ?: "",
             userName = uiState.user?.name ?: "User",
             avatarUrl = uiState.user?.avatarUrl,
-            recordedDays = "8",
-            photoCount = uiState.myThemes.size.toString(),
+            recordedDays = uiState.totalLogs.toString(),
+            photoCount = uiState.totalPhotos.toString(),
             onNotificationClick = onNavigateToNotifications,
             onSettingsClick = onNavigateToSettings,
             onAccountClick = onNavigateToAccount,
             onPhotosClick = onNavigateToPhotos,
             onThemeCalendarClick = onNavigateToThemeCalendar,
             onWidgetsClick = onNavigateToWidgets,
-            onInviteFriendClick = onNavigateToInviteFriend
+            onInviteFriendClick = onNavigateToInviteFriend,
+            onStatsClick = onNavigateToStats
         )
     }
 }
@@ -78,7 +81,8 @@ fun ProfileScreenContent(
     onPhotosClick: () -> Unit,
     onThemeCalendarClick: () -> Unit,
     onWidgetsClick: () -> Unit,
-    onInviteFriendClick: () -> Unit
+    onInviteFriendClick: () -> Unit,
+    onStatsClick: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
 
@@ -112,8 +116,14 @@ fun ProfileScreenContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                StatCard(title = "Recorded days", value = recordedDays, modifier = Modifier.weight(1f))
-                ActionCard(title = "My Photos", value = photoCount, modifier = Modifier.weight(1f), onClick = onPhotosClick)
+                ActionCard(
+                    title = "Record days", 
+                    value = recordedDays, 
+                    icon = Icons.Rounded.CalendarToday,
+                    modifier = Modifier.weight(1f), 
+                    onClick = onStatsClick
+                )
+                ActionCard(title = "My photos", value = photoCount, modifier = Modifier.weight(1f), onClick = onPhotosClick)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -149,7 +159,8 @@ fun ProfileScreenPreview() {
             onPhotosClick = {},
             onThemeCalendarClick = {},
             onWidgetsClick = {},
-            onInviteFriendClick = {}
+            onInviteFriendClick = {},
+            onStatsClick = {}
         )
     }
 }

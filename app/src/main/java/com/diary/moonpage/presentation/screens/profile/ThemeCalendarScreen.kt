@@ -25,6 +25,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.diary.moonpage.MainViewModel
 import com.diary.moonpage.core.util.ThemeConstants
 import com.diary.moonpage.core.theme.MoonThemeType
+import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 
 @Composable
 fun ThemeCalendarScreen(
@@ -63,6 +64,15 @@ fun ThemeCalendarScreen(
     // 3. Combined List (System + Purchased)
     val allSelectableThemes = (systemThemes + ownedThemes).distinctBy { it.first }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(Unit) {
+        storeViewModel.uiEffect.collect { effect ->
+            if (effect is com.diary.moonpage.presentation.screens.store.StoreUiEffect.ShowSnackBar) {
+                snackbarHostState.showSnackbar(effect.message)
+            }
+        }
+    }
+
     ThemePickerContent(
         availableThemes = allSelectableThemes,
         currentThemeType = currentThemeType,
@@ -75,7 +85,8 @@ fun ThemeCalendarScreen(
         onDarkModeToggled = { mainViewModel.setDarkMode(it) },
         onApply = { onNavigateBack() },
         onNavigateBack = onNavigateBack,
-        isLoading = uiState.isLoading
+        isLoading = uiState.isLoading,
+        snackbarHostState = snackbarHostState
     )
 }
 
@@ -89,10 +100,12 @@ fun ThemePickerContent(
     onDarkModeToggled: (Boolean?) -> Unit,
     onApply: () -> Unit,
     onNavigateBack: () -> Unit,
-    isLoading: Boolean = false
+    isLoading: Boolean = false,
+    snackbarHostState: SnackbarHostState
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -116,7 +129,7 @@ fun ThemePickerContent(
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Text("Done", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onPrimary)
+                    Text("Activate", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onPrimary)
                 }
             }
         }

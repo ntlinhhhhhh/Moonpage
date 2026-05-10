@@ -1,6 +1,7 @@
 package com.diary.moonpage.presentation.screens.auth
 
 import android.content.res.Configuration
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -30,12 +31,13 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.R
 import com.diary.moonpage.core.theme.MoonPageTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.withTimeoutOrNull
 
 @Composable
 fun LoadingScreen(
@@ -50,7 +52,6 @@ fun LoadingScreen(
 
         if (isLoggedIn) {
             viewModel.loadInitialAppResources {
-                // Ensure UI has a moment to render 100% progress
                 viewModel.viewModelScope.launch {
                     delay(300)
                     val onboardingDone = viewModel.checkOnboardingForCurrentUser()

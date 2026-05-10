@@ -16,4 +16,20 @@
     <string name="moment_upload_success">Moment uploaded successfully!</string>
     <string name="moment_deleted">Moment deleted successfully.</string>
 
+    <!-- Settings -->
+    <string name="settings">Settings</string>
+    <string name="preferences">Preferences</string>
+    <string name="language">Language</string>
+    <string name="app_theme">App Theme</string>
+    <string name="security">Security</string>
+    <string name="passcode_lock">Passcode Lock</string>
+    <string name="biometric_auth">Biometric Authentication</string>
+    <string name="support">Support</string>
+    <string name="help_center">Help Center</string>
+    <string name="terms_of_service">Terms of Service</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="account_action">Account Action</string>
+    <string name="delete_account">Delete Account</string>
+    <string name="select_language">Select Language</string>
+    <string name="close">Close</string>
 </resources>
