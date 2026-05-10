@@ -118,7 +118,9 @@ fun FilterScreen(
                             visual = visual,
                             isSelected = isSelected,
                             isAnySelected = isAnySelected,
-                            onClick = { selectedItem = FilterItem.Mood(moodId) }
+                            onClick = { 
+                                selectedItem = if ((selectedItem as? FilterItem.Mood)?.id == moodId) null else FilterItem.Mood(moodId)
+                            }
                         )
                     }
                 }
@@ -138,7 +140,9 @@ fun FilterScreen(
                                 items = activityItems,
                                 selectedId = (selectedItem as? FilterItem.Activity)?.id,
                                 isAnySelected = isAnySelected,
-                                onItemClick = { selectedItem = it }
+                                onItemClick = { activityItem ->
+                                    selectedItem = if ((selectedItem as? FilterItem.Activity)?.id == activityItem.id) null else activityItem
+                                }
                             )
                         }
                     }
@@ -165,7 +169,9 @@ fun FilterScreen(
                             item = special,
                             isSelected = isSelected,
                             isAnySelected = isAnySelected,
-                            onClick = { selectedItem = special }
+                            onClick = { 
+                                selectedItem = if ((selectedItem as? FilterItem.Special)?.id == special.id) null else special 
+                            }
                         )
                     }
                 }

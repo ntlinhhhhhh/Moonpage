@@ -719,28 +719,74 @@ private fun DailySleepSection(
     onRecordClick: () -> Unit,
     onImportClick: () -> Unit
 ) {
-    val hasRecorded = sleepHours > 0f
-    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {
+    val hasRecorded = sleepHours > 0f && !(bedTime == LocalTime.of(0, 0) && wakeTime == LocalTime.of(7, 0))
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
+        modifier = Modifier.fillMaxWidth()
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text("Sleep", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 16.sp)
                 Text(
-                    "Import", 
-                    fontSize = 12.sp, 
+                    "Import",
+                    fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.clickable { onImportClick() }
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
-            Surface(color = MoonTheme.customColors.logItemBg, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().clickable { onRecordClick() }) {
+            Surface(
+                color = MoonTheme.customColors.logItemBg,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth().clickable { onRecordClick() }
+            ) {
                 if (hasRecorded) {
-                    Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        Text("${sleepHours}h sleep", color = MoonTheme.customColors.logCardOnBg, fontWeight = FontWeight.Bold)
-                        val fmt = DateTimeFormatter.ofPattern("HH:mm")
-                        Text("${bedTime.format(fmt)} - ${wakeTime.format(fmt)}", fontSize = 12.sp, color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.6f))
+                    val h = sleepHours.toInt()
+                    val m = ((sleepHours - h) * 60).toInt()
+                    val fmt = DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH)
+                    Row(
+                        modifier = Modifier.padding(12.dp).fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Rounded.Bedtime, contentDescription = null,
+                                modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(bedTime.format(fmt), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
+                                Text("Went to bed", fontSize = 10.sp, color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.6f))
+                            }
+                        }
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("${h}h ${m}m", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            Text("Time asleep", fontSize = 10.sp, color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.6f))
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(wakeTime.format(fmt), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
+                                Text("Woke up", fontSize = 10.sp, color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.6f))
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(
+                                Icons.Rounded.AlarmOn, contentDescription = null,
+                                modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
                     }
                 } else {
-                    Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Icon(Icons.Rounded.Bedtime, contentDescription = null, modifier = Modifier.size(20.dp), tint = MoonTheme.customColors.logCardOnBg)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Record your sleep", fontSize = 14.sp, color = MoonTheme.customColors.logCardOnBg)
