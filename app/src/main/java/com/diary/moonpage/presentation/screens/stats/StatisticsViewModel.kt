@@ -97,25 +97,25 @@ class StatisticsViewModel @Inject constructor(
     private fun generateMockMoodBySleep(): List<com.diary.moonpage.data.remote.dto.stats.MoodBySleepDto> {
         return listOf(
             com.diary.moonpage.data.remote.dto.stats.MoodBySleepDto("< 5h", listOf(
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Bad", 40, 40),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Low", 30, 30),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Meh", 20, 20),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Good", 10, 10),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Rad", 0, 0)
+                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Bad", 40, 40.0),
+                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Low", 30, 30.0),
+                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Meh", 20, 20.0),
+                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Good", 10, 10.0),
+                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Rad", 0, 0.0)
             )),
             com.diary.moonpage.data.remote.dto.stats.MoodBySleepDto("6-7h", listOf(
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Bad", 10, 10),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Low", 20, 20),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Meh", 40, 40),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Good", 20, 20),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Rad", 10, 10)
+                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Bad", 10, 10.0),
+                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Low", 20, 20.0),
+                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Meh", 40, 40.0),
+                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Good", 20, 20.0),
+                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Rad", 10, 10.0)
             )),
             com.diary.moonpage.data.remote.dto.stats.MoodBySleepDto("8h+", listOf(
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Bad", 5, 5),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Low", 5, 5),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Meh", 10, 10),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Good", 40, 40),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Rad", 40, 40)
+                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Bad", 5, 5.0),
+                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Low", 5, 5.0),
+                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Meh", 10, 10.0),
+                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Good", 40, 40.0),
+                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Rad", 40, 40.0)
             ))
         )
     }

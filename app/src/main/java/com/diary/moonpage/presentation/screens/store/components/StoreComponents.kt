@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.rounded.CheckCircleOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -109,16 +110,27 @@ fun CuteBeanIcon(
 @Composable
 fun StoreTopBar(
     coins: Int,
-    onMenuClick: () -> Unit,
+    onBackClick: () -> Unit,
     onDoneClick: (() -> Unit)? = null
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(64.dp)
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 4.dp),
         contentAlignment = Alignment.Center
     ) {
+        IconButton(
+            onClick = onBackClick,
+            modifier = Modifier.align(Alignment.CenterStart)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back",
+                tint = MaterialTheme.colorScheme.onBackground
+            )
+        }
+
         Text(
             text = "Store",
             style = MaterialTheme.typography.titleLarge,
@@ -129,7 +141,7 @@ fun StoreTopBar(
             Button(
                 onClick = onDoneClick,
                 modifier = Modifier
-                    .padding(end = 8.dp)
+                    .padding(end = 12.dp)
                     .height(36.dp)
                     .align(Alignment.CenterEnd),
                 shape = RoundedCornerShape(18.dp),
@@ -196,6 +208,7 @@ fun ThemeCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
+            .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else Color.Transparent)
             .clickable { onClick() }
             .padding(vertical = 12.dp, horizontal = 8.dp)
     ) {
@@ -210,20 +223,18 @@ fun ThemeCard(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                        .background(
+                            if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Box(contentAlignment = Alignment.BottomEnd) {
-                        CuteBeanIcon(
-                            modifier = Modifier.size(36.dp),
-                            emotion = if (isSelected) "VERY_HAPPY" else "NEUTRAL",
-                            decoration = theme.decoration,
-                            color = shades.getOrElse(if (isSelected) 4 else 2) { Color.LightGray }
-                        )
-                        if (isSelected && showSelectionIndicator) {
-                            // Tick is removed as per user request to "bỏ hết các tick"
-                        }
-                    }
+                    CuteBeanIcon(
+                        modifier = Modifier.size(36.dp),
+                        emotion = if (isSelected) "VERY_HAPPY" else "NEUTRAL",
+                        decoration = theme.decoration,
+                        color = shades.getOrElse(if (isSelected) 4 else 2) { Color.LightGray }
+                    )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 
@@ -232,7 +243,7 @@ fun ThemeCard(
                         text = theme.name,
                         style = MaterialTheme.typography.titleMedium,
                         color = onSurface,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Bold
                     )
                     Text(
                         text = theme.collection,
@@ -620,6 +631,82 @@ fun PurchaseSuccessDialog(
         containerColor = MoonTheme.customColors.popupBgColor,
         tonalElevation = 0.dp
     )
+}
+
+@Composable
+fun ConfirmActivationDialog(
+    themeName: String,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit
+) {
+    Dialog(onDismissRequest = onCancel) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = MoonTheme.customColors.popupBgColor,
+            tonalElevation = 0.dp,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.CheckCircleOutline,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(48.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Confirm Activation",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = "Do you want to set \"$themeName\" as your active theme?",
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick = onCancel,
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MoonTheme.customColors.cancelBtnBgColor,
+                            contentColor = MoonTheme.customColors.cancelBtnTextColor
+                        )
+                    ) {
+                        Text("No", fontWeight = FontWeight.Bold)
+                    }
+                    Button(
+                        onClick = onConfirm,
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        shape = RoundedCornerShape(24.dp)
+                    ) {
+                        Text("Activate", fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
 }
 
 fun getThemeShades(theme: Theme): List<Color> {

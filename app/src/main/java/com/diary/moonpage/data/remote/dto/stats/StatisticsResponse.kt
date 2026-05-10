@@ -3,10 +3,10 @@ package com.diary.moonpage.data.remote.dto.stats
 import com.google.gson.annotations.SerializedName
 
 data class StatisticsResponse(
-    @SerializedName("totalLogs") val totalLogs: Int,
-    @SerializedName("totalPhotos") val totalPhotos: Int,
-    @SerializedName("currentStreak") val currentStreak: Int,
-    @SerializedName("longestStreak") val longestStreak: Int,
+    @SerializedName(value = "totalLogs", alternate = ["total_logs"]) val totalLogs: Int,
+    @SerializedName(value = "totalPhotos", alternate = ["total_photos"]) val totalPhotos: Int,
+    @SerializedName(value = "currentStreak", alternate = ["current_streak"]) val currentStreak: Int,
+    @SerializedName(value = "longestStreak", alternate = ["longest_streak"]) val longestStreak: Int,
     @SerializedName("moodDistribution") val moodDistribution: List<MoodDistributionDto>,
     @SerializedName("moodFlow") val moodFlow: List<MoodFlowDto>,
     @SerializedName("bestActivities") val bestActivities: List<BestActivityDto>,
@@ -35,7 +35,7 @@ data class MoodBySleepDto(
 data class MoodDistributionDto(
     @SerializedName("label") val label: String,
     @SerializedName("count") val count: Int,
-    @SerializedName("percentage") val percentage: Int
+    @SerializedName("percentage") val percentage: Double
 )
 
 data class MoodFlowDto(

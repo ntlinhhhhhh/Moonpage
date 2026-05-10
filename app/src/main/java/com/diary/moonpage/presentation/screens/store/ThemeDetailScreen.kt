@@ -148,9 +148,6 @@ fun ThemeDetailScreen(
                 }
             }
         },
-        snackbarHost = { 
-            MoonSnackbarHost(hostState = snackbarHostState) 
-        },
         containerColor = backgroundColor
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
@@ -212,11 +209,26 @@ fun ThemeDetailScreen(
                 Spacer(modifier = Modifier.height(32.dp))
             }
 
+            // Snackbar at top
+            MoonSnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.align(Alignment.TopCenter),
+                topPadding = 16.dp
+            )
+
             if (uiState.showConfirmPurchaseDialog && uiState.themeToPurchase != null) {
                 ConfirmPurchaseDialog(
                     theme = uiState.themeToPurchase!!,
                     onConfirm = { viewModel.buyTheme(uiState.themeToPurchase!!) },
                     onCancel = { viewModel.cancelPurchase() }
+                )
+            }
+
+            if (uiState.showConfirmActivationDialog && uiState.selectedThemeDetail != null) {
+                ConfirmActivationDialog(
+                    themeName = uiState.selectedThemeDetail?.name ?: "",
+                    onConfirm = { viewModel.confirmActivation() },
+                    onCancel = { viewModel.cancelActivation() }
                 )
             }
 

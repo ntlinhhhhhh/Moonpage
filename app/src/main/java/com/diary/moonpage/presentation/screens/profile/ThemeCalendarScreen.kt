@@ -86,7 +86,12 @@ fun ThemeCalendarScreen(
         onApply = { onNavigateBack() },
         onNavigateBack = onNavigateBack,
         isLoading = uiState.isLoading,
-        snackbarHostState = snackbarHostState
+        snackbarHostState = snackbarHostState,
+        showConfirmActivation = uiState.showConfirmActivationDialog,
+        temporarySelectedThemeId = uiState.temporarySelectedThemeId,
+        ownedThemes = uiState.ownedThemes,
+        onConfirmActivation = { storeViewModel.confirmActivation() },
+        onCancelActivation = { storeViewModel.cancelActivation() }
     )
 }
 
@@ -101,11 +106,15 @@ fun ThemePickerContent(
     onApply: () -> Unit,
     onNavigateBack: () -> Unit,
     isLoading: Boolean = false,
-    snackbarHostState: SnackbarHostState
+    snackbarHostState: SnackbarHostState,
+    showConfirmActivation: Boolean = false,
+    temporarySelectedThemeId: String? = null,
+    ownedThemes: List<com.diary.moonpage.domain.model.Theme> = emptyList(),
+    onConfirmActivation: () -> Unit = {},
+    onCancelActivation: () -> Unit = {}
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -129,7 +138,7 @@ fun ThemePickerContent(
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Text("Activate", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onPrimary)
+                    Text("Done", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onPrimary)
                 }
             }
         }
@@ -212,6 +221,21 @@ fun ThemePickerContent(
                         }
                     }
                 }
+            }
+
+            // Snackbar at top
+            com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.align(Alignment.TopCenter),
+                topPadding = 16.dp
+            )
+
+            if (showConfirmActivation) {
+                com.diary.moonpage.presentation.screens.store.components.ConfirmActivationDialog(
+                    themeName = ownedThemes.find { it.id == temporarySelectedThemeId }?.name ?: "this theme",
+                    onConfirm = onConfirmActivation,
+                    onCancel = onCancelActivation
+                )
             }
         }
     }

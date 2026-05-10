@@ -71,7 +71,18 @@ class StoreViewModel @Inject constructor(
     }
 
     fun activateTheme(themeId: String) {
-        onEvent(StoreUiEvent.ActivateTheme(themeId))
+        _uiState.update { it.copy(showConfirmActivationDialog = true, temporarySelectedThemeId = themeId) }
+    }
+
+    fun confirmActivation() {
+        _uiState.value.temporarySelectedThemeId?.let { themeId ->
+            performActivateTheme(themeId)
+            _uiState.update { it.copy(showConfirmActivationDialog = false, temporarySelectedThemeId = null) }
+        }
+    }
+
+    fun cancelActivation() {
+        _uiState.update { it.copy(showConfirmActivationDialog = false, temporarySelectedThemeId = null) }
     }
 
     fun selectThemeTemporarily(themeId: String) {
@@ -81,7 +92,6 @@ class StoreViewModel @Inject constructor(
     fun applyTheme() {
         _uiState.value.temporarySelectedThemeId?.let { themeId ->
             activateTheme(themeId)
-            _uiState.update { it.copy(temporarySelectedThemeId = null) }
         }
     }
 
@@ -117,7 +127,9 @@ class StoreViewModel @Inject constructor(
                 _uiState.update { it.copy(showConfirmPurchaseDialog = false, themeToPurchase = null) }
             }
             is StoreUiEvent.BuyTheme -> performBuyTheme(event.theme)
-            is StoreUiEvent.ActivateTheme -> performActivateTheme(event.themeId)
+            is StoreUiEvent.ActivateTheme -> {
+                _uiState.update { it.copy(showConfirmActivationDialog = true, temporarySelectedThemeId = event.themeId) }
+            }
             StoreUiEvent.DismissDialog -> {
                 _uiState.update { it.copy(showPurchaseSuccessDialog = false) }
             }

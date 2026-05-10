@@ -54,19 +54,24 @@ class ProfileViewModel @Inject constructor(
     fun loadStatistics() {
         viewModelScope.launch {
             try {
+                _uiState.update { it.copy(isLoading = it.totalLogs == 0 && it.totalPhotos == 0) }
                 val response = statisticsRepository.getGlobalSummary()
                 if (response.isSuccessful && response.body() != null) {
                     val stats = response.body()!!
+                    android.util.Log.d("ProfileViewModel", "Stats received: Logs=${stats.totalLogs}, Photos=${stats.totalPhotos}")
                     _uiState.update { it.copy(
                         totalLogs = stats.totalLogs,
-                        totalPhotos = stats.totalPhotos
+                        totalPhotos = stats.totalPhotos,
+                        isLoading = false
                     ) }
                 } else {
                     val errorMsg = response.errorBody()?.string() ?: "Unknown error"
                     android.util.Log.e("ProfileViewModel", "Stats failed: $errorMsg")
+                    _uiState.update { it.copy(isLoading = false) }
                 }
             } catch (e: Exception) {
                 android.util.Log.e("ProfileViewModel", "Stats exception", e)
+                _uiState.update { it.copy(isLoading = false) }
             }
         }
     }

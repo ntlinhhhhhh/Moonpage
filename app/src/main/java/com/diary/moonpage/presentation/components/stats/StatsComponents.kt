@@ -255,28 +255,33 @@ fun MoodDistributionView(
                     (mood.name == "Angry" && it.label.equals("Bad", ignoreCase = true)) ||
                     (mood.name == "Angry" && it.label.equals("Awful", ignoreCase = true))
                 }
-                val percentage = dist?.percentage ?: 0
+                val currentMoodPercent: Int = (dist?.percentage ?: 0.0).toInt()
+                val iconSize = if (currentMoodPercent > 25) 64.dp else 52.dp
+                val tintColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                val colorFilter = if (currentMoodPercent > 0) null else androidx.compose.ui.graphics.ColorFilter.tint(tintColor)
+                val surfaceColor = if (currentMoodPercent > 0) mood.color.copy(alpha = 0.2f) else MoonTheme.customColors.logItemBg
+                val textColor = if (currentMoodPercent > 0) mood.color else MaterialTheme.colorScheme.onSurfaceVariant
                 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     if (mood.drawableRes != null) {
                         Image(
                             painter = painterResource(id = mood.drawableRes!!),
                             contentDescription = null,
-                            modifier = Modifier.size(if (percentage > 25) 64.dp else 52.dp),
-                            colorFilter = if (percentage > 0) null else androidx.compose.ui.graphics.ColorFilter.tint(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
+                            modifier = Modifier.size(iconSize),
+                            colorFilter = colorFilter
                         )
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                     Surface(
                         shape = RoundedCornerShape(12.dp),
-                        color = if (percentage > 0) mood.color.copy(alpha = 0.2f) else MoonTheme.customColors.logItemBg
+                        color = surfaceColor
                     ) {
                         Text(
-                            "$percentage%",
+                            "$currentMoodPercent%",
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (percentage > 0) mood.color else MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = textColor,
                             textAlign = TextAlign.Center
                         )
                     }

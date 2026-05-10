@@ -48,20 +48,17 @@ fun StoreScreen(
     }
 
     Scaffold(
-        snackbarHost = { 
-            MoonSnackbarHost(hostState = snackbarHostState) 
-        }
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .background(MaterialTheme.colorScheme.background)
             ) {
                 StoreTopBar(
                     coins = uiState.userCoins,
-                    onMenuClick = onNavigateBack,
+                    onBackClick = onNavigateBack,
                     onDoneClick = if (uiState.temporarySelectedThemeId != null) {
                         { viewModel.applyTheme() }
                     } else null
@@ -118,14 +115,29 @@ fun StoreScreen(
                     }
                 }
             }
-        }
-    }
 
-    if (uiState.showPurchaseSuccessDialog && uiState.purchasedTheme != null) {
-        PurchaseSuccessDialog(
-            themeName = uiState.purchasedTheme?.name ?: "",
-            onDismiss = { viewModel.dismissDialog() }
-        )
+            // Snackbar at top
+            MoonSnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.align(Alignment.TopCenter),
+                topPadding = 16.dp
+            )
+            
+            if (uiState.showConfirmActivationDialog) {
+                ConfirmActivationDialog(
+                    themeName = uiState.ownedThemes.find { it.id == uiState.temporarySelectedThemeId }?.name ?: "this theme",
+                    onConfirm = { viewModel.confirmActivation() },
+                    onCancel = { viewModel.cancelActivation() }
+                )
+            }
+            
+            if (uiState.showPurchaseSuccessDialog && uiState.purchasedTheme != null) {
+                PurchaseSuccessDialog(
+                    themeName = uiState.purchasedTheme?.name ?: "",
+                    onDismiss = { viewModel.dismissDialog() }
+                )
+            }
+        }
     }
 }
 @Composable
