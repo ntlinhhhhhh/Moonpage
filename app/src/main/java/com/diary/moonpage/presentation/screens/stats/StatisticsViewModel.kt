@@ -46,9 +46,10 @@ class StatisticsViewModel @Inject constructor(
                     
                     // Enhancement: Ensure we have data for the new charts (Mocking if missing)
                     val enhancedStats = stats.copy(
+                        moodFlow = if (stats.moodFlow.isEmpty()) generateMockMoodFlow(_uiState.value.selectedYear, _uiState.value.selectedMonth, _uiState.value.isMonthly) else stats.moodFlow,
                         sleepData = stats.sleepData ?: generateMockSleepData(_uiState.value.selectedYear, _uiState.value.selectedMonth),
                         stepsData = stats.stepsData ?: generateMockStepsData(_uiState.value.selectedYear, _uiState.value.selectedMonth),
-                        menstruationData = stats.menstruationData ?: if (_uiState.value.gender != "Male") listOf("2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15") else emptyList(),
+                        menstruationData = stats.menstruationData ?: if (_uiState.value.gender != "Male") generateMockMenstruationData(_uiState.value.selectedYear, _uiState.value.selectedMonth) else emptyList(),
                         moodBySleep = stats.moodBySleep ?: generateMockMoodBySleep(),
                         yearlyMoodGrid = stats.yearlyMoodGrid ?: generateMockYearlyGrid(_uiState.value.selectedYear)
                     )
@@ -131,6 +132,34 @@ class StatisticsViewModel @Inject constructor(
             }
         }
         return list
+    }
+
+    private fun generateMockMoodFlow(year: Int, month: Int, isMonthly: Boolean): List<com.diary.moonpage.data.remote.dto.stats.MoodFlowDto> {
+        return if (isMonthly) {
+            val days = java.time.YearMonth.of(year, month).lengthOfMonth()
+            (1..days).filter { it % 2 == 0 }.map { d ->
+                com.diary.moonpage.data.remote.dto.stats.MoodFlowDto(
+                    date = String.format("%04d-%02d-%02d", year, month, d),
+                    moodId = (1..5).random()
+                )
+            }
+        } else {
+            (1..12).map { m ->
+                com.diary.moonpage.data.remote.dto.stats.MoodFlowDto(
+                    date = String.format("%04d-%02d-15", year, m),
+                    moodId = (1..5).random()
+                )
+            }
+        }
+    }
+
+    private fun generateMockMenstruationData(year: Int, month: Int): List<String> {
+        return listOf(
+            String.format("%04d-%02d-12", year, month),
+            String.format("%04d-%02d-13", year, month),
+            String.format("%04d-%02d-14", year, month),
+            String.format("%04d-%02d-15", year, month)
+        )
     }
 
     fun onIconClick(id: String?) {

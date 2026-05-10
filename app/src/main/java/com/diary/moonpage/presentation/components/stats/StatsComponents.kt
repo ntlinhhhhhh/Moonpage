@@ -165,8 +165,10 @@ fun MoodFlowChart(
                 // Menstruation Background (Monthly only)
                 if (isMonthly && menstruationDates.isNotEmpty()) {
                     val daysInMonth = YearMonth.of(year, month).lengthOfMonth()
-                    val dx = width / (daysInMonth - 1)
-                    menstruationDates.forEach { dateStr ->
+                    val dx = if (daysInMonth > 1) width / (daysInMonth - 1) else 0f
+                    val currentMonthStr = String.format("%04d-%02d", year, month)
+                    
+                    menstruationDates.filter { it.startsWith(currentMonthStr) }.forEach { dateStr ->
                         try {
                             val d = dateStr.split("-").last().toInt() - 1
                             val x = d * dx
@@ -180,9 +182,14 @@ fun MoodFlowChart(
                 }
 
                 if (moodFlow.isNotEmpty()) {
+                    val currentMonthStr = String.format("%04d-%02d", year, month)
+                    val filteredMoods = if (isMonthly) {
+                        moodFlow.filter { it.date.startsWith(currentMonthStr) }
+                    } else {
+                        moodFlow.filter { it.date.startsWith(year.toString()) }
+                    }
+
                     val path = Path()
-                    // If monthly, we show days. Max days in month is 31.
-                    // If annual, we show months. 12 months.
                     val maxSlots = if (isMonthly) {
                         YearMonth.of(year, month).lengthOfMonth() - 1
                     } else {
@@ -191,8 +198,7 @@ fun MoodFlowChart(
                     
                     val dx = if (maxSlots > 0) width / maxSlots else 0f
                     
-                    moodFlow.forEachIndexed { index, item ->
-                        // Try to parse day from date string "yyyy-MM-dd"
+                    filteredMoods.forEachIndexed { index, item ->
                         val dayOfMonth = try {
                             val parts = item.date.split("-")
                             if (isMonthly) parts.last().toInt() - 1 else parts[1].toInt() - 1
@@ -442,12 +448,13 @@ fun MoodBySleepChart(moodBySleep: List<com.diary.moonpage.data.remote.dto.stats.
 }
 
 @Composable
-fun MonthlyMoodAverageChart(yearlyMoodGrid: List<MoodFlowDto>, themeType: MoonThemeType) {
+fun MonthlyMoodAverageChart(yearlyMoodGrid: List<MoodFlowDto>, year: Int, themeType: MoonThemeType) {
     val primaryColor = MaterialTheme.colorScheme.primary
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     
     val averages = (1..12).map { m ->
-        val monthLogs = yearlyMoodGrid.filter { it.date.contains(String.format("-%02d-", m)) }
+        val currentMonthStr = String.format("%04d-%02d", year, m)
+        val monthLogs = yearlyMoodGrid.filter { it.date.startsWith(currentMonthStr) }
         if (monthLogs.isEmpty()) 0f else monthLogs.map { it.moodId }.average().toFloat()
     }
 

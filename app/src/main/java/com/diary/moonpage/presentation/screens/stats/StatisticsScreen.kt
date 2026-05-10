@@ -176,7 +176,11 @@ fun StatisticsScreenContent(
 
                         // 2. Monthly Mood Average
                         StatsCard(title = "Monthly Average") {
-                            MonthlyMoodAverageChart(stats?.yearlyMoodGrid ?: emptyList(), uiState.themeType)
+                            MonthlyMoodAverageChart(
+                                yearlyMoodGrid = stats?.yearlyMoodGrid ?: emptyList(), 
+                                year = uiState.selectedYear,
+                                themeType = uiState.themeType
+                            )
                         }
 
                         // 3. Yearly Trends (Cycle & Sleep)
