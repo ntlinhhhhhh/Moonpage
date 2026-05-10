@@ -47,18 +47,61 @@ fun CuteBeanIcon(
     }
 
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        // Circular Background
+        // Vibrant Solid Background
         Surface(
             modifier = Modifier.fillMaxSize(),
             shape = CircleShape,
-            color = color.copy(alpha = 0.2f)
+            color = color
         ) {}
 
-        // Mood Icon Image
+        // Rich Decorations
+        when (decoration) {
+            "KITTY" -> {
+                Canvas(modifier = Modifier.fillMaxSize().offset(x = (-10).dp, y = (-10).dp)) {
+                    drawCircle(color = color, radius = size.minDimension / 4)
+                }
+                Canvas(modifier = Modifier.fillMaxSize().offset(x = 10.dp, y = (-10).dp)) {
+                    drawCircle(color = color, radius = size.minDimension / 4)
+                }
+            }
+            "SPROUT" -> {
+                Canvas(modifier = Modifier.size(16.dp).offset(y = (-18).dp)) {
+                    drawCircle(color = Color(0xFF81C784), radius = 4.dp.toPx())
+                }
+            }
+            "BLUSHING" -> {
+                Row(modifier = Modifier.width(26.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Surface(modifier = Modifier.size(7.dp), shape = CircleShape, color = Color(0xFFFF8A80).copy(alpha = 0.7f)) {}
+                    Surface(modifier = Modifier.size(7.dp), shape = CircleShape, color = Color(0xFFFF8A80).copy(alpha = 0.7f)) {}
+                }
+            }
+            "PUPPY" -> {
+                Canvas(modifier = Modifier.fillMaxSize().offset(x = (-12).dp, y = (-8).dp)) {
+                    drawOval(color = color, size = Size(9.dp.toPx(), 18.dp.toPx()))
+                }
+                Canvas(modifier = Modifier.fillMaxSize().offset(x = 12.dp, y = (-8).dp)) {
+                    drawOval(color = color, size = Size(9.dp.toPx(), 18.dp.toPx()))
+                }
+            }
+            "HEART" -> {
+                Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = Color.Red.copy(alpha = 0.6f), modifier = Modifier.size(12.dp).offset(y = (-18).dp))
+            }
+            "WEATHER" -> {
+                if (emotion == "VERY_HAPPY") {
+                    Box(modifier = Modifier.size(10.dp).offset(x = 10.dp, y = (-10).dp).background(Color.Yellow, CircleShape))
+                }
+            }
+            "COOKIE" -> {
+                Box(modifier = Modifier.size(4.dp).offset(x = (-8).dp, y = (-8).dp).background(Color(0xFF3E2723), CircleShape))
+                Box(modifier = Modifier.size(4.dp).offset(x = 8.dp, y = 8.dp).background(Color(0xFF3E2723), CircleShape))
+            }
+        }
+
+        // Professional Black Facial Expression
         Image(
             painter = painterResource(id = drawableRes),
             contentDescription = null,
-            modifier = Modifier.fillMaxSize(0.65f)
+            modifier = Modifier.fillMaxSize(0.55f) // Slightly smaller to reveal decorations better
         )
     }
 }
