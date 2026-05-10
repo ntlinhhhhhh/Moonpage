@@ -57,7 +57,10 @@ fun StoreScreen(
         ) {
             StoreTopBar(
                 coins = uiState.userCoins,
-                onMenuClick = onNavigateBack
+                onMenuClick = onNavigateBack,
+                onDoneClick = if (uiState.temporarySelectedThemeId != null) {
+                    { viewModel.applyTheme() }
+                } else null
             )
 
             StoreTabs(
@@ -94,9 +97,14 @@ fun StoreScreen(
                     )
                     1 -> MyThemeTabContent(
                         ownedThemes = uiState.ownedThemes,
-                        onThemeClick = {
-                            viewModel.selectTheme(it)
-                            onNavigateToDetail()
+                        temporarySelectedId = uiState.temporarySelectedThemeId,
+                        onThemeClick = { theme ->
+                            if (theme.isActive) {
+                                viewModel.selectTheme(theme)
+                                onNavigateToDetail()
+                            } else {
+                                viewModel.selectThemeTemporarily(theme.id)
+                            }
                         },
                         onExploreMore = { viewModel.onTabSelected(0) }
                     )
@@ -276,6 +284,7 @@ fun HomeTabContent(
 @Composable
 fun MyThemeTabContent(
     ownedThemes: List<Theme>,
+    temporarySelectedId: String?,
     onThemeClick: (Theme) -> Unit,
     onExploreMore: () -> Unit
 ) {
@@ -301,7 +310,11 @@ fun MyThemeTabContent(
         }
 
         items(otherThemes) { theme ->
-            ThemeCard(theme = theme, onClick = { onThemeClick(theme) })
+            ThemeCard(
+                theme = theme, 
+                isSelected = theme.id == temporarySelectedId,
+                onClick = { onThemeClick(theme) }
+            )
         }
 
         item {

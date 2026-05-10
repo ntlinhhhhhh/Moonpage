@@ -186,7 +186,7 @@ fun MoonPageTheme(
             MoonThemeType.MATCHA -> Color(0xFF81C784)
             MoonThemeType.SUNSET -> Color(0xFFFFB74D)
             MoonThemeType.GALAXY -> Color(0xFF7986CB)
-            MoonThemeType.AUTUMN -> Color(0xFFE64A19)
+            MoonThemeType.AUTUMN -> Color(0xFFD32F2F)
             MoonThemeType.GRAY_BROWN -> Color(0xFF8D6E63)
             MoonThemeType.COOKIE_BATCH -> Color(0xFFFFA000)
             MoonThemeType.HEART_FELT -> Color(0xFFE91E63)
@@ -312,11 +312,11 @@ fun MoonPageTheme(
                 surfaceVariant = Color(0xFFE8EAF6)
             )
             MoonThemeType.AUTUMN -> lightColorScheme(
-                primary = Color(0xFFD84315),
+                primary = Color(0xFFD32F2F),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
-                surfaceVariant = Color(0xFFFBE9E7)
+                surfaceVariant = Color(0xFFFDF5E6)
             )
             MoonThemeType.GRAY_BROWN -> lightColorScheme(
                 primary = Color(0xFF6D4C41),

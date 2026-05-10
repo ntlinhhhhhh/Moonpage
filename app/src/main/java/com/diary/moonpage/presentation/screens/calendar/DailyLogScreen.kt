@@ -786,44 +786,47 @@ private fun DailySleepSection(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        Icon(Icons.Rounded.Nightlight, contentDescription = null, tint = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.4f))
+                        Icon(
+                            Icons.Rounded.Nightlight, 
+                            contentDescription = null, 
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                        )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text("Record sleep", color = MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
                     }
                 } else {
                     Row(
                         modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Moon Icon
                         Icon(
                             Icons.Rounded.Nightlight, 
                             contentDescription = null, 
-                            tint = Color(0xFFC5E1A5),
-                            modifier = Modifier.size(24.dp)
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(28.dp).weight(0.12f)
                         )
                         
                         // Went to bed
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(bedTime.format(fmt), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 16.sp)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(0.25f)) {
+                            Text(bedTime.format(fmt), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
                             Text("Went to bed", color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
                         }
                         
                         // Duration
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(0.26f)) {
                             Text(
                                 if (mins == 0) "${hrs}h" else "${hrs}h ${mins}m", 
                                 fontWeight = FontWeight.Bold, 
                                 color = MaterialTheme.colorScheme.primary,
                                 fontSize = 16.sp
                             )
-                            Text("Time asleep", color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
+                            Text("Asleep", color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
                         }
                         
                         // Woke up
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(wakeTime.format(fmt), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 16.sp)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(0.25f)) {
+                            Text(wakeTime.format(fmt), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
                             Text("Woke up", color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
                         }
                         
@@ -832,7 +835,7 @@ private fun DailySleepSection(
                             Icons.Rounded.AlarmOn, 
                             contentDescription = null, 
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(28.dp).weight(0.12f)
                         )
                     }
                 }

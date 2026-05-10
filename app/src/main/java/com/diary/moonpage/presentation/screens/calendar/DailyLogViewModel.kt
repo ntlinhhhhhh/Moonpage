@@ -117,7 +117,8 @@ class DailyLogViewModel @Inject constructor(
     }
 
     fun setInitialDate(date: LocalDate) {
-        _uiState.update { it.copy(date = date) }
+        if (_uiState.value.isInitialized && _uiState.value.date == date) return
+        _uiState.update { it.copy(date = date, isInitialized = true) }
         fetchLogForDate(date)
     }
 

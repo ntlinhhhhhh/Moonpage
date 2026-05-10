@@ -279,15 +279,15 @@ object ThemeConstants {
             id = "theme_autumn",
             name = "Autumn",
             price = 100,
-            thumbnailUrl = "#D84315",
-            backgroundUrl = "#FBE9E7",
+            thumbnailUrl = "#D32F2F",
+            backgroundUrl = "#FDF5E6",
             decoration = "AUTUMN",
             moods = listOf(
-                PredefinedMood("Rad", "#FBE9E7", "Autumn mood 1"),
-                PredefinedMood("Good", "#FFCCBC", "Autumn mood 2"),
-                PredefinedMood("Meh", "#FFAB91", "Autumn mood 3"),
-                PredefinedMood("Bad", "#E64A19", "Autumn mood 4"),
-                PredefinedMood("Awful", "#BF360C", "Autumn mood 5")
+                PredefinedMood("Rad", "#FDF5E6", "Autumn mood 1"),
+                PredefinedMood("Good", "#F5DEB3", "Autumn mood 2"),
+                PredefinedMood("Meh", "#DEB887", "Autumn mood 3"),
+                PredefinedMood("Bad", "#CD853F", "Autumn mood 4"),
+                PredefinedMood("Awful", "#8B4513", "Autumn mood 5")
             )
         ),
         PredefinedTheme(

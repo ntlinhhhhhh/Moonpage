@@ -74,6 +74,17 @@ class StoreViewModel @Inject constructor(
         onEvent(StoreUiEvent.ActivateTheme(themeId))
     }
 
+    fun selectThemeTemporarily(themeId: String) {
+        _uiState.update { it.copy(temporarySelectedThemeId = themeId) }
+    }
+
+    fun applyTheme() {
+        _uiState.value.temporarySelectedThemeId?.let { themeId ->
+            activateTheme(themeId)
+            _uiState.update { it.copy(temporarySelectedThemeId = null) }
+        }
+    }
+
     fun initiatePurchase(theme: Theme) {
         onEvent(StoreUiEvent.InitiatePurchase(theme))
     }

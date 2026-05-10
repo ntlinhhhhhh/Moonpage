@@ -1,6 +1,7 @@
 package com.diary.moonpage.presentation.screens.store.components
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,6 +19,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -35,101 +37,37 @@ fun CuteBeanIcon(
     decoration: String = "NONE",
     color: Color = Color(0xFFC5E1A5)
 ) {
+    val drawableRes = when (emotion) {
+        "VERY_HAPPY" -> com.diary.moonpage.R.drawable.very_happy
+        "HAPPY" -> com.diary.moonpage.R.drawable.happy
+        "NEUTRAL" -> com.diary.moonpage.R.drawable.neutral
+        "SAD" -> com.diary.moonpage.R.drawable.sad
+        "ANGRY" -> com.diary.moonpage.R.drawable.very_sad
+        else -> com.diary.moonpage.R.drawable.neutral
+    }
+
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        // Circular Background
         Surface(
-            modifier = Modifier.size(40.dp),
+            modifier = Modifier.fillMaxSize(),
             shape = CircleShape,
-            color = color
+            color = color.copy(alpha = 0.2f)
         ) {}
 
-        when (decoration) {
-            "KITTY" -> {
-                Canvas(modifier = Modifier.size(40.dp).offset(x = (-12).dp, y = (-12).dp)) {
-                    drawCircle(color = color, radius = size.minDimension / 4)
-                }
-                Canvas(modifier = Modifier.size(40.dp).offset(x = 12.dp, y = (-12).dp)) {
-                    drawCircle(color = color, radius = size.minDimension / 4)
-                }
-            }
-            "SPROUT" -> {
-                Canvas(modifier = Modifier.size(20.dp).offset(y = (-20).dp)) {
-                    drawCircle(color = Color(0xFF81C784), radius = 4.dp.toPx())
-                }
-            }
-            "BLUSHING" -> {
-                Row(modifier = Modifier.width(30.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Surface(modifier = Modifier.size(8.dp), shape = CircleShape, color = Color(0xFFFF8A80).copy(alpha = 0.6f)) {}
-                    Surface(modifier = Modifier.size(8.dp), shape = CircleShape, color = Color(0xFFFF8A80).copy(alpha = 0.6f)) {}
-                }
-            }
-            "PUPPY" -> {
-                Canvas(modifier = Modifier.size(40.dp).offset(x = (-14).dp, y = (-8).dp)) {
-                    drawOval(color = color, size = Size(10.dp.toPx(), 20.dp.toPx()))
-                }
-                Canvas(modifier = Modifier.size(40.dp).offset(x = 14.dp, y = (-8).dp)) {
-                    drawOval(color = color, size = Size(10.dp.toPx(), 20.dp.toPx()))
-                }
-            }
-            "MUSHROOM" -> {
-                Canvas(modifier = Modifier.size(40.dp).offset(y = (-16).dp)) {
-                    drawArc(color = Color.Red.copy(alpha = 0.8f), startAngle = 180f, sweepAngle = 180f, useCenter = true)
-                }
-            }
-            "COOKIE" -> {
-                repeat(4) { 
-                    Box(modifier = Modifier.size(2.dp).offset(x = (it * 4).dp, y = (it % 2).dp).background(Color(0xFF3E2723), CircleShape))
-                }
-            }
-            "HEART" -> {
-                Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = Color.Red.copy(alpha = 0.5f), modifier = Modifier.size(12.dp).offset(y = (-18).dp))
-            }
-            "WEATHER" -> {
-                if (emotion == "VERY_HAPPY") {
-                    Box(modifier = Modifier.size(12.dp).offset(x = 12.dp, y = (-12).dp).background(Color.Yellow, CircleShape))
-                } else if (emotion == "ANGRY") {
-                    Box(modifier = Modifier.size(12.dp).offset(x = 12.dp, y = (-12).dp).background(Color.Gray, CircleShape))
-                }
-            }
-        }
-
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Row(modifier = Modifier.width(16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                if (emotion == "ANGRY") {
-                    Canvas(modifier = Modifier.size(4.dp)) {
-                        val path = Path().apply {
-                            moveTo(0f, 0f)
-                            lineTo(size.width, size.height)
-                        }
-                        drawPath(path, Color.Black, style = Stroke(width = 2.dp.toPx()))
-                    }
-                    Canvas(modifier = Modifier.size(4.dp)) {
-                        val path = Path().apply {
-                            moveTo(size.width, 0f)
-                            lineTo(0f, size.height)
-                        }
-                        drawPath(path, Color.Black, style = Stroke(width = 2.dp.toPx()))
-                    }
-                } else {
-                    Box(modifier = Modifier.size(3.dp).background(Color.Black, CircleShape))
-                    Box(modifier = Modifier.size(3.dp).background(Color.Black, CircleShape))
-                }
-            }
-            Spacer(modifier = Modifier.height(2.dp))
-            when (emotion) {
-                "VERY_HAPPY" -> Box(modifier = Modifier.size(width = 10.dp, height = 5.dp).background(Color.Black, RoundedCornerShape(bottomStart = 5.dp, bottomEnd = 5.dp)))
-                "HAPPY" -> Box(modifier = Modifier.size(width = 6.dp, height = 2.dp).background(Color.Black, RoundedCornerShape(bottomStart = 3.dp, bottomEnd = 3.dp)))
-                "NEUTRAL" -> Box(modifier = Modifier.size(width = 6.dp, height = 1.dp).background(Color.Black))
-                "SAD" -> Box(modifier = Modifier.size(width = 6.dp, height = 3.dp).background(Color.Black, RoundedCornerShape(topStart = 3.dp, topEnd = 3.dp)))
-                "ANGRY" -> Box(modifier = Modifier.size(width = 6.dp, height = 2.dp).background(Color.Black, RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp)))
-            }
-        }
+        // Mood Icon Image
+        Image(
+            painter = painterResource(id = drawableRes),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(0.65f)
+        )
     }
 }
 
 @Composable
 fun StoreTopBar(
     coins: Int,
-    onMenuClick: () -> Unit
+    onMenuClick: () -> Unit,
+    onDoneClick: (() -> Unit)? = null
 ) {
     Box(
         modifier = Modifier
@@ -154,43 +92,65 @@ fun StoreTopBar(
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        Surface(
-            shape = RoundedCornerShape(20.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant,
-            modifier = Modifier
-                .padding(end = 16.dp)
-                .height(32.dp)
-                .align(Alignment.CenterEnd)
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
+        if (onDoneClick != null) {
+            Button(
+                onClick = onDoneClick,
+                modifier = Modifier
+                    .padding(end = 8.dp)
+                    .height(36.dp)
+                    .align(Alignment.CenterEnd),
+                shape = RoundedCornerShape(18.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(18.dp)
-                        .background(MaterialTheme.colorScheme.primary, CircleShape),
-                    contentAlignment = Alignment.Center
+                Text(
+                    text = "Done",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        } else {
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                modifier = Modifier
+                    .padding(end = 16.dp)
+                    .height(32.dp)
+                    .align(Alignment.CenterEnd)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "$",
-                        modifier = Modifier.offset(y = (-0.8).dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        style = TextStyle(
-                            platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    Box(
+                        modifier = Modifier
+                            .size(18.dp)
+                            .background(MaterialTheme.colorScheme.primary, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "$",
+                            modifier = Modifier.offset(y = (-0.8).dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            style = TextStyle(
+                                platformStyle = PlatformTextStyle(includeFontPadding = false)
+                            )
                         )
+                    }
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "$coins Coins",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontSize = 12.sp
                     )
                 }
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "$coins Coins",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 12.sp
-                )
             }
         }
     }
@@ -199,6 +159,7 @@ fun StoreTopBar(
 @Composable
 fun ThemeCard(
     theme: Theme,
+    isSelected: Boolean = false,
     onClick: () -> Unit
 ) {
     val onSurface = MaterialTheme.colorScheme.onBackground
@@ -217,12 +178,25 @@ fun ThemeCard(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                 val shades = getThemeShades(theme)
-                CuteBeanIcon(
-                    modifier = Modifier.size(36.dp),
-                    emotion = "NEUTRAL",
-                    decoration = theme.decoration,
-                    color = shades.getOrElse(2) { Color.LightGray }
-                )
+                Box(contentAlignment = Alignment.BottomEnd) {
+                    CuteBeanIcon(
+                        modifier = Modifier.size(36.dp),
+                        emotion = if (isSelected) "VERY_HAPPY" else "NEUTRAL",
+                        decoration = theme.decoration,
+                        color = shades.getOrElse(if (isSelected) 4 else 2) { Color.LightGray }
+                    )
+                    if (isSelected) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(12.dp).offset(x = 2.dp, y = 2.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(text = "✓", color = Color.White, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.width(12.dp))
                 
                 Column {
@@ -296,7 +270,9 @@ fun ThemeCard(
         val shades = getThemeShades(theme)
 
         val defaultBg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-        val previewBg = if (!theme.primaryColor.isNullOrBlank()) {
+        val previewBg = if (theme.id == com.diary.moonpage.core.util.ThemeConstants.DEFAULT_THEME_ID) {
+            Color(0xFFFFF2C2).copy(alpha = 0.2f)
+        } else if (!theme.primaryColor.isNullOrBlank()) {
             try {
                 val colorStr = if (theme.primaryColor.startsWith("#")) theme.primaryColor else "#${theme.primaryColor}"
                 Color(android.graphics.Color.parseColor(colorStr)).copy(alpha = 0.15f)

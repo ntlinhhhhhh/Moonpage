@@ -8,13 +8,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.diary.moonpage.R
 
-// sniglet - app name
 val snigletFontFamily = FontFamily(
     Font(R.font.sniglet_regular, FontWeight.Normal),
     Font(R.font.sniglet_extrabold, FontWeight.ExtraBold)
 )
 
-// nunito
 val nunitoFontFamily = FontFamily(
     Font(R.font.nunito_regular, FontWeight.Normal),
     Font(R.font.nunito_medium, FontWeight.Medium),

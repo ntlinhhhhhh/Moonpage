@@ -37,5 +37,6 @@ data class DailyLogUiState(
     val snackbarMessage: String? = null,
     val themeType: MoonThemeType = MoonThemeType.DEFAULT,
     val customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null,
-    val gender: String? = null
+    val gender: String? = null,
+    val isInitialized: Boolean = false
 )
