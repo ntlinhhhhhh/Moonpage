@@ -401,7 +401,7 @@ private fun DailyLogMainContent(
                 sleepHours = uiState.sleepHours,
                 bedTime = uiState.sleepBedTime,
                 wakeTime = uiState.sleepWakeTime,
-                onRecordClick = { onEvent(DailyLogUiEvent.OnSleepRecordClick) },
+                onSleepClick = { onEvent(DailyLogUiEvent.OnSleepRecordClick) },
                 onImportClick = onImportSteps
             )
         }
@@ -422,7 +422,11 @@ private fun DailyLogMainContent(
         }
 
         item {
-            DailyPhotoSection(photos = uiState.dailyPhotos, onPhotoClick = onNavigateToDailyPhoto)
+            DailyPhotoSection(
+                photos = uiState.dailyPhotos, 
+                onPhotoClick = onNavigateToDailyPhoto,
+                onPhotoRemove = { onEvent(DailyLogUiEvent.OnPhotoRemoved(it)) }
+            )
         }
 
         item { Spacer(modifier = Modifier.height(32.dp)) }
@@ -721,80 +725,89 @@ private fun DailySleepSection(
     sleepHours: Float,
     bedTime: LocalTime,
     wakeTime: LocalTime,
-    onRecordClick: () -> Unit,
+    onSleepClick: () -> Unit,
     onImportClick: () -> Unit
 ) {
-    val hasRecorded = sleepHours > 0f && !(bedTime == LocalTime.of(0, 0) && wakeTime == LocalTime.of(7, 0))
+    val fmt = DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH)
+    val hrs = sleepHours.toInt()
+    val mins = ((sleepHours - hrs) * 60).toInt()
+    
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
         modifier = Modifier.fillMaxWidth()
-    ) {
+    ) {      
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Sleep", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 16.sp)
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("Sleep", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
                 Text(
-                    "Import",
-                    fontSize = 12.sp,
+                    "Import", 
+                    fontSize = 12.sp, 
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.clickable { onImportClick() }
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
+            
             Surface(
-                color = MoonTheme.customColors.logItemBg,
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth().clickable { onRecordClick() }
+                color = MoonTheme.customColors.logItemBg, 
+                shape = RoundedCornerShape(12.dp), 
+                modifier = Modifier.fillMaxWidth().clickable { onSleepClick() }
             ) {
-                if (hasRecorded) {
-                    val h = sleepHours.toInt()
-                    val m = ((sleepHours - h) * 60).toInt()
-                    val fmt = DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH)
+                if (sleepHours <= 0) {
                     Row(
-                        modifier = Modifier.padding(12.dp).fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Rounded.Bedtime, contentDescription = null,
-                                modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Column {
-                                Text(bedTime.format(fmt), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
-                                Text("Went to bed", fontSize = 10.sp, color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.6f))
-                            }
-                        }
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("${h}h ${m}m", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                            Text("Time asleep", fontSize = 10.sp, color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.6f))
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(wakeTime.format(fmt), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
-                                Text("Woke up", fontSize = 10.sp, color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.6f))
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Icon(
-                                Icons.Rounded.AlarmOn, contentDescription = null,
-                                modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
+                        Icon(Icons.Rounded.Nightlight, contentDescription = null, tint = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.4f))
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text("Record sleep", color = MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
                     }
                 } else {
                     Row(
-                        modifier = Modifier.padding(12.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Icon(Icons.Rounded.Bedtime, contentDescription = null, modifier = Modifier.size(20.dp), tint = MoonTheme.customColors.logCardOnBg)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Record your sleep", fontSize = 14.sp, color = MoonTheme.customColors.logCardOnBg)
+                        // Moon Icon
+                        Icon(
+                            Icons.Rounded.Nightlight, 
+                            contentDescription = null, 
+                            tint = Color(0xFFC5E1A5),
+                            modifier = Modifier.size(24.dp)
+                        )
+                        
+                        // Went to bed
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(bedTime.format(fmt), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 16.sp)
+                            Text("Went to bed", color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
+                        }
+                        
+                        // Duration
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                if (mins == 0) "${hrs}h" else "${hrs}h ${mins}m", 
+                                fontWeight = FontWeight.Bold, 
+                                color = Color(0xFFC5E1A5),
+                                fontSize = 16.sp
+                            )
+                            Text("Time asleep", color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
+                        }
+                        
+                        // Woke up
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(wakeTime.format(fmt), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 16.sp)
+                            Text("Woke up", color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
+                        }
+                        
+                        // Alarm Icon
+                        Icon(
+                            Icons.Rounded.AlarmOn, 
+                            contentDescription = null, 
+                            tint = Color(0xFFC5E1A5),
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
             }
@@ -887,7 +900,11 @@ private fun DailyNoteSection(noteText: String, onNoteChanged: (String) -> Unit) 
 }
 
 @Composable
-private fun DailyPhotoSection(photos: List<String>, onPhotoClick: () -> Unit) {
+private fun DailyPhotoSection(
+    photos: List<String>, 
+    onPhotoClick: () -> Unit,
+    onPhotoRemove: (String) -> Unit
+) {
     Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {      
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Today's photo", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
@@ -915,15 +932,38 @@ private fun DailyPhotoSection(photos: List<String>, onPhotoClick: () -> Unit) {
                             modifier = Modifier
                                 .weight(1f)
                                 .aspectRatio(1f)
-                                .clip(RoundedCornerShape(12.dp))
-                                .clickable { onPhotoClick() }
                         ) {
-                            coil.compose.AsyncImage(
-                                model = photoUri,
-                                contentDescription = null,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable { onPhotoClick() }
+                            ) {
+                                coil.compose.AsyncImage(
+                                    model = photoUri,
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                )
+                            }
+                            
+                            // Remove Button
+                            Surface(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(4.dp)
+                                    .size(20.dp)
+                                    .clickable { onPhotoRemove(photoUri) },
+                                shape = CircleShape,
+                                color = Color.Black.copy(alpha = 0.5f)
+                            ) {
+                                Icon(
+                                    Icons.Rounded.Close,
+                                    contentDescription = "Remove",
+                                    tint = Color.White,
+                                    modifier = Modifier.padding(4.dp)
+                                )
+                            }
                         }
                     }
                     // Add empty slots if less than 3 photos

@@ -28,7 +28,6 @@ class DailyLogViewModel @Inject constructor(
 
     private val BASE_URL = "https://hieu-wikipedia.io.vn/"
 
-
     private val _uiState = MutableStateFlow(DailyLogUiState())
     val uiState: StateFlow<DailyLogUiState> = _uiState.asStateFlow()
 
@@ -88,7 +87,15 @@ class DailyLogViewModel @Inject constructor(
                 _uiState.update { it.copy(isMenstruation = event.isMenstruation) }
             }
             is DailyLogUiEvent.OnPhotosChanged -> {
-                _uiState.update { it.copy(dailyPhotos = event.photos) }
+                // event.photos is List<String> (URIs)
+                val current = _uiState.value.dailyPhotos
+                val combined = (current + event.photos).distinct().take(3)
+                _uiState.update { it.copy(dailyPhotos = combined) }
+            }
+            is DailyLogUiEvent.OnPhotoRemoved -> {
+                _uiState.update { it.copy(
+                    dailyPhotos = it.dailyPhotos.filter { uri -> uri != event.photoUri }
+                ) }
             }
             is DailyLogUiEvent.OnMusicChanged -> {
                 _uiState.update { it.copy(musicTitle = event.musicTitle) }
@@ -208,12 +215,13 @@ class DailyLogViewModel @Inject constructor(
                 val bedTime = log.sleepBedTime?.let { try { LocalTime.parse(it, formatter) } catch(e: Exception) { LocalTime.of(0, 0) } } ?: LocalTime.of(0, 0)
                 val wakeTime = log.sleepWakeTime?.let { try { LocalTime.parse(it, formatter) } catch(e: Exception) { LocalTime.of(7, 0) } } ?: LocalTime.of(7, 0)
                 
-                // Calculate sleep hours if it's null or 0 from server
                 val calculatedHours = if ((log.sleepHours ?: 0.0) <= 0.0) {
-                    val bedMin = bedTime.hour * 60 + bedTime.minute
-                    val wakeMin = wakeTime.hour * 60 + wakeTime.minute
-                    val diffMin = if (wakeMin >= bedMin) wakeMin - bedMin else (24 * 60 - bedMin) + wakeMin
-                    diffMin / 60f
+                    if (log.sleepBedTime != null && log.sleepWakeTime != null) {
+                        val bedMin = bedTime.hour * 60 + bedTime.minute
+                        val wakeMin = wakeTime.hour * 60 + wakeTime.minute
+                        val diffMin = if (wakeMin >= bedMin) wakeMin - bedMin else (24 * 60 - bedMin) + wakeMin
+                        diffMin / 60f
+                    } else 0f
                 } else {
                     log.sleepHours?.toFloat() ?: 0f
                 }
@@ -271,7 +279,8 @@ class DailyLogViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             
-            val photoFiles = state.dailyPhotos.mapNotNull { uriString ->
+            // Only upload photos that are local (don't start with http)
+            val photoFiles = state.dailyPhotos.filter { !it.startsWith("http") }.mapNotNull { uriString ->
                 try {
                     val uri = android.net.Uri.parse(uriString)
                     com.diary.moonpage.core.util.ImageUtils.compressAndCropSquare(context, uri)

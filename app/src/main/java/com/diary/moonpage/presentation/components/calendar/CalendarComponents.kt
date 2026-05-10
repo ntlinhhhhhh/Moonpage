@@ -401,24 +401,7 @@ fun DayDetailArea(
                 )
             }
 
-            if (dailyPhotos.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    dailyPhotos.forEach { photoUrl ->
-                        coil.compose.AsyncImage(
-                            model = photoUrl,
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(100.dp)
-                                .clip(RoundedCornerShape(12.dp)),
-                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                        )
-                    }
-                }
-            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             // Stats Card
@@ -495,6 +478,45 @@ fun DayDetailArea(
                         Text("Choosin' Texas", color = cs.onSurface, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         Spacer(modifier = Modifier.height(2.dp))
                         Text("Ella Langley", color = cs.onSurface.copy(alpha = 0.6f), fontSize = 12.sp)
+                    }
+                }
+            }
+
+            if (dailyPhotos.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(20.dp))
+                Text(
+                    "Daily Photos",
+                    color = cs.onSurface,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    dailyPhotos.forEach { photoUrl ->
+                        val context = androidx.compose.ui.platform.LocalContext.current
+                        val imageRequest = remember(photoUrl) {
+                            coil.request.ImageRequest.Builder(context)
+                                .data(photoUrl)
+                                .crossfade(true)
+                                .diskCachePolicy(coil.request.CachePolicy.ENABLED)
+                                .build()
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(110.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(cs.onSurface.copy(alpha = 0.05f))
+                        ) {
+                            coil.compose.AsyncImage(
+                                model = imageRequest,
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                            )
+                        }
                     }
                 }
             }

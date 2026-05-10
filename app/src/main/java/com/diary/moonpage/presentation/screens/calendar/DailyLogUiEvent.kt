@@ -17,6 +17,7 @@ sealed class DailyLogUiEvent {
     data class OnDateChanged(val date: LocalDate) : DailyLogUiEvent()
     data class OnMenstruationToggled(val isMenstruation: Boolean) : DailyLogUiEvent()
     data class OnPhotosChanged(val photos: List<String>) : DailyLogUiEvent()
+    data class OnPhotoRemoved(val photoUri: String) : DailyLogUiEvent()
     data class OnMusicChanged(val musicTitle: String?) : DailyLogUiEvent()
     data class OnMusicSelected(val title: String, val artist: String, val imageUrl: String?) : DailyLogUiEvent()
     object OnSaveClick : DailyLogUiEvent()
