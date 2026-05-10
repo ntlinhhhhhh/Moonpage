@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -215,6 +216,7 @@ fun MoodFlowChart(
                     drawPath(path = path, color = primaryColor, style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round))
                 }
             }
+        }
             
             // X-Axis Labels
             Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -228,7 +230,6 @@ fun MoodFlowChart(
                     (1..12).forEach { Text("$it", fontSize = 12.sp, color = labelColor) }
                 }
             }
-        }
     }
 }
 
@@ -255,33 +256,62 @@ fun MoodDistributionView(
                     (mood.name == "Angry" && it.label.equals("Bad", ignoreCase = true)) ||
                     (mood.name == "Angry" && it.label.equals("Awful", ignoreCase = true))
                 }
-                val currentMoodPercent: Int = (dist?.percentage ?: 0.0).toInt()
-                val iconSize = if (currentMoodPercent > 25) 64.dp else 52.dp
-                val tintColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-                val colorFilter = if (currentMoodPercent > 0) null else androidx.compose.ui.graphics.ColorFilter.tint(tintColor)
-                val surfaceColor = if (currentMoodPercent > 0) mood.color.copy(alpha = 0.2f) else MoonTheme.customColors.logItemBg
-                val textColor = if (currentMoodPercent > 0) mood.color else MaterialTheme.colorScheme.onSurfaceVariant
+                // Precise Mapping for both UI tags and the Bar
+                val rawPercent = dist?.percentage ?: 0.0
+                val currentMoodPercent: Int = Math.round(rawPercent).toInt()
+                
+                val iconSize = 32.dp
+                val containerSize = 48.dp
+                val tintColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f) 
+                val colorFilter = if (rawPercent > 0) {
+                    androidx.compose.ui.graphics.ColorFilter.tint(Color.Black.copy(alpha = 0.7f)) // Or theme-aware?
+                } else {
+                    androidx.compose.ui.graphics.ColorFilter.tint(tintColor)
+                }
+                
+                // Actually, let's use White/Black depending on background or just keep original if preferred.
+                // But the user wants it to "match the theme".
+                // Usually this means the icon itself should be tinted.
+                val iconTint = if (rawPercent > 0) {
+                    // Use a slightly darker color on light backgrounds
+                    Color.Black.copy(alpha = 0.7f)
+                } else tintColor
+                
+                val tagBgColor = if (rawPercent > 0) {
+                    mood.color.copy(alpha = 0.85f)
+                } else MoonTheme.customColors.logItemBg
+                
+                // Use a very dark color for text to ensure visibility on all backgrounds
+                val tagTextColor = if (rawPercent > 0) Color(0xFF1A1C1E) else MaterialTheme.colorScheme.onSurfaceVariant
                 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (mood.drawableRes != null) {
-                        Image(
-                            painter = painterResource(id = mood.drawableRes!!),
-                            contentDescription = null,
-                            modifier = Modifier.size(iconSize),
-                            colorFilter = colorFilter
-                        )
+                    Box(
+                        modifier = Modifier
+                            .size(containerSize)
+                            .clip(CircleShape)
+                            .background(if (rawPercent > 0) mood.color.copy(alpha = 0.85f) else MoonTheme.customColors.logItemBg),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (mood.drawableRes != null) {
+                            Image(
+                                painter = painterResource(id = mood.drawableRes!!),
+                                contentDescription = null,
+                                modifier = Modifier.size(iconSize),
+                                colorFilter = if (rawPercent > 0) androidx.compose.ui.graphics.ColorFilter.tint(iconTint) else androidx.compose.ui.graphics.ColorFilter.tint(tintColor)
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                     Surface(
                         shape = RoundedCornerShape(12.dp),
-                        color = surfaceColor
+                        color = tagBgColor
                     ) {
                         Text(
                             "$currentMoodPercent%",
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = textColor,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = tagTextColor,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -291,14 +321,40 @@ fun MoodDistributionView(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Thanh phÃ¢n Ä‘oáº¡n mÃ u sáº¯c bÃªn dÆ°á»›i
-        Row(modifier = Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(22.dp)).background(MoonTheme.customColors.logItemBg)) {
-            moods.forEach { mood ->
-                val dist = distribution.find { it.label.equals(mood.name, true) }
+        // Multi-colored Segmented Bar
+        Row(modifier = Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(24.dp)).background(MoonTheme.customColors.logItemBg)) {
+            val moodMappings = listOf(
+                listOf("Happy", "Rad", "Very Happy"),
+                listOf("Good", "Content", "Nice"),
+                listOf("Neutral", "Meh", "Normal"),
+                listOf("Sad", "Low", "Bad"),
+                listOf("Angry", "Awful", "Very Sad")
+            )
+
+            moods.forEachIndexed { index, mood ->
+                val aliases = moodMappings[index]
+                val dist = distribution.find { d ->
+                    aliases.any { alias -> d.label.equals(alias, ignoreCase = true) }
+                }
+                
                 val weight = dist?.percentage?.toFloat() ?: 0f
                 if (weight > 0) {
                     Box(modifier = Modifier.fillMaxHeight().weight(weight).background(mood.color))
                 }
+            }
+            
+            // Check for any remaining data from API
+            val totalApiWeight = distribution.sumOf { it.percentage }.toFloat()
+            val matchedWeight = moods.indices.sumOf { index ->
+                val aliases = moodMappings[index]
+                val dist = distribution.find { d ->
+                    aliases.any { alias -> d.label.equals(alias, ignoreCase = true) }
+                }
+                dist?.percentage ?: 0.0
+            }.toFloat()
+            
+            if (totalApiWeight > matchedWeight && (totalApiWeight - matchedWeight) > 0.1f) {
+                Box(modifier = Modifier.fillMaxHeight().weight(totalApiWeight - matchedWeight).background(Color.Gray.copy(alpha = 0.6f)))
             }
         }
     }

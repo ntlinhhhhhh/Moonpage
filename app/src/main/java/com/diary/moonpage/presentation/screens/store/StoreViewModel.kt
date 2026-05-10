@@ -74,16 +74,6 @@ class StoreViewModel @Inject constructor(
         _uiState.update { it.copy(showConfirmActivationDialog = true, temporarySelectedThemeId = themeId) }
     }
 
-    fun confirmActivation() {
-        _uiState.value.temporarySelectedThemeId?.let { themeId ->
-            performActivateTheme(themeId)
-            _uiState.update { it.copy(showConfirmActivationDialog = false, temporarySelectedThemeId = null) }
-        }
-    }
-
-    fun cancelActivation() {
-        _uiState.update { it.copy(showConfirmActivationDialog = false, temporarySelectedThemeId = null) }
-    }
 
     fun selectThemeTemporarily(themeId: String) {
         _uiState.update { it.copy(temporarySelectedThemeId = themeId) }
@@ -111,6 +101,14 @@ class StoreViewModel @Inject constructor(
         onEvent(StoreUiEvent.DismissDialog)
     }
 
+    fun confirmActivation() {
+        onEvent(StoreUiEvent.ConfirmActivation)
+    }
+
+    fun cancelActivation() {
+        onEvent(StoreUiEvent.CancelActivation)
+    }
+
     fun onEvent(event: StoreUiEvent) {
         when (event) {
             StoreUiEvent.LoadData -> loadData()
@@ -130,8 +128,15 @@ class StoreViewModel @Inject constructor(
             is StoreUiEvent.ActivateTheme -> {
                 _uiState.update { it.copy(showConfirmActivationDialog = true, temporarySelectedThemeId = event.themeId) }
             }
+            StoreUiEvent.ConfirmActivation -> {
+                _uiState.value.temporarySelectedThemeId?.let { performActivateTheme(it) }
+                _uiState.update { it.copy(showConfirmActivationDialog = false, temporarySelectedThemeId = null) }
+            }
+            StoreUiEvent.CancelActivation -> {
+                _uiState.update { it.copy(showConfirmActivationDialog = false, temporarySelectedThemeId = null) }
+            }
             StoreUiEvent.DismissDialog -> {
-                _uiState.update { it.copy(showPurchaseSuccessDialog = false) }
+                _uiState.update { it.copy(showPurchaseSuccessDialog = false, showConfirmActivationDialog = false) }
             }
         }
     }
@@ -232,6 +237,7 @@ class StoreViewModel @Inject constructor(
                 
                 _uiEffect.send(StoreUiEffect.ThemeActivated)
                 _uiEffect.send(StoreUiEffect.ShowSnackBar("Theme activated!"))
+                _uiEffect.send(StoreUiEffect.NavigateBack)
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false) }
                 _uiEffect.send(StoreUiEffect.ShowSnackBar(error.message ?: "Activation failed"))

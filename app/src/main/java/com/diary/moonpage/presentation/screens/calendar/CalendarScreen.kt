@@ -30,6 +30,7 @@ import com.diary.moonpage.domain.model.DailyLog
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.diary.moonpage.core.util.ComposeCaptureUtils
 import com.diary.moonpage.core.util.ImageUtils
 import com.diary.moonpage.presentation.components.calendar.*
@@ -255,69 +256,99 @@ fun DeleteConfirmDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    Dialog(onDismissRequest = onDismiss) {
+    val colorScheme = MaterialTheme.colorScheme
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true,
+            usePlatformDefaultWidth = false
+        )
+    ) {
         Surface(
-            shape = RoundedCornerShape(28.dp),
+            modifier = Modifier
+                .fillMaxWidth(0.88f)
+                .wrapContentHeight(),
+            shape = RoundedCornerShape(20.dp),
             color = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor,
-            tonalElevation = 0.dp,
-            modifier = Modifier.fillMaxWidth()
+            tonalElevation = 0.dp
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
+                modifier = Modifier.padding(28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.DeleteOutline,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.size(48.dp)
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
+                // Title
                 Text(
                     text = "Delete Moment",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = colorScheme.onSurface,
+                    textAlign = TextAlign.Center
                 )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Main message
                 Text(
-                    text = "Are you sure you want to delete this moment? This action cannot be undone.",
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                    style = MaterialTheme.typography.bodyMedium
+                    text = "Are you sure you want to delete this moment?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colorScheme.onSurface.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
+                // Warning message
+                Text(
+                    text = "This action cannot be undone and the record will be lost forever.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colorScheme.error,
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Medium
+                )
+
+                Spacer(modifier = Modifier.height(28.dp))
+
+                // Buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    // Cancel button
                     Button(
                         onClick = onDismiss,
-                        modifier = Modifier.weight(1f).height(48.dp),
-                        shape = RoundedCornerShape(24.dp),
+                        modifier = Modifier.weight(1f).height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnBgColor,
                             contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor
-                        )
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(0.dp)
                     ) {
-                        Text("Cancel", fontWeight = FontWeight.Bold)
+                        Text(
+                            "Cancel",
+                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
                     }
+
+                    // Delete button
                     Button(
                         onClick = onConfirm,
-                        modifier = Modifier.weight(1f).height(48.dp),
+                        modifier = Modifier.weight(1f).height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error,
-                            contentColor = MaterialTheme.colorScheme.onError
+                            containerColor = colorScheme.error,
+                            contentColor = colorScheme.onError
                         ),
-                        shape = RoundedCornerShape(24.dp)
+                        elevation = ButtonDefaults.buttonElevation(0.dp)
                     ) {
-                        Text("Delete", fontWeight = FontWeight.Bold)
+                        Text(
+                            "Delete",
+                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
                     }
                 }
             }

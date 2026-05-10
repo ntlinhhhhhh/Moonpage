@@ -773,7 +773,7 @@ private fun DailySleepSection(
             Spacer(modifier = Modifier.height(12.dp))
             
             Surface(
-                color = MoonTheme.customColors.logItemBg, 
+                color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MoonTheme.customColors.logItemBg, 
                 shape = RoundedCornerShape(12.dp), 
                 modifier = Modifier.fillMaxWidth().clickable(
                     interactionSource = remember { MutableInteractionSource() },
@@ -809,8 +809,8 @@ private fun DailySleepSection(
                         
                         // Went to bed
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(0.25f)) {
-                            Text(bedTime.format(fmt), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
-                            Text("Went to bed", color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
+                            Text(bedTime.format(fmt), fontWeight = FontWeight.Bold, color = if (sleepHours > 0) MaterialTheme.colorScheme.primary else MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
+                            Text("Went to bed", color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
                         }
                         
                         // Duration
@@ -821,13 +821,13 @@ private fun DailySleepSection(
                                 color = MaterialTheme.colorScheme.primary,
                                 fontSize = 16.sp
                             )
-                            Text("Asleep", color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
+                            Text("Asleep", color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
                         }
                         
                         // Woke up
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(0.25f)) {
-                            Text(wakeTime.format(fmt), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
-                            Text("Woke up", color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
+                            Text(wakeTime.format(fmt), fontWeight = FontWeight.Bold, color = if (sleepHours > 0) MaterialTheme.colorScheme.primary else MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
+                            Text("Woke up", color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
                         }
                         
                         // Alarm Icon

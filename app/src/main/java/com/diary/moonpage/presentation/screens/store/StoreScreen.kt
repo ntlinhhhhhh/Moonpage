@@ -33,8 +33,7 @@ import com.diary.moonpage.core.theme.*
 @Composable
 fun StoreScreen(
     viewModel: StoreViewModel,
-    onNavigateToDetail: () -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateToDetail: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -58,7 +57,6 @@ fun StoreScreen(
             ) {
                 StoreTopBar(
                     coins = uiState.userCoins,
-                    onBackClick = onNavigateBack,
                     onDoneClick = if (uiState.temporarySelectedThemeId != null) {
                         { viewModel.applyTheme() }
                     } else null
@@ -120,7 +118,7 @@ fun StoreScreen(
             MoonSnackbarHost(
                 hostState = snackbarHostState,
                 modifier = Modifier.align(Alignment.TopCenter),
-                topPadding = 16.dp
+                topPadding = 45.dp
             )
             
             if (uiState.showConfirmActivationDialog) {

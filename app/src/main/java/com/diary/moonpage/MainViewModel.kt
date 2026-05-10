@@ -14,12 +14,15 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val themePreferencesManager: ThemePreferencesManager,
-    private val userRepository: com.diary.moonpage.domain.repository.UserRepository
+    private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
+    private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository
 ) : ViewModel() {
 
     init {
         viewModelScope.launch {
             userRepository.getCurrentUser()
+            val now = java.time.LocalDate.now()
+            statisticsRepository.getStatisticsSummary(now.year, now.monthValue, true)
         }
     }
 

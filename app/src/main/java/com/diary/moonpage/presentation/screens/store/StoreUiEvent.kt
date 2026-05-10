@@ -13,6 +13,8 @@ sealed class StoreUiEvent {
     object CancelPurchase : StoreUiEvent()
     data class BuyTheme(val theme: Theme) : StoreUiEvent()
     data class ActivateTheme(val themeId: String) : StoreUiEvent()
+    object ConfirmActivation : StoreUiEvent()
+    object CancelActivation : StoreUiEvent()
     object DismissDialog : StoreUiEvent()
 }
 

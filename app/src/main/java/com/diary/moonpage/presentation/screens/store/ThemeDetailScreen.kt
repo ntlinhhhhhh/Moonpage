@@ -58,6 +58,8 @@ fun ThemeDetailScreen(
         viewModel.uiEffect.collect { effect ->
             if (effect is StoreUiEffect.ShowSnackBar) {
                 snackbarHostState.showSnackbar(effect.message)
+            } else if (effect is StoreUiEffect.NavigateBack) {
+                onNavigateBack()
             }
         }
     }
@@ -213,7 +215,7 @@ fun ThemeDetailScreen(
             MoonSnackbarHost(
                 hostState = snackbarHostState,
                 modifier = Modifier.align(Alignment.TopCenter),
-                topPadding = 16.dp
+                topPadding = 45.dp
             )
 
             if (uiState.showConfirmPurchaseDialog && uiState.themeToPurchase != null) {

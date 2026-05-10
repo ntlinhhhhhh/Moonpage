@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.core.theme.*
 
@@ -110,7 +111,6 @@ fun CuteBeanIcon(
 @Composable
 fun StoreTopBar(
     coins: Int,
-    onBackClick: () -> Unit,
     onDoneClick: (() -> Unit)? = null
 ) {
     Box(
@@ -120,16 +120,6 @@ fun StoreTopBar(
             .padding(horizontal = 4.dp),
         contentAlignment = Alignment.Center
     ) {
-        IconButton(
-            onClick = onBackClick,
-            modifier = Modifier.align(Alignment.CenterStart)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
-                tint = MaterialTheme.colorScheme.onBackground
-            )
-        }
 
         Text(
             text = "Store",
@@ -639,69 +629,88 @@ fun ConfirmActivationDialog(
     onConfirm: () -> Unit,
     onCancel: () -> Unit
 ) {
-    Dialog(onDismissRequest = onCancel) {
+    val colorScheme = MaterialTheme.colorScheme
+
+    Dialog(
+        onDismissRequest = onCancel,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true,
+            usePlatformDefaultWidth = false
+        )
+    ) {
         Surface(
-            shape = RoundedCornerShape(28.dp),
+            modifier = Modifier
+                .fillMaxWidth(0.88f)
+                .wrapContentHeight(),
+            shape = RoundedCornerShape(20.dp),
             color = MoonTheme.customColors.popupBgColor,
-            tonalElevation = 0.dp,
-            modifier = Modifier.fillMaxWidth()
+            tonalElevation = 0.dp
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
+                modifier = Modifier.padding(28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.CheckCircleOutline,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(48.dp)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
+                // Title
                 Text(
                     text = "Confirm Activation",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = colorScheme.onSurface,
+                    textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
+                // Main message
                 Text(
                     text = "Do you want to set \"$themeName\" as your active theme?",
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colorScheme.onSurface.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(28.dp))
 
+                // Buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    // No button
                     Button(
                         onClick = onCancel,
-                        modifier = Modifier.weight(1f).height(48.dp),
-                        shape = RoundedCornerShape(24.dp),
+                        modifier = Modifier.weight(1f).height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MoonTheme.customColors.cancelBtnBgColor,
                             contentColor = MoonTheme.customColors.cancelBtnTextColor
-                        )
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(0.dp)
                     ) {
-                        Text("No", fontWeight = FontWeight.Bold)
+                        Text(
+                            "No",
+                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
                     }
+
+                    // Activate button
                     Button(
                         onClick = onConfirm,
-                        modifier = Modifier.weight(1f).height(48.dp),
+                        modifier = Modifier.weight(1f).height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
+                            containerColor = colorScheme.primary,
+                            contentColor = colorScheme.onPrimary
                         ),
-                        shape = RoundedCornerShape(24.dp)
+                        elevation = ButtonDefaults.buttonElevation(0.dp)
                     ) {
-                        Text("Activate", fontWeight = FontWeight.Bold)
+                        Text(
+                            "Activate",
+                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
                     }
                 }
             }

@@ -25,6 +25,7 @@ class DailyLogViewModel @Inject constructor(
     private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager,
     private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
     private val tokenManager: com.diary.moonpage.core.util.TokenManager,
+    private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository,
     val healthConnectManager: com.diary.moonpage.core.util.HealthConnectManager,
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
@@ -370,6 +371,7 @@ class DailyLogViewModel @Inject constructor(
                 distance = state.distance
             ).onSuccess {
                 val msg = if (state.existingLog != null) "Record updated successfully!" else "Record created successfully!"
+                statisticsRepository.triggerRefresh()
                 _uiEffect.emit(DailyLogUiEffect.SaveSuccess(msg))
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false, snackbarMessage = error.message ?: "Failed to save log") }

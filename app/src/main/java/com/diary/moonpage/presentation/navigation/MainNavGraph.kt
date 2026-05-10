@@ -60,8 +60,7 @@ fun NavGraphBuilder.mainNavGraph(
             screenWrapper(Screen.Store.route) {
                 StoreScreen(
                     viewModel = storeViewModel,
-                    onNavigateToDetail = { navController.navigate(Screen.ThemeDetail.route) },
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateToDetail = { navController.navigate(Screen.ThemeDetail.route) }
                 )
             }
         }

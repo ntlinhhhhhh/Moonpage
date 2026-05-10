@@ -78,8 +78,11 @@ fun ThemeCalendarScreen(
         currentThemeType = currentThemeType,
         isDarkMode = isDarkModePref,
         onThemeSelected = { type ->
-            mainViewModel.setTheme(type)
-            val theme = uiState.ownedThemes.find { it.decoration.toMoonThemeType() == type }
+            val theme = if (type == MoonThemeType.DEFAULT) {
+                uiState.ownedThemes.find { it.id == ThemeConstants.DEFAULT_THEME_ID }
+            } else {
+                uiState.ownedThemes.find { it.decoration.toMoonThemeType() == type }
+            }
             theme?.let { storeViewModel.activateTheme(it.id) }
         },
         onDarkModeToggled = { mainViewModel.setDarkMode(it) },
@@ -227,12 +230,13 @@ fun ThemePickerContent(
             com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost(
                 hostState = snackbarHostState,
                 modifier = Modifier.align(Alignment.TopCenter),
-                topPadding = 16.dp
+                topPadding = 45.dp
             )
 
             if (showConfirmActivation) {
+                val themeName = availableThemes.find { it.first == temporarySelectedThemeId?.toMoonThemeType() }?.second ?: "this theme"
                 com.diary.moonpage.presentation.screens.store.components.ConfirmActivationDialog(
-                    themeName = ownedThemes.find { it.id == temporarySelectedThemeId }?.name ?: "this theme",
+                    themeName = themeName,
                     onConfirm = onConfirmActivation,
                     onCancel = onCancelActivation
                 )
@@ -242,8 +246,11 @@ fun ThemePickerContent(
 }
 
 private fun String.toMoonThemeType(): MoonThemeType {
+    if (this == com.diary.moonpage.core.util.ThemeConstants.DEFAULT_THEME_ID) return MoonThemeType.DEFAULT
     return try {
-        MoonThemeType.valueOf(this.uppercase())
+        // Try mapping decoration name to MoonThemeType
+        val decoration = if (this.startsWith("theme_")) this.substringAfter("theme_") else this
+        MoonThemeType.valueOf(decoration.uppercase())
     } catch (e: Exception) {
         MoonThemeType.DEFAULT
     }

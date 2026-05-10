@@ -19,7 +19,8 @@ import com.diary.moonpage.core.util.ActivityPreferencesManager
 class CalendarViewModel @Inject constructor(
     private val repository: DailyLogRepository,
     private val activityPreferencesManager: ActivityPreferencesManager,
-    private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager
+    private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager,
+    private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository
 ) : ViewModel() {
 
     private val BASE_URL = "https://hieu-wikipedia.io.vn/"
@@ -116,6 +117,7 @@ class CalendarViewModel @Inject constructor(
     private fun deleteDailyLog(date: LocalDate) {
         viewModelScope.launch {
             repository.deleteDailyLog(date.toString()).onSuccess {
+                statisticsRepository.triggerRefresh()
                 // Remove the deleted log from the local state immediately for instant feedback
                 _uiState.update { currentState ->
                     val newLogs = currentState.dailyLogs.filterKeys { it != date }

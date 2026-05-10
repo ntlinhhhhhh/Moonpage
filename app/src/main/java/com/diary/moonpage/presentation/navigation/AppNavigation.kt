@@ -301,11 +301,10 @@ fun AppNavigation() {
             composable(Screen.Store.route) { backStackEntry ->
                 val storeViewModel: StoreViewModel = hiltViewModel(backStackEntry)
                 ScreenWrapper(Screen.Store.route) {
-                    StoreScreen(
-                        viewModel = storeViewModel,
-                        onNavigateToDetail = { navController.navigate(Screen.ThemeDetail.route) },
-                        onNavigateBack = { navController.popBackStack() }
-                    )
+                StoreScreen(
+                    viewModel = storeViewModel,
+                    onNavigateToDetail = { navController.navigate(Screen.ThemeDetail.route) }
+                )
                 }
             }
 
