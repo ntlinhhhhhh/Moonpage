@@ -15,5 +15,7 @@ data class StatisticsUiState(
     val selectedYear: Int = java.time.LocalDate.now().year,
     val selectedMonth: Int = java.time.LocalDate.now().monthValue,
     val isMonthly: Boolean = true,
-    val themeType: MoonThemeType = MoonThemeType.DEFAULT
+    val themeType: MoonThemeType = MoonThemeType.DEFAULT,
+    val gender: String? = null,
+    val selectedIconId: String? = null
 )

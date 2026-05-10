@@ -30,7 +30,8 @@ fun StatisticsScreen(
     StatisticsScreenContent(
         uiState = uiState,
         onMonthChange = viewModel::onMonthSelected,
-        onTabChange = viewModel::setMonthly
+        onTabChange = viewModel::setMonthly,
+        onIconClick = viewModel::onIconClick
     )
 }
 
@@ -39,7 +40,8 @@ fun StatisticsScreen(
 fun StatisticsScreenContent(
     uiState: StatisticsUiState,
     onMonthChange: (Int, Int) -> Unit,
-    onTabChange: (Boolean) -> Unit
+    onTabChange: (Boolean) -> Unit,
+    onIconClick: (String) -> Unit
 ) {
     val scrollState = rememberScrollState()
     var showDatePicker by remember { mutableStateOf(false) }
@@ -105,35 +107,99 @@ fun StatisticsScreenContent(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
-                    // Mood Flow Chart
-                    StatsCard(title = "Mood Flow") {
-                        MoodFlowChart(stats?.moodFlow ?: emptyList(), uiState.selectedYear, uiState.selectedMonth, isMonthly = uiState.isMonthly, themeType = uiState.themeType)
-                    }
+                    val isMale = uiState.gender == "Male" || uiState.gender == "Nam"
+                    
+                    if (uiState.isMonthly) {
+                        // --- MONTHLY VIEW ---
+                        
+                        // 1. Mood Flow & Menstruation
+                        StatsCard(title = "Mood Flow" + if (!isMale) " & Cycle" else "") {
+                            MoodFlowChart(
+                                moodFlow = stats?.moodFlow ?: emptyList(), 
+                                year = uiState.selectedYear, 
+                                month = uiState.selectedMonth, 
+                                isMonthly = true, 
+                                themeType = uiState.themeType,
+                                menstruationDates = if (!isMale) stats?.menstruationData ?: emptyList() else emptyList()
+                            )
+                        }
 
-                    // Mood Bar Chart
-                    StatsCard(title = "Mood Bar") {
-                        MoodDistributionView(stats?.moodDistribution ?: emptyList(), themeType = uiState.themeType)
-                    }
+                        // 2. Sleep Analysis
+                        StatsCard(title = "Sleep Analysis") {
+                            SleepAnalysisChart(stats?.sleepData ?: emptyList())
+                        }
 
-                    if (!uiState.isMonthly) {
-                        // Year in Beans (Annual only)
-                        StatsCard(title = "Year in Beans") {
-                            YearInBeansView(uiState.selectedYear, themeType = uiState.themeType)
+                        // 3. Mood by Sleep
+                        StatsCard(title = "Mood by Sleep") {
+                            MoodBySleepChart(stats?.moodBySleep ?: emptyList(), uiState.themeType)
+                        }
+
+                        // 4. Mood Distribution
+                        StatsCard(title = "Mood Distribution") {
+                            MoodDistributionView(stats?.moodDistribution ?: emptyList(), themeType = uiState.themeType)
+                        }
+                        
+                        // 5. Activity Stats (Frequently Recorded)
+                        StatsCard(title = "Activity Stats") {
+                            FrequentlyRecordedView(
+                                activities = frequentlyRecorded,
+                                onIconClick = onIconClick
+                            )
+                        }
+
+
+                        // 6. Best & Worst
+                        StatsCard(title = "Best & Worst") {
+                            BestAndWorstView(bestActivities, worstActivities)
+                        }
+
+                        // 7. Icon Deep Dive
+                        StatsCard(title = "Icon Deep Dive") {
+                            IconDeepDiveView(
+                                activityId = uiState.selectedIconId,
+                                allActivities = stats?.bestActivities ?: emptyList(),
+                                themeType = uiState.themeType
+                            )
+                        }
+
+                    } else {
+                        // --- ANNUAL VIEW ---
+                        
+                        // 1. Yearly Grid (Mood Mandala)
+                        StatsCard(title = "Mood Mandala") {
+                            YearlyGridChart(
+                                yearlyMoodGrid = stats?.yearlyMoodGrid ?: emptyList(),
+                                menstruationDates = if (!isMale) stats?.menstruationData ?: emptyList() else emptyList(),
+                                themeType = uiState.themeType
+                            )
+                        }
+
+                        // 2. Monthly Mood Average
+                        StatsCard(title = "Monthly Average") {
+                            MonthlyMoodAverageChart(stats?.yearlyMoodGrid ?: emptyList(), uiState.themeType)
+                        }
+
+                        // 3. Yearly Trends (Cycle & Sleep)
+                        if (!isMale) {
+                            StatsCard(title = "Yearly Cycle Trends") {
+                                Text("Average Cycle: 28 days", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                Text("Average Period: 5 days", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                        
+                        StatsCard(title = "Yearly Sleep Trends") {
+                            Text("Avg Sleep: 7.2h", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            Text("Sleep Quality: Good", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+
+                        // 4. Yearly Top Activities
+                        StatsCard(title = "Yearly Top Activities") {
+                            FrequentlyRecordedView(
+                                activities = frequentlyRecorded,
+                                onIconClick = onIconClick
+                            )
                         }
                     }
-
-                    // Frequently Recorded
-                    StatsCard(title = "Frequently Recorded", actionText = "More") {
-                        FrequentlyRecordedView(frequentlyRecorded)
-                    }
-
-                    // Best & Worst
-                    StatsCard(title = "Best & Worst", actionText = "More") {
-                        BestAndWorstView(bestActivities, worstActivities)
-                    }
-
-                    // Premium Section
-                    PremiumAnalysisSection(themeType = uiState.themeType)
 
                     Spacer(modifier = Modifier.height(32.dp))
                 }
