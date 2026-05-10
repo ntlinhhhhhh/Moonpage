@@ -2,9 +2,10 @@ package com.diary.moonpage.presentation.screens.calendar
 
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,7 +25,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
@@ -53,7 +53,7 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlinx.coroutines.launch
-import java.io.File
+import androidx.compose.ui.platform.LocalLocale
 
 /**
  * Stateful Component
@@ -83,11 +83,18 @@ fun DailyLogScreen(
         }
     }
 
-    val healthConnectManager = viewModel.healthConnectManager
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickMultipleVisualMedia(3)
+    ) { uris ->
+        if (uris.isNotEmpty()) {
+            viewModel.onEvent(DailyLogUiEvent.OnPhotosChanged(uris.map { it.toString() }))
+        }
+    }
+
     val permissionLauncher = rememberLauncherForActivityResult(
-        contract = healthConnectManager.requestPermissionsContract()
+        contract = viewModel.healthConnectManager.requestPermissionsContract()
     ) { granted ->
-        if (granted.containsAll(healthConnectManager.permissions)) {
+        if (granted.containsAll(viewModel.healthConnectManager.permissions)) {
             viewModel.onEvent(DailyLogUiEvent.OnImportSteps)
         }
     }
@@ -98,13 +105,15 @@ fun DailyLogScreen(
         onNavigateBack = onNavigateBack,
         onNavigateToMusic = onNavigateToMusic,
         onNavigateToMenstrualCycle = onNavigateToMenstrualCycle,
-        onNavigateToDailyPhoto = onNavigateToDailyPhoto,
+        onNavigateToDailyPhoto = {
+            photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+        },
         onImportSteps = {
             scope.launch {
-                if (healthConnectManager.hasAllPermissions()) {
+                if (viewModel.healthConnectManager.hasAllPermissions()) {
                     viewModel.onEvent(DailyLogUiEvent.OnImportSteps)
                 } else {
-                    permissionLauncher.launch(healthConnectManager.permissions)
+                    permissionLauncher.launch(viewModel.healthConnectManager.permissions)
                 }
             }
         },
@@ -167,9 +176,7 @@ fun DailyLogScreenContent(
         bottomBar = {
             DailyLogBottomBar(
                 isLoading = uiState.isLoading,
-                onSaveClick = { onEvent(DailyLogUiEvent.OnSaveClick) },
-                themeType = uiState.themeType,
-                selectedMood = uiState.selectedMood
+                onSaveClick = { onEvent(DailyLogUiEvent.OnSaveClick) }
             )
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -287,9 +294,7 @@ private fun DailyLogTopBar(
 @Composable
 private fun DailyLogBottomBar(
     isLoading: Boolean,
-    onSaveClick: () -> Unit,
-    themeType: MoonThemeType,
-    selectedMood: Int?
+    onSaveClick: () -> Unit
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surface,
@@ -702,7 +707,7 @@ private fun DailyHealthSection(steps: Int, calories: Int, distance: Double, onIm
                 HealthStatItem(
                     modifier = Modifier.weight(1f),
                     label = "Distance",
-                    value = String.format("%.1f km", distance),
+                    value = String.format(LocalLocale.current.platformLocale, "%.1f km", distance),
                     icon = Icons.Rounded.Route,
                     color = Color(0xFF42A5F5)
                 )
@@ -829,7 +834,7 @@ private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean
                         Box(
                             modifier = Modifier.size(40.dp).clip(CircleShape)
                                 .background(
-                                    if (i == 2 && isMenstruation) Color(0xFFFFCDD2)
+                                    if (i == 2 && isMenstruation) Color(0xFFFFEBEE)
                                     else MoonTheme.customColors.logItemBg
                                 )
                                 .clickable { if (i == 2) onToggle(!isMenstruation) },
@@ -838,7 +843,7 @@ private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean
                             Icon(
                                 Icons.Rounded.WaterDrop,
                                 contentDescription = null,
-                                tint = if (i == 2 && isMenstruation) Color(0xFFE57373)
+                                tint = if (i == 2 && isMenstruation) Color(0xFFEF5350)
                                        else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.4f)
                             )
                         }
@@ -887,11 +892,56 @@ private fun DailyPhotoSection(photos: List<String>, onPhotoClick: () -> Unit) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Today's photo", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
             Spacer(modifier = Modifier.height(12.dp))
-            Surface(color = MoonTheme.customColors.logItemBg, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().aspectRatio(1f).clickable { onPhotoClick() }) {
-                Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Rounded.CameraAlt, contentDescription = null, modifier = Modifier.size(48.dp), tint = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.4f)) 
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text("Select up to 3 photos", color = MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
+            
+            if (photos.isEmpty()) {
+                Surface(
+                    color = MoonTheme.customColors.logItemBg, 
+                    shape = RoundedCornerShape(12.dp), 
+                    modifier = Modifier.fillMaxWidth().aspectRatio(1f).clickable { onPhotoClick() }
+                ) {
+                    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Rounded.CameraAlt, contentDescription = null, modifier = Modifier.size(48.dp), tint = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.4f)) 
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("Select up to 3 photos", color = MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
+                    }
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    photos.take(3).forEach { photoUri ->
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .aspectRatio(1f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable { onPhotoClick() }
+                        ) {
+                            coil.compose.AsyncImage(
+                                model = photoUri,
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                            )
+                        }
+                    }
+                    // Add empty slots if less than 3 photos
+                    if (photos.size < 3) {
+                        repeat(3 - photos.size) {
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .aspectRatio(1f)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(MoonTheme.customColors.logItemBg.copy(alpha = 0.5f))
+                                    .clickable { onPhotoClick() },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Rounded.Add, contentDescription = null, tint = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.3f))
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -283,12 +283,13 @@ fun DayDetailArea(
     moodLabel: String,
     noteSnippet: String?,
     activityNames: List<String> = emptyList(),
+    dailyPhotos: List<String> = emptyList(),
     sleepHours: Double? = null,
     isMenstruation: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val cs = MaterialTheme.colorScheme
-    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val isActuallyDark = cs.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
 
     Row(
         modifier = modifier
@@ -326,7 +327,7 @@ fun DayDetailArea(
             Spacer(modifier = Modifier.height(12.dp))
 
             Surface(
-                color = if (isDark) Color(0xFF424242) else Color(0xFFE0E0E0),
+                color = if (isActuallyDark) com.diary.moonpage.core.theme.MoonTheme.customColors.logItemBg else Color(0xFFE0E0E0),
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Text(
@@ -400,6 +401,24 @@ fun DayDetailArea(
                 )
             }
 
+            if (dailyPhotos.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    dailyPhotos.forEach { photoUrl ->
+                        coil.compose.AsyncImage(
+                            model = photoUrl,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(100.dp)
+                                .clip(RoundedCornerShape(12.dp)),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                        )
+                    }
+                }
+            }
             Spacer(modifier = Modifier.height(16.dp))
 
             // Stats Card
@@ -557,6 +576,7 @@ fun DayDetailBottomSheet(
     moodLabel: String,
     noteSnippet: String?,
     activityNames: List<String> = emptyList(),
+    dailyPhotos: List<String> = emptyList(),
     sleepHours: Double? = null,
     isMenstruation: Boolean = false,
     onDismiss: () -> Unit,
@@ -595,6 +615,7 @@ fun DayDetailBottomSheet(
                     moodLabel = moodLabel,
                     noteSnippet = noteSnippet,
                     activityNames = activityNames,
+                    dailyPhotos = dailyPhotos,
                     sleepHours = sleepHours,
                     isMenstruation = isMenstruation
                 )

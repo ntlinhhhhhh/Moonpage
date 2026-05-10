@@ -473,6 +473,7 @@ fun CalendarSelectedLogDetail(
                 moodLabel = mv.name,
                 noteSnippet = selectedLog.note,
                 activityNames = activityNames,
+                dailyPhotos = selectedLog.dailyPhotos ?: emptyList(),
                 sleepHours = selectedLog.sleepHours,
                 isMenstruation = selectedLog.isMenstruation
             )

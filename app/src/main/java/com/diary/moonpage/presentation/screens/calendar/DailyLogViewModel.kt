@@ -22,8 +22,12 @@ class DailyLogViewModel @Inject constructor(
     private val activityPreferencesManager: ActivityPreferencesManager,
     private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager,
     private val tokenManager: com.diary.moonpage.core.util.TokenManager,
-    val healthConnectManager: com.diary.moonpage.core.util.HealthConnectManager
+    val healthConnectManager: com.diary.moonpage.core.util.HealthConnectManager,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
+
+    private val BASE_URL = "https://hieu-wikipedia.io.vn/"
+
 
     private val _uiState = MutableStateFlow(DailyLogUiState())
     val uiState: StateFlow<DailyLogUiState> = _uiState.asStateFlow()
@@ -201,17 +205,30 @@ class DailyLogViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true) }
             repository.getDailyLogByDate(date.toString()).onSuccess { log ->
                 val formatter = DateTimeFormatter.ofPattern("HH:mm")
+                val bedTime = log.sleepBedTime?.let { try { LocalTime.parse(it, formatter) } catch(e: Exception) { LocalTime.of(0, 0) } } ?: LocalTime.of(0, 0)
+                val wakeTime = log.sleepWakeTime?.let { try { LocalTime.parse(it, formatter) } catch(e: Exception) { LocalTime.of(7, 0) } } ?: LocalTime.of(7, 0)
+                
+                // Calculate sleep hours if it's null or 0 from server
+                val calculatedHours = if ((log.sleepHours ?: 0.0) <= 0.0) {
+                    val bedMin = bedTime.hour * 60 + bedTime.minute
+                    val wakeMin = wakeTime.hour * 60 + wakeTime.minute
+                    val diffMin = if (wakeMin >= bedMin) wakeMin - bedMin else (24 * 60 - bedMin) + wakeMin
+                    diffMin / 60f
+                } else {
+                    log.sleepHours?.toFloat() ?: 0f
+                }
+
                 _uiState.update { it.copy(
                     existingLog = log,
                     selectedMood = log.baseMoodId,
                     selectedActivities = log.activityIds ?: emptyList(),
                     noteText = log.note ?: "",
-                    sleepHours = log.sleepHours?.toFloat() ?: 0f,
-                    sleepBedTime = log.sleepBedTime?.let { LocalTime.parse(it, formatter) } ?: LocalTime.of(0, 0),
-                    sleepWakeTime = log.sleepWakeTime?.let { LocalTime.parse(it, formatter) } ?: LocalTime.of(7, 0),
+                    sleepHours = calculatedHours,
+                    sleepBedTime = bedTime,
+                    sleepWakeTime = wakeTime,
                     isMenstruation = log.isMenstruation,
                     menstruationPhase = log.menstruationPhase,
-                    dailyPhotos = log.dailyPhotos ?: emptyList(),
+                    dailyPhotos = log.dailyPhotos?.map { if (it.startsWith("http")) it else BASE_URL + it.trimStart('/') } ?: emptyList(),
                     musicTitle = log.songTitle,
                     artistName = log.artistName,
                     albumArtUrl = log.albumArtUrl,
@@ -254,6 +271,15 @@ class DailyLogViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             
+            val photoFiles = state.dailyPhotos.mapNotNull { uriString ->
+                try {
+                    val uri = android.net.Uri.parse(uriString)
+                    com.diary.moonpage.core.util.ImageUtils.compressAndCropSquare(context, uri)
+                } catch (e: Exception) {
+                    null
+                }
+            }
+            
             val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
             
             repository.createDailyLog(
@@ -264,7 +290,7 @@ class DailyLogViewModel @Inject constructor(
                 isMenstruation = state.isMenstruation,
                 menstruationPhase = state.menstruationPhase,
                 activityIds = state.selectedActivities,
-                dailyPhotos = null,
+                dailyPhotos = photoFiles.takeIf { it.isNotEmpty() },
                 songTitle = state.musicTitle,
                 artistName = state.artistName,
                 albumArtUrl = state.albumArtUrl,

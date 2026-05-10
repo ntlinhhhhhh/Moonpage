@@ -22,6 +22,9 @@ class CalendarViewModel @Inject constructor(
     private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager
 ) : ViewModel() {
 
+    private val BASE_URL = "https://hieu-wikipedia.io.vn/"
+
+
     private val _uiState = MutableStateFlow(CalendarUiState())
     val uiState: StateFlow<CalendarUiState> = _uiState.asStateFlow()
 
@@ -97,7 +100,9 @@ class CalendarViewModel @Inject constructor(
             val yearMonthStr = "${yearMonth.year}-${yearMonth.monthValue.toString().padStart(2, '0')}"
 
             repository.getDailyLogsByMonth(yearMonthStr).collect { logs ->
-                val logsMap = logs.associateBy { LocalDate.parse(it.date) }
+                val logsMap = logs.map { log ->
+                    log.copy(dailyPhotos = log.dailyPhotos?.map { if (it.startsWith("http")) it else BASE_URL + it.trimStart('/') })
+                }.associateBy { LocalDate.parse(it.date) }
                 _uiState.update { currentState ->
                     // Instead of putAll which keeps old entries, we want to update the month's data
                     // However, to keep it simple and reactive, we'll just use the new logs from the repository
