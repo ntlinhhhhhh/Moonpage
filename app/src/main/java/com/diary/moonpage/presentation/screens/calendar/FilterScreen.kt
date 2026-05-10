@@ -43,12 +43,18 @@ fun FilterScreen(
 ) {
     var selectedItem by remember { mutableStateOf<FilterItem?>(currentFilter) }
     val isAnySelected = selectedItem != null
-    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val colorScheme = MaterialTheme.colorScheme
+    val isActuallyDark = colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
+    
+    val bgColor = if (isActuallyDark) com.diary.moonpage.core.theme.MoonBgDark else Color.White
+    val textColor = if (isActuallyDark) Color.White else Color.Black
+    val pillBg = if (isActuallyDark) Color(0xFF262626) else Color(0xFFF2F2F2)
+    val closeIconTint = if (isActuallyDark) Color(0xFFAEAEAE) else Color.Black
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(if (isDark) MaterialTheme.colorScheme.background else Color.White)
+            .background(bgColor)
             .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
         // Header
@@ -57,14 +63,14 @@ fun FilterScreen(
                 text = "When did I record...",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = if (isDark) Color.White else Color.Black,
+                color = textColor,
                 modifier = Modifier.align(Alignment.Center)
             )
             IconButton(
                 onClick = onDismiss,
                 modifier = Modifier.align(Alignment.CenterEnd)
             ) {
-                Icon(Icons.Rounded.Close, contentDescription = "Close", tint = if (isDark) Color.White else Color.Black)
+                Icon(Icons.Rounded.Close, contentDescription = "Close", tint = closeIconTint)
             }
         }
 
@@ -76,7 +82,7 @@ fun FilterScreen(
                 .height(56.dp)
                 .defaultMinSize(minWidth = 120.dp)
                 .align(Alignment.CenterHorizontally)
-                .background(if (isDark) Color(0xFF333333) else Color(0xFFF2F2F2), RoundedCornerShape(28.dp)),
+                .background(pillBg, RoundedCornerShape(28.dp)),
             contentAlignment = Alignment.Center
         ) {
             if (selectedItem == null) {
@@ -203,8 +209,9 @@ fun FilterScreen(
 
 @Composable
 fun SelectedItemDisplay(item: FilterItem, themeType: com.diary.moonpage.core.theme.MoonThemeType) {
-    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
-    val textColor = if (isDark) Color.White else Color.Black
+    val colorScheme = MaterialTheme.colorScheme
+    val isActuallyDark = colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
+    val textColor = if (isActuallyDark) Color.White else Color.Black
 
     when (item) {
         is FilterItem.Mood -> {
@@ -231,7 +238,7 @@ fun SelectedItemDisplay(item: FilterItem, themeType: com.diary.moonpage.core.the
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(if (isDark) Color(0xFF404040) else MoonTheme.customColors.logItemSelect),
+                    .background(if (isActuallyDark) Color(0xFF404040) else MoonTheme.customColors.logItemSelect),
                 contentAlignment = Alignment.Center
             ) {
                 if (icon.drawableRes != null) {
@@ -283,11 +290,14 @@ fun MoodFilterItem(
     isAnySelected: Boolean,
     onClick: () -> Unit
 ) {
-    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
-    val dimmedBg = if (isDark) Color(0xFF404040) else Color(0xFFE0E0E0)
-    val dimmedAlpha = 0.3f
-
-    val bg = if (!isAnySelected || isSelected) visual.color else dimmedBg
+    val isActuallyDark = MaterialTheme.colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
+    
+    val bg = if (isActuallyDark) {
+        if (isSelected) Color(0xFF555555) else MoonTheme.customColors.logItemBg
+    } else {
+        val dimmedBg = Color(0xFFE0E0E0)
+        if (!isAnySelected || isSelected) visual.color else dimmedBg
+    }
 
     Box(
         modifier = Modifier
@@ -306,7 +316,7 @@ fun MoodFilterItem(
                 contentDescription = null,
                 modifier = Modifier
                     .size(40.dp)
-                    .then(if (isAnySelected && !isSelected) Modifier.alpha(dimmedAlpha) else Modifier)
+                    .then(if (isAnySelected && !isSelected && !isActuallyDark) Modifier.alpha(0.3f) else Modifier)
             )
         }
     }
@@ -319,11 +329,16 @@ fun SpecialFilterItem(
     isAnySelected: Boolean,
     onClick: () -> Unit
 ) {
-    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
-    val activeBg = if (isSelected) MoonTheme.customColors.logItemSelect else if (isDark) Color(0xFF292929) else Color.White
-    val dimmedBg = if (isDark) Color(0xFF404040) else Color(0xFFE0E0E0)
+    val isActuallyDark = MaterialTheme.colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
     
-    val bg = if (!isAnySelected) activeBg else if (isSelected) activeBg else dimmedBg
+    val bg = if (isActuallyDark) {
+        if (isSelected) Color(0xFF555555) else MoonTheme.customColors.logItemBg
+    } else {
+        val activeBg = if (isSelected) MoonTheme.customColors.logItemSelect else Color.White
+        val dimmedBg = Color(0xFFE0E0E0)
+        if (!isAnySelected) activeBg else if (isSelected) activeBg else dimmedBg
+    }
+    
     val iconTint = if (!isAnySelected) MaterialTheme.colorScheme.onSurface else if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
     val textTint = if (!isAnySelected) MaterialTheme.colorScheme.onSurface else if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
 
@@ -332,7 +347,7 @@ fun SpecialFilterItem(
             .height(48.dp)
             .clip(RoundedCornerShape(24.dp))
             .background(bg)
-            .then(if (isSelected) Modifier.border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), RoundedCornerShape(24.dp)) else Modifier)
+            .then(if (isSelected && !isActuallyDark) Modifier.border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), RoundedCornerShape(24.dp)) else Modifier)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
@@ -343,11 +358,11 @@ fun SpecialFilterItem(
         Icon(
             item.icon,
             contentDescription = item.name,
-            tint = iconTint,
+            tint = if (isActuallyDark && isSelected) Color.White else iconTint,
             modifier = Modifier.size(20.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
-        Text(item.name, color = textTint, fontWeight = FontWeight.Medium, fontSize = 14.sp)
+        Text(item.name, color = if (isActuallyDark && isSelected) Color.White else textTint, fontWeight = FontWeight.Medium, fontSize = 14.sp)
     }
 }
 
@@ -359,10 +374,7 @@ fun ActivityFilterGrid(
     isAnySelected: Boolean,
     onItemClick: (FilterItem.Activity) -> Unit
 ) {
-    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
-    val activeBg = MoonTheme.customColors.logItemBg
-    val selectedBg = MoonTheme.customColors.logItemSelect
-    val dimmedBg = if (isDark) Color(0xFF404040) else Color(0xFFE0E0E0)
+    val isActuallyDark = MaterialTheme.colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
 
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
@@ -373,7 +385,14 @@ fun ActivityFilterGrid(
             val isSelected = item.id == selectedId
             val icon = MoonIcons.getIconForActivity(item.name)
             
-            val bg = if (isSelected) selectedBg else if (!isAnySelected) activeBg else dimmedBg
+            val bg = if (isActuallyDark) {
+                if (isSelected) Color(0xFF555555) else MoonTheme.customColors.logItemBg
+            } else {
+                val activeBg = MoonTheme.customColors.logItemBg
+                val selectedBg = MoonTheme.customColors.logItemSelect
+                val dimmedBg = Color(0xFFE0E0E0)
+                if (isSelected) selectedBg else if (!isAnySelected) activeBg else dimmedBg
+            }
             
             Box(
                 modifier = Modifier
@@ -392,13 +411,13 @@ fun ActivityFilterGrid(
                         contentDescription = item.name,
                         modifier = Modifier
                             .size(32.dp)
-                            .then(if (isAnySelected && !isSelected) Modifier.alpha(0.3f) else Modifier)
+                            .then(if (isAnySelected && !isSelected && !isActuallyDark) Modifier.alpha(0.3f) else Modifier)
                     )
                 } else if (icon.vector != null) {
                     Icon(
                         icon.vector,
                         contentDescription = item.name,
-                        tint = if (isAnySelected && !isSelected) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f) else icon.color,
+                        tint = if (isAnySelected && !isSelected && !isActuallyDark) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f) else icon.color,
                         modifier = Modifier.size(24.dp)
                     )
                 }

@@ -264,8 +264,8 @@ fun DayItem(
                 colorScheme.onSurface.copy(alpha = 0.2f)
             } else if (isSelected || isToday) {
                 colorScheme.primary
-            } else if (isSystemInDarkTheme()) {
-                colorScheme.onSurface.copy(alpha = 0.85f)
+            } else if (isActuallyDark) {
+                Color.White.copy(alpha = 0.85f)
             } else {
                 colorScheme.onSurface.copy(alpha = 0.6f)
             }
@@ -366,7 +366,7 @@ fun DayDetailArea(
                             modifier = Modifier
                                 .size(42.dp)
                                 .background(
-                                    if (isDark) Color(0xFF404040) else com.diary.moonpage.core.theme.MoonTheme.customColors.logItemSelect, 
+                                    com.diary.moonpage.core.theme.MoonTheme.customColors.logItemBg, 
                                     CircleShape
                                 ),
                             contentAlignment = Alignment.Center

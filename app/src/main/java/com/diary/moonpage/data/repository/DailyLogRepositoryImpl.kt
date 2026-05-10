@@ -29,7 +29,13 @@ class DailyLogRepositoryImpl @Inject constructor(
         isMenstruation: Boolean,
         menstruationPhase: String?,
         activityIds: List<String>?,
-        dailyPhotos: List<File>?
+        dailyPhotos: List<File>?,
+        songTitle: String?,
+        artistName: String?,
+        albumArtUrl: String?,
+        steps: Int?,
+        calories: Int?,
+        distance: Double?
     ): Result<Unit> {
         return try {
             val baseMoodIdBody = baseMoodId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
@@ -38,6 +44,14 @@ class DailyLogRepositoryImpl @Inject constructor(
             val sleepHoursBody = sleepHours?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
             val isMenstruationBody = isMenstruation.toString().toRequestBody("text/plain".toMediaTypeOrNull())
             val menstruationPhaseBody = menstruationPhase?.toRequestBody("text/plain".toMediaTypeOrNull())
+            
+            val songTitleBody = songTitle?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val artistNameBody = artistName?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val albumArtUrlBody = albumArtUrl?.toRequestBody("text/plain".toMediaTypeOrNull())
+            
+            val stepsBody = steps?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val caloriesBody = calories?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val distanceBody = distance?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
 
             val activityParts = activityIds?.map { id ->
                 MultipartBody.Part.createFormData("ActivityIds", id)
@@ -49,7 +63,8 @@ class DailyLogRepositoryImpl @Inject constructor(
             }
 
             val response = api.createDailyLog(
-                baseMoodIdBody, dateBody, noteBody, sleepHoursBody, isMenstruationBody, menstruationPhaseBody, activityParts, photoParts
+                baseMoodIdBody, dateBody, noteBody, sleepHoursBody, isMenstruationBody, menstruationPhaseBody, activityParts, photoParts,
+                songTitleBody, artistNameBody, albumArtUrlBody, stepsBody, caloriesBody, distanceBody
             )
             
             if (response.isSuccessful) {

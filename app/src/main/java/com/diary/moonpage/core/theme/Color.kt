@@ -9,7 +9,7 @@ val MoonBottomNavBgDark = Color(0xFF424242)
 val MoonUnselectedDark = Color(0xFF707070)
 val MoonCardBgDark = Color(0xFF292929)
 val MoonDayCircleDark = Color(0xFF505457)
-val MoonTextDarkNew = Color(0xFF878787)
+val MoonTextDarkNew = Color(0xFFE0E0E0)
 val MoonSurfaceDark = Color(0xFF292929) // Matching card bg for consistency
 
 val MoonTextDark = Color(0xFF463C35)
@@ -24,10 +24,10 @@ val MoonAccentBlue = Color(0xFF4A55A2)
 val MoonSecondaryBlue = Color(0xFF7895CB)
 
 val MoonInputBgLight = Color(0xFFF5E8C7)
-val MoonInputBgDark = Color(0xFF3C4153)
+val MoonInputBgDark = Color(0xFF454545)
 
 val MoonLinkLight = Color(0xFF85A37D)
-val MoonLinkDark = Color(0xFFA4B0D0)
+val MoonLinkDark = Color(0xFFE0E0E0)
 
 val MoonDotActive = Color(0xFF5D7048)
 val MoonDotInactive = Color(0xFFE8E1DA)

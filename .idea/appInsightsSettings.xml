@@ -6,14 +6,6 @@
         <entry key="Firebase Crashlytics">
           <value>
             <InsightsFilterSettings>
-              <option name="connection">
-                <ConnectionSetting>
-                  <option name="appId" value="com.diary.moonpage" />
-                  <option name="mobileSdkAppId" value="1:11803658921:android:d134ff7f540866684137b8" />
-                  <option name="projectId" value="moodyfy-3f2dd" />
-                  <option name="projectNumber" value="11803658921" />
-                </ConnectionSetting>
-              </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
               <option name="timeIntervalDays" value="THIRTY_DAYS" />
               <option name="visibilityType" value="ALL" />

@@ -9,5 +9,11 @@ data class DailyLog(
     val isMenstruation: Boolean,
     val menstruationPhase: String?,
     val dailyPhotos: List<String>?,
-    val activityIds: List<String>?
-)
+    val activityIds: List<String>?,
+    val songTitle: String? = null,
+    val artistName: String? = null,
+    val albumArtUrl: String? = null,
+    val steps: Int? = null,
+    val calories: Int? = null,
+    val distance: Double? = null
+    )

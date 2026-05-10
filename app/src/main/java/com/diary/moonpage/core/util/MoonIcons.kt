@@ -33,9 +33,6 @@ import com.diary.moonpage.core.theme.MoonMoodHappy
 import com.diary.moonpage.core.theme.MoonMoodNeutral
 import com.diary.moonpage.core.theme.MoonMoodSad
 
-/**
- * Data class Ã„â€˜Ã¡ÂºÂ¡i diÃ¡Â»â€¡n cho mÃ¡Â»â„¢t Icon cÃƒÂ³ mÃƒÂ u Ã„â€˜i kÃƒÂ¨m.
- */
 data class MoonIcon(
     val vector: ImageVector? = null,
     val color: Color,
@@ -43,12 +40,8 @@ data class MoonIcon(
     @DrawableRes val drawableRes: Int? = null
 )
 
-/**
- * TÃ¡ÂºÂ­p hÃ¡Â»Â£p cÃƒÂ¡c Icon Ã„â€˜Ã†Â°Ã¡Â»Â£c phÃƒÂ¢n loÃ¡ÂºÂ¡i cho Ã¡Â»Â©ng dÃ¡Â»Â¥ng Moon Page vÃ¡Â»â€ºi mÃƒÂ u sÃ¡ÂºÂ¯c phÃƒÂ¹ hÃ¡Â»Â£p (Daily Bean style).
- */
 object MoonIcons {
 
-    // 0. Core Moods (DailyBean style)
     object Moods {
         val Happy = MoonIcon(null, Color.Unspecified, "Happy", R.drawable.very_happy)
         val Good = MoonIcon(null, Color.Unspecified, "Good", R.drawable.happy) 
@@ -81,7 +74,6 @@ object MoonIcons {
         }
     }
 
-    // 1. Hobbies (SÃ¡Â»Å¸ thÃƒÂ­ch)
     object Hobbies {
         val Exercise = MoonIcon(Icons.Rounded.FitnessCenter, Color(0xFFE53935), "Exercise") // Ã„ÂÃ¡Â»Â Ã„â€˜Ã¡ÂºÂ­m hÃ†Â¡n
         val TvContent = MoonIcon(Icons.Rounded.Tv, Color(0xFF651FFF), "TV & Content") // TÃƒÂ­m Ã„â€˜Ã¡ÂºÂ­m
@@ -93,7 +85,6 @@ object MoonIcons {
         val Drawing = MoonIcon(Icons.Rounded.Brush, Color(0xFFFF8F00), "Drawing") // Cam Ã„â€˜Ã¡ÂºÂ­m
     }
 
-    // 2. Emotions (CÃ¡ÂºÂ£m xÃƒÂºc)
     object Emotions {
         val Excited = MoonIcon(Icons.Rounded.Celebration, Color(0xFFFFB300), "Excited") // VÃƒÂ ng cam
         val Relaxed = MoonIcon(Icons.Rounded.Spa, Color(0xFF4CAF50), "Relaxed") // Xanh lÃƒÂ¡
@@ -117,7 +108,6 @@ object MoonIcons {
         val Bored = MoonIcon(Icons.Rounded.SentimentNeutral, Color(0xFFC55113), "Bored") // XÃƒÂ¡m slate
     }
 
-    // 3. Meals (BÃ¡Â»Â¯a Ã„Æ’n)
     object Meals {
         val Breakfast = MoonIcon(Icons.Rounded.BreakfastDining, Color(0xFFFFB300), "Breakfast")
         val Lunch = MoonIcon(Icons.Rounded.LunchDining, Color(0xFFF4511E), "Lunch")
@@ -125,7 +115,6 @@ object MoonIcons {
         val NightSnack = MoonIcon(Icons.Rounded.Nightlight, Color(0xFF3949AB), "Night Snack")
     }
 
-    // 4. Self-Care (ChÃ„Æ’m sÃƒÂ³c bÃ¡ÂºÂ£n thÃƒÂ¢n)
     object SelfCare {
         val Shower = MoonIcon(Icons.Rounded.Shower, Color(0xFF0288D1), "Shower")
         val BrushTeeth = MoonIcon(Icons.Rounded.CleanHands, Color(0xFF039BE5), "Brush Teeth")
@@ -133,7 +122,6 @@ object MoonIcons {
         val DrinkWater = MoonIcon(Icons.Rounded.LocalDrink, Color(0xFF0277BD), "Drink Water")
     }
 
-    // 5. Chores (ViÃ¡Â»â€¡c nhÃƒÂ )
     object Chores {
         val Cleaning = MoonIcon(Icons.Rounded.CleaningServices, Color(0xFF7CB342), "Cleaning")
         val Cooking = MoonIcon(Icons.Rounded.Restaurant, Color(0xFFFB8C00), "Cooking")
@@ -141,7 +129,6 @@ object MoonIcons {
         val Dishes = MoonIcon(Icons.Rounded.Countertops, Color(0xFF00897B), "Dishes")
     }
 
-    // 6. Events (SÃ¡Â»Â± kiÃ¡Â»â€¡n)
     object Events {
         val StayHome = MoonIcon(Icons.Rounded.Home, Color(0xFF7E57C2), "Stay Home")
         val School = MoonIcon(Icons.Rounded.School, Color(0xFF3949AB), "School")
@@ -153,7 +140,6 @@ object MoonIcons {
         val Cinema = MoonIcon(Icons.Rounded.Theaters, Color(0xFF3F90B5), "Cinema")
     }
 
-    // 7. People (NgÃ†Â°Ã¡Â»Âi)
     object People {
         val Friends = MoonIcon(Icons.Rounded.Group, Color(0xFF00897B), "Friends")
         val Family = MoonIcon(Icons.Rounded.Groups, Color(0xFFD81B60), "Family")
@@ -161,7 +147,6 @@ object MoonIcons {
         val None = MoonIcon(Icons.Rounded.PersonOff, Color(0xFF2196F3), "None")
     }
 
-    // 8. Beauty (LÃƒÂ m Ã„â€˜Ã¡ÂºÂ¹p)
     object Beauty {
         val Hair = MoonIcon(Icons.Rounded.ContentCut, Color(0xFFAB47BC), "Hair")
         val Nails = MoonIcon(Icons.Rounded.Palette, Color(0xFFEC407A), "Nails")

@@ -20,8 +20,38 @@ class TokenManager @Inject constructor(@ApplicationContext private val context: 
 
     companion object {
         private val TOKEN_KEY     = stringPreferencesKey("jwt_token")
+        private val SPOTIFY_TOKEN_KEY = stringPreferencesKey("spotify_token")
+        private val SPOTIFY_VERIFIER_KEY = stringPreferencesKey("spotify_verifier")
+        private val SPOTIFY_STATE_KEY = stringPreferencesKey("spotify_state")
         private val USER_ID_KEY   = stringPreferencesKey("user_id")
         private val USER_NAME_KEY = stringPreferencesKey("user_name")
+    }
+
+    suspend fun saveSpotifyToken(token: String) {
+        context.dataStore.edit { preferences ->
+            preferences[SPOTIFY_TOKEN_KEY] = token
+        }
+    }
+
+    fun getSpotifyToken(): Flow<String?> {
+        return context.dataStore.data.map { preferences ->
+            preferences[SPOTIFY_TOKEN_KEY]
+        }
+    }
+
+    suspend fun saveSpotifyAuthData(verifier: String, state: String) {
+        context.dataStore.edit { preferences ->
+            preferences[SPOTIFY_VERIFIER_KEY] = verifier
+            preferences[SPOTIFY_STATE_KEY] = state
+        }
+    }
+
+    suspend fun getSpotifyVerifier(): String? {
+        return context.dataStore.data.map { it[SPOTIFY_VERIFIER_KEY] }.first()
+    }
+
+    suspend fun getSpotifyAuthState(): String? {
+        return context.dataStore.data.map { it[SPOTIFY_STATE_KEY] }.first()
     }
 
     suspend fun saveToken(token: String) {

@@ -92,224 +92,167 @@ class StoreViewModel @Inject constructor(
 
             val mockThemes = listOf(
                 Theme(
-                    id = "1",
-                    name = "Blushing Bean",
-                    collection = "Don't stare, they're a little shy",
-                    price = 70,
-                    thumbnailUrl = null,
-                    backgroundUrl = null,
-                    type = ThemeType.THEME,
-                    description = "A set of shy but sweet bean expressions.",
+                    id = "1", name = "Blushing", collection = "Soft rosy tones", price = 1000,
+                    thumbnailUrl = "#F07063", backgroundUrl = "#F4F6F1",
+                    type = ThemeType.THEME, description = "A set of shy but sweet rosy expressions.",
                     icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
-                    primaryColor = "#FFDDE1",
-                    decoration = "BLUSHING"
+                    primaryColor = "#F07063", decoration = "BLUSHING"
                 ),
                 Theme(
-                    id = "2",
-                    name = "Kitty Bean",
-                    collection = "Purrfect beans for the cat lover",
-                    price = 140,
-                    thumbnailUrl = null,
-                    backgroundUrl = null,
-                    type = ThemeType.THEME,
-                    description = "Adorable cat-eared beans for your daily logs.",
+                    id = "2", name = "Kitty", collection = "Purrfect for lovers", price = 1200,
+                    thumbnailUrl = "#7A93FF", backgroundUrl = "#F4F6F1",
+                    type = ThemeType.THEME, description = "Adorable cat-inspired theme for your daily logs.",
                     icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
-                    primaryColor = "#D1D9FF",
-                    decoration = "KITTY"
+                    primaryColor = "#7A93FF", decoration = "KITTY"
                 ),
                 Theme(
-                    id = "3",
-                    name = "Sprout Bean",
-                    collection = "Sprout bean or bean sprout?",
-                    price = 70,
-                    thumbnailUrl = null,
-                    backgroundUrl = null,
-                    type = ThemeType.THEME,
-                    description = "Tiny sprouts growing on happy little beans.",
+                    id = "3", name = "Sprout", collection = "Fresh beginnings", price = 800,
+                    thumbnailUrl = "#6EC276", backgroundUrl = "#F4F6F1",
+                    type = ThemeType.THEME, description = "Tiny sprouts for a fresh journaling experience.",
                     icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
-                    primaryColor = "#66BB6A",
-                    decoration = "SPROUT"
+                    primaryColor = "#6EC276", decoration = "SPROUT"
                 ),
                 Theme(
-                    id = "12",
-                    name = "Sunny Bean",
-                    collection = "Hello sunshine!",
-                    price = 80,
-                    thumbnailUrl = null,
-                    backgroundUrl = null,
-                    type = ThemeType.THEME,
-                    description = "Bright and cheerful yellow beans to light up your day.",
+                    id = "4", name = "Midnight", collection = "Night owl style", price = 1600,
+                    thumbnailUrl = "#1A1B26", backgroundUrl = "#F4F6F1",
+                    type = ThemeType.THEME, description = "Deep indigo theme for the midnight thinkers.",
                     icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
-                    primaryColor = "#FFB300",
-                    decoration = "SUNNY"
+                    primaryColor = "#1A1B26", decoration = "MIDNIGHT"
                 ),
                 Theme(
-                    id = "13",
-                    name = "Sky Bean",
-                    collection = "Up in the clouds",
-                    price = 80,
-                    thumbnailUrl = null,
-                    backgroundUrl = null,
-                    type = ThemeType.THEME,
-                    description = "Vibrant sky blue beans for a fresh journaling experience.",
+                    id = "5", name = "Sunny", collection = "Hello sunshine!", price = 1000,
+                    thumbnailUrl = "#FFB300", backgroundUrl = "#F4F6F1",
+                    type = ThemeType.THEME, description = "Bright and cheerful yellow for a radiant day.",
                     icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
-                    primaryColor = "#29B6F6",
-                    decoration = "SKY"
+                    primaryColor = "#FFB300", decoration = "SUNNY"
                 ),
                 Theme(
-                    id = "14",
-                    name = "Forest Bean",
-                    collection = "Nature's embrace",
-                    price = 90,
-                    thumbnailUrl = null,
-                    backgroundUrl = null,
-                    type = ThemeType.THEME,
-                    description = "Deep teal beans inspired by the tranquility of the forest.",
+                    id = "6", name = "Sky", collection = "Up in the clouds", price = 1000,
+                    thumbnailUrl = "#29B6F6", backgroundUrl = "#F4F6F1",
+                    type = ThemeType.THEME, description = "Vibrant sky blue for a fresh perspective.",
                     icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
-                    primaryColor = "#26A69A",
-                    decoration = "FOREST"
+                    primaryColor = "#29B6F6", decoration = "SKY"
                 ),
                 Theme(
-                    id = "15",
-                    name = "Coffee Bean",
-                    collection = "Morning brew",
-                    price = 90,
-                    thumbnailUrl = null,
-                    backgroundUrl = null,
-                    type = ThemeType.THEME,
-                    description = "Warm coffee-toned beans for those cozy journaling moments.",
+                    id = "7", name = "Forest", collection = "Nature's embrace", price = 1000,
+                    thumbnailUrl = "#26A69A", backgroundUrl = "#F4F6F1",
+                    type = ThemeType.THEME, description = "Deep teal inspired by the tranquility of nature.",
                     icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
-                    primaryColor = "#8D6E63",
-                    decoration = "COFFEE"
+                    primaryColor = "#26A69A", decoration = "FOREST"
                 ),
                 Theme(
-                    id = "16",
-                    name = "Lemon Bean",
-                    collection = "Zesty life",
-                    price = 80,
-                    thumbnailUrl = null,
-                    backgroundUrl = null,
-                    type = ThemeType.THEME,
-                    description = "Fresh and zesty lemon beans for a bright day.",
+                    id = "8", name = "Coffee", collection = "Morning brew", price = 1200,
+                    thumbnailUrl = "#8D6E63", backgroundUrl = "#F4F6F1",
+                    type = ThemeType.THEME, description = "Warm coffee-toned theme for cozy moments.",
                     icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
-                    primaryColor = "#CDDC39",
-                    decoration = "LEMON"
+                    primaryColor = "#8D6E63", decoration = "COFFEE"
                 ),
                 Theme(
-                    id = "17",
-                    name = "Cherry Bean",
-                    collection = "Sweet & Red",
-                    price = 100,
-                    thumbnailUrl = null,
-                    backgroundUrl = null,
-                    type = ThemeType.THEME,
-                    description = "Sweet cherry red beans to express your passion.",
+                    id = "10", name = "Lemon", collection = "Zesty life", price = 1000,
+                    thumbnailUrl = "#CDDC39", backgroundUrl = "#F4F6F1",
+                    type = ThemeType.THEME, description = "Fresh and zesty citrus for a bright day.",
                     icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
-                    primaryColor = "#EF5350",
-                    decoration = "CHERRY"
+                    primaryColor = "#CDDC39", decoration = "LEMON"
                 ),
                 Theme(
-                    id = "18",
-                    name = "Lavender Bean",
-                    collection = "Calm Purple",
-                    price = 90,
-                    thumbnailUrl = null,
-                    backgroundUrl = null,
-                    type = ThemeType.THEME,
-                    description = "Soothing lavender beans for peaceful reflection.",
+                    id = "11", name = "Cherry", collection = "Sweet & Red", price = 1000,
+                    thumbnailUrl = "#EF5350", backgroundUrl = "#F4F6F1",
+                    type = ThemeType.THEME, description = "Sweet cherry red to express your passion.",
                     icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
-                    primaryColor = "#AB47BC",
-                    decoration = "LAVENDER"
+                    primaryColor = "#EF5350", decoration = "CHERRY"
                 ),
                 Theme(
-                    id = "19",
-                    name = "Ocean Bean",
-                    collection = "Deep Blue Sea",
-                    price = 110,
-                    thumbnailUrl = null,
-                    backgroundUrl = null,
-                    type = ThemeType.THEME,
-                    description = "Deep ocean blue beans for your deepest thoughts.",
+                    id = "12", name = "Lavender", collection = "Calm Purple", price = 1000,
+                    thumbnailUrl = "#B570EB", backgroundUrl = "#F4F6F1",
+                    type = ThemeType.THEME, description = "Soothing lavender for peaceful reflection.",
                     icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
-                    primaryColor = "#42A5F5",
-                    decoration = "OCEAN"
+                    primaryColor = "#B570EB", decoration = "LAVENDER"
                 ),
                 Theme(
-                    id = "4",
-                    name = "Midnight Light",
-                    collection = "Purrfect for the night owls",
-                    price = 160,
-                    thumbnailUrl = null,
-                    backgroundUrl = null,
-                    type = ThemeType.THEME,
-                    description = "Yellow moon-like beans on a deep indigo sky.",
+                    id = "13", name = "Ocean", collection = "Deep Blue Sea", price = 1000,
+                    thumbnailUrl = "#66AAEB", backgroundUrl = "#F4F6F1",
+                    type = ThemeType.THEME, description = "Deep ocean blue for your deepest thoughts.",
                     icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
-                    primaryColor = "#1A1B26", 
-                    decoration = "MOON"
+                    primaryColor = "#66AAEB", decoration = "OCEAN"
                 ),
                 Theme(
-                    id = "6",
-                    name = "Gray Brown",
-                    collection = "Earth tones Collection",
-                    price = 90,
-                    thumbnailUrl = null,
-                    backgroundUrl = null,
-                    type = ThemeType.ICON_PACK,
-                    description = "A minimalist gray-brown palette for your journal.",
+                    id = "14", name = "Nebula", collection = "Cosmic dream", price = 2000,
+                    thumbnailUrl = "#BA68C8", backgroundUrl = "#F4F6F1",
+                    type = ThemeType.THEME, description = "Deep purple and pink celestial cosmic theme.",
                     icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
-                    decoration = "NONE"
+                    primaryColor = "#BA68C8", decoration = "NEBULA"
                 ),
                 Theme(
-                    id = "7",
-                    name = "Cookie Batch",
-                    collection = "Sweet treats",
-                    price = 80,
-                    thumbnailUrl = null,
-                    backgroundUrl = null,
-                    type = ThemeType.ICON_PACK,
-                    description = "Delicious cookies for a sweet journaling session.",
+                    id = "15", name = "Matcha", collection = "Zen Garden", price = 1500,
+                    thumbnailUrl = "#A5D6A7", backgroundUrl = "#F4F6F1",
+                    type = ThemeType.THEME, description = "Soft green tones for a peaceful mind.",
                     icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
-                    decoration = "COOKIE"
+                    primaryColor = "#A5D6A7", decoration = "MATCHA"
                 ),
                 Theme(
-                    id = "8",
-                    name = "Heart Felt",
-                    collection = "Love is in the air",
-                    price = 100,
-                    thumbnailUrl = null,
-                    backgroundUrl = null,
-                    type = ThemeType.ICON_PACK,
-                    description = "Express your feelings with these heart shapes.",
+                    id = "16", name = "Sunset", collection = "Golden Sky", price = 1800,
+                    thumbnailUrl = "#FFB74D", backgroundUrl = "#F4F6F1",
+                    type = ThemeType.THEME, description = "Warm orange and red like the setting sun.",
                     icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
-                    decoration = "HEART"
+                    primaryColor = "#FFB74D", decoration = "SUNSET"
                 ),
                 Theme(
-                    id = "11",
-                    name = "Weather Cycle",
-                    collection = "Sun to Rain",
-                    price = 110,
-                    thumbnailUrl = null,
-                    backgroundUrl = null,
-                    type = ThemeType.ICON_PACK,
-                    description = "From sunny smiles to rainy tears.",
+                    id = "17", name = "Galaxy", collection = "Stardust Journey", price = 2500,
+                    thumbnailUrl = "#9FA8DA", backgroundUrl = "#F4F6F1",
+                    type = ThemeType.THEME, description = "Indigo and blue mystery of the far galaxy.",
                     icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
-                    decoration = "WEATHER"
+                    primaryColor = "#9FA8DA", decoration = "GALAXY"
+                ),
+                Theme(
+                    id = "18", name = "Autumn", collection = "Fall Season", price = 1200,
+                    thumbnailUrl = "#FFAB91", backgroundUrl = "#F4F6F1",
+                    type = ThemeType.THEME, description = "Earthy brown and orange of falling leaves.",
+                    icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
+                    primaryColor = "#FFAB91", decoration = "AUTUMN"
+                ),
+                Theme(
+                    id = "19", name = "Gray Brown", collection = "Minimalist Earth", price = 900,
+                    thumbnailUrl = "#BCAAA4", backgroundUrl = "#F4F6F1",
+                    type = ThemeType.THEME, description = "Sophisticated neutral tones for minimalism.",
+                    icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
+                    primaryColor = "#BCAAA4", decoration = "GRAY_BROWN"
+                ),
+                Theme(
+                    id = "20", name = "Cookie Batch", collection = "Sweet Treats", price = 1300,
+                    thumbnailUrl = "#FFFFD54F", backgroundUrl = "#F4F6F1",
+                    type = ThemeType.THEME, description = "Warm cookie colors for a sweet session.",
+                    icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
+                    primaryColor = "#FFFFD54F", decoration = "COOKIE_BATCH"
+                ),
+                Theme(
+                    id = "21", name = "Heart Felt", collection = "Romantic Softness", price = 1400,
+                    thumbnailUrl = "#F06292", backgroundUrl = "#F4F6F1",
+                    type = ThemeType.THEME, description = "Express love with sweet soft pinks.",
+                    icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
+                    primaryColor = "#F06292", decoration = "HEART_FELT"
+                ),
+                Theme(
+                    id = "22", name = "Weather Cycle", collection = "Dynamic Nature", price = 1100,
+                    thumbnailUrl = "#90A4AE", backgroundUrl = "#F4F6F1",
+                    type = ThemeType.THEME, description = "Clean gray-blue tones of the weather.",
+                    icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
+                    primaryColor = "#90A4AE", decoration = "WEATHER_CYCLE"
                 )
             )
 
             val mockOwnedThemes = listOf(
                 Theme(
                     id = "9",
-                    name = "Default Bean",
-                    collection = "Original classic",
+                    name = "Classic Yellow",
+                    collection = "Original style",
                     price = 0,
-                    thumbnailUrl = null,
-                    backgroundUrl = null,
+                    thumbnailUrl = "#FFFFC547",
+                    backgroundUrl = "#F4F6F1",
                     isActive = true,
                     isOwned = true,
                     type = ThemeType.THEME,
                     icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
-                    primaryColor = "#FFFBF4"
+                    primaryColor = "#FFFFC547"
                 )
             )
 
@@ -382,6 +325,19 @@ class StoreViewModel @Inject constructor(
                 "13" -> MoonThemeType.SKY
                 "14" -> MoonThemeType.FOREST
                 "15" -> MoonThemeType.COFFEE
+                "16" -> MoonThemeType.LEMON
+                "17" -> MoonThemeType.CHERRY
+                "18" -> MoonThemeType.LAVENDER
+                "19" -> MoonThemeType.OCEAN
+                "20" -> MoonThemeType.NEBULA
+                "21" -> MoonThemeType.MATCHA
+                "22" -> MoonThemeType.SUNSET
+                "23" -> MoonThemeType.GALAXY
+                "24" -> MoonThemeType.AUTUMN
+                "6" -> MoonThemeType.GRAY_BROWN
+                "7" -> MoonThemeType.COOKIE_BATCH
+                "8" -> MoonThemeType.HEART_FELT
+                "11" -> MoonThemeType.WEATHER_CYCLE
                 else -> MoonThemeType.DEFAULT
             }
             themePreferencesManager.setThemeType(themeType)

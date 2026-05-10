@@ -37,6 +37,17 @@ class MainViewModel @Inject constructor(
             initialValue = null
         )
 
+    private val _snackbarMessage = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+    val snackbarMessage: StateFlow<String?> = _snackbarMessage
+
+    fun showSnackbar(message: String) {
+        _snackbarMessage.value = message
+    }
+
+    fun dismissSnackbar() {
+        _snackbarMessage.value = null
+    }
+
     fun setTheme(theme: MoonThemeType) {
         viewModelScope.launch {
             themePreferencesManager.setThemeType(theme)

@@ -14,7 +14,13 @@ data class DailyLogEntity(
     val isMenstruation: Boolean,
     val menstruationPhase: String?,
     val dailyPhotosJson: String?, // Serialized List<String>
-    val activityIdsJson: String?   // Serialized List<String>
+    val activityIdsJson: String?,   // Serialized List<String>
+    val songTitle: String? = null,
+    val artistName: String? = null,
+    val albumArtUrl: String? = null,
+    val steps: Int? = null,
+    val calories: Int? = null,
+    val distance: Double? = null
 ) {
     fun toResponse(): DailyLogResponseDto {
         return DailyLogResponseDto(
@@ -26,7 +32,13 @@ data class DailyLogEntity(
             isMenstruation = isMenstruation,
             menstruationPhase = menstruationPhase,
             dailyPhotos = dailyPhotosJson?.split(",")?.filter { it.isNotBlank() },
-            activityIds = activityIdsJson?.split(",")?.filter { it.isNotBlank() }
+            activityIds = activityIdsJson?.split(",")?.filter { it.isNotBlank() },
+            songTitle = songTitle,
+            artistName = artistName,
+            albumArtUrl = albumArtUrl,
+            steps = steps,
+            calories = calories,
+            distance = distance
         )
     }
 
@@ -40,7 +52,13 @@ data class DailyLogEntity(
             isMenstruation = isMenstruation,
             menstruationPhase = menstruationPhase,
             dailyPhotos = dailyPhotosJson?.split(",")?.filter { it.isNotBlank() },
-            activityIds = activityIdsJson?.split(",")?.filter { it.isNotBlank() }
+            activityIds = activityIdsJson?.split(",")?.filter { it.isNotBlank() },
+            songTitle = songTitle,
+            artistName = artistName,
+            albumArtUrl = albumArtUrl,
+            steps = steps,
+            calories = calories,
+            distance = distance
         )
     }
 
@@ -55,7 +73,13 @@ data class DailyLogEntity(
                 isMenstruation = response.isMenstruation,
                 menstruationPhase = response.menstruationPhase,
                 dailyPhotosJson = response.dailyPhotos?.joinToString(","),
-                activityIdsJson = response.activityIds?.joinToString(",")
+                activityIdsJson = response.activityIds?.joinToString(","),
+                songTitle = response.songTitle,
+                artistName = response.artistName,
+                albumArtUrl = response.albumArtUrl,
+                steps = response.steps,
+                calories = response.calories,
+                distance = response.distance
             )
         }
     }

@@ -3,27 +3,32 @@ package com.diary.moonpage.presentation.screens.calendar
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.core.util.ActivityPreferencesManager
+import com.diary.moonpage.domain.model.DailyLog
 import com.diary.moonpage.domain.repository.DailyLogRepository
+import com.diary.moonpage.core.util.PkceUtil
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import javax.inject.Inject
-import kotlinx.coroutines.channels.Channel
 import java.io.File
+import java.time.LocalDate
+import java.time.LocalTime
+import java.util.UUID
+import javax.inject.Inject
 
 @HiltViewModel
 class DailyLogViewModel @Inject constructor(
     private val repository: DailyLogRepository,
     private val activityPreferencesManager: ActivityPreferencesManager,
-    private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager
+    private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager,
+    private val tokenManager: com.diary.moonpage.core.util.TokenManager,
+    val healthConnectManager: com.diary.moonpage.core.util.HealthConnectManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DailyLogUiState())
     val uiState: StateFlow<DailyLogUiState> = _uiState.asStateFlow()
 
-    private val _uiEffect = Channel<DailyLogUiEffect>()
-    val uiEffect = _uiEffect.receiveAsFlow()
+    private val _uiEffect = MutableSharedFlow<DailyLogUiEffect>()
+    val uiEffect: SharedFlow<DailyLogUiEffect> = _uiEffect.asSharedFlow()
 
     init {
         viewModelScope.launch {
@@ -41,6 +46,16 @@ class DailyLogViewModel @Inject constructor(
                 _uiState.update { it.copy(themeType = themeType) }
             }
         }
+        viewModelScope.launch {
+            tokenManager.getSpotifyToken().collect { token ->
+                _uiState.update { it.copy(isSpotifyLinked = token != null) }
+            }
+        }
+    }
+
+    fun setInitialDate(date: LocalDate) {
+        _uiState.update { it.copy(date = date) }
+        fetchLogForDate(date)
     }
 
     fun onEvent(event: DailyLogUiEvent) {
@@ -49,20 +64,16 @@ class DailyLogViewModel @Inject constructor(
                 _uiState.update { it.copy(selectedMood = event.moodId) }
             }
             is DailyLogUiEvent.OnActivityToggled -> {
-                _uiState.update { state ->
-                    val newList = if (state.selectedActivities.contains(event.activityId)) {
-                        state.selectedActivities - event.activityId
-                    } else {
-                        state.selectedActivities + event.activityId
-                    }
-                    state.copy(selectedActivities = newList)
+                val current = _uiState.value.selectedActivities.toMutableList()
+                if (current.contains(event.activityId)) {
+                    current.remove(event.activityId)
+                } else {
+                    current.add(event.activityId)
                 }
+                _uiState.update { it.copy(selectedActivities = current) }
             }
             is DailyLogUiEvent.OnNoteChanged -> {
                 _uiState.update { it.copy(noteText = event.note) }
-            }
-            is DailyLogUiEvent.OnSleepChanged -> {
-                _uiState.update { it.copy(sleepHours = event.hours) }
             }
             is DailyLogUiEvent.OnDateChanged -> {
                 _uiState.update { it.copy(date = event.date) }
@@ -77,6 +88,60 @@ class DailyLogViewModel @Inject constructor(
             is DailyLogUiEvent.OnMusicChanged -> {
                 _uiState.update { it.copy(musicTitle = event.musicTitle) }
             }
+            is DailyLogUiEvent.OnMusicSelected -> {
+                _uiState.update { it.copy(
+                    musicTitle = event.title,
+                    artistName = event.artist,
+                    albumArtUrl = event.imageUrl
+                ) }
+            }
+            is DailyLogUiEvent.OnSleepChanged -> {
+                _uiState.update { it.copy(sleepHours = event.hours) }
+            }
+            DailyLogUiEvent.OnImportSteps -> {
+                viewModelScope.launch {
+                    if (healthConnectManager.hasAllPermissions()) {
+                        try {
+                            val data = healthConnectManager.readHealthData(_uiState.value.date)
+                            _uiState.update { it.copy(
+                                steps = data.steps,
+                                calories = data.calories,
+                                distance = data.distance,
+                                snackbarMessage = "Health data imported: ${data.steps} steps!"
+                            ) }
+                        } catch (e: Exception) {
+                            _uiState.update { it.copy(snackbarMessage = "Failed to read health data: ${e.message}") }
+                        }
+                    }
+                }
+            }
+            DailyLogUiEvent.OnLinkMusicAccount -> {
+                _uiState.update { it.copy(showSpotifyAuthDialog = true) }
+            }
+            DailyLogUiEvent.OnSpotifyAuthConfirm -> {
+                _uiState.update { it.copy(showSpotifyAuthDialog = false) }
+            }
+            DailyLogUiEvent.OnSpotifyAuthDismiss -> {
+                _uiState.update { it.copy(showSpotifyAuthDialog = false) }
+            }
+            DailyLogUiEvent.OnSleepRecordClick -> {
+                _uiState.update { it.copy(showSleepDialog = true) }
+            }
+            DailyLogUiEvent.OnSleepDialogDismiss -> {
+                _uiState.update { it.copy(showSleepDialog = false) }
+            }
+            is DailyLogUiEvent.OnSleepTimeConfirmed -> {
+                val bedMin = event.bedTime.hour * 60 + event.bedTime.minute
+                val wakeMin = event.wakeTime.hour * 60 + event.wakeTime.minute
+                val diffMin = if (wakeMin >= bedMin) wakeMin - bedMin else (24 * 60 - bedMin) + wakeMin
+                val hours = diffMin / 60f
+                _uiState.update { it.copy(
+                    sleepHours = hours,
+                    sleepBedTime = event.bedTime,
+                    sleepWakeTime = event.wakeTime,
+                    showSleepDialog = false
+                ) }
+            }
             DailyLogUiEvent.OnSaveClick -> {
                 saveDailyLog()
             }
@@ -86,60 +151,24 @@ class DailyLogViewModel @Inject constructor(
             DailyLogUiEvent.OnDismissExitDialog -> {
                 _uiState.update { it.copy(showExitDialog = false) }
             }
-            DailyLogUiEvent.OnDismissOverwriteDialog -> {
-                _uiState.update { it.copy(showOverwriteDialog = false) }
-            }
-            DailyLogUiEvent.OnConfirmOverwrite -> {
-                _uiState.value.pendingDate?.let { date ->
-                    _uiState.update { it.copy(date = date, showOverwriteDialog = false) }
-                    fetchLogForDate(date)
-                }
-            }
             DailyLogUiEvent.OnDatePickerClick -> {
                 _uiState.update { it.copy(showDatePicker = true) }
             }
             DailyLogUiEvent.OnDatePickerDismiss -> {
                 _uiState.update { it.copy(showDatePicker = false) }
             }
+            DailyLogUiEvent.OnConfirmOverwrite -> {
+                val pending = _uiState.value.pendingDate
+                if (pending != null) {
+                    _uiState.update { it.copy(date = pending, showOverwriteDialog = false) }
+                    fetchLogForDate(pending)
+                }
+            }
+            DailyLogUiEvent.OnDismissOverwriteDialog -> {
+                _uiState.update { it.copy(showOverwriteDialog = false) }
+            }
             DailyLogUiEvent.DismissMessage -> {
                 _uiState.update { it.copy(snackbarMessage = null) }
-            }
-        }
-    }
-
-    fun setInitialDate(date: LocalDate) {
-        _uiState.update { it.copy(date = date) }
-        fetchLogForDate(date)
-    }
-
-    private fun fetchLogForDate(date: LocalDate) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            repository.getDailyLogByDate(date.toString()).onSuccess { log ->
-                _uiState.update { it.copy(
-                    existingLog = log,
-                    selectedMood = log.baseMoodId,
-                    selectedActivities = log.activityIds ?: emptyList(),
-                    noteText = log.note ?: "",
-                    sleepHours = log.sleepHours?.toFloat() ?: 7f,
-                    isMenstruation = log.isMenstruation,
-                    menstruationPhase = log.menstruationPhase,
-                    dailyPhotos = log.dailyPhotos ?: emptyList(),
-                    isLoading = false
-                ) }
-            }.onFailure {
-                _uiState.update { it.copy(
-                    existingLog = null,
-                    selectedMood = null,
-                    selectedActivities = emptyList(),
-                    noteText = "",
-                    sleepHours = 7f,
-                    isMenstruation = false,
-                    menstruationPhase = null,
-                    dailyPhotos = emptyList(),
-                    musicTitle = null,
-                    isLoading = false
-                ) }
             }
         }
     }
@@ -156,6 +185,57 @@ class DailyLogViewModel @Inject constructor(
 
     fun setPendingDate(date: LocalDate) {
         _uiState.update { it.copy(pendingDate = date, showOverwriteDialog = true) }
+    }
+
+    suspend fun getSpotifyAuthUrl(): String {
+        val verifier = PkceUtil.generateCodeVerifier()
+        val challenge = PkceUtil.generateCodeChallenge(verifier)
+        val state = UUID.randomUUID().toString()
+        tokenManager.saveSpotifyAuthData(verifier, state)
+        return com.diary.moonpage.data.remote.api.SpotifyApi.getAuthUrl(challenge, state)
+    }
+
+    private fun fetchLogForDate(date: LocalDate) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            repository.getDailyLogByDate(date.toString()).onSuccess { log ->
+                _uiState.update { it.copy(
+                    existingLog = log,
+                    selectedMood = log.baseMoodId,
+                    selectedActivities = log.activityIds ?: emptyList(),
+                    noteText = log.note ?: "",
+                    sleepHours = log.sleepHours?.toFloat() ?: 0f,
+                    isMenstruation = log.isMenstruation,
+                    menstruationPhase = log.menstruationPhase,
+                    dailyPhotos = log.dailyPhotos ?: emptyList(),
+                    musicTitle = log.songTitle,
+                    artistName = log.artistName,
+                    albumArtUrl = log.albumArtUrl,
+                    steps = log.steps ?: 0,
+                    calories = log.calories ?: 0,
+                    distance = log.distance ?: 0.0,
+                    isLoading = false
+                ) }
+            }.onFailure {
+                _uiState.update { it.copy(
+                    existingLog = null,
+                    selectedMood = null,
+                    selectedActivities = emptyList(),
+                    noteText = "",
+                    sleepHours = 0f,
+                    isMenstruation = false,
+                    menstruationPhase = null,
+                    dailyPhotos = emptyList(),
+                    musicTitle = null,
+                    artistName = null,
+                    albumArtUrl = null,
+                    steps = 0,
+                    calories = 0,
+                    distance = 0.0,
+                    isLoading = false
+                ) }
+            }
+        }
     }
 
     private fun saveDailyLog() {
@@ -176,10 +256,16 @@ class DailyLogViewModel @Inject constructor(
                 isMenstruation = state.isMenstruation,
                 menstruationPhase = state.menstruationPhase,
                 activityIds = state.selectedActivities,
-                dailyPhotos = state.dailyPhotos.takeIf { it.isNotEmpty() } as List<File>?
+                dailyPhotos = null,
+                songTitle = state.musicTitle,
+                artistName = state.artistName,
+                albumArtUrl = state.albumArtUrl,
+                steps = state.steps,
+                calories = state.calories,
+                distance = state.distance
             ).onSuccess {
                 val msg = if (state.existingLog != null) "Record updated successfully!" else "Record created successfully!"
-                _uiEffect.send(DailyLogUiEffect.SaveSuccess(msg))
+                _uiEffect.emit(DailyLogUiEffect.SaveSuccess(msg))
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false, snackbarMessage = error.message ?: "Failed to save log") }
             }

@@ -84,7 +84,9 @@ private val LightColorScheme = lightColorScheme(
 )
 
 enum class MoonThemeType {
-    DEFAULT, BLUSHING, KITTY, SPROUT, MIDNIGHT, SUNNY, SKY, FOREST, COFFEE, LEMON, CHERRY, LAVENDER, OCEAN
+    DEFAULT, BLUSHING, KITTY, SPROUT, MIDNIGHT, SUNNY, SKY, FOREST, COFFEE, LEMON, CHERRY, LAVENDER, OCEAN,
+    NEBULA, MATCHA, SUNSET, GALAXY, AUTUMN,
+    GRAY_BROWN, COOKIE_BATCH, HEART_FELT, WEATHER_CYCLE
 }
 
 fun getThemeShades(themeType: MoonThemeType): List<Color> {
@@ -125,7 +127,34 @@ fun getThemeShades(themeType: MoonThemeType): List<Color> {
         MoonThemeType.MIDNIGHT -> listOf(
             Color(0xFFFFF7D1), Color(0xFFF5E69A), Color(0xFFD4C059), Color(0xFFA89532), Color(0xFF806F18)
         )
-        else -> listOf( // Default Bean - Yellow Progression
+        MoonThemeType.NEBULA -> listOf(
+            Color(0xFFF3E5F5), Color(0xFFE1BEE7), Color(0xFFBA68C8), Color(0xFF9C27B0), Color(0xFF7B1FA2)
+        )
+        MoonThemeType.MATCHA -> listOf(
+            Color(0xFFE8F5E9), Color(0xFFC8E6C9), Color(0xFFA5D6A7), Color(0xFF81C784), Color(0xFF66BB6A)
+        )
+        MoonThemeType.SUNSET -> listOf(
+            Color(0xFFFFF3E0), Color(0xFFFFE0B2), Color(0xFFFFB74D), Color(0xFFFFA726), Color(0xFFFF9800)
+        )
+        MoonThemeType.GALAXY -> listOf(
+            Color(0xFFE8EAF6), Color(0xFFC5CAE9), Color(0xFF9FA8DA), Color(0xFF7986CB), Color(0xFF5C6BC0)
+        )
+        MoonThemeType.AUTUMN -> listOf(
+            Color(0xFFFBE9E7), Color(0xFFFFCCBC), Color(0xFFFFAB91), Color(0xFFE64A19), Color(0xFFBF360C)
+        )
+        MoonThemeType.GRAY_BROWN -> listOf( // Sophisticated neutral
+            Color(0xFFEFEBE9), Color(0xFFD7CCC8), Color(0xFFBCAAA4), Color(0xFF8D6E63), Color(0xFF5D4037)
+        )
+        MoonThemeType.COOKIE_BATCH -> listOf( // Delicious warm cookies
+            Color(0xFFFFF8E1), Color(0xFFFFECB3), Color(0xFFFFD54F), Color(0xFFFFA000), Color(0xFF8D6E63)
+        )
+        MoonThemeType.HEART_FELT -> listOf( // Sweet soft pinks
+            Color(0xFFFCE4EC), Color(0xFFF8BBD0), Color(0xFFF06292), Color(0xFFE91E63), Color(0xFFAD1457)
+        )
+        MoonThemeType.WEATHER_CYCLE -> listOf( // Clean gray/blue weather
+            Color(0xFFECEFF1), Color(0xFFCFD8DC), Color(0xFF90A4AE), Color(0xFF607D8B), Color(0xFF455A64)
+        )
+        else -> listOf(
             Color(0xFFFFF2C2), Color(0xFFFFE18A), Color(0xFFFFC547), Color(0xFFDB9D1F), Color(0xFFA8730D)
         )
     }
@@ -138,8 +167,35 @@ fun MoonPageTheme(
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
+    val themePrimary = if (darkTheme) {
+        when (themeType) {
+            MoonThemeType.DEFAULT -> MoonActionDark
+            MoonThemeType.SPROUT -> Color(0xFFB6E388)
+            MoonThemeType.BLUSHING -> Color(0xFFECA79D)
+            MoonThemeType.KITTY -> Color(0xFFB7C2FF)
+            MoonThemeType.SUNNY -> Color(0xFFFFD54F)
+            MoonThemeType.SKY -> Color(0xFF81D4FA)
+            MoonThemeType.FOREST -> Color(0xFF80CBC4)
+            MoonThemeType.COFFEE -> Color(0xFFD7CCC8)
+            MoonThemeType.LEMON -> Color(0xFFD4E157)
+            MoonThemeType.CHERRY -> Color(0xFFEF9A9A)
+            MoonThemeType.LAVENDER -> Color(0xFFCE93D8)
+            MoonThemeType.OCEAN -> Color(0xFF90CAF9)
+            MoonThemeType.MIDNIGHT -> Color(0xFFF0E68C)
+            MoonThemeType.NEBULA -> Color(0xFFBA68C8)
+            MoonThemeType.MATCHA -> Color(0xFF81C784)
+            MoonThemeType.SUNSET -> Color(0xFFFFB74D)
+            MoonThemeType.GALAXY -> Color(0xFF7986CB)
+            MoonThemeType.AUTUMN -> Color(0xFFE64A19)
+            MoonThemeType.GRAY_BROWN -> Color(0xFF8D6E63)
+            MoonThemeType.COOKIE_BATCH -> Color(0xFFFFA000)
+            MoonThemeType.HEART_FELT -> Color(0xFFE91E63)
+            MoonThemeType.WEATHER_CYCLE -> Color(0xFF607D8B)
+        }
+    } else MoonActionDark
+
     val colorScheme = if (darkTheme) {
-        DarkColorScheme 
+        DarkColorScheme.copy(primary = themePrimary)
     } else {
         when (themeType) {
             MoonThemeType.DEFAULT -> LightColorScheme
@@ -226,6 +282,69 @@ fun MoonPageTheme(
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFE0E2EA)
+            )
+            MoonThemeType.NEBULA -> lightColorScheme(
+                primary = Color(0xFF9C27B0),
+                onPrimary = Color.White,
+                background = MoonBgLight,
+                surface = Color.White,
+                surfaceVariant = Color(0xFFF3E5F5)
+            )
+            MoonThemeType.MATCHA -> lightColorScheme(
+                primary = Color(0xFF4CAF50),
+                onPrimary = Color.White,
+                background = MoonBgLight,
+                surface = Color.White,
+                surfaceVariant = Color(0xFFE8F5E9)
+            )
+            MoonThemeType.SUNSET -> lightColorScheme(
+                primary = Color(0xFFFF9800),
+                onPrimary = Color.White,
+                background = MoonBgLight,
+                surface = Color.White,
+                surfaceVariant = Color(0xFFFFF3E0)
+            )
+            MoonThemeType.GALAXY -> lightColorScheme(
+                primary = Color(0xFF3F51B5),
+                onPrimary = Color.White,
+                background = MoonBgLight,
+                surface = Color.White,
+                surfaceVariant = Color(0xFFE8EAF6)
+            )
+            MoonThemeType.AUTUMN -> lightColorScheme(
+                primary = Color(0xFFD84315),
+                onPrimary = Color.White,
+                background = MoonBgLight,
+                surface = Color.White,
+                surfaceVariant = Color(0xFFFBE9E7)
+            )
+            MoonThemeType.GRAY_BROWN -> lightColorScheme(
+                primary = Color(0xFF6D4C41),
+                onPrimary = Color.White,
+                background = MoonBgLight,
+                surface = Color.White,
+                surfaceVariant = Color(0xFFEFEBE9)
+            )
+            MoonThemeType.COOKIE_BATCH -> lightColorScheme(
+                primary = Color(0xFF8D6E63),
+                onPrimary = Color.White,
+                background = MoonBgLight,
+                surface = Color.White,
+                surfaceVariant = Color(0xFFFFF8E1)
+            )
+            MoonThemeType.HEART_FELT -> lightColorScheme(
+                primary = Color(0xFFC2185B),
+                onPrimary = Color.White,
+                background = MoonBgLight,
+                surface = Color.White,
+                surfaceVariant = Color(0xFFFCE4EC)
+            )
+            MoonThemeType.WEATHER_CYCLE -> lightColorScheme(
+                primary = Color(0xFF455A64),
+                onPrimary = Color.White,
+                background = MoonBgLight,
+                surface = Color.White,
+                surfaceVariant = Color(0xFFECEFF1)
             )
         }
     }

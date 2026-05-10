@@ -13,7 +13,13 @@ interface DailyLogRepository {
         isMenstruation: Boolean,
         menstruationPhase: String?,
         activityIds: List<String>?,
-        dailyPhotos: List<File>?
+        dailyPhotos: List<File>?,
+        songTitle: String? = null,
+        artistName: String? = null,
+        albumArtUrl: String? = null,
+        steps: Int? = null,
+        calories: Int? = null,
+        distance: Double? = null
     ): Result<Unit>
 
     suspend fun getDailyLogByDate(date: String): Result<DailyLog>

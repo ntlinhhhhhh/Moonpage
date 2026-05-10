@@ -276,10 +276,9 @@ fun ThemeCard(
             getThemeShades(theme.decoration)
         }
 
-        val isNewStyle = listOf("SUNNY", "SKY", "FOREST", "COFFEE", "LEMON", "CHERRY", "LAVENDER", "OCEAN", "SPROUT").contains(theme.decoration)
-        val previewBg = if (isNewStyle) shades[0]
-        else if (theme.primaryColor != null) Color(android.graphics.Color.parseColor(theme.primaryColor))
-        else MaterialTheme.colorScheme.background
+        val isNewStyle = listOf("SUNNY", "SKY", "FOREST", "COFFEE", "LEMON", "CHERRY", "LAVENDER", "OCEAN", "SPROUT", "NEBULA", "MATCHA", "SUNSET", "GALAXY", "AUTUMN", "GRAY_BROWN", "COOKIE_BATCH", "HEART_FELT", "WEATHER_CYCLE").contains(theme.decoration)
+        val previewBg = if (theme.primaryColor != null) Color(android.graphics.Color.parseColor(theme.primaryColor)).copy(alpha = 0.15f)
+        else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
 
         Box(
             modifier = Modifier

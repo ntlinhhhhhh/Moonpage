@@ -1,8 +1,10 @@
 package com.diary.moonpage.presentation.screens.calendar
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,6 +30,8 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -42,11 +46,14 @@ import com.diary.moonpage.core.util.MoonIcons
 import androidx.compose.ui.graphics.ColorFilter
 import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import com.diary.moonpage.core.theme.MoonTheme
+import com.diary.moonpage.core.theme.MoonThemeType
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlinx.coroutines.launch
+import java.io.File
 
 /**
  * Stateful Component
@@ -62,6 +69,7 @@ fun DailyLogScreen(
     viewModel: DailyLogViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(dateString) {
         viewModel.setInitialDate(LocalDate.parse(dateString))
@@ -75,6 +83,15 @@ fun DailyLogScreen(
         }
     }
 
+    val healthConnectManager = viewModel.healthConnectManager
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = healthConnectManager.requestPermissionsContract()
+    ) { granted ->
+        if (granted.containsAll(healthConnectManager.permissions)) {
+            viewModel.onEvent(DailyLogUiEvent.OnImportSteps)
+        }
+    }
+
     DailyLogScreenContent(
         uiState = uiState,
         onEvent = viewModel::onEvent,
@@ -82,8 +99,20 @@ fun DailyLogScreen(
         onNavigateToMusic = onNavigateToMusic,
         onNavigateToMenstrualCycle = onNavigateToMenstrualCycle,
         onNavigateToDailyPhoto = onNavigateToDailyPhoto,
-        checkLogExists = viewModel::checkLogExists,
-        setPendingDate = viewModel::setPendingDate
+        onImportSteps = {
+            scope.launch {
+                if (healthConnectManager.hasAllPermissions()) {
+                    viewModel.onEvent(DailyLogUiEvent.OnImportSteps)
+                } else {
+                    permissionLauncher.launch(healthConnectManager.permissions)
+                }
+            }
+        },
+        onLinkMusicAccount = { viewModel.onEvent(DailyLogUiEvent.OnLinkMusicAccount) },
+        checkLogExists = { date, callback -> viewModel.checkLogExists(date, callback) },
+        setPendingDate = { date -> viewModel.setPendingDate(date) },
+        getSpotifyAuthUrl = { viewModel.getSpotifyAuthUrl() },
+        scope = scope
     )
 }
 
@@ -98,8 +127,12 @@ fun DailyLogScreenContent(
     onNavigateToMusic: () -> Unit,
     onNavigateToMenstrualCycle: () -> Unit,
     onNavigateToDailyPhoto: () -> Unit,
+    onImportSteps: () -> Unit,
+    onLinkMusicAccount: () -> Unit,
     checkLogExists: (LocalDate, (Boolean) -> Unit) -> Unit,
-    setPendingDate: (LocalDate) -> Unit
+    setPendingDate: (LocalDate) -> Unit,
+    getSpotifyAuthUrl: suspend () -> String,
+    scope: kotlinx.coroutines.CoroutineScope
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val hasChanges = remember(uiState) {
@@ -115,7 +148,8 @@ fun DailyLogScreenContent(
         }
     }
 
-    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+    val focusManager = LocalFocusManager.current
+    val uriHandler = LocalUriHandler.current
 
     Scaffold(
         modifier = Modifier.pointerInput(Unit) {
@@ -141,17 +175,32 @@ fun DailyLogScreenContent(
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize()) {
-        DailyLogMainContent(
-            modifier = Modifier.padding(paddingValues),
-            uiState = uiState,
-            onEvent = onEvent,
-            onNavigateToMusic = onNavigateToMusic,
-            onNavigateToMenstrualCycle = onNavigateToMenstrualCycle,
-            onNavigateToDailyPhoto = onNavigateToDailyPhoto
-        )
-        
-        MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
+            DailyLogMainContent(
+                modifier = Modifier.padding(paddingValues),
+                uiState = uiState,
+                onEvent = onEvent,
+                onNavigateToMusic = onNavigateToMusic,
+                onNavigateToMenstrualCycle = onNavigateToMenstrualCycle,
+                onNavigateToDailyPhoto = onNavigateToDailyPhoto,
+                onImportSteps = onImportSteps,
+                onLinkMusicAccount = onLinkMusicAccount
+            )
+            
+            MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
+    }
+
+    if (uiState.showSpotifyAuthDialog) {
+        SpotifyAuthDialog(
+            onDismiss = { onEvent(DailyLogUiEvent.OnSpotifyAuthDismiss) },
+            onConfirm = { 
+                onEvent(DailyLogUiEvent.OnSpotifyAuthDismiss)
+                scope.launch {
+                    val authUrl = getSpotifyAuthUrl()
+                    uriHandler.openUri(authUrl)
+                }
+            }
+        )
     }
 
     if (uiState.showExitDialog) {
@@ -184,6 +233,17 @@ fun DailyLogScreenContent(
                 }
             },
             onDismiss = { onEvent(DailyLogUiEvent.OnDatePickerDismiss) }
+        )
+    }
+
+    if (uiState.showSleepDialog) {
+        SleepRecordDialog(
+            initialBedTime = uiState.sleepBedTime,
+            initialWakeTime = uiState.sleepWakeTime,
+            onDismiss = { onEvent(DailyLogUiEvent.OnSleepDialogDismiss) },
+            onConfirm = { bed, wake ->
+                onEvent(DailyLogUiEvent.OnSleepTimeConfirmed(bed, wake))
+            }
         )
     }
 }
@@ -228,7 +288,7 @@ private fun DailyLogTopBar(
 private fun DailyLogBottomBar(
     isLoading: Boolean,
     onSaveClick: () -> Unit,
-    themeType: com.diary.moonpage.core.theme.MoonThemeType,
+    themeType: MoonThemeType,
     selectedMood: Int?
 ) {
     Surface(
@@ -266,7 +326,9 @@ private fun DailyLogMainContent(
     onEvent: (DailyLogUiEvent) -> Unit,
     onNavigateToMusic: () -> Unit,
     onNavigateToMenstrualCycle: () -> Unit,
-    onNavigateToDailyPhoto: () -> Unit
+    onNavigateToDailyPhoto: () -> Unit,
+    onImportSteps: () -> Unit,
+    onLinkMusicAccount: () -> Unit
 ) {
     val themeType = uiState.themeType
 
@@ -295,7 +357,14 @@ private fun DailyLogMainContent(
         }
 
         item {
-            DailyMusicSection(musicTitle = uiState.musicTitle, onMusicClick = onNavigateToMusic)
+            DailyMusicSection(
+                musicTitle = uiState.musicTitle, 
+                artistName = uiState.artistName,
+                albumArtUrl = uiState.albumArtUrl,
+                isLinked = uiState.isSpotifyLinked,
+                onMusicClick = onNavigateToMusic,
+                onLinkAccount = onLinkMusicAccount
+            )
         }
 
         uiState.enabledCategories.forEach { category ->
@@ -314,7 +383,22 @@ private fun DailyLogMainContent(
         }
 
         item {
-            DailySleepSection(sleepHours = uiState.sleepHours)
+            DailyHealthSection(
+                steps = uiState.steps,
+                calories = uiState.calories,
+                distance = uiState.distance,
+                onImportClick = onImportSteps
+            )
+        }
+
+        item {
+            DailySleepSection(
+                sleepHours = uiState.sleepHours,
+                bedTime = uiState.sleepBedTime,
+                wakeTime = uiState.sleepWakeTime,
+                onRecordClick = { onEvent(DailyLogUiEvent.OnSleepRecordClick) },
+                onImportClick = onImportSteps
+            )
         }
 
         item {
@@ -343,7 +427,7 @@ private fun DailyLogMainContent(
 @Composable
 private fun DailyMoodSection(
     selectedMood: Int?,
-    themeType: com.diary.moonpage.core.theme.MoonThemeType,
+    themeType: MoonThemeType,
     onMoodSelected: (Int) -> Unit
 ) {
     Card(
@@ -382,19 +466,68 @@ private fun DailyMoodSection(
 }
 
 @Composable
-private fun DailyMusicSection(musicTitle: String?, onMusicClick: () -> Unit) {
+private fun DailyMusicSection(
+    musicTitle: String?, 
+    artistName: String?,
+    albumArtUrl: String?,
+    isLinked: Boolean, 
+    onMusicClick: () -> Unit, 
+    onLinkAccount: () -> Unit
+) {
     Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text("Music", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 16.sp)
-                Text("Link account", fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
+                if (!isLinked) {
+                    Text(
+                        "Link account", 
+                        fontSize = 11.sp, 
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable { onLinkAccount() }
+                    )
+                } else {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Rounded.CheckCircle, null, tint = MoonTheme.customColors.successColor, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Spotify Linked", fontSize = 11.sp, color = MoonTheme.customColors.successColor)
+                    }
+                }
             }
             Spacer(modifier = Modifier.height(10.dp))
-            Surface(color = MoonTheme.customColors.logItemBg, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().clickable { onMusicClick() }) {
-                Row(modifier = Modifier.padding(10.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Rounded.MusicNote, contentDescription = null, modifier = Modifier.size(20.dp), tint = MoonTheme.customColors.logCardOnBg)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(musicTitle ?: "Add a song", fontSize = 14.sp, color = MoonTheme.customColors.logCardOnBg)
+            
+            Surface(
+                color = MoonTheme.customColors.logItemBg, 
+                shape = RoundedCornerShape(12.dp), 
+                modifier = Modifier.fillMaxWidth().clickable { onMusicClick() }
+            ) {
+                if (musicTitle != null) {
+                    Row(
+                        modifier = Modifier.padding(10.dp), 
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        coil.compose.AsyncImage(
+                            model = albumArtUrl,
+                            contentDescription = null,
+                            modifier = Modifier.size(44.dp).clip(RoundedCornerShape(8.dp)),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(musicTitle, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, maxLines = 1)
+                            Text(artistName ?: "Unknown Artist", fontSize = 12.sp, color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.6f), maxLines = 1)
+                        }
+                        Icon(Icons.Rounded.MusicNote, null, tint = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.4f))
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier.padding(12.dp), 
+                        horizontalArrangement = Arrangement.Center, 
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Rounded.MusicNote, contentDescription = null, modifier = Modifier.size(20.dp), tint = MoonTheme.customColors.logCardOnBg)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Add a song", fontSize = 14.sp, color = MoonTheme.customColors.logCardOnBg)
+                    }
                 }
             }
         }
@@ -537,21 +670,99 @@ fun DailyLogGrid(
 }
 
 @Composable
-private fun DailySleepSection(sleepHours: Float) {
+private fun DailyHealthSection(steps: Int, calories: Int, distance: Double, onImportClick: () -> Unit) {
+    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("Health & Steps", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 16.sp)
+                Text(
+                    "Import", 
+                    fontSize = 12.sp, 
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable { onImportClick() }
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                HealthStatItem(
+                    modifier = Modifier.weight(1f),
+                    label = "Steps",
+                    value = steps.toString(),
+                    icon = Icons.Rounded.DirectionsWalk,
+                    color = Color(0xFF66BB6A)
+                )
+                HealthStatItem(
+                    modifier = Modifier.weight(1f),
+                    label = "Calories",
+                    value = "$calories kcal",
+                    icon = Icons.Rounded.LocalFireDepartment,
+                    color = Color(0xFFEF5350)
+                )
+                HealthStatItem(
+                    modifier = Modifier.weight(1f),
+                    label = "Distance",
+                    value = String.format("%.1f km", distance),
+                    icon = Icons.Rounded.Route,
+                    color = Color(0xFF42A5F5)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DailySleepSection(
+    sleepHours: Float,
+    bedTime: LocalTime,
+    wakeTime: LocalTime,
+    onRecordClick: () -> Unit,
+    onImportClick: () -> Unit
+) {
+    val hasRecorded = sleepHours > 0f
     Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text("Sleep", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 16.sp)
-                Text("Import", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
+                Text(
+                    "Import", 
+                    fontSize = 12.sp, 
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable { onImportClick() }
+                )
             }
             Spacer(modifier = Modifier.height(12.dp))
-            Surface(color = MoonTheme.customColors.logItemBg, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
-                Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Rounded.Bedtime, contentDescription = null, modifier = Modifier.size(20.dp), tint = MoonTheme.customColors.logCardOnBg)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Record your sleep", fontSize = 14.sp, color = MoonTheme.customColors.logCardOnBg)
+            Surface(color = MoonTheme.customColors.logItemBg, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().clickable { onRecordClick() }) {
+                if (hasRecorded) {
+                    Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text("${sleepHours}h sleep", color = MoonTheme.customColors.logCardOnBg, fontWeight = FontWeight.Bold)
+                        val fmt = DateTimeFormatter.ofPattern("HH:mm")
+                        Text("${bedTime.format(fmt)} - ${wakeTime.format(fmt)}", fontSize = 12.sp, color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.6f))
+                    }
+                } else {
+                    Row(modifier = Modifier.padding(12.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Rounded.Bedtime, contentDescription = null, modifier = Modifier.size(20.dp), tint = MoonTheme.customColors.logCardOnBg)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Record your sleep", fontSize = 14.sp, color = MoonTheme.customColors.logCardOnBg)
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun HealthStatItem(modifier: Modifier, label: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector, color: Color) {
+    Surface(
+        modifier = modifier,
+        color = MoonTheme.customColors.logItemBg,
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.padding(10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(icon, null, tint = color, modifier = Modifier.size(20.dp))
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(value, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MoonTheme.customColors.logCardOnBg)
+            Text(label, fontSize = 10.sp, color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.6f))
         }
     }
 }
@@ -565,15 +776,25 @@ private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.CenterVertically) {
                 repeat(5) { i ->
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("5/${6+i}", fontSize = 10.sp, color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.7f))
+                        val formatter = DateTimeFormatter.ofPattern("M/d")
+                        val date = LocalDate.now().minusDays(2L - i.toLong())
+                        Text(date.format(formatter), fontSize = 10.sp, color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.7f))
                         Spacer(modifier = Modifier.height(8.dp))
                         Box(
                             modifier = Modifier.size(40.dp).clip(CircleShape)
-                                .background(if (i == 2 && isMenstruation) MoonTheme.customColors.logItemAccent else MoonTheme.customColors.logItemBg)
+                                .background(
+                                    if (i == 2 && isMenstruation) Color(0xFFFFCDD2)
+                                    else MoonTheme.customColors.logItemBg
+                                )
                                 .clickable { if (i == 2) onToggle(!isMenstruation) },
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Rounded.WaterDrop, contentDescription = null, tint = if (i == 2 && isMenstruation) MoonTheme.customColors.logCardOnBg else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.4f))
+                            Icon(
+                                Icons.Rounded.WaterDrop,
+                                contentDescription = null,
+                                tint = if (i == 2 && isMenstruation) Color(0xFFE57373)
+                                       else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.4f)
+                            )
                         }
                     }
                 }
@@ -582,7 +803,7 @@ private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Rounded.WaterDrop, contentDescription = null, modifier = Modifier.size(14.dp), tint = MoonTheme.customColors.logCardOnBg)
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("On day 60 of cycle", fontSize = 12.sp, color = MoonTheme.customColors.logCardOnBg)
+                Text("Menstrual tracking enabled", fontSize = 12.sp, color = MoonTheme.customColors.logCardOnBg)
             }
         }
     }
@@ -590,7 +811,7 @@ private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean
 
 @Composable
 private fun DailyNoteSection(noteText: String, onNoteChanged: (String) -> Unit) {
-    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {
+    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {      
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Today's note", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
             Spacer(modifier = Modifier.height(12.dp))
@@ -616,13 +837,13 @@ private fun DailyNoteSection(noteText: String, onNoteChanged: (String) -> Unit) 
 
 @Composable
 private fun DailyPhotoSection(photos: List<String>, onPhotoClick: () -> Unit) {
-    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {
+    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {      
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Today's photo", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
             Spacer(modifier = Modifier.height(12.dp))
             Surface(color = MoonTheme.customColors.logItemBg, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().aspectRatio(1f).clickable { onPhotoClick() }) {
                 Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Rounded.CameraAlt, contentDescription = null, modifier = Modifier.size(48.dp), tint = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.4f))
+                    Icon(Icons.Rounded.CameraAlt, contentDescription = null, modifier = Modifier.size(48.dp), tint = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.4f)) 
                     Spacer(modifier = Modifier.height(12.dp))
                     Text("Select up to 3 photos", color = MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
                 }
@@ -634,12 +855,12 @@ private fun DailyPhotoSection(photos: List<String>, onPhotoClick: () -> Unit) {
 @Composable
 private fun DailyLogExitDialog(onDismiss: () -> Unit, onExit: () -> Unit) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(shape = RoundedCornerShape(20.dp), color = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+        Surface(shape = RoundedCornerShape(20.dp), color = MoonTheme.customColors.popupBgColor, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
             Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(text = "Changes have not been saved.", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(32.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnBgColor, contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor), shape = RoundedCornerShape(12.dp)) { Text("Cancel", fontWeight = FontWeight.Bold) }
+                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = MoonTheme.customColors.cancelBtnBgColor, contentColor = MoonTheme.customColors.cancelBtnTextColor), shape = RoundedCornerShape(12.dp)) { Text("Cancel", fontWeight = FontWeight.Bold) }
                     Button(onClick = onExit, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary), shape = RoundedCornerShape(12.dp)) { Text("Exit", fontWeight = FontWeight.Bold) }
                 }
             }
@@ -650,16 +871,16 @@ private fun DailyLogExitDialog(onDismiss: () -> Unit, onExit: () -> Unit) {
 @Composable
 private fun DailyLogOverwriteDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(shape = RoundedCornerShape(24.dp), color = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor, modifier = Modifier.fillMaxWidth().padding(horizontal = 28.dp)) {
+        Surface(shape = RoundedCornerShape(24.dp), color = MoonTheme.customColors.popupBgColor, modifier = Modifier.fillMaxWidth().padding(horizontal = 28.dp)) {
             Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(Icons.Rounded.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(48.dp))
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(text = "Data already exists", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                Text(text = "Data already exists", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)  
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(text = "There is already a record for this day. Do you want to overwrite it?", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(32.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnBgColor, contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor), shape = RoundedCornerShape(12.dp)) { Text("Cancel", fontWeight = FontWeight.Bold) }
+                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = MoonTheme.customColors.cancelBtnBgColor, contentColor = MoonTheme.customColors.cancelBtnTextColor), shape = RoundedCornerShape(12.dp)) { Text("Cancel", fontWeight = FontWeight.Bold) }
                     Button(onClick = onConfirm, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError), shape = RoundedCornerShape(12.dp)) { Text("Overwrite", fontWeight = FontWeight.Bold) }
                 }
             }
@@ -678,7 +899,7 @@ fun DailyLogDatePickerDialog(initialDate: LocalDate, onDateSelected: (LocalDate)
     val scope = rememberCoroutineScope()
 
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(shape = RoundedCornerShape(28.dp), color = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor, modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
+        Surface(shape = RoundedCornerShape(28.dp), color = MoonTheme.customColors.popupBgColor, modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
             Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("Which day is this record for?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(vertical = 16.dp))
                 Row(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -707,8 +928,28 @@ fun DailyLogDatePickerDialog(initialDate: LocalDate, onDateSelected: (LocalDate)
                 }
                 Spacer(modifier = Modifier.height(24.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(52.dp), colors = ButtonDefaults.buttonColors(containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnBgColor, contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor), shape = RoundedCornerShape(12.dp)) { Text("Cancel", fontWeight = FontWeight.Bold) }
+                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(52.dp), colors = ButtonDefaults.buttonColors(containerColor = MoonTheme.customColors.cancelBtnBgColor, contentColor = MoonTheme.customColors.cancelBtnTextColor), shape = RoundedCornerShape(12.dp)) { Text("Cancel", fontWeight = FontWeight.Bold) }
                     Button(onClick = { onDateSelected(selectedDateInPicker) }, modifier = Modifier.weight(1f).height(52.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary), shape = RoundedCornerShape(12.dp)) { Text("OK", fontWeight = FontWeight.Bold) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SpotifyAuthDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Surface(shape = RoundedCornerShape(24.dp), color = Color.White, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+            Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(Icons.Rounded.MusicNote, contentDescription = null, tint = Color(0xFF1DB954), modifier = Modifier.size(48.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(text = "Connect to Spotify", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color.Black)
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(text = "MoonPage wants to access your Spotify account to search and add music to your logs.", style = MaterialTheme.typography.bodyMedium, color = Color.Gray, textAlign = TextAlign.Center)
+                Spacer(modifier = Modifier.height(32.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF5F5F5), contentColor = Color.Black), shape = RoundedCornerShape(12.dp)) { Text("Cancel") }
+                    Button(onClick = onConfirm, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1DB954), contentColor = Color.White), shape = RoundedCornerShape(12.dp)) { Text("Allow Access") }
                 }
             }
         }

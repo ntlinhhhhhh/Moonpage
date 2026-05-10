@@ -12,7 +12,13 @@ data class DailyLogResponseDto(
     @SerializedName("isMenstruation") val isMenstruation: Boolean,
     @SerializedName("menstruationPhase") val menstruationPhase: String?,
     @SerializedName("dailyPhotos") val dailyPhotos: List<String>?,
-    @SerializedName("activityIds") val activityIds: List<String>?
+    @SerializedName("activityIds") val activityIds: List<String>?,
+    @SerializedName("songTitle") val songTitle: String? = null,
+    @SerializedName("artistName") val artistName: String? = null,
+    @SerializedName("albumArtUrl") val albumArtUrl: String? = null,
+    @SerializedName("steps") val steps: Int? = null,
+    @SerializedName("calories") val calories: Int? = null,
+    @SerializedName("distance") val distance: Double? = null
 ) {
     fun toDomain(): DailyLog {
         return DailyLog(
@@ -24,7 +30,13 @@ data class DailyLogResponseDto(
             isMenstruation = isMenstruation,
             menstruationPhase = menstruationPhase,
             dailyPhotos = dailyPhotos,
-            activityIds = activityIds
+            activityIds = activityIds,
+            songTitle = songTitle,
+            artistName = artistName,
+            albumArtUrl = albumArtUrl,
+            steps = steps,
+            calories = calories,
+            distance = distance
         )
     }
 }

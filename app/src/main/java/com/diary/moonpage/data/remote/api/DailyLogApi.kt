@@ -18,7 +18,13 @@ interface DailyLogApi {
         @Part("IsMenstruation") isMenstruation: RequestBody?,
         @Part("MenstruationPhase") menstruationPhase: RequestBody?,
         @Part activityIds: List<MultipartBody.Part>?, 
-        @Part dailyPhotos: List<MultipartBody.Part>? 
+        @Part dailyPhotos: List<MultipartBody.Part>?,
+        @Part("SongTitle") songTitle: RequestBody? = null,
+        @Part("ArtistName") artistName: RequestBody? = null,
+        @Part("AlbumArtUrl") albumArtUrl: RequestBody? = null,
+        @Part("Steps") steps: RequestBody? = null,
+        @Part("Calories") calories: RequestBody? = null,
+        @Part("Distance") distance: RequestBody? = null
     ): Response<Unit>
 
     @GET("api/dailylogs/date/{date}")

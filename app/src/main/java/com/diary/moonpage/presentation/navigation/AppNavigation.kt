@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.LayoutDirection
@@ -216,6 +217,12 @@ fun AppNavigation() {
 
             composable(Screen.DailyLog.route) { backStackEntry ->
                 val dateStr = backStackEntry.arguments?.getString("date") ?: ""
+                val savedStateHandle = backStackEntry.savedStateHandle
+                
+                val selectedSongTitle = savedStateHandle.get<String>("selected_song_title")
+                val selectedSongArtist = savedStateHandle.get<String>("selected_song_artist")
+                val selectedSongUrl = savedStateHandle.get<String>("selected_song_url")
+                
                 ScreenWrapper(Screen.DailyLog.route) {
                     DailyLogScreen(
                         dateString = dateStr,
@@ -231,12 +238,36 @@ fun AppNavigation() {
                             navController.popBackStack()
                         }
                     )
+                    
+                    // Trigger the VM update when a song is returned from MusicScreen
+                    val viewModel: com.diary.moonpage.presentation.screens.calendar.DailyLogViewModel = hiltViewModel()
+                    LaunchedEffect(selectedSongTitle) {
+                        if (selectedSongTitle != null) {
+                            viewModel.onEvent(com.diary.moonpage.presentation.screens.calendar.DailyLogUiEvent.OnMusicSelected(
+                                selectedSongTitle,
+                                selectedSongArtist ?: "Unknown",
+                                selectedSongUrl
+                            ))
+                            savedStateHandle.remove<String>("selected_song_title")
+                            savedStateHandle.remove<String>("selected_song_artist")
+                            savedStateHandle.remove<String>("selected_song_url")
+                        }
+                    }
                 }
             }
 
             composable(Screen.Music.route) {
                 ScreenWrapper(Screen.Music.route) {
-                    MusicScreen(onNavigateBack = { navController.popBackStack() })
+                    MusicScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        onSongSelected = { title, artist, url ->
+                            navController.previousBackStackEntry?.savedStateHandle?.apply {
+                                set("selected_song_title", title)
+                                set("selected_song_artist", artist)
+                                set("selected_song_url", url)
+                            }
+                        }
+                    )
                 }
             }
 

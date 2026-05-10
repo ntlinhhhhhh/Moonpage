@@ -83,6 +83,7 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.accompanist.permissions)
     implementation(libs.androidx.exifinterface)
+    implementation(libs.androidx.health.connect.client)
     implementation(libs.play.services.location)
 
     // Room
