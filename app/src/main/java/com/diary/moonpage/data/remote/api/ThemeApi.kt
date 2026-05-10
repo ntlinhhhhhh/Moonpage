@@ -22,19 +22,15 @@ interface ThemeApi {
     ): Response<List<ThemeMoodResponseDTO>>
 
     @GET("api/users/me/themes")
-    suspend fun getOwnedThemes(
-        @Header("Authorization") token: String
-    ): Response<List<String>>
+    suspend fun getOwnedThemes(): Response<List<String>>
 
     @POST("api/users/me/store/buy-theme")
     suspend fun buyTheme(
-        @Header("Authorization") token: String,
         @Body request: BuyThemeRequest
     ): Response<Unit>
 
     @PUT("api/users/me/themes/active")
     suspend fun setActiveTheme(
-        @Header("Authorization") token: String,
         @Body request: SetActiveThemeRequest
     ): Response<Unit>
 }

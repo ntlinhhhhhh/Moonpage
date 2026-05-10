@@ -84,8 +84,9 @@ class DailyLogViewModel @Inject constructor(
                     
                     // Fallback to local mood color if API hex is invalid or bad
                     val color = try {
-                        if (entity.iconUrl.startsWith("#")) {
-                            androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor(entity.iconUrl))
+                        if (!entity.iconUrl.isNullOrBlank() && (entity.iconUrl.startsWith("#") || entity.iconUrl.length == 6 || entity.iconUrl.length == 8)) {
+                            val colorStr = if (entity.iconUrl.startsWith("#")) entity.iconUrl else "#${entity.iconUrl}"
+                            androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor(colorStr))
                         } else {
                             MoonIcons.Moods.getMoodColor(level, currentTheme)
                         }

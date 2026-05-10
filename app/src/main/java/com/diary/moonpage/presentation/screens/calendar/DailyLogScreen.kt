@@ -455,7 +455,7 @@ private fun DailyMoodSection(
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
             Text("How was your day?", color = MoonTheme.customColors.logCardOnBg, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                (1..5).forEach { id ->
+                (5 downTo 1).forEach { id ->
                     val isSelected = selectedMood == id
                     val moodVisual = MoonIcons.Moods.getMoodVisual(id, themeType, customMoods)
                     val moodColor = moodVisual.color

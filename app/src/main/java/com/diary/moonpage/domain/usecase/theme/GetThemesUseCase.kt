@@ -7,7 +7,7 @@ import javax.inject.Inject
 class GetThemesUseCase @Inject constructor(
     private val repository: ThemeRepository
 ) {
-    suspend operator fun invoke(token: String): Result<List<Theme>> {
-        return repository.getAllThemes(token)
+    suspend operator fun invoke(): Result<List<Theme>> {
+        return repository.getAllThemes()
     }
 }

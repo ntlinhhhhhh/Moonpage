@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.diary.moonpage.MainViewModel
+import com.diary.moonpage.core.util.ThemeConstants
 import com.diary.moonpage.core.theme.MoonThemeType
 
 @Composable
@@ -42,10 +43,16 @@ fun ThemeCalendarScreen(
 
     // 2. Map API Owned Themes (Purchased)
     val ownedThemes = remember(uiState.ownedThemes) {
-        uiState.ownedThemes.filter { it.id != "theme_default" }.map { theme ->
+        uiState.ownedThemes.filter { it.id != ThemeConstants.DEFAULT_THEME_ID }.map { theme ->
+
             val type = theme.decoration.toMoonThemeType()
             val color = try {
-                Color(android.graphics.Color.parseColor(theme.primaryColor ?: "#FFC547"))
+                if (!theme.primaryColor.isNullOrBlank()) {
+                    val colorStr = if (theme.primaryColor.startsWith("#")) theme.primaryColor else "#${theme.primaryColor}"
+                    Color(android.graphics.Color.parseColor(colorStr))
+                } else {
+                    Color(0xFFFFC547)
+                }
             } catch (e: Exception) {
                 Color(0xFFFFC547)
             }
@@ -192,10 +199,6 @@ fun ThemePickerContent(
                         }
                     }
                 }
-            }
-            
-            if (isLoading && availableThemes.size <= 1) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
         }
     }

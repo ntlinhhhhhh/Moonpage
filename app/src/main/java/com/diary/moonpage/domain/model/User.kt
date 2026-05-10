@@ -7,7 +7,8 @@ data class User(
     val email: String,
     val avatarUrl: String?,
     val gender: String?,
-    val birthday: String?
+    val birthday: String?,
+    val coinBalance: Int = 0
 ) {
     // Alias for UI compatibility if needed
     val id: String get() = userId

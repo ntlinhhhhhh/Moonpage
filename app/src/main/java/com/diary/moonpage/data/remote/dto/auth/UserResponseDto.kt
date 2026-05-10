@@ -8,7 +8,8 @@ data class UserResponseDto(
     val email: String,
     val avatarUrl: String?,
     val gender: String?,
-    val birthday: String?
+    val birthday: String?,
+    val coinBalance: Int? = 0
 ) {
     fun toDomain(token: String = ""): User {
         return User(
@@ -18,7 +19,8 @@ data class UserResponseDto(
             email = email,
             avatarUrl = avatarUrl,
             gender = gender,
-            birthday = birthday
+            birthday = birthday,
+            coinBalance = coinBalance ?: 0
         )
     }
 }

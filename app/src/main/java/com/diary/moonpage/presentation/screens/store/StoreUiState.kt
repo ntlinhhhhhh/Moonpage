@@ -13,5 +13,6 @@ data class StoreUiState(
     val showConfirmPurchaseDialog: Boolean = false,
     val themeToPurchase: Theme? = null,
     val purchasedTheme: Theme? = null,
-    val selectedThemeDetail: Theme? = null
+    val selectedThemeDetail: Theme? = null,
+    val selectedCategory: String = "ALL"
 )

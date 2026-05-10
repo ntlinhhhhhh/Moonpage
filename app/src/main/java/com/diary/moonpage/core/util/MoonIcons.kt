@@ -47,11 +47,11 @@ object MoonIcons {
         fun getMoodColor(level: Int, themeType: com.diary.moonpage.core.theme.MoonThemeType): Color {
             val shades = com.diary.moonpage.core.theme.getThemeShades(themeType)
             return when (level) {
-                1 -> shades[0]
-                2 -> shades[1]
+                1 -> shades[4]
+                2 -> shades[3]
                 3 -> shades[2]
-                4 -> shades[3]
-                5 -> shades[4]
+                4 -> shades[1]
+                5 -> shades[0]
                 else -> shades[2]
             }
         }
@@ -66,11 +66,11 @@ object MoonIcons {
             }
             val color = getMoodColor(level, themeType)
             return when (level) {
-                1 -> Happy.copy(color = color)
-                2 -> Good.copy(color = color)
+                1 -> Angry.copy(color = color)
+                2 -> Sad.copy(color = color)
                 3 -> Neutral.copy(color = color)
-                4 -> Sad.copy(color = color)
-                5 -> Angry.copy(color = color)
+                4 -> Good.copy(color = color)
+                5 -> Happy.copy(color = color)
                 else -> Neutral.copy(color = color)
             }
         }

@@ -14,5 +14,6 @@ data class Theme(
     val type: ThemeType = ThemeType.THEME,
     val icons: List<String> = emptyList(), // "VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"
     val primaryColor: String? = null,
-    val decoration: String = "NONE" // "NONE", "KITTY", "SPROUT", "BLUSHING"
+    val decoration: String = "NONE", // "NONE", "KITTY", "SPROUT", "BLUSHING"
+    val category: String = "LIGHT" // "LIGHT", "DARK", "EXCLUSIVE", "NEWEST"
 )

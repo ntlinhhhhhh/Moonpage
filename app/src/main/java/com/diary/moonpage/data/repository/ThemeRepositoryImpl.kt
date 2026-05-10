@@ -10,20 +10,44 @@ import com.diary.moonpage.domain.model.ThemeType
 import com.diary.moonpage.domain.repository.ThemeRepository
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import com.diary.moonpage.core.util.ThemeConstants
+import com.diary.moonpage.core.util.PredefinedTheme
 import javax.inject.Inject
 
 class ThemeRepositoryImpl @Inject constructor(
     private val api: ThemeApi,
     private val dao: com.diary.moonpage.data.local.dao.ThemeDao
 ) : ThemeRepository {
+    override val ownedThemes: Flow<List<Theme>> = dao.getOwnedThemes().map { entities ->
+        entities.map { it.toDomain() }
+    }
 
-    override suspend fun getAllThemes(token: String): Result<List<Theme>> {
+    override val allThemes: Flow<List<Theme>> = dao.getAllThemes().map { entities ->
+        entities.map { it.toDomain() }
+    }
+
+    override suspend fun getAllThemes(): Result<List<Theme>> {
         val cached = dao.getAllThemes().first().map { it.toDomain() }
         
         return try {
             val response = api.getAllThemes()
             if (response.isSuccessful && response.body() != null) {
                 val networkThemes = response.body()!!.map { it.toDomain() }
+                    .filter { it.id != ThemeConstants.DEFAULT_THEME_ID } // Hide default from store
+                    .map { theme ->
+                        // Override with predefined data if available
+                        val predefined = ThemeConstants.THEMES.find { it.id == theme.id }
+                        if (predefined != null) {
+                            theme.copy(
+                                name = predefined.name,
+                                price = predefined.price,
+                                thumbnailUrl = predefined.thumbnailUrl,
+                                backgroundUrl = predefined.backgroundUrl
+                            )
+                        } else theme
+                    }
                 
                 val currentCached = dao.getAllThemes().first()
                 val updatedEntities = networkThemes.map { theme ->
@@ -44,14 +68,19 @@ class ThemeRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getOwnedThemes(token: String): Result<List<Theme>> {
+    override suspend fun getOwnedThemes(): Result<List<Theme>> {
         val cachedOwned = dao.getOwnedThemes().first().map { it.toDomain() }
 
         return try {
-            val response = api.getOwnedThemes("Bearer $token")
+            val response = api.getOwnedThemes()
             if (response.isSuccessful && response.body() != null) {
-                val ownedIds = response.body()!!
+                val ownedIds = response.body()!!.toMutableList()
                 
+                // Ensure default theme is always in owned list
+                if (!ownedIds.contains(ThemeConstants.DEFAULT_THEME_ID)) {
+                    ownedIds.add(0, ThemeConstants.DEFAULT_THEME_ID)
+                }
+
                 val allCached = dao.getAllThemes().first()
                 val toUpdate = mutableListOf<ThemeEntity>()
                 
@@ -77,6 +106,12 @@ class ThemeRepositoryImpl @Inject constructor(
     }
 
     private suspend fun fetchAndCacheThemeDetails(themeId: String) {
+        val predefined = ThemeConstants.THEMES.find { it.id == themeId }
+        if (predefined != null) {
+            insertPredefinedThemeLocally(predefined)
+            return
+        }
+
         try {
             val detailResponse = api.getThemeDetail(themeId)
             if (detailResponse.isSuccessful && detailResponse.body() != null) {
@@ -105,13 +140,44 @@ class ThemeRepositoryImpl @Inject constructor(
         } catch (e: Exception) { }
     }
 
-    override suspend fun buyTheme(token: String, themeId: String): Result<Unit> {
+    private suspend fun insertPredefinedThemeLocally(predefined: PredefinedTheme) {
+        val existing = dao.getThemeById(predefined.id)
+        val entity = ThemeEntity(
+            id = predefined.id,
+            name = predefined.name,
+            collection = "Collection",
+            price = predefined.price,
+            isFree = predefined.price == 0,
+            thumbnailUrl = predefined.thumbnailUrl,
+            backgroundUrl = predefined.backgroundUrl,
+            isOwned = true,
+            isActive = existing?.isActive ?: (predefined.id == ThemeConstants.DEFAULT_THEME_ID),
+            description = null,
+            type = ThemeType.THEME.name,
+            icons = "VERY_HAPPY,HAPPY,NEUTRAL,SAD,ANGRY",
+            primaryColor = predefined.thumbnailUrl,
+            decoration = predefined.decoration
+        )
+        dao.insertThemes(listOf(entity))
+
+        val moods = predefined.moods.map { mood ->
+            ThemeMoodEntity(
+                themeId = predefined.id,
+                baseMoodId = mood.baseMoodId,
+                iconUrl = mood.iconUrl,
+                customName = mood.customName
+            )
+        }
+        dao.insertThemeMoods(moods)
+    }
+
+    override suspend fun buyTheme(themeId: String): Result<Unit> {
         return try {
             // Find price from cache
             val cachedTheme = dao.getThemeById(themeId)
             val price = cachedTheme?.price ?: 0
             
-            val response = api.buyTheme("Bearer $token", BuyThemeRequest(themeId, price))
+            val response = api.buyTheme(BuyThemeRequest(themeId, price))
             if (response.isSuccessful) {
                 cachedTheme?.let { dao.insertThemes(listOf(it.copy(isOwned = true))) }
                 Result.success(Unit)
@@ -123,9 +189,9 @@ class ThemeRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun setActiveTheme(token: String, themeId: String): Result<Unit> {
+    override suspend fun setActiveTheme(themeId: String): Result<Unit> {
         return try {
-            val response = api.setActiveTheme("Bearer $token", SetActiveThemeRequest(themeId))
+            val response = api.setActiveTheme(SetActiveThemeRequest(themeId))
             if (response.isSuccessful) {
                 dao.clearActiveTheme()
                 dao.setActiveTheme(themeId)
@@ -141,6 +207,21 @@ class ThemeRepositoryImpl @Inject constructor(
     override suspend fun getMoodsForTheme(themeId: String): List<ThemeMoodEntity> {
         val cachedMoods = dao.getMoodsForTheme(themeId)
         if (cachedMoods.isEmpty()) {
+            // Check predefined first
+            val predefined = ThemeConstants.THEMES.find { it.id == themeId }
+            if (predefined != null) {
+                val moods = predefined.moods.map { mood ->
+                    ThemeMoodEntity(
+                        themeId = themeId,
+                        baseMoodId = mood.baseMoodId,
+                        iconUrl = mood.iconUrl,
+                        customName = mood.customName
+                    )
+                }
+                dao.insertThemeMoods(moods)
+                return moods
+            }
+
             try {
                 val response = api.getThemeMoods(themeId)
                 if (response.isSuccessful && response.body() != null) {

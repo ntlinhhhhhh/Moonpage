@@ -4,11 +4,14 @@ import com.diary.moonpage.domain.model.Theme
 import kotlinx.coroutines.flow.Flow
 
 interface ThemeRepository {
-    suspend fun getAllThemes(token: String): Result<List<Theme>>
-    suspend fun getOwnedThemes(token: String): Result<List<Theme>>
-    suspend fun buyTheme(token: String, themeId: String): Result<Unit>
-    suspend fun setActiveTheme(token: String, themeId: String): Result<Unit>
+    suspend fun getAllThemes(): Result<List<Theme>>
+    suspend fun getOwnedThemes(): Result<List<Theme>>
+    suspend fun buyTheme(themeId: String): Result<Unit>
+    suspend fun setActiveTheme(themeId: String): Result<Unit>
     
     suspend fun getMoodsForTheme(themeId: String): List<com.diary.moonpage.data.local.entity.ThemeMoodEntity>
     suspend fun getActiveThemeId(): String?
+    
+    val ownedThemes: Flow<List<Theme>>
+    val allThemes: Flow<List<Theme>>
 }

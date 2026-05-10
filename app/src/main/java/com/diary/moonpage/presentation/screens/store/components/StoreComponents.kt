@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -24,7 +25,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import coil.compose.AsyncImage
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.core.theme.*
 
@@ -134,9 +134,20 @@ fun StoreTopBar(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(horizontal = 4.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {
+        IconButton(
+            onClick = onMenuClick,
+            modifier = Modifier.align(Alignment.CenterStart)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back",
+                tint = MaterialTheme.colorScheme.onBackground
+            )
+        }
+
         Text(
             text = "Store",
             style = MaterialTheme.typography.titleLarge,
@@ -147,6 +158,7 @@ fun StoreTopBar(
             shape = RoundedCornerShape(20.dp),
             color = MaterialTheme.colorScheme.surfaceVariant,
             modifier = Modifier
+                .padding(end = 16.dp)
                 .height(32.dp)
                 .align(Alignment.CenterEnd)
         ) {
@@ -201,20 +213,31 @@ fun ThemeCard(
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = theme.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = onSurface,
-                    fontWeight = FontWeight.Bold
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                val shades = getThemeShades(theme)
+                CuteBeanIcon(
+                    modifier = Modifier.size(36.dp),
+                    emotion = "NEUTRAL",
+                    decoration = theme.decoration,
+                    color = shades.getOrElse(2) { Color.LightGray }
                 )
-                Text(
-                    text = theme.collection,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = onSurface.copy(alpha = 0.6f)
-                )
+                Spacer(modifier = Modifier.width(12.dp))
+                
+                Column {
+                    Text(
+                        text = theme.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = onSurface,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = theme.collection,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = onSurface.copy(alpha = 0.6f)
+                    )
+                }
             }
 
             if (theme.isOwned) {
@@ -270,15 +293,19 @@ fun ThemeCard(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        val shades = if (theme.decoration == "MOON") {
-            listOf(Color(0xFFFFF176), Color(0xFFFFEE58), Color(0xFFFFD54F), Color(0xFFFFB300), Color(0xFFFFA000))
-        } else {
-            getThemeShades(theme.decoration)
-        }
+        val shades = getThemeShades(theme)
 
-        val isNewStyle = listOf("SUNNY", "SKY", "FOREST", "COFFEE", "LEMON", "CHERRY", "LAVENDER", "OCEAN", "SPROUT", "NEBULA", "MATCHA", "SUNSET", "GALAXY", "AUTUMN", "GRAY_BROWN", "COOKIE_BATCH", "HEART_FELT", "WEATHER_CYCLE").contains(theme.decoration)
-        val previewBg = if (theme.primaryColor != null) Color(android.graphics.Color.parseColor(theme.primaryColor)).copy(alpha = 0.15f)
-        else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+        val defaultBg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+        val previewBg = if (!theme.primaryColor.isNullOrBlank()) {
+            try {
+                val colorStr = if (theme.primaryColor.startsWith("#")) theme.primaryColor else "#${theme.primaryColor}"
+                Color(android.graphics.Color.parseColor(colorStr)).copy(alpha = 0.15f)
+            } catch (e: Exception) {
+                defaultBg
+            }
+        } else {
+            defaultBg
+        }
 
         Box(
             modifier = Modifier
@@ -295,6 +322,7 @@ fun ThemeCard(
             ) {
                 theme.icons.forEachIndexed { index, emotion ->
                     CuteBeanIcon(
+                        modifier = Modifier.size(42.dp),
                         emotion = emotion,
                         decoration = theme.decoration,
                         color = shades.getOrElse(index) { Color.LightGray }
@@ -325,13 +353,7 @@ fun IconPackCard(pack: Theme, onClick: () -> Unit) {
                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                val shades = if (pack.decoration == "MOON") {
-                    listOf(
-                        Color(0xFFFFF176), Color(0xFFFFEE58), Color(0xFFFFD54F), Color(0xFFFFB300), Color(0xFFFFA000)
-                    )
-                } else {
-                    getThemeShades(pack.decoration)
-                }
+                val shades = getThemeShades(pack)
                 pack.icons.take(2).forEachIndexed { index, emotion ->
                     CuteBeanIcon(
                         modifier = Modifier.size(24.dp),
@@ -435,13 +457,23 @@ fun CurrentThemeCard(theme: Theme) {
         )
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(MaterialTheme.colorScheme.primary, CircleShape), 
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "âœ“", color = MaterialTheme.colorScheme.onPrimary, fontSize = 20.sp)
+            val shades = getThemeShades(theme)
+            Box(contentAlignment = Alignment.BottomEnd) {
+                CuteBeanIcon(
+                    modifier = Modifier.size(48.dp),
+                    emotion = "HAPPY",
+                    decoration = theme.decoration,
+                    color = shades.getOrElse(3) { MaterialTheme.colorScheme.primary }
+                )
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(16.dp).offset(x = 4.dp, y = 4.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(text = "✓", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column {
@@ -469,7 +501,7 @@ fun ConfirmPurchaseDialog(
     Dialog(onDismissRequest = onCancel) {
         Surface(
             shape = RoundedCornerShape(28.dp),
-            color = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor,
+            color = MoonTheme.customColors.popupBgColor,
             tonalElevation = 0.dp,
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -498,13 +530,7 @@ fun ConfirmPurchaseDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    val shades = if (theme.decoration == "MOON") {
-                        listOf(
-                            Color(0xFFFFF176), Color(0xFFFFEE58), Color(0xFFFFD54F), Color(0xFFFFB300), Color(0xFFFFA000)
-                        )
-                    } else {
-                        getThemeShades(theme.decoration)
-                    }
+                    val shades = getThemeShades(theme)
                     theme.icons.forEachIndexed { index, emotion ->
                         CuteBeanIcon(
                             modifier = Modifier.size(36.dp),
@@ -526,8 +552,8 @@ fun ConfirmPurchaseDialog(
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(24.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnBgColor,
-                            contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor
+                            containerColor = MoonTheme.customColors.cancelBtnBgColor,
+                            contentColor = MoonTheme.customColors.cancelBtnTextColor
                         )
                     ) {
                         Text("Cancel")
@@ -576,7 +602,7 @@ fun PurchaseSuccessDialog(
                         .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("âœ“", color = MaterialTheme.colorScheme.primary, fontSize = 32.sp)
+                    Text("✓", color = MaterialTheme.colorScheme.primary, fontSize = 32.sp)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
@@ -588,20 +614,31 @@ fun PurchaseSuccessDialog(
         },
         text = {
             Text(
-                text = "Your archive is now glowing with the warmth of the sun.",
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                text = "$themeName is now glowing in your archive with the warmth of the sun.",
+                textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.onSurface
             )
         },
         shape = RoundedCornerShape(24.dp),
-        containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor,
+        containerColor = MoonTheme.customColors.popupBgColor,
         tonalElevation = 0.dp
     )
 }
 
-fun getThemeShades(decoration: String): List<Color> {
-    return when (decoration) {
+fun getThemeShades(theme: Theme): List<Color> {
+    val predefined = com.diary.moonpage.core.util.ThemeConstants.THEMES.find { it.id == theme.id }
+    if (predefined != null) {
+        return predefined.moods.map { mood ->
+            try {
+                Color(android.graphics.Color.parseColor(mood.iconUrl))
+            } catch (e: Exception) {
+                Color.LightGray
+            }
+        }
+    }
+    
+    return when (theme.decoration) {
         "BLUSHING" -> listOf(
             Color(0xFFFFEBEE), Color(0xFFFFCDD2), Color(0xFFEF9A9A), Color(0xFFE57373), Color(0xFFEF5350)
         )
@@ -646,6 +683,9 @@ fun getThemeShades(decoration: String): List<Color> {
         )
         "WEATHER" -> listOf(
             Color(0xFFE1F5FE), Color(0xFFB3E5FC), Color(0xFF81D4FA), Color(0xFF4FC3F7), Color(0xFF29B6F6)
+        )
+        "MOON" -> listOf(
+            Color(0xFFFFF176), Color(0xFFFFEE58), Color(0xFFFFD54F), Color(0xFFFFB300), Color(0xFFFFA000)
         )
         else -> listOf(
             Color(0xFFE8E1DA), Color(0xFFD7CCC8), Color(0xFFBCAAA4), Color(0xFF8D6E63), Color(0xFF5D4037)

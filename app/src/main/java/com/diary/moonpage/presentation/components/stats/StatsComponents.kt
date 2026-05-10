@@ -207,7 +207,7 @@ fun MoodFlowChart(
                         }
                         
                         val x = (dayOfMonth * dx).coerceIn(0f, width)
-                        val y = height * (item.moodId - 1).coerceIn(0, 4) / 4f
+                        val y = height * (5 - item.moodId).coerceIn(0, 4) / 4f
                         
                         if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
                         drawCircle(color = primaryColor, radius = 4.dp.toPx(), center = androidx.compose.ui.geometry.Offset(x, y))
@@ -238,23 +238,22 @@ fun MoodDistributionView(
     themeType: MoonThemeType = MoonThemeType.DEFAULT
 ) {
     val moods = listOf(
-        MoonIcons.Moods.getMoodVisual(1, themeType),
-        MoonIcons.Moods.getMoodVisual(2, themeType),
-        MoonIcons.Moods.getMoodVisual(3, themeType),
+        MoonIcons.Moods.getMoodVisual(5, themeType),
         MoonIcons.Moods.getMoodVisual(4, themeType),
-        MoonIcons.Moods.getMoodVisual(5, themeType)
+        MoonIcons.Moods.getMoodVisual(3, themeType),
+        MoonIcons.Moods.getMoodVisual(2, themeType),
+        MoonIcons.Moods.getMoodVisual(1, themeType)
     )
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.Bottom) {
-            moods.forEachIndexed { index, mood ->
-                val moodId = index + 1
+            moods.forEach { mood ->
                 val dist = distribution.find { 
                     it.label.equals(mood.name, ignoreCase = true) ||
-                    (moodId == 1 && it.label.equals("Rad", ignoreCase = true)) ||
-                    (moodId == 3 && it.label.equals("Meh", ignoreCase = true)) ||
-                    (moodId == 4 && it.label.equals("Low", ignoreCase = true)) ||
-                    (moodId == 5 && it.label.equals("Bad", ignoreCase = true))
+                    (mood.name == "Happy" && it.label.equals("Rad", ignoreCase = true)) ||
+                    (mood.name == "Neutral" && it.label.equals("Meh", ignoreCase = true)) ||
+                    (mood.name == "Angry" && it.label.equals("Bad", ignoreCase = true)) ||
+                    (mood.name == "Angry" && it.label.equals("Awful", ignoreCase = true))
                 }
                 val percentage = dist?.percentage ?: 0
                 

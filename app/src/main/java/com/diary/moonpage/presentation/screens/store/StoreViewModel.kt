@@ -2,6 +2,7 @@ package com.diary.moonpage.presentation.screens.store
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.diary.moonpage.core.util.ThemeConstants
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.domain.model.ThemeType
 import com.diary.moonpage.domain.usecase.theme.BuyThemeUseCase
@@ -22,7 +23,8 @@ class StoreViewModel @Inject constructor(
     private val buyThemeUseCase: BuyThemeUseCase,
     private val setActiveThemeUseCase: SetActiveThemeUseCase,
     private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager,
-    private val tokenManager: com.diary.moonpage.core.util.TokenManager
+    private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
+    private val themeRepository: com.diary.moonpage.domain.repository.ThemeRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(StoreUiState())
@@ -33,10 +35,35 @@ class StoreViewModel @Inject constructor(
 
     init {
         loadData()
+        observeUser()
+    }
+
+    private fun observeUser() {
+        viewModelScope.launch {
+            userRepository.currentUser.collect { user ->
+                _uiState.update { it.copy(userCoins = user?.coinBalance ?: 0) }
+            }
+        }
+        
+        viewModelScope.launch {
+            themeRepository.ownedThemes.collect { owned ->
+                _uiState.update { it.copy(ownedThemes = owned) }
+            }
+        }
+
+        viewModelScope.launch {
+            themeRepository.allThemes.collect { all ->
+                _uiState.update { it.copy(themes = all) }
+            }
+        }
     }
 
     fun onTabSelected(index: Int) {
         _uiState.update { it.copy(selectedTabIndex = index) }
+    }
+
+    fun onCategorySelected(category: String) {
+        _uiState.update { it.copy(selectedCategory = category) }
     }
 
     fun selectTheme(theme: Theme) {
@@ -88,24 +115,26 @@ class StoreViewModel @Inject constructor(
 
     private fun loadData() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            // Only show loading if we have no themes yet
+            if (_uiState.value.themes.isEmpty()) {
+                _uiState.update { it.copy(isLoading = true) }
+            }
             
-            tokenManager.getToken().first()?.let { token ->
-                // Fetch All Themes for Store
-                getThemesUseCase(token).onSuccess { themes ->
-                    _uiState.update { it.copy(themes = themes) }
-                }.onFailure { error ->
+            // 1. Fetch User Profile for current Coins
+            userRepository.getCurrentUser()
+
+            // 2. Fetch All Themes for Store (Background refresh)
+            getThemesUseCase().onFailure { error ->
+                if (_uiState.value.themes.isEmpty()) {
                     _uiEffect.send(StoreUiEffect.ShowSnackBar(error.message ?: "Failed to load store themes"))
                 }
+            }
 
-                // Fetch Owned Themes
-                getOwnedThemesUseCase(token).onSuccess { owned ->
-                    _uiState.update { it.copy(ownedThemes = owned) }
-                }.onFailure { error ->
+            // 3. Fetch Owned Themes (Background refresh)
+            getOwnedThemesUseCase().onFailure { error ->
+                if (_uiState.value.ownedThemes.isEmpty()) {
                     _uiEffect.send(StoreUiEffect.ShowSnackBar(error.message ?: "Failed to load owned themes"))
                 }
-            } ?: run {
-                _uiEffect.send(StoreUiEffect.ShowSnackBar("Session expired. Please login again."))
             }
 
             _uiState.update { it.copy(isLoading = false) }
@@ -116,36 +145,37 @@ class StoreViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, showConfirmPurchaseDialog = false) }
             
-            tokenManager.getToken().first()?.let { token ->
-                buyThemeUseCase(token, theme.id).onSuccess {
-                    _uiState.update { state ->
-                        val updatedThemes = state.themes.map { 
-                            if (it.id == theme.id) it.copy(isOwned = true) else it 
-                        }
-                        val purchased = updatedThemes.find { it.id == theme.id }
-                        val updatedOwned = if (purchased != null) state.ownedThemes + purchased else state.ownedThemes
-                        
-                        val updatedDetail = if (state.selectedThemeDetail?.id == theme.id) {
-                            state.selectedThemeDetail.copy(isOwned = true)
-                        } else {
-                            state.selectedThemeDetail
-                        }
-
-                        state.copy(
-                            isLoading = false, 
-                            showPurchaseSuccessDialog = true,
-                            purchasedTheme = theme,
-                            themes = updatedThemes,
-                            ownedThemes = updatedOwned,
-                            selectedThemeDetail = updatedDetail,
-                            themeToPurchase = null
-                        ) 
+            buyThemeUseCase(theme.id).onSuccess {
+                _uiState.update { state ->
+                    val updatedThemes = state.themes.map { 
+                        if (it.id == theme.id) it.copy(isOwned = true) else it 
                     }
-                    _uiEffect.send(StoreUiEffect.PurchaseSuccess)
-                }.onFailure { error ->
-                    _uiState.update { it.copy(isLoading = false) }
-                    _uiEffect.send(StoreUiEffect.ShowSnackBar(error.message ?: "Purchase failed"))
+                    val purchased = updatedThemes.find { it.id == theme.id }
+                    val updatedOwned = if (purchased != null) state.ownedThemes + purchased else state.ownedThemes
+                    
+                    val updatedDetail = if (state.selectedThemeDetail?.id == theme.id) {
+                        state.selectedThemeDetail.copy(isOwned = true)
+                    } else {
+                        state.selectedThemeDetail
+                    }
+
+                    state.copy(
+                        isLoading = false, 
+                        showPurchaseSuccessDialog = true,
+                        purchasedTheme = theme,
+                        themes = updatedThemes,
+                        ownedThemes = updatedOwned,
+                        selectedThemeDetail = updatedDetail,
+                        themeToPurchase = null
+                    ) 
                 }
+                // Refresh user for coins
+                userRepository.getCurrentUser()
+                
+                _uiEffect.send(StoreUiEffect.PurchaseSuccess)
+            }.onFailure { error ->
+                _uiState.update { it.copy(isLoading = false) }
+                _uiEffect.send(StoreUiEffect.ShowSnackBar(error.message ?: "Purchase failed"))
             }
         }
     }
@@ -154,46 +184,46 @@ class StoreViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             
-            tokenManager.getToken().first()?.let { token ->
-                setActiveThemeUseCase(token, themeId).onSuccess {
-                    _uiState.update { state ->
-                        val updatedOwned = state.ownedThemes.map { theme ->
-                            theme.copy(isActive = theme.id == themeId)
-                        }
-                        
-                        val updatedDetail = state.selectedThemeDetail?.copy(
-                            isActive = state.selectedThemeDetail.id == themeId
-                        )
+            setActiveThemeUseCase(themeId).onSuccess {
+                _uiState.update { state ->
+                    val updatedOwned = state.ownedThemes.map { theme ->
+                        theme.copy(isActive = theme.id == themeId)
+                    }
+                    
+                    val updatedDetail = state.selectedThemeDetail?.copy(
+                        isActive = state.selectedThemeDetail.id == themeId
+                    )
 
-                        state.copy(
-                            ownedThemes = updatedOwned, 
-                            isLoading = false,
-                            selectedThemeDetail = updatedDetail
-                        )
-                    }
-                    
-                    // Map theme type and save locally
-                    val theme = _uiState.value.ownedThemes.find { it.id == themeId }
-                    theme?.let {
-                        themePreferencesManager.setThemeType(it.type.toMoonThemeType())
-                    }
-                    
-                    _uiEffect.send(StoreUiEffect.ThemeActivated)
-                    _uiEffect.send(StoreUiEffect.ShowSnackBar("Theme activated!"))
-                }.onFailure { error ->
-                    _uiState.update { it.copy(isLoading = false) }
-                    _uiEffect.send(StoreUiEffect.ShowSnackBar(error.message ?: "Activation failed"))
+                    state.copy(
+                        ownedThemes = updatedOwned, 
+                        isLoading = false,
+                        selectedThemeDetail = updatedDetail
+                    )
                 }
+                
+                // Map theme and save locally
+                val theme = _uiState.value.ownedThemes.find { it.id == themeId }
+                theme?.let {
+                    themePreferencesManager.setThemeType(it.toMoonThemeType())
+                }
+                
+                _uiEffect.send(StoreUiEffect.ThemeActivated)
+                _uiEffect.send(StoreUiEffect.ShowSnackBar("Theme activated!"))
+            }.onFailure { error ->
+                _uiState.update { it.copy(isLoading = false) }
+                _uiEffect.send(StoreUiEffect.ShowSnackBar(error.message ?: "Activation failed"))
             }
         }
     }
 }
 
-// Extension to map ThemeType to MoonThemeType
-fun ThemeType.toMoonThemeType(): MoonThemeType {
+// Extension to map Theme to MoonThemeType
+fun Theme.toMoonThemeType(): MoonThemeType {
+    if (this.id == ThemeConstants.DEFAULT_THEME_ID) return MoonThemeType.DEFAULT
     return try {
-        MoonThemeType.valueOf(this.name)
+        MoonThemeType.valueOf(this.decoration.uppercase())
     } catch (e: Exception) {
         MoonThemeType.DEFAULT
     }
 }
+

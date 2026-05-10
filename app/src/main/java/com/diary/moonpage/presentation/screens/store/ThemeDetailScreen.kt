@@ -282,11 +282,7 @@ fun ThemeCalendarPreview(theme: Theme) {
         Spacer(modifier = Modifier.height(16.dp))
 
         // Shaded Color Range Logic
-        val shades = getThemeShades(theme.decoration)
-        val moonShades = listOf(
-            Color(0xFFFFF176), Color(0xFFFFEE58), Color(0xFFFFD54F), Color(0xFFFFB300), Color(0xFFFFA000)
-        )
-        val actualShades = if (theme.decoration == "MOON") moonShades else shades
+        val actualShades = getThemeShades(theme)
 
         Column(modifier = Modifier.fillMaxWidth()) {
             repeat(4) { rowIndex ->

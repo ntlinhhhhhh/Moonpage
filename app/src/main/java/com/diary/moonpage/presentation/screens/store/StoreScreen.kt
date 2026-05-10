@@ -84,6 +84,8 @@ fun StoreScreen(
                 when (targetIndex) {
                     0 -> HomeTabContent(
                         themes = uiState.themes,
+                        selectedCategory = uiState.selectedCategory,
+                        onCategoryClick = { viewModel.onCategorySelected(it) },
                         onThemeClick = {
                             viewModel.selectTheme(it)
                             onNavigateToDetail()
@@ -168,10 +170,18 @@ fun TabItem(text: String, isSelected: Boolean, onClick: () -> Unit) {
 @Composable
 fun HomeTabContent(
     themes: List<Theme>,
+    selectedCategory: String,
+    onCategoryClick: (String) -> Unit,
     onThemeClick: (Theme) -> Unit,
     onViewAllClick: () -> Unit
 ) {
-    val featuredThemes = themes.filter { it.type == ThemeType.THEME }
+    val filteredThemes = remember(themes, selectedCategory) {
+        if (selectedCategory == "ALL") {
+            themes.filter { it.type == ThemeType.THEME }
+        } else {
+            themes.filter { it.type == ThemeType.THEME && it.category == selectedCategory }
+        }
+    }
     val iconPacks = themes.filter { it.type == ThemeType.ICON_PACK }
 
     LazyColumn(
@@ -183,11 +193,11 @@ fun HomeTabContent(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                item { MoonFilterChip("All Themes", true) }
-                item { MoonFilterChip("Light Mode", false) }
-                item { MoonFilterChip("Dark Mode", false) }
-                item { MoonFilterChip("Exclusive", false) }
-                item { MoonFilterChip("Newest", false) }
+                item { MoonFilterChip("All Themes", selectedCategory == "ALL") { onCategoryClick("ALL") } }
+                item { MoonFilterChip("Light Mode", selectedCategory == "LIGHT") { onCategoryClick("LIGHT") } }
+                item { MoonFilterChip("Dark Mode", selectedCategory == "DARK") { onCategoryClick("DARK") } }
+                item { MoonFilterChip("Exclusive", selectedCategory == "EXCLUSIVE") { onCategoryClick("EXCLUSIVE") } }
+                item { MoonFilterChip("Newest", selectedCategory == "NEWEST") { onCategoryClick("NEWEST") } }
             }
         }
 
@@ -216,7 +226,7 @@ fun HomeTabContent(
             }
         }
 
-        items(featuredThemes.take(3)) { theme ->
+        items(filteredThemes) { theme ->
             ThemeCard(theme = theme, onClick = { onThemeClick(theme) })
         }
 
@@ -325,13 +335,13 @@ fun CollectionsTabContent(
 }
 
 @Composable
-fun MoonFilterChip(text: String, isSelected: Boolean) {
+fun MoonFilterChip(text: String, isSelected: Boolean, onClick: () -> Unit) {
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
         modifier = Modifier
             .clip(RoundedCornerShape(16.dp))
-            .clickable { }
+            .clickable { onClick() }
     ) {
         Text(
             text = text,
