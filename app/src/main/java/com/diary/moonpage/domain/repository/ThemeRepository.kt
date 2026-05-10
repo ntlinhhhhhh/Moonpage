@@ -8,4 +8,7 @@ interface ThemeRepository {
     suspend fun getOwnedThemes(token: String): Result<List<Theme>>
     suspend fun buyTheme(token: String, themeId: String): Result<Unit>
     suspend fun setActiveTheme(token: String, themeId: String): Result<Unit>
+    
+    suspend fun getMoodsForTheme(themeId: String): List<com.diary.moonpage.data.local.entity.ThemeMoodEntity>
+    suspend fun getActiveThemeId(): String?
 }

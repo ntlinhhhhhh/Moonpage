@@ -2,6 +2,7 @@ package com.diary.moonpage.data.local.dao
 
 import androidx.room.*
 import com.diary.moonpage.data.local.entity.ThemeEntity
+import com.diary.moonpage.data.local.entity.ThemeMoodEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -24,6 +25,16 @@ interface ThemeDao {
     @Query("UPDATE themes SET isActive = 1 WHERE id = :id")
     suspend fun setActiveTheme(id: String)
 
+    @Query("SELECT * FROM themes WHERE isActive = 1 LIMIT 1")
+    suspend fun getActiveTheme(): com.diary.moonpage.data.local.entity.ThemeEntity?
+
     @Query("DELETE FROM themes")
     suspend fun deleteAllThemes()
+
+    // Mood related queries
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertThemeMoods(moods: List<ThemeMoodEntity>)
+
+    @Query("SELECT * FROM theme_moods WHERE themeId = :themeId")
+    suspend fun getMoodsForTheme(themeId: String): List<ThemeMoodEntity>
 }

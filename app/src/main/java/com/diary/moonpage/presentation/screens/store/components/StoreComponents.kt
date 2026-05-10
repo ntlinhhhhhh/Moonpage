@@ -470,7 +470,7 @@ fun ConfirmPurchaseDialog(
         Surface(
             shape = RoundedCornerShape(28.dp),
             color = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor,
-            tonalElevation = 6.dp,
+            tonalElevation = 0.dp,
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
@@ -595,7 +595,8 @@ fun PurchaseSuccessDialog(
             )
         },
         shape = RoundedCornerShape(24.dp),
-        containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor
+        containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor,
+        tonalElevation = 0.dp
     )
 }
 

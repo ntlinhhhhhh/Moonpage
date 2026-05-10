@@ -225,7 +225,10 @@ fun DayItem(
                 .size(42.dp)
                 .clip(CircleShape)
                 .background(animatedBg)
-                .clickable { onClick() }
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) { onClick() }
                 .then(
                     when {
                         isSelected -> Modifier.border(2.dp, colorScheme.primary, CircleShape)
@@ -713,7 +716,7 @@ fun MonthYearPickerDialog(
                 .padding(horizontal = 12.dp),
             shape = RoundedCornerShape(28.dp),
             color = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor,
-            tonalElevation = 6.dp
+            tonalElevation = 0.dp
         ) {
             Column(
                 modifier = Modifier
@@ -900,7 +903,15 @@ private fun WheelPicker(
                 Box(
                     modifier = Modifier
                         .height(itemHeight)
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            coroutineScope.launch {
+                                listState.animateScrollToItem(index)
+                            }
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -1240,7 +1251,10 @@ fun FilterBottomSheet(
                             .size(52.dp)
                             .clip(CircleShape)
                             .background(if (isSelected) visual.color else visual.color.copy(alpha = 0.12f))
-                            .clickable { onMoodToggled(moodId) }
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) { onMoodToggled(moodId) }
                             .border(
                                 width = if (isSelected) 2.dp else 0.dp,
                                 color = if (isSelected) cs.onSurface.copy(alpha = 0.5f) else Color.Transparent,

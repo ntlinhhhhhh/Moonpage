@@ -27,11 +27,6 @@ import androidx.annotation.DrawableRes
 import com.diary.moonpage.R
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
-import com.diary.moonpage.core.theme.MoonMoodAngry
-import com.diary.moonpage.core.theme.MoonMoodGood
-import com.diary.moonpage.core.theme.MoonMoodHappy
-import com.diary.moonpage.core.theme.MoonMoodNeutral
-import com.diary.moonpage.core.theme.MoonMoodSad
 
 data class MoonIcon(
     val vector: ImageVector? = null,
@@ -61,7 +56,14 @@ object MoonIcons {
             }
         }
 
-        fun getMoodVisual(level: Int, themeType: com.diary.moonpage.core.theme.MoonThemeType): MoonIcon {
+        fun getMoodVisual(
+            level: Int, 
+            themeType: com.diary.moonpage.core.theme.MoonThemeType,
+            customMoods: Map<Int, MoonIcon>? = null
+        ): MoonIcon {
+            if (customMoods != null && customMoods.containsKey(level)) {
+                return customMoods[level]!!
+            }
             val color = getMoodColor(level, themeType)
             return when (level) {
                 1 -> Happy.copy(color = color)
@@ -75,37 +77,37 @@ object MoonIcons {
     }
 
     object Hobbies {
-        val Exercise = MoonIcon(Icons.Rounded.FitnessCenter, Color(0xFFE53935), "Exercise") // Ã„ÂÃ¡Â»Â Ã„â€˜Ã¡ÂºÂ­m hÃ†Â¡n
-        val TvContent = MoonIcon(Icons.Rounded.Tv, Color(0xFF2C82C4), "TV & Content") // TÃƒÂ­m Ã„â€˜Ã¡ÂºÂ­m
-        val Movie = MoonIcon(Icons.Rounded.Movie, Color(0xFF3D5AFE), "Movie") // Xanh lam Ã„â€˜Ã¡ÂºÂ­m
-        val Gaming = MoonIcon(Icons.Rounded.SportsEsports, Color(0xFF0091EA), "Gaming") // Xanh dÃ†Â°Ã†Â¡ng tÃ†Â°Ã†Â¡i
-        val Reading = MoonIcon(Icons.Rounded.AutoStories, Color(0xFF6D4C41), "Reading") // NÃƒÂ¢u Ã„â€˜Ã¡ÂºÂ­m
-        val Walk = MoonIcon(Icons.Rounded.DirectionsWalk, Color(0xFF2E7D32), "Walk") // Xanh lÃƒÂ¡ Ã„â€˜Ã¡ÂºÂ­m
-        val Music = MoonIcon(Icons.Rounded.MusicNote, Color(0xFFF50057), "Music") // HÃ¡Â»â€œng tÃ†Â°Ã†Â¡i
-        val Drawing = MoonIcon(Icons.Rounded.Brush, Color(0xFFFF8F00), "Drawing") // Cam Ã„â€˜Ã¡ÂºÂ­m
+        val Exercise = MoonIcon(Icons.Rounded.FitnessCenter, Color(0xFFE53935), "Exercise")
+        val TvContent = MoonIcon(Icons.Rounded.Tv, Color(0xFF2C82C4), "TV & Content")
+        val Movie = MoonIcon(Icons.Rounded.Movie, Color(0xFF3D5AFE), "Movie")
+        val Gaming = MoonIcon(Icons.Rounded.SportsEsports, Color(0xFF0091EA), "Gaming")
+        val Reading = MoonIcon(Icons.Rounded.AutoStories, Color(0xFF6D4C41), "Reading")
+        val Walk = MoonIcon(Icons.Rounded.DirectionsWalk, Color(0xFF2E7D32), "Walk")
+        val Music = MoonIcon(Icons.Rounded.MusicNote, Color(0xFFF50057), "Music")
+        val Drawing = MoonIcon(Icons.Rounded.Brush, Color(0xFFFF8F00), "Drawing")
     }
 
     object Emotions {
-        val Excited = MoonIcon(Icons.Rounded.Celebration, Color(0xFFFFB300), "Excited") // VÃƒÂ ng cam
-        val Relaxed = MoonIcon(Icons.Rounded.Spa, Color(0xFF4CAF50), "Relaxed") // Xanh lÃƒÂ¡
-        val Proud = MoonIcon(Icons.Rounded.EmojiEvents, Color(0xFFFF8F00), "Proud") // Cam vÃƒÂ ng
-        val Hopeful = MoonIcon(Icons.Rounded.AutoAwesome, Color(0xFFFFCA28), "Hopeful") // VÃƒÂ ng hÃ¡Â»â€¢ phÃƒÂ¡ch
-        val Happy = MoonIcon(Icons.Rounded.SentimentVerySatisfied, Color(0xFFFFB300), "Happy") // VÃƒÂ ng cam
-        val Enthusiastic = MoonIcon(Icons.Rounded.Whatshot, Color(0xFFE64A19), "Enthusiastic") // Ã„ÂÃ¡Â»Â cam Ã„â€˜Ã¡ÂºÂ­m
-        val PitAPat = MoonIcon(Icons.Rounded.Favorite, Color(0xFFF06292), "Pit-a-pat") // HÃ¡Â»â€œng Ã„â€˜Ã¡ÂºÂ­m hÃ†Â¡n
-        val Refreshed = MoonIcon(Icons.Rounded.WaterDrop, Color(0xFF039BE5), "Refreshed") // Xanh nÃ†Â°Ã¡Â»â€ºc biÃ¡Â»Æ’n
-        val Calm = MoonIcon(Icons.Rounded.SelfImprovement, Color(0xFF7E57C2), "Calm") // TÃƒÂ­m
-        val Grateful = MoonIcon(Icons.Rounded.VolunteerActivism, Color(0xFFE91E63), "Grateful") // HÃ¡Â»â€œng phÃ¡ÂºÂ¥n Ã„â€˜Ã¡ÂºÂ­m
-        val Depressed = MoonIcon(Icons.Rounded.SentimentVeryDissatisfied, Color(0xFF3949AB), "Depressed") // Xanh sÃ¡ÂºÂ«m
-        val Lonely = MoonIcon(Icons.Rounded.PersonOutline, Color(0xFF4C9FBD), "Lonely") // XÃƒÂ¡m than xanh
-        val Anxious = MoonIcon(Icons.Rounded.SentimentDissatisfied, Color(0xFF0F87BD), "Anxious") // XÃƒÂ¡m xanh Ã„â€˜Ã¡ÂºÂ­m
-        val Sad = MoonIcon(Icons.Rounded.MoodBad, Color(0xFF1B75D0), "Sad") // Xanh buÃ¡Â»â€œn Ã„â€˜Ã¡ÂºÂ­m
-        val Angry = MoonIcon(Icons.Rounded.PriorityHigh, Color(0xFFD32F2F), "Angry") // Ã„ÂÃ¡Â»Â gÃ¡ÂºÂ¯t
-        val Pressured = MoonIcon(Icons.Rounded.Timer, Color(0xFFE64A19), "Pressured") // Ã„ÂÃ¡Â»Â cam
-        val Annoyed = MoonIcon(Icons.Rounded.ErrorOutline, Color(0xFFF4511E), "Annoyed") // Cam chÃƒÂ¡y
-        val Tired = MoonIcon(Icons.Rounded.Battery0Bar, Color(0xFF5D4037), "Tired") // NÃƒÂ¢u xÃƒÂ¡m
-        val Stressed = MoonIcon(Icons.Rounded.Psychology, Color(0xFF3F51B5), "Stressed") // Xanh chÃƒÂ m
-        val Bored = MoonIcon(Icons.Rounded.SentimentNeutral, Color(0xFFC55113), "Bored") // XÃƒÂ¡m slate
+        val Excited = MoonIcon(Icons.Rounded.Celebration, Color(0xFFFFB300), "Excited")
+        val Relaxed = MoonIcon(Icons.Rounded.Spa, Color(0xFF4CAF50), "Relaxed")
+        val Proud = MoonIcon(Icons.Rounded.EmojiEvents, Color(0xFFFF8F00), "Proud")
+        val Hopeful = MoonIcon(Icons.Rounded.AutoAwesome, Color(0xFFFFCA28), "Hopeful")
+        val Happy = MoonIcon(Icons.Rounded.SentimentVerySatisfied, Color(0xFFFFB300), "Happy")
+        val Enthusiastic = MoonIcon(Icons.Rounded.Whatshot, Color(0xFFE64A19), "Enthusiastic")
+        val PitAPat = MoonIcon(Icons.Rounded.Favorite, Color(0xFFF06292), "Pit-a-pat")
+        val Refreshed = MoonIcon(Icons.Rounded.WaterDrop, Color(0xFF039BE5), "Refreshed")
+        val Calm = MoonIcon(Icons.Rounded.SelfImprovement, Color(0xFF7E57C2), "Calm")
+        val Grateful = MoonIcon(Icons.Rounded.VolunteerActivism, Color(0xFFE91E63), "Grateful")
+        val Depressed = MoonIcon(Icons.Rounded.SentimentVeryDissatisfied, Color(0xFF3949AB), "Depressed")
+        val Lonely = MoonIcon(Icons.Rounded.PersonOutline, Color(0xFF4C9FBD), "Lonely")
+        val Anxious = MoonIcon(Icons.Rounded.SentimentDissatisfied, Color(0xFF0F87BD), "Anxious")
+        val Sad = MoonIcon(Icons.Rounded.MoodBad, Color(0xFF1B75D0), "Sad")
+        val Angry = MoonIcon(Icons.Rounded.PriorityHigh, Color(0xFFD32F2F), "Angry")
+        val Pressured = MoonIcon(Icons.Rounded.Timer, Color(0xFFE64A19), "Pressured")
+        val Annoyed = MoonIcon(Icons.Rounded.ErrorOutline, Color(0xFFF4511E), "Annoyed")
+        val Tired = MoonIcon(Icons.Rounded.Battery0Bar, Color(0xFF5D4037), "Tired")
+        val Stressed = MoonIcon(Icons.Rounded.Psychology, Color(0xFF3F51B5), "Stressed")
+        val Bored = MoonIcon(Icons.Rounded.SentimentNeutral, Color(0xFFC55113), "Bored")
     }
 
     object Meals {
@@ -154,27 +156,24 @@ object MoonIcons {
         val Makeup = MoonIcon(Icons.Rounded.AutoFixHigh, Color(0xFFBA68C8), "Makeup")
     }
 
-    // 9. Weather (ThÃ¡Â»Âi tiÃ¡ÂºÂ¿t)
     object Weather {
         val Sunny = MoonIcon(Icons.Rounded.WbSunny, Color(0xFFFFB300), "Sunny")
         val Cloudy = MoonIcon(Icons.Rounded.Cloud, Color(0xFF78909C), "Cloudy")
         val Rainy = MoonIcon(Icons.Rounded.Umbrella, Color(0xFF1E88E5), "Rainy")
-        val Snowy = MoonIcon(Icons.Rounded.AcUnit, Color(0xFF039BE5), "Snowy") // Ã„ÂÃ¡Â»â€¢i tuyÃ¡ÂºÂ¿t tÃ¡Â»Â« trÃ¡ÂºÂ¯ng/xanh siÃƒÂªu nhÃ¡ÂºÂ¡t sang xanh ngÃ¡Â»Âc
+        val Snowy = MoonIcon(Icons.Rounded.AcUnit, Color(0xFF039BE5), "Snowy")
         val Windy = MoonIcon(Icons.Rounded.Air, Color(0xFF4CAF50), "Windy")
         val Stormy = MoonIcon(Icons.Rounded.Thunderstorm, Color(0xFFFF9800), "Stormy")
         val Hot = MoonIcon(Icons.Rounded.Thermostat, Color(0xFFE64A19), "Hot")
         val Cold = MoonIcon(Icons.Rounded.SevereCold, Color(0xFF01579B), "Cold")
     }
 
-    // 10. Health (SÃ¡Â»Â©c khÃ¡Â»Âe)
     object Health {
-        val Sick = MoonIcon(Icons.Rounded.Sick, Color(0xFFAFB42B), "Sick") // Xanh rÃƒÂªu/vÃƒÂ ng ÃƒÂºa Ã„â€˜Ã¡ÂºÂ­m
+        val Sick = MoonIcon(Icons.Rounded.Sick, Color(0xFFAFB42B), "Sick")
         val Hospital = MoonIcon(Icons.Rounded.LocalHospital, Color(0xFFD32F2F), "Hospital")
         val Checkup = MoonIcon(Icons.Rounded.AssignmentTurnedIn, Color(0xFF388E3C), "Checkup")
         val Medicine = MoonIcon(Icons.Rounded.Medication, Color(0xFF0288D1), "Medicine")
     }
 
-    // 11. Work (CÃƒÂ´ng viÃ¡Â»â€¡c)
     object Work {
         val Work = MoonIcon(Icons.Rounded.Work, Color(0xFF3949AB), "Work")
         val EndOnTime = MoonIcon(Icons.Rounded.AlarmOn, Color(0xFF388E3C), "End on Time")
@@ -182,7 +181,6 @@ object MoonIcons {
         val Vacation = MoonIcon(Icons.Rounded.BeachAccess, Color(0xFF00897B), "Vacation")
     }
 
-    // 12. Other (KhÃƒÂ¡c)
     object Other {
         val Snack = MoonIcon(Icons.Rounded.Cookie, Color(0xFFFB8C00), "Snack")
         val Coffee = MoonIcon(Icons.Rounded.Coffee, Color(0xFF6D4C41), "Coffee")
@@ -192,7 +190,6 @@ object MoonIcons {
         val Smoking = MoonIcon(Icons.Rounded.SmokingRooms, Color(0xFF2196F3), "Smoking")
     }
 
-    // 13. School (TrÃ†Â°Ã¡Â»Âng hÃ¡Â»Âc)
     object School {
         val Class = MoonIcon(Icons.Rounded.CastForEducation, Color(0xFF3949AB), "Class")
         val Study = MoonIcon(Icons.Rounded.AutoStories, Color(0xFF3F51B5), "Study")
@@ -200,7 +197,6 @@ object MoonIcons {
         val Exam = MoonIcon(Icons.Rounded.FactCheck, Color(0xFFD32F2F), "Exam")
     }
 
-    // 14. Relationship (MÃ¡Â»â€˜i quan hÃ¡Â»â€¡)
     object Relationship {
         val Date = MoonIcon(Icons.Rounded.Favorite, Color(0xFFD81B60), "Date")
         val Anniversary = MoonIcon(Icons.Rounded.Cake, Color(0xFFE64A19), "Anniversary")
@@ -242,74 +238,5 @@ object MoonIcons {
     fun getIconForActivity(activityName: String): MoonIcon {
         val searchKey = activityName.replace(" ", "").lowercase()
         return iconMapByName[searchKey] ?: Other.Coffee
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MoonIconsPreview() {
-    com.diary.moonpage.core.theme.MoonPageTheme {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    "Moon Page Icons Preview",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-                
-                LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 80.dp),
-                    contentPadding = PaddingValues(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(MoonIcons.getAllIcons()) { icon ->
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(MaterialTheme.colorScheme.surface)
-                                .padding(8.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .clip(CircleShape)
-                                    .background(icon.color.copy(alpha = 0.15f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (icon.drawableRes != null) {
-                                    Image(
-                                        painter = painterResource(id = icon.drawableRes),
-                                        contentDescription = icon.name,
-                                        modifier = Modifier.size(32.dp)
-                                    )
-                                } else if (icon.vector != null) {
-                                    Icon(
-                                        imageVector = icon.vector,
-                                        contentDescription = icon.name,
-                                        tint = icon.color,
-                                        modifier = Modifier.size(28.dp)
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = icon.name,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1
-                            )
-                        }
-                    }
-                }
-            }
-        }
     }
 }

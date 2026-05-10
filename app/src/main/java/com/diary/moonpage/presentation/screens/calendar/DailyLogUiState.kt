@@ -35,5 +35,7 @@ data class DailyLogUiState(
     val showSpotifyAuthDialog: Boolean = false,
     val pendingDate: LocalDate? = null,
     val snackbarMessage: String? = null,
-    val themeType: MoonThemeType = MoonThemeType.DEFAULT
+    val themeType: MoonThemeType = MoonThemeType.DEFAULT,
+    val customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null,
+    val gender: String? = null
 )

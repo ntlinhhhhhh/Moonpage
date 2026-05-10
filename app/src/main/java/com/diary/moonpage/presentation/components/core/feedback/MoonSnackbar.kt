@@ -25,7 +25,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 fun MoonSnackbarHost(
     hostState: SnackbarHostState,
     modifier: Modifier = Modifier,
-    topPadding: Dp = 105.dp
+    topPadding: Dp = 45.dp
 ) {
     // Always overlay at top of the enclosing Box
     SnackbarHost(

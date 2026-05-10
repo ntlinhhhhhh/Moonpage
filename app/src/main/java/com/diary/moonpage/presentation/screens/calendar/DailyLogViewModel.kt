@@ -6,6 +6,7 @@ import com.diary.moonpage.core.util.ActivityPreferencesManager
 import com.diary.moonpage.domain.model.DailyLog
 import com.diary.moonpage.domain.repository.DailyLogRepository
 import com.diary.moonpage.core.util.PkceUtil
+import com.diary.moonpage.core.util.MoonIcons
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -19,8 +20,10 @@ import javax.inject.Inject
 @HiltViewModel
 class DailyLogViewModel @Inject constructor(
     private val repository: DailyLogRepository,
+    private val themeRepository: com.diary.moonpage.domain.repository.ThemeRepository,
     private val activityPreferencesManager: ActivityPreferencesManager,
     private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager,
+    private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
     private val tokenManager: com.diary.moonpage.core.util.TokenManager,
     val healthConnectManager: com.diary.moonpage.core.util.HealthConnectManager,
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
@@ -48,12 +51,67 @@ class DailyLogViewModel @Inject constructor(
         viewModelScope.launch {
             themePreferencesManager.themeType.collect { themeType ->
                 _uiState.update { it.copy(themeType = themeType) }
+                loadCustomMoods()
             }
         }
         viewModelScope.launch {
             tokenManager.getSpotifyToken().collect { token ->
                 _uiState.update { it.copy(isSpotifyLinked = token != null) }
             }
+        }
+        viewModelScope.launch {
+            userRepository.currentUser.collect { user ->
+                _uiState.update { it.copy(gender = user?.gender) }
+            }
+        }
+    }
+
+    private suspend fun loadCustomMoods() {
+        val activeThemeId = themeRepository.getActiveThemeId()
+        if (activeThemeId != null) {
+            val moodEntities = themeRepository.getMoodsForTheme(activeThemeId)
+            if (moodEntities.isNotEmpty()) {
+                val currentTheme = _uiState.value.themeType
+                val customMoods = moodEntities.associate { entity ->
+                    val level = when (entity.baseMoodId) {
+                        "Awful" -> 1
+                        "Bad" -> 2
+                        "Meh" -> 3
+                        "Good" -> 4
+                        "Rad" -> 5
+                        else -> 3
+                    }
+                    
+                    // Fallback to local mood color if API hex is invalid or bad
+                    val color = try {
+                        if (entity.iconUrl.startsWith("#")) {
+                            androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor(entity.iconUrl))
+                        } else {
+                            MoonIcons.Moods.getMoodColor(level, currentTheme)
+                        }
+                    } catch (e: Exception) {
+                        MoonIcons.Moods.getMoodColor(level, currentTheme)
+                    }
+
+                    level to com.diary.moonpage.core.util.MoonIcon(
+                        color = color,
+                        name = entity.customName,
+                        drawableRes = when (level) {
+                            1 -> com.diary.moonpage.R.drawable.very_sad
+                            2 -> com.diary.moonpage.R.drawable.sad
+                            3 -> com.diary.moonpage.R.drawable.neutral
+                            4 -> com.diary.moonpage.R.drawable.happy
+                            5 -> com.diary.moonpage.R.drawable.very_happy
+                            else -> com.diary.moonpage.R.drawable.neutral
+                        }
+                    )
+                }
+                _uiState.update { it.copy(customMoods = customMoods) }
+            } else {
+                _uiState.update { it.copy(customMoods = null) }
+            }
+        } else {
+            _uiState.update { it.copy(customMoods = null) }
         }
     }
 

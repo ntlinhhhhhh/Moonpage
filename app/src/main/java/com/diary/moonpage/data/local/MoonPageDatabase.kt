@@ -9,10 +9,11 @@ import com.diary.moonpage.data.local.dao.StatisticsDao
 import com.diary.moonpage.data.local.entity.DailyLogEntity
 import com.diary.moonpage.data.local.entity.ThemeEntity
 import com.diary.moonpage.data.local.entity.StatisticsEntity
+import com.diary.moonpage.data.local.entity.ThemeMoodEntity
 
 @Database(
-    entities = [DailyLogEntity::class, ThemeEntity::class, StatisticsEntity::class],
-    version = 6,
+    entities = [DailyLogEntity::class, ThemeEntity::class, StatisticsEntity::class, ThemeMoodEntity::class],
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
