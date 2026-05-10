@@ -18,6 +18,8 @@ data class DailyLogEntity(
     val songTitle: String? = null,
     val artistName: String? = null,
     val albumArtUrl: String? = null,
+    val sleepBedTime: String? = null,
+    val sleepWakeTime: String? = null,
     val steps: Int? = null,
     val calories: Int? = null,
     val distance: Double? = null
@@ -36,6 +38,8 @@ data class DailyLogEntity(
             songTitle = songTitle,
             artistName = artistName,
             albumArtUrl = albumArtUrl,
+            sleepBedTime = sleepBedTime,
+            sleepWakeTime = sleepWakeTime,
             steps = steps,
             calories = calories,
             distance = distance
@@ -56,6 +60,8 @@ data class DailyLogEntity(
             songTitle = songTitle,
             artistName = artistName,
             albumArtUrl = albumArtUrl,
+            sleepBedTime = sleepBedTime,
+            sleepWakeTime = sleepWakeTime,
             steps = steps,
             calories = calories,
             distance = distance
@@ -77,6 +83,8 @@ data class DailyLogEntity(
                 songTitle = response.songTitle,
                 artistName = response.artistName,
                 albumArtUrl = response.albumArtUrl,
+                sleepBedTime = response.sleepBedTime,
+                sleepWakeTime = response.sleepWakeTime,
                 steps = response.steps,
                 calories = response.calories,
                 distance = response.distance

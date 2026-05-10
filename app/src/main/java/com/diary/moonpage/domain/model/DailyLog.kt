@@ -13,6 +13,8 @@ data class DailyLog(
     val songTitle: String? = null,
     val artistName: String? = null,
     val albumArtUrl: String? = null,
+    val sleepBedTime: String? = null, // Format: HH:mm
+    val sleepWakeTime: String? = null, // Format: HH:mm
     val steps: Int? = null,
     val calories: Int? = null,
     val distance: Double? = null

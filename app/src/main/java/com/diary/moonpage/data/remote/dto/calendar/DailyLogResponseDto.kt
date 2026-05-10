@@ -16,6 +16,8 @@ data class DailyLogResponseDto(
     @SerializedName("songTitle") val songTitle: String? = null,
     @SerializedName("artistName") val artistName: String? = null,
     @SerializedName("albumArtUrl") val albumArtUrl: String? = null,
+    @SerializedName("sleepBedTime") val sleepBedTime: String? = null,
+    @SerializedName("sleepWakeTime") val sleepWakeTime: String? = null,
     @SerializedName("steps") val steps: Int? = null,
     @SerializedName("calories") val calories: Int? = null,
     @SerializedName("distance") val distance: Double? = null
@@ -34,6 +36,8 @@ data class DailyLogResponseDto(
             songTitle = songTitle,
             artistName = artistName,
             albumArtUrl = albumArtUrl,
+            sleepBedTime = sleepBedTime,
+            sleepWakeTime = sleepWakeTime,
             steps = steps,
             calories = calories,
             distance = distance

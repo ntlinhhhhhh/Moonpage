@@ -103,7 +103,7 @@ fun ThemeCalendarScreen(
             Triple(MoonThemeType.WEATHER_CYCLE, "Weather Cycle", Color(0xFF607D8B))
         ),
         currentThemeType = currentThemeType,
-        isDarkMode = isDark,
+        isDarkMode = isDarkModePref,
         onThemeSelected = { mainViewModel.setTheme(it) },
         onDarkModeToggled = { mainViewModel.setDarkMode(it) },
         onApply = { onNavigateBack() },
@@ -116,9 +116,9 @@ fun ThemeCalendarScreen(
 fun ThemePickerContent(
     availableThemes: List<Triple<MoonThemeType, String, Color>>,
     currentThemeType: MoonThemeType,
-    isDarkMode: Boolean,
+    isDarkMode: Boolean?,
     onThemeSelected: (MoonThemeType) -> Unit,
-    onDarkModeToggled: (Boolean) -> Unit,
+    onDarkModeToggled: (Boolean?) -> Unit,
     onApply: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
@@ -165,29 +165,24 @@ fun ThemePickerContent(
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                Card(
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
-                    modifier = Modifier.fillMaxWidth()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                if (isDarkMode) Icons.Rounded.DarkMode else Icons.Rounded.LightMode,
-                                null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Text("Dark Mode", fontWeight = FontWeight.SemiBold)
-                        }
-                        Switch(
-                            checked = isDarkMode,
-                            onCheckedChange = onDarkModeToggled,
-                            colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.primary)
+                    val modes = listOf(
+                        Triple("System", Icons.Rounded.Settings, null as Boolean?),
+                        Triple("Light", Icons.Rounded.LightMode, false as Boolean?),
+                        Triple("Dark", Icons.Rounded.DarkMode, true as Boolean?)
+                    )
+                    
+                    modes.forEach { (name, icon, value) ->
+                        val isSelected = isDarkMode == value
+                        AppThemeItem(
+                            name = name,
+                            icon = icon,
+                            isSelected = isSelected,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onDarkModeToggled(value) }
                         )
                     }
                 }

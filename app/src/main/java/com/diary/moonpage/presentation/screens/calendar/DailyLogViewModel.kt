@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 import javax.inject.Inject
 
@@ -199,12 +200,15 @@ class DailyLogViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             repository.getDailyLogByDate(date.toString()).onSuccess { log ->
+                val formatter = DateTimeFormatter.ofPattern("HH:mm")
                 _uiState.update { it.copy(
                     existingLog = log,
                     selectedMood = log.baseMoodId,
                     selectedActivities = log.activityIds ?: emptyList(),
                     noteText = log.note ?: "",
                     sleepHours = log.sleepHours?.toFloat() ?: 0f,
+                    sleepBedTime = log.sleepBedTime?.let { LocalTime.parse(it, formatter) } ?: LocalTime.of(0, 0),
+                    sleepWakeTime = log.sleepWakeTime?.let { LocalTime.parse(it, formatter) } ?: LocalTime.of(7, 0),
                     isMenstruation = log.isMenstruation,
                     menstruationPhase = log.menstruationPhase,
                     dailyPhotos = log.dailyPhotos ?: emptyList(),
@@ -223,6 +227,8 @@ class DailyLogViewModel @Inject constructor(
                     selectedActivities = emptyList(),
                     noteText = "",
                     sleepHours = 0f,
+                    sleepBedTime = LocalTime.of(0, 0),
+                    sleepWakeTime = LocalTime.of(7, 0),
                     isMenstruation = false,
                     menstruationPhase = null,
                     dailyPhotos = emptyList(),
@@ -248,6 +254,8 @@ class DailyLogViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             
+            val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+            
             repository.createDailyLog(
                 baseMoodId = state.selectedMood,
                 date = state.date.toString(),
@@ -260,6 +268,8 @@ class DailyLogViewModel @Inject constructor(
                 songTitle = state.musicTitle,
                 artistName = state.artistName,
                 albumArtUrl = state.albumArtUrl,
+                sleepBedTime = state.sleepBedTime.format(timeFormatter),
+                sleepWakeTime = state.sleepWakeTime.format(timeFormatter),
                 steps = state.steps,
                 calories = state.calories,
                 distance = state.distance

@@ -33,6 +33,8 @@ class DailyLogRepositoryImpl @Inject constructor(
         songTitle: String?,
         artistName: String?,
         albumArtUrl: String?,
+        sleepBedTime: String?,
+        sleepWakeTime: String?,
         steps: Int?,
         calories: Int?,
         distance: Double?
@@ -49,6 +51,9 @@ class DailyLogRepositoryImpl @Inject constructor(
             val artistNameBody = artistName?.toRequestBody("text/plain".toMediaTypeOrNull())
             val albumArtUrlBody = albumArtUrl?.toRequestBody("text/plain".toMediaTypeOrNull())
             
+            val sleepBedTimeBody = sleepBedTime?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val sleepWakeTimeBody = sleepWakeTime?.toRequestBody("text/plain".toMediaTypeOrNull())
+            
             val stepsBody = steps?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
             val caloriesBody = calories?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
             val distanceBody = distance?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
@@ -64,7 +69,7 @@ class DailyLogRepositoryImpl @Inject constructor(
 
             val response = api.createDailyLog(
                 baseMoodIdBody, dateBody, noteBody, sleepHoursBody, isMenstruationBody, menstruationPhaseBody, activityParts, photoParts,
-                songTitleBody, artistNameBody, albumArtUrlBody, stepsBody, caloriesBody, distanceBody
+                songTitleBody, artistNameBody, albumArtUrlBody, sleepBedTimeBody, sleepWakeTimeBody, stepsBody, caloriesBody, distanceBody
             )
             
             if (response.isSuccessful) {

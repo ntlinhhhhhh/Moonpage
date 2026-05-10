@@ -76,7 +76,7 @@ object MoonIcons {
 
     object Hobbies {
         val Exercise = MoonIcon(Icons.Rounded.FitnessCenter, Color(0xFFE53935), "Exercise") // Ã„ÂÃ¡Â»Â Ã„â€˜Ã¡ÂºÂ­m hÃ†Â¡n
-        val TvContent = MoonIcon(Icons.Rounded.Tv, Color(0xFF651FFF), "TV & Content") // TÃƒÂ­m Ã„â€˜Ã¡ÂºÂ­m
+        val TvContent = MoonIcon(Icons.Rounded.Tv, Color(0xFF2C82C4), "TV & Content") // TÃƒÂ­m Ã„â€˜Ã¡ÂºÂ­m
         val Movie = MoonIcon(Icons.Rounded.Movie, Color(0xFF3D5AFE), "Movie") // Xanh lam Ã„â€˜Ã¡ÂºÂ­m
         val Gaming = MoonIcon(Icons.Rounded.SportsEsports, Color(0xFF0091EA), "Gaming") // Xanh dÃ†Â°Ã†Â¡ng tÃ†Â°Ã†Â¡i
         val Reading = MoonIcon(Icons.Rounded.AutoStories, Color(0xFF6D4C41), "Reading") // NÃƒÂ¢u Ã„â€˜Ã¡ÂºÂ­m

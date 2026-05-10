@@ -17,6 +17,8 @@ interface DailyLogRepository {
         songTitle: String? = null,
         artistName: String? = null,
         albumArtUrl: String? = null,
+        sleepBedTime: String? = null,
+        sleepWakeTime: String? = null,
         steps: Int? = null,
         calories: Int? = null,
         distance: Double? = null
