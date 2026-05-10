@@ -465,13 +465,15 @@ fun CurrentThemeCard(theme: Theme) {
                     decoration = theme.decoration,
                     color = shades.getOrElse(3) { MaterialTheme.colorScheme.primary }
                 )
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(16.dp).offset(x = 4.dp, y = 4.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(text = "✓", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                if (theme.id != com.diary.moonpage.core.util.ThemeConstants.DEFAULT_THEME_ID) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp).offset(x = 4.dp, y = 4.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(text = "✓", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }
