@@ -35,4 +35,8 @@ class ActivityRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun clearCache() {
+        activityPreferencesManager.clearAll()
+    }
 }

@@ -37,4 +37,7 @@ interface ThemeDao {
 
     @Query("SELECT * FROM theme_moods WHERE themeId = :themeId")
     suspend fun getMoodsForTheme(themeId: String): List<ThemeMoodEntity>
+
+    @Query("DELETE FROM theme_moods")
+    suspend fun deleteAllThemeMoods()
 }

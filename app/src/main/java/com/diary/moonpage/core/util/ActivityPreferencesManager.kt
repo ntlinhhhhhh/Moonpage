@@ -70,4 +70,10 @@ class ActivityPreferencesManager @Inject constructor(
             prefs[ACTIVITIES_JSON_KEY] = json
         }
     }
+
+    suspend fun clearAll() {
+        context.activityDataStore.edit { prefs ->
+            prefs.clear()
+        }
+    }
 }

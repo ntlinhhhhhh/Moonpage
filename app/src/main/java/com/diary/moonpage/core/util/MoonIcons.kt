@@ -38,11 +38,11 @@ data class MoonIcon(
 object MoonIcons {
 
     object Moods {
-        val Happy = MoonIcon(null, Color.Unspecified, "Happy", R.drawable.very_happy)
-        val Good = MoonIcon(null, Color.Unspecified, "Good", R.drawable.happy) 
+        val VeryHappy = MoonIcon(null, Color.Unspecified, "Very Happy", R.drawable.very_happy)
+        val Happy = MoonIcon(null, Color.Unspecified, "Happy", R.drawable.happy) 
         val Neutral = MoonIcon(null, Color.Unspecified, "Neutral", R.drawable.neutral) 
         val Sad = MoonIcon(null, Color.Unspecified, "Sad", R.drawable.sad) 
-        val Angry = MoonIcon(null, Color.Unspecified, "Angry", R.drawable.very_sad)
+        val VerySad = MoonIcon(null, Color.Unspecified, "Very Sad", R.drawable.very_sad)
 
         fun getMoodColor(level: Int, themeType: com.diary.moonpage.core.theme.MoonThemeType): Color {
             val shades = com.diary.moonpage.core.theme.getThemeShades(themeType)
@@ -66,11 +66,11 @@ object MoonIcons {
             }
             val color = getMoodColor(level, themeType)
             return when (level) {
-                1 -> Angry.copy(color = color)
+                1 -> VerySad.copy(color = color)
                 2 -> Sad.copy(color = color)
                 3 -> Neutral.copy(color = color)
-                4 -> Good.copy(color = color)
-                5 -> Happy.copy(color = color)
+                4 -> Happy.copy(color = color)
+                5 -> VeryHappy.copy(color = color)
                 else -> Neutral.copy(color = color)
             }
         }
@@ -207,7 +207,7 @@ object MoonIcons {
 
     fun getAllCategories(): Map<String, List<MoonIcon>> {
         return mapOf(
-            "Moods" to listOf(Moods.Happy, Moods.Good, Moods.Neutral, Moods.Sad, Moods.Angry),
+            "Moods" to listOf(Moods.VeryHappy, Moods.Happy, Moods.Neutral, Moods.Sad, Moods.VerySad),
             "Hobbies" to listOf(Hobbies.Exercise, Hobbies.TvContent, Hobbies.Movie, Hobbies.Gaming, Hobbies.Reading, Hobbies.Walk, Hobbies.Music, Hobbies.Drawing),
             "Emotions" to listOf(Emotions.Excited, Emotions.Relaxed, Emotions.Proud, Emotions.Hopeful, Emotions.Happy, Emotions.Enthusiastic, Emotions.PitAPat, Emotions.Refreshed, Emotions.Calm, Emotions.Grateful, Emotions.Depressed, Emotions.Lonely, Emotions.Anxious, Emotions.Sad, Emotions.Angry, Emotions.Pressured, Emotions.Annoyed, Emotions.Tired, Emotions.Stressed, Emotions.Bored),
             "Meals" to listOf(Meals.Breakfast, Meals.Lunch, Meals.Dinner, Meals.NightSnack),

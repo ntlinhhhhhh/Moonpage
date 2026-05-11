@@ -366,7 +366,6 @@ PUT /api/users/me
 ### Request body (application/json):
 
 - name (string, Required)
-- avatarUrl (string, Optional)
 - gender (string, Optional)
 - birthday (string, Optional): YYYY-MM-DD format.
 
@@ -413,6 +412,27 @@ PUT /api/users/me/avatar
 }
 ```
 
+## Delete my account
+
+- Endpoint:
+
+```text
+DELETE /api/users/me
+```
+
+- Description: Deletes the authenticated user's account.
+- Auth required: Yes
+
+### Responses:
+
+- [200 OK] - Account deleted successfully.
+
+```json
+{
+  "message": "Your account has been deleted successfully."
+}
+```
+
 ## Search users
 
 - Endpoint:
@@ -427,7 +447,7 @@ GET /api/users/search
 ### Query parameters:
 
 - name (string, Required): The search keyword.
-- limit (int, Optional): Max results to return.
+- limit (int, Required): Max results to return.
 
 ### Responses:
 
@@ -571,6 +591,7 @@ POST /api/dailylogs
 - BaseMoodId (int, Optional): 1 (Very Sad) to 5 (Very Happy).
 - Note (string, Optional).
 - SleepHours (double, Optional).
+- SleepStartTime (string, Optional): HH:mm format.
 - IsMenstruation (bool, Optional).
 - MenstruationPhase (string, Optional).
 - Steps (int, Optional).
@@ -610,8 +631,11 @@ GET /api/dailylogs/date/:date
   "date": "2024-04-20",
   "note": "Great day!",
   "sleepHours": 8.0,
+  "sleepStartTime": "22:00",
   "isMenstruation": false,
+  "menstruationPhase": null,
   "steps": 10000,
+  "musicRecord": "Classical",
   "dailyPhotos": ["https://storage.../image1.jpg"],
   "activityIds": ["act_sport", "act_reading"],
   "createdAt": "2024-04-20T10:00:00Z"
@@ -751,9 +775,10 @@ POST /api/moments
 ### Request body (multipart/form-data):
 
 - ImageFile (File, Required): The photo to share.
+- DailyLogId (string, Optional): Associated daily log ID.
 - Caption (string, Optional).
 - IsPublic (bool, Optional).
-- DailyLogId (string, Optional): Associated daily log ID.
+- CapturedAt (DateTime, Optional): Default is current UTC.
 
 ### Responses:
 
@@ -856,6 +881,13 @@ POST /api/notifications/send
 
 - [200 OK] - Notification sent.
 
+```json
+{
+  "success": true,
+  "messageId": "..."
+}
+```
+
 ## Create app notification
 
 - Endpoint:
@@ -878,6 +910,20 @@ POST /api/notifications
 
 - [201 Created] - Notification created.
 
+```json
+{
+  "success": true,
+  "data": {
+    "id": "...",
+    "title": "...",
+    "message": "...",
+    "type": "...",
+    "isRead": false,
+    "createdAt": "..."
+  }
+}
+```
+
 ## Get my notifications
 
 - Endpoint:
@@ -892,6 +938,22 @@ GET /api/notifications
 ### Responses:
 
 - [200 OK] - List of notifications.
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "...",
+      "title": "...",
+      "message": "...",
+      "type": "...",
+      "isRead": false,
+      "createdAt": "..."
+    }
+  ]
+}
+```
 
 ## Mark notification as read
 
@@ -938,6 +1000,13 @@ DELETE /api/notifications/all
 
 - [200 OK] - All notifications deleted.
 
+```json
+{
+  "success": true,
+  "message": "All your notifications have been cleared!"
+}
+```
+
 ---
 
 # Statistics Endpoints:
@@ -955,7 +1024,7 @@ GET /api/statistics/summary
 
 ### Query parameters:
 
-- year (int, Optional): Year for statistics.
+- year (int, Optional): Year for statistics. Defaults to current year.
 - month (int, Optional): Month for statistics.
 
 ### Responses:
@@ -1147,6 +1216,7 @@ POST /api/themes
 - price (int, Required)
 - thumbnailUrl (string, Optional)
 - backgroundUrl (string, Optional)
+- isActive (bool, Optional): Default is true.
 - moods (array, Required): List of mood icons.
 
 ```json

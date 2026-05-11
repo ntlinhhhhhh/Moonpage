@@ -36,7 +36,13 @@ class AuthViewModel @Inject constructor (
     private val tokenManager: TokenManager,
     private val onboardingPrefsManager: OnboardingPrefsManager,
     private val userRepository: UserRepository,
-    private val activityRepository: ActivityRepository
+    private val activityRepository: ActivityRepository,
+    private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository,
+    private val themeRepository: com.diary.moonpage.domain.repository.ThemeRepository,
+    private val dailyLogRepository: com.diary.moonpage.domain.repository.DailyLogRepository,
+    private val momentRepository: com.diary.moonpage.domain.repository.MomentRepository,
+    private val authApi: com.diary.moonpage.data.remote.api.AuthApi,
+    private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AuthUiState())
@@ -255,7 +261,26 @@ class AuthViewModel @Inject constructor (
 
     fun logout() {
         viewModelScope.launch {
-            tokenManager.clearToken()
+            _uiState.update { it.copy(isLoading = true) }
+            
+            // 1. Call backend logout (best effort)
+            try {
+                authApi.logout()
+            } catch (e: Exception) {
+                // Ignore backend logout failures as we're clearing locally anyway
+            }
+
+            // 2. Clear all local session data and caches
+            tokenManager.clearAll()
+            userRepository.clearCache()
+            statisticsRepository.clearCache()
+            themeRepository.clearCache()
+            dailyLogRepository.clearCache()
+            momentRepository.clearCache()
+            activityRepository.clearCache()
+            themePreferencesManager.clearAll()
+
+            // 3. Reset UI state and navigate
             _uiState.update { AuthUiState() }
             _uiEvent.send(AuthUiEvent.NavigateToLogin)
         }

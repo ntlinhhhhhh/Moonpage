@@ -317,7 +317,12 @@ fun AppNavigation() {
                 ScreenWrapper(Screen.Store.route) {
                 StoreScreen(
                     viewModel = storeViewModel,
-                    onNavigateToDetail = { navController.navigate(Screen.ThemeDetail.route) }
+                    onNavigateToDetail = { navController.navigate(Screen.ThemeDetail.route) },
+                    onNavigateBack = { 
+                        navController.navigate(Screen.Calendar.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
                 )
                 }
             }
@@ -432,7 +437,12 @@ fun AppNavigation() {
             composable(Screen.ThemeCalendar.route) {
                 ScreenWrapper(Screen.ThemeCalendar.route) {
                     ThemeCalendarScreen(
-                        onNavigateBack = { navController.popBackStack() }
+                        onNavigateBack = { navController.popBackStack() },
+                        onActivated = {
+                            navController.navigate(Screen.Calendar.route) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
                     )
                 }
             }

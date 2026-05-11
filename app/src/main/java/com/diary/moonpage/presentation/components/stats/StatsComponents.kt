@@ -302,16 +302,22 @@ fun MoodDistributionView(
         MoonIcons.Moods.getMoodVisual(1, themeType)
     )
 
+    // Define consistent aliases for all 5 mood levels
+    val moodAliases = listOf(
+        listOf("Very Happy", "Rad", "Extreme Happy", "Excellent"),
+        listOf("Happy", "Good", "Glad", "Content", "Nice"),
+        listOf("Neutral", "Meh", "Normal", "Okay"),
+        listOf("Sad", "Gloomy", "Low", "Bad", "Down"),
+        listOf("Very Sad", "Angry", "Awful", "Terrible", "Depressed")
+    )
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.Bottom) {
-            moods.forEach { mood ->
-                val matchingDists = distribution.filter { 
-                    it.label.equals(mood.name, ignoreCase = true) ||
-                    (mood.name == "Happy" && it.label.equals("Rad", ignoreCase = true)) ||
-                    (mood.name == "Good" && it.label.equals("Glad", ignoreCase = true)) ||
-                    (mood.name == "Neutral" && it.label.equals("Meh", ignoreCase = true)) ||
-                    (mood.name == "Sad" && it.label.equals("Gloomy", ignoreCase = true)) ||
-                    (mood.name == "Angry" && (it.label.equals("Bad", ignoreCase = true) || it.label.equals("Awful", ignoreCase = true)))
+            moods.forEachIndexed { index, mood ->
+                val aliases = moodAliases[index]
+                val matchingDists = distribution.filter { dist ->
+                    dist.label.equals(mood.name, ignoreCase = true) ||
+                    aliases.any { alias -> dist.label.equals(alias, ignoreCase = true) }
                 }
                 
                 val rawPercent = matchingDists.sumOf { it.percentage }
@@ -322,7 +328,6 @@ fun MoodDistributionView(
                 val tintColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f) 
                 
                 val iconTint = if (rawPercent > 0) {
-                    // Use a slightly darker color on light backgrounds
                     Color.Black.copy(alpha = 0.7f)
                 } else tintColor
                 
@@ -330,7 +335,6 @@ fun MoodDistributionView(
                     mood.color.copy(alpha = 0.85f)
                 } else MoonTheme.customColors.logItemBg
                 
-                // Use a very dark color for text to ensure visibility on all backgrounds
                 val tagTextColor = if (rawPercent > 0) Color(0xFF1A1C1E) else MaterialTheme.colorScheme.onSurfaceVariant
                 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -372,18 +376,13 @@ fun MoodDistributionView(
 
         // Multi-colored Segmented Bar
         Row(modifier = Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(24.dp)).background(MoonTheme.customColors.logItemBg)) {
-            val moodMappings = listOf(
-                listOf("Happy", "Rad", "Very Happy"),
-                listOf("Good", "Glad", "Content", "Nice"),
-                listOf("Neutral", "Meh", "Normal"),
-                listOf("Sad", "Gloomy", "Low"),
-                listOf("Angry", "Bad", "Awful", "Very Sad")
-            )
-
             moods.forEachIndexed { index, mood ->
-                val aliases = moodMappings[index]
+                val aliases = moodAliases[index]
                 val weight = distribution
-                    .filter { d -> aliases.any { alias -> d.label.equals(alias, ignoreCase = true) } }
+                    .filter { dist -> 
+                        dist.label.equals(mood.name, ignoreCase = true) ||
+                        aliases.any { alias -> dist.label.equals(alias, ignoreCase = true) }
+                    }
                     .sumOf { it.percentage }
                     .toFloat()
                 
@@ -392,12 +391,15 @@ fun MoodDistributionView(
                 }
             }
             
-            // Check for any remaining data from API (Optional safety check)
+            // Safety check for unmapped data
             val totalApiWeight = distribution.sumOf { it.percentage }.toFloat()
             val matchedWeight = moods.indices.sumOf { index ->
-                val aliases = moodMappings[index]
+                val aliases = moodAliases[index]
                 distribution
-                    .filter { d -> aliases.any { alias -> d.label.equals(alias, ignoreCase = true) } }
+                    .filter { dist -> 
+                        dist.label.equals(moods[index].name, ignoreCase = true) ||
+                        aliases.any { alias -> dist.label.equals(alias, ignoreCase = true) }
+                    }
                     .sumOf { it.percentage }
             }.toFloat()
             

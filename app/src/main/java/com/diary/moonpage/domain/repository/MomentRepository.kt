@@ -21,4 +21,6 @@ interface MomentRepository {
         weather: String?,
         rating: Float?
     ): Result<Moment>
+
+    suspend fun clearCache()
 }

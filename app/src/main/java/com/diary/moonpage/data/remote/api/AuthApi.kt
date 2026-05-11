@@ -35,4 +35,7 @@ interface AuthApi {
     suspend fun resetPassword(
         @Body request: ResetPasswordRequestDTO
     ): Response<Unit>
+
+    @POST("api/auth/logout")
+    suspend fun logout(): Response<Unit>
 }

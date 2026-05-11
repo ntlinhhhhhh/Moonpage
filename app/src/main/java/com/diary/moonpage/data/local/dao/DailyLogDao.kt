@@ -22,4 +22,7 @@ interface DailyLogDao {
 
     @Query("DELETE FROM daily_logs WHERE date LIKE :yearMonth || '%'")
     suspend fun deleteLogsByMonth(yearMonth: String)
+
+    @Query("DELETE FROM daily_logs")
+    suspend fun clearAllDailyLogs()
 }

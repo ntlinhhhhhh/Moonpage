@@ -95,4 +95,10 @@ class TokenManager @Inject constructor(@ApplicationContext private val context: 
             preferences.remove(TOKEN_KEY)
         }
     }
+
+    suspend fun clearAll() {
+        context.dataStore.edit { preferences ->
+            preferences.clear()
+        }
+    }
 }

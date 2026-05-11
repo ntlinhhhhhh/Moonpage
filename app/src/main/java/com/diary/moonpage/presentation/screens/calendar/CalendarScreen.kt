@@ -1,5 +1,7 @@
 package com.diary.moonpage.presentation.screens.calendar
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -163,13 +165,14 @@ fun CalendarScreenContent(
 
                     CalendarMonthHeader(
                         currentMonthName = currentMonthName,
+                        themeType = uiState.themeType,
                         onMonthClick = { onEvent(CalendarUiEvent.OnMonthPickerClick) },
                         onShareClick = { onEvent(CalendarUiEvent.OnShareClick) }
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    CalendarHeader()
+                    CalendarHeader(themeType = uiState.themeType)
 
                     CalendarGrid(
                         pageYearMonth = pageYearMonth,
@@ -259,10 +262,12 @@ fun CalendarScreenContent(
         @OptIn(ExperimentalMaterial3Api::class)
         ModalBottomSheet(
             onDismissRequest = { onEvent(CalendarUiEvent.OnFilterDismiss) },
-            containerColor = MaterialTheme.colorScheme.background,
+            containerColor = if (androidx.compose.foundation.isSystemInDarkTheme()) MaterialTheme.colorScheme.background else Color.White,
+            tonalElevation = 0.dp,
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
             dragHandle = {
-                BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.background)
+                val dragHandleColor = if (androidx.compose.foundation.isSystemInDarkTheme()) MaterialTheme.colorScheme.background else Color.White
+                BottomSheetDefaults.DragHandle(color = dragHandleColor)
             }
         ) {
             FilterScreen(
@@ -400,9 +405,19 @@ fun DeleteConfirmDialog(
 @Composable
 fun CalendarMonthHeader(
     currentMonthName: String,
+    themeType: com.diary.moonpage.core.theme.MoonThemeType,
     onMonthClick: () -> Unit,
     onShareClick: () -> Unit
 ) {
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val shades = com.diary.moonpage.core.theme.getThemeShades(themeType)
+    val highlightColor = if (shades.size > 3) shades[3] else MaterialTheme.colorScheme.primary
+    val headerColor = if (isDark) {
+        if (shades.size > 1) shades[1] else highlightColor
+    } else {
+        if (shades.size > 4) shades[4] else highlightColor
+    }
+
     Box(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
         contentAlignment = Alignment.Center
@@ -418,12 +433,12 @@ fun CalendarMonthHeader(
                 text = currentMonthName,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = headerColor
             )
             Icon(
                 imageVector = Icons.Rounded.KeyboardArrowDown,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface
+                tint = headerColor
             )
         }
         IconButton(

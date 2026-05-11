@@ -31,12 +31,18 @@ import kotlinx.coroutines.launch
 @Composable
 fun ThemeCalendarScreen(
     onNavigateBack: () -> Unit,
+    onActivated: () -> Unit = onNavigateBack,
     mainViewModel: MainViewModel = hiltViewModel(),
     storeViewModel: com.diary.moonpage.presentation.screens.store.StoreViewModel = hiltViewModel()
 ) {
     val uiState by storeViewModel.uiState.collectAsState()
     val currentThemeType by mainViewModel.themeType.collectAsState()
     val isDarkModePref by mainViewModel.isDarkMode.collectAsState()
+
+    // Track initial values to enable/disable Done button
+    val initialThemeType = remember { currentThemeType }
+    val initialDarkMode = remember { isDarkModePref }
+    val hasChanges = currentThemeType != initialThemeType || isDarkModePref != initialDarkMode
 
     // 1. Define Local Default Themes
     val systemThemes = listOf(
@@ -71,7 +77,10 @@ fun ThemeCalendarScreen(
         storeViewModel.uiEffect.collect { effect ->
             when (effect) {
                 is com.diary.moonpage.presentation.screens.store.StoreUiEffect.ShowSnackBar -> {
-                    scope.launch { snackbarHostState.showSnackbar(effect.message) }
+                    snackbarHostState.showSnackbar(effect.message)
+                }
+                is com.diary.moonpage.presentation.screens.store.StoreUiEffect.ThemeActivated -> {
+                    snackbarHostState.showSnackbar("Theme updated successfully!")
                 }
                 is com.diary.moonpage.presentation.screens.store.StoreUiEffect.NavigateBack -> {
                     onNavigateBack()
@@ -102,7 +111,8 @@ fun ThemeCalendarScreen(
         temporarySelectedThemeId = uiState.temporarySelectedThemeId,
         ownedThemes = uiState.ownedThemes,
         onConfirmActivation = { storeViewModel.confirmActivation() },
-        onCancelActivation = { storeViewModel.cancelActivation() }
+        onCancelActivation = { storeViewModel.cancelActivation() },
+        isDoneEnabled = hasChanges
     )
 }
 
@@ -122,34 +132,57 @@ fun ThemePickerContent(
     temporarySelectedThemeId: String? = null,
     ownedThemes: List<com.diary.moonpage.domain.model.Theme> = emptyList(),
     onConfirmActivation: () -> Unit = {},
-    onCancelActivation: () -> Unit = {}
+    onCancelActivation: () -> Unit = {},
+    isDoneEnabled: Boolean = true
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text("Themes & Styles", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+            // Static Top Bar to avoid any Material3 animations
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .height(64.dp)
+                    .background(MaterialTheme.colorScheme.background),
+                contentAlignment = Alignment.Center
+            ) {
+                IconButton(
+                    onClick = onNavigateBack,
+                    modifier = Modifier.align(Alignment.CenterStart)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.ArrowBackIosNew,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+                Text(
+                    text = "Themes & Styles",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = MaterialTheme.colorScheme.onBackground
                 )
-            )
+            }
         },
         bottomBar = {
             Surface(color = MaterialTheme.colorScheme.background, shadowElevation = 12.dp) {
                 Button(
                     onClick = onApply,
+                    enabled = isDoneEnabled,
                     modifier = Modifier.fillMaxWidth().padding(16.dp).height(52.dp),
                     shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                    )
                 ) {
-                    Text("Done", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.onPrimary)
+                    Text(
+                        "Done", 
+                        fontWeight = FontWeight.Bold, 
+                        fontSize = 16.sp, 
+                        color = if (isDoneEnabled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f)
+                    )
                 }
             }
         }
@@ -242,11 +275,12 @@ fun ThemePickerContent(
             )
 
             if (showConfirmActivation) {
-                val themeName = availableThemes.find { it.first == temporarySelectedThemeId?.toMoonThemeType() }?.second ?: "this theme"
+                val themeData = availableThemes.find { it.first == temporarySelectedThemeId?.toMoonThemeType() }
                 com.diary.moonpage.presentation.screens.store.components.ConfirmActivationDialog(
-                    themeName = themeName,
+                    themeName = themeData?.second ?: "this theme",
                     onConfirm = onConfirmActivation,
-                    onCancel = onCancelActivation
+                    onCancel = onCancelActivation,
+                    primaryColor = themeData?.third
                 )
             }
         }

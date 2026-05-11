@@ -299,7 +299,8 @@ fun MoodFilterItem(
     val isActuallyDark = MaterialTheme.colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
     
     val bg = if (isActuallyDark) {
-        if (isSelected) Color(0xFF555555) else MoonTheme.customColors.logItemBg
+        val dimmedBg = Color(0xFF262626)
+        if (!isAnySelected || isSelected) visual.color else dimmedBg
     } else {
         val dimmedBg = Color(0xFFE0E0E0)
         if (!isAnySelected || isSelected) visual.color else dimmedBg
@@ -322,7 +323,7 @@ fun MoodFilterItem(
                 contentDescription = null,
                 modifier = Modifier
                     .size(40.dp)
-                    .then(if (isAnySelected && !isSelected && !isActuallyDark) Modifier.alpha(0.3f) else Modifier)
+                    .then(if (isAnySelected && !isSelected) Modifier.alpha(0.3f) else Modifier)
             )
         }
     }
@@ -338,7 +339,8 @@ fun SpecialFilterItem(
     val isActuallyDark = MaterialTheme.colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
     
     val bg = if (isActuallyDark) {
-        if (isSelected) Color(0xFF555555) else MoonTheme.customColors.logItemBg
+        val dimmedBg = Color(0xFF262626)
+        if (isSelected) Color(0xFF555555) else if (!isAnySelected) MoonTheme.customColors.logItemBg else dimmedBg
     } else {
         val activeBg = if (isSelected) MoonTheme.customColors.logItemSelect else Color.White
         val dimmedBg = Color(0xFFE0E0E0)
@@ -392,7 +394,8 @@ fun ActivityFilterGrid(
             val icon = MoonIcons.getIconForActivity(item.name)
             
             val bg = if (isActuallyDark) {
-                if (isSelected) Color(0xFF555555) else MoonTheme.customColors.logItemBg
+                val dimmedBg = Color(0xFF262626)
+                if (isSelected) Color(0xFF555555) else if (!isAnySelected) MoonTheme.customColors.logItemBg else dimmedBg
             } else {
                 val activeBg = MoonTheme.customColors.logItemBg
                 val selectedBg = MoonTheme.customColors.logItemSelect
@@ -417,13 +420,13 @@ fun ActivityFilterGrid(
                         contentDescription = item.name,
                         modifier = Modifier
                             .size(32.dp)
-                            .then(if (isAnySelected && !isSelected && !isActuallyDark) Modifier.alpha(0.3f) else Modifier)
+                            .then(if (isAnySelected && !isSelected) Modifier.alpha(0.3f) else Modifier)
                     )
                 } else if (icon.vector != null) {
                     Icon(
                         icon.vector,
                         contentDescription = item.name,
-                        tint = if (isAnySelected && !isSelected && !isActuallyDark) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f) else icon.color,
+                        tint = if (isAnySelected && !isSelected) icon.color.copy(alpha = 0.3f) else icon.color,
                         modifier = Modifier.size(24.dp)
                     )
                 }

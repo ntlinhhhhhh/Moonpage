@@ -245,6 +245,11 @@ class ThemeRepositoryImpl @Inject constructor(
         return dao.getActiveTheme()?.id
     }
 
+    override suspend fun clearCache() {
+        dao.deleteAllThemes()
+        dao.deleteAllThemeMoods()
+    }
+
     private fun parseErrorResponse(errorBody: String?): String {
         if (errorBody.isNullOrBlank()) return "An unknown error occurred"
         return try {

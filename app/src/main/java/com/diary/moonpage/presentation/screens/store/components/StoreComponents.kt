@@ -112,7 +112,8 @@ fun CuteBeanIcon(
 @Composable
 fun StoreTopBar(
     coins: Int,
-    onDoneClick: (() -> Unit)? = null
+    onDoneClick: (() -> Unit)? = null,
+    isActivate: Boolean = false
 ) {
     Box(
         modifier = Modifier
@@ -144,7 +145,7 @@ fun StoreTopBar(
                 )
             ) {
                 Text(
-                    text = "Activate",
+                    text = if (isActivate) "Activate" else "Done",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold
                 )

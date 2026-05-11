@@ -236,9 +236,7 @@ class StoreViewModel @Inject constructor(
                     themePreferencesManager.setThemeType(it.toMoonThemeType())
                 }
                 
-                _uiEffect.emit(StoreUiEffect.NavigateBack)
-                delay(150)
-                _uiEffect.emit(StoreUiEffect.ShowSnackBar("Theme updated successfully!"))
+                _uiEffect.emit(StoreUiEffect.ThemeActivated)
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false) }
                 _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Activation failed"))

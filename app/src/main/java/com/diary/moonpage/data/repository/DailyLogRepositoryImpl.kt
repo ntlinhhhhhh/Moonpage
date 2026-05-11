@@ -127,4 +127,8 @@ class DailyLogRepositoryImpl @Inject constructor(
             // Error handled by the flow consumer (if needed)
         }
     }.flowOn(Dispatchers.IO)
+
+    override suspend fun clearCache() {
+        dao.clearAllDailyLogs()
+    }
 }

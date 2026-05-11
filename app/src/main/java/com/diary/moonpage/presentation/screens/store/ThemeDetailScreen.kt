@@ -1,5 +1,6 @@
 package com.diary.moonpage.presentation.screens.store
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -55,12 +56,14 @@ fun ThemeDetailScreen(
         return
     }
 
-    val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
             when (effect) {
                 is StoreUiEffect.ShowSnackBar -> {
-                    scope.launch { snackbarHostState.showSnackbar(effect.message) }
+                    snackbarHostState.showSnackbar(effect.message)
+                }
+                is StoreUiEffect.ThemeActivated -> {
+                    snackbarHostState.showSnackbar("Theme updated successfully!")
                 }
                 is StoreUiEffect.NavigateBack -> {
                     onNavigateBack()

@@ -29,4 +29,16 @@ interface UserApi {
     suspend fun updateAvatar(
         @Part image: MultipartBody.Part
     ): Response<UserResponseDto>
+
+    @DELETE("api/users/me")
+    suspend fun deleteMe(): Response<Unit>
+
+    @GET("api/users/search")
+    suspend fun searchUsers(
+        @Query("name") name: String,
+        @Query("limit") limit: Int
+    ): Response<List<UserResponseDto>>
+
+    @POST("api/users/me/store/buy-freeze")
+    suspend fun buyStreakFreeze(): Response<Unit>
 }

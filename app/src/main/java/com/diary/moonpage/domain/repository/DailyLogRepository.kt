@@ -26,4 +26,6 @@ interface DailyLogRepository {
     suspend fun deleteDailyLog(date: String): Result<Unit>
     
     fun getDailyLogsByMonth(yearMonth: String): Flow<List<DailyLog>>
+
+    suspend fun clearCache()
 }

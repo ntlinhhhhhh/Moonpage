@@ -145,4 +145,8 @@ class MomentRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun clearCache() {
+        momentManager.clearCache()
+    }
 }

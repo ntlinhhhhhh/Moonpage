@@ -148,22 +148,37 @@ fun CalendarTopBar(
 }
 
 @Composable
-fun CalendarHeader() {
+fun CalendarHeader(
+    themeType: com.diary.moonpage.core.theme.MoonThemeType = com.diary.moonpage.core.theme.MoonThemeType.DEFAULT
+) {
     val daysOfWeek = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+    val currentDayIndex = LocalDate.now().dayOfWeek.value % 7 // Sun=0, Mon=1, ..., Sat=6
+    val shades = com.diary.moonpage.core.theme.getThemeShades(themeType)
+    val highlightColor = if (shades.size > 3) shades[3] else MaterialTheme.colorScheme.primary
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp, vertical = 4.dp)
     ) {
         val isDark = androidx.compose.foundation.isSystemInDarkTheme()
-        daysOfWeek.forEach { day ->
+        daysOfWeek.forEachIndexed { index, day ->
+            val isCurrentDay = index == currentDayIndex
             Text(
                 text = day,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Medium,
-                color = if (isDark) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                fontWeight = if (isCurrentDay) FontWeight.Bold else FontWeight.Medium,
+                color = when {
+                    isCurrentDay -> if (isDark) {
+                        if (shades.size > 1) shades[1] else highlightColor
+                    } else {
+                        if (shades.size > 4) shades[4] else highlightColor
+                    }
+                    isDark -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
+                    else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                }
             )
         }
     }
@@ -199,20 +214,14 @@ fun DayItem(
     // Robust check for dark mode based on current theme's background
     val isActuallyDark = colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
     val shades = com.diary.moonpage.core.theme.getThemeShades(themeType)
+    val highlightColor = if (shades.size > 3) shades[3] else colorScheme.primary
     
     // Logic: If it's a logged day that matches the filter (or no filter), show its mood color.
     // Otherwise, show the default placeholder color (Fixed gray for Dark, Theme shade for Light).
-    val circleBg = if (moodColor != null && (!isFiltered || !isDimmed)) {
-        moodColor
-    } else {
-        if (isActuallyDark) Color(0xFF505457) else shades[0].copy(alpha = 0.4f)
+    val circleBg = when {
+        moodColor != null && (!isFiltered || !isDimmed) -> moodColor
+        else -> if (isActuallyDark) Color(0xFF505457) else shades[0].copy(alpha = 0.4f)
     }
-
-    val animatedBg by animateColorAsState(
-        targetValue = circleBg,
-        animationSpec = tween(200),
-        label = "dayBg"
-    )
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -224,17 +233,14 @@ fun DayItem(
             modifier = Modifier
                 .size(42.dp)
                 .clip(CircleShape)
-                .background(animatedBg)
+                .background(circleBg)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
                 ) { onClick() }
                 .then(
-                    when {
-                        isSelected -> Modifier.border(2.dp, colorScheme.primary, CircleShape)
-                        isToday -> Modifier.border(2.dp, colorScheme.primary.copy(alpha = 0.5f), CircleShape)
-                        else -> Modifier
-                    }
+                    if (isSelected) Modifier.border(2.dp, colorScheme.primary, CircleShape)
+                    else Modifier
                 ),
             contentAlignment = Alignment.Center
         ) {
@@ -263,14 +269,16 @@ fun DayItem(
             text = day.toString(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = if (isToday || isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = if (isFiltered && isDimmed) {
-                colorScheme.onSurface.copy(alpha = 0.2f)
-            } else if (isSelected || isToday) {
-                colorScheme.primary
-            } else if (isActuallyDark) {
-                Color.White.copy(alpha = 0.85f)
-            } else {
-                colorScheme.onSurface.copy(alpha = 0.6f)
+            color = when {
+                isToday -> if (isActuallyDark) {
+                    if (shades.size > 1) shades[1] else highlightColor
+                } else {
+                    if (shades.size > 4) shades[4] else highlightColor
+                }
+                isFiltered && isDimmed -> colorScheme.onSurface.copy(alpha = 0.2f)
+                isSelected -> colorScheme.primary
+                isActuallyDark -> Color.White.copy(alpha = 0.85f)
+                else -> colorScheme.onSurface.copy(alpha = 0.6f)
             }
         )
     }

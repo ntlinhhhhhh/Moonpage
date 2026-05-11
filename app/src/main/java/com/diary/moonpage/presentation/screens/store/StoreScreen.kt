@@ -33,15 +33,26 @@ import com.diary.moonpage.core.theme.*
 @Composable
 fun StoreScreen(
     viewModel: StoreViewModel,
-    onNavigateToDetail: () -> Unit
+    mainViewModel: com.diary.moonpage.MainViewModel = hiltViewModel(),
+    onNavigateToDetail: () -> Unit,
+    onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
-            if (effect is StoreUiEffect.ShowSnackBar) {
-                snackbarHostState.showSnackbar(effect.message)
+            when (effect) {
+                is StoreUiEffect.ShowSnackBar -> {
+                    snackbarHostState.showSnackbar(effect.message)
+                }
+                is StoreUiEffect.ThemeActivated -> {
+                    snackbarHostState.showSnackbar("Theme updated successfully!")
+                }
+                is StoreUiEffect.NavigateBack -> {
+                    onNavigateBack()
+                }
+                else -> {}
             }
         }
     }
@@ -59,7 +70,10 @@ fun StoreScreen(
                     coins = uiState.userCoins,
                     onDoneClick = if (uiState.temporarySelectedThemeId != null) {
                         { viewModel.applyTheme() }
-                    } else null
+                    } else {
+                        onNavigateBack
+                    },
+                    isActivate = uiState.temporarySelectedThemeId != null
                 )
 
                 StoreTabs(

@@ -14,4 +14,6 @@ interface ThemeRepository {
     
     val ownedThemes: Flow<List<Theme>>
     val allThemes: Flow<List<Theme>>
+
+    suspend fun clearCache()
 }
