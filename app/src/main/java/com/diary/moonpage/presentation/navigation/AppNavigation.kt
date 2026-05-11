@@ -2,10 +2,7 @@ package com.diary.moonpage.presentation.navigation
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -76,13 +73,19 @@ fun AppNavigation() {
         @Composable
         fun ScreenWrapper(route: String, content: @Composable () -> Unit) {
             val isMainRoute = route in mainAppRoutes
+            // Screens that handle their own status bar padding for a more custom layout
+            val isEdgeToEdge = route == Screen.Store.route || 
+                               route == Screen.ThemeDetail.route || 
+                               route.startsWith("daily_log_screen")
+
             Box(
-                modifier = Modifier.padding(
-                    top = paddingValues.calculateTopPadding(),
-                    bottom = if (isMainRoute) paddingValues.calculateBottomPadding() else 0.dp,
-                    start = paddingValues.calculateStartPadding(LayoutDirection.Ltr),
-                    end = paddingValues.calculateEndPadding(LayoutDirection.Ltr)
-                )
+                modifier = Modifier
+                    .then(if (!isEdgeToEdge) Modifier.statusBarsPadding() else Modifier)
+                    .padding(
+                        bottom = if (isMainRoute) paddingValues.calculateBottomPadding() else 0.dp,
+                        start = paddingValues.calculateStartPadding(LayoutDirection.Ltr),
+                        end = paddingValues.calculateEndPadding(LayoutDirection.Ltr)
+                    )
             ) {
                 content()
             }

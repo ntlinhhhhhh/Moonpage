@@ -10,7 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.rounded.CheckCircleOutline
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -117,6 +117,7 @@ fun StoreTopBar(
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .statusBarsPadding()
             .height(64.dp)
             .padding(horizontal = 4.dp),
         contentAlignment = Alignment.Center
@@ -167,12 +168,12 @@ fun StoreTopBar(
                             .background(MaterialTheme.colorScheme.primary, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "$",
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                    Icon(
+                        imageVector = Icons.Rounded.Star,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(10.dp)
+                    )
                     }
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
@@ -199,7 +200,7 @@ fun ThemeCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
-            .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else Color.White)
+            .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else MoonTheme.customColors.logCardBg)
             .clickable { onClick() }
             .padding(vertical = 12.dp, horizontal = 8.dp)
     ) {
@@ -272,16 +273,11 @@ fun ThemeCard(
                                 .background(MaterialTheme.colorScheme.primary, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = "$", 
-                                modifier = Modifier.offset(y = (-0.8).dp),
-                                color = MaterialTheme.colorScheme.onPrimary, 
-                                fontSize = 8.sp, 
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                style = TextStyle(
-                                    platformStyle = PlatformTextStyle(includeFontPadding = false)
-                                )
+                            Icon(
+                                imageVector = Icons.Rounded.Star,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimary, 
+                                modifier = Modifier.size(8.dp)
                             )
                         }
                         Spacer(modifier = Modifier.width(6.dp))
@@ -394,16 +390,11 @@ fun IconPackCard(pack: Theme, onClick: () -> Unit) {
                             .background(MaterialTheme.colorScheme.primary, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "$",
-                            modifier = Modifier.offset(y = (-0.8).dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            fontSize = 7.sp,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center,
-                            style = TextStyle(
-                                platformStyle = PlatformTextStyle(includeFontPadding = false)
-                            )
+                        Icon(
+                            imageVector = Icons.Rounded.FilterVintage, 
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimary, 
+                            modifier = Modifier.size(8.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(4.dp))
@@ -455,11 +446,12 @@ fun ExploreMoreCard(onClick: () -> Unit) {
 
 @Composable
 fun CurrentThemeCard(theme: Theme) {
+    val onSurface = MaterialTheme.colorScheme.onSurface
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = MoonTheme.customColors.logCardBg
         )
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -471,14 +463,13 @@ fun CurrentThemeCard(theme: Theme) {
                     decoration = theme.decoration,
                     color = shades.getOrElse(4) { MaterialTheme.colorScheme.primary }
                 )
-                // Tick is removed as per user request to "bỏ hết các tick khi theme ấy activate đi"
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column {
                 Text(
                     text = theme.name, 
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color.Black
+                    color = onSurface
                 )
                 val activatedDate = remember(theme.activatedAt) {
                     if (theme.activatedAt != null) {
@@ -489,7 +480,7 @@ fun CurrentThemeCard(theme: Theme) {
                 Text(
                     text = "Active since $activatedDate", 
                     style = MaterialTheme.typography.bodySmall, 
-                    color = Color.Black.copy(alpha = 0.6f)
+                    color = onSurface.copy(alpha = 0.6f)
                 )
             }
         }
@@ -634,9 +625,11 @@ fun PurchaseSuccessDialog(
 fun ConfirmActivationDialog(
     themeName: String,
     onConfirm: () -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    primaryColor: Color? = null
 ) {
     val colorScheme = MaterialTheme.colorScheme
+    val buttonColor = primaryColor ?: colorScheme.primary
 
     Dialog(
         onDismissRequest = onCancel,
@@ -708,7 +701,7 @@ fun ConfirmActivationDialog(
                         modifier = Modifier.weight(1f).height(52.dp),
                         shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = colorScheme.primary,
+                            containerColor = buttonColor,
                             contentColor = colorScheme.onPrimary
                         ),
                         elevation = ButtonDefaults.buttonElevation(0.dp)

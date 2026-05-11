@@ -10,16 +10,13 @@ interface DailyLogRepository {
         date: String,
         note: String?,
         sleepHours: Double?,
+        sleepStartTime: String? = null,
         isMenstruation: Boolean,
         menstruationPhase: String?,
         activityIds: List<String>?,
         dailyPhotos: List<File>?,
-        songTitle: String? = null,
-        artistName: String? = null,
-        albumArtUrl: String? = null,
-        sleepBedTime: String? = null,
-        sleepWakeTime: String? = null,
         steps: Int? = null,
+        musicRecord: String? = null,
         calories: Int? = null,
         distance: Double? = null
     ): Result<Unit>

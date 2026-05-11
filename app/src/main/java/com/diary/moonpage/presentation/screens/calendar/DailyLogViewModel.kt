@@ -3,14 +3,12 @@ package com.diary.moonpage.presentation.screens.calendar
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.core.util.ActivityPreferencesManager
-import com.diary.moonpage.domain.model.DailyLog
 import com.diary.moonpage.domain.repository.DailyLogRepository
 import com.diary.moonpage.core.util.PkceUtil
 import com.diary.moonpage.core.util.MoonIcons
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.io.File
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -28,6 +26,7 @@ class DailyLogViewModel @Inject constructor(
     private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository,
     private val weatherRepository: com.diary.moonpage.domain.repository.WeatherRepository,
     private val spotifyApi: com.diary.moonpage.data.remote.api.SpotifyApi,
+    private val momentRepository: com.diary.moonpage.domain.repository.MomentRepository,
     val healthConnectManager: com.diary.moonpage.core.util.HealthConnectManager,
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
@@ -343,21 +342,28 @@ class DailyLogViewModel @Inject constructor(
     private fun fetchLogForDate(date: LocalDate) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            repository.getDailyLogByDate(date.toString()).onSuccess { log ->
+            
+            // Fetch moments from the flow and filter by date
+            val dateStr = date.toString()
+            val momentPhotos = try {
+                momentRepository.moments.first()
+                    .filter { it.capturedAt.startsWith(dateStr) }
+                    .map { it.imageUrl }
+            } catch (e: Exception) {
+                emptyList<String>()
+            }
+            
+            val momentPhotoUrls = momentPhotos.map { if (it.startsWith("http")) it else BASE_URL + it.trimStart('/') }
+
+            repository.getDailyLogByDate(dateStr).onSuccess { log ->
                 val formatter = DateTimeFormatter.ofPattern("HH:mm")
-                val bedTime = log.sleepBedTime?.let { try { LocalTime.parse(it, formatter) } catch(e: Exception) { LocalTime.of(0, 0) } } ?: LocalTime.of(0, 0)
-                val wakeTime = log.sleepWakeTime?.let { try { LocalTime.parse(it, formatter) } catch(e: Exception) { LocalTime.of(7, 0) } } ?: LocalTime.of(7, 0)
+                val bedTime = log.sleepStartTime?.let { try { LocalTime.parse(it, formatter) } catch(e: Exception) { LocalTime.of(0, 0) } } ?: LocalTime.of(0, 0)
                 
-                val calculatedHours = if ((log.sleepHours ?: 0.0) <= 0.0) {
-                    if (log.sleepBedTime != null && log.sleepWakeTime != null) {
-                        val bedMin = bedTime.hour * 60 + bedTime.minute
-                        val wakeMin = wakeTime.hour * 60 + wakeTime.minute
-                        val diffMin = if (wakeMin >= bedMin) wakeMin - bedMin else (24 * 60 - bedMin) + wakeMin
-                        diffMin / 60f
-                    } else 0f
-                } else {
-                    log.sleepHours?.toFloat() ?: 0f
-                }
+                val wakeTime = bedTime.plusMinutes(( (log.sleepHours ?: 8.0) * 60).toLong())
+                val calculatedHours = log.sleepHours?.toFloat() ?: 0f
+
+                val logPhotos = log.dailyPhotos?.map { if (it.startsWith("http")) it else BASE_URL + it.trimStart('/') } ?: emptyList()
+                val combinedPhotos = (logPhotos + momentPhotoUrls).distinct()
 
                 _uiState.update { it.copy(
                     existingLog = log,
@@ -369,10 +375,8 @@ class DailyLogViewModel @Inject constructor(
                     sleepWakeTime = wakeTime,
                     isMenstruation = log.isMenstruation,
                     menstruationPhase = log.menstruationPhase,
-                    dailyPhotos = log.dailyPhotos?.map { if (it.startsWith("http")) it else BASE_URL + it.trimStart('/') } ?: emptyList(),
-                    musicTitle = log.songTitle,
-                    artistName = log.artistName,
-                    albumArtUrl = log.albumArtUrl,
+                    dailyPhotos = combinedPhotos,
+                    musicTitle = log.musicRecord,
                     steps = log.steps ?: 0,
                     calories = log.calories ?: 0,
                     distance = log.distance ?: 0.0,
@@ -389,7 +393,7 @@ class DailyLogViewModel @Inject constructor(
                     sleepWakeTime = LocalTime.of(7, 0),
                     isMenstruation = false,
                     menstruationPhase = null,
-                    dailyPhotos = emptyList(),
+                    dailyPhotos = momentPhotoUrls,
                     musicTitle = null,
                     artistName = null,
                     albumArtUrl = null,
@@ -429,16 +433,13 @@ class DailyLogViewModel @Inject constructor(
                 date = state.date.toString(),
                 note = state.noteText.takeIf { it.isNotBlank() },
                 sleepHours = state.sleepHours.toDouble(),
+                sleepStartTime = state.sleepBedTime.format(timeFormatter),
                 isMenstruation = state.isMenstruation,
                 menstruationPhase = state.menstruationPhase,
                 activityIds = state.selectedActivities,
                 dailyPhotos = photoFiles.takeIf { it.isNotEmpty() },
-                songTitle = state.musicTitle,
-                artistName = state.artistName,
-                albumArtUrl = state.albumArtUrl,
-                sleepBedTime = state.sleepBedTime.format(timeFormatter),
-                sleepWakeTime = state.sleepWakeTime.format(timeFormatter),
                 steps = state.steps,
+                musicRecord = state.musicTitle,
                 calories = state.calories,
                 distance = state.distance
             ).onSuccess {

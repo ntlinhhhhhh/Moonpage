@@ -267,6 +267,7 @@ fun CameraMainUI(
             Text("HISTORY", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
         }
         Spacer(modifier = Modifier.height(16.dp))
+
     }
 }
 

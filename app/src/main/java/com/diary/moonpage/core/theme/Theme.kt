@@ -13,6 +13,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
+import android.app.Activity
 
 @Immutable
 data class MoonCustomColors(
@@ -361,7 +366,7 @@ fun MoonPageTheme(
             logItemAccent = Color(0xFF424242),
             logItemIconUnselected = Color(0xFF888888),
             logItemIconSelected = colorScheme.primary,
-            logCardBg = Color(0xFF212121),
+            logCardBg = MoonCardBgDark,
             logCardOnBg = Color(0xFFF5F5F5),
             snackbarBg = Color(0xFF1A1A1A),
             snackbarOnBg = Color(0xFFE0E0E0),
@@ -390,6 +395,14 @@ fun MoonPageTheme(
             cancelBtnBgColor = Color(0xFFF1F3F5),
             cancelBtnTextColor = Color(0xFF495057)
         )
+    }
+
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+        }
     }
 
     CompositionLocalProvider(

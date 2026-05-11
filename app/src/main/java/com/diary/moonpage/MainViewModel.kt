@@ -5,9 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.core.util.ThemePreferencesManager
 import com.diary.moonpage.core.theme.MoonThemeType
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -18,11 +16,22 @@ class MainViewModel @Inject constructor(
     private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository
 ) : ViewModel() {
 
+    private val _isReady = MutableStateFlow(false)
+    val isReady = _isReady.asStateFlow()
+
     init {
         viewModelScope.launch {
             userRepository.getCurrentUser()
             val now = java.time.LocalDate.now()
             statisticsRepository.getStatisticsSummary(now.year, now.monthValue, true)
+            
+            // Wait for first emission of theme settings
+            combine(themePreferencesManager.themeType, themePreferencesManager.isDarkMode) { _, _ -> true }
+                .take(1)
+                .collect {
+                    kotlinx.coroutines.delay(200) // Small delay to prevent white flash
+                    _isReady.value = true
+                }
         }
     }
 

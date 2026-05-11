@@ -215,7 +215,14 @@ fun DailyLogScreenContent(
     if (uiState.showExitDialog) {
         DailyLogExitDialog(
             onDismiss = { onEvent(DailyLogUiEvent.OnDismissExitDialog) },
-            onExit = onNavigateBack
+            onExit = {
+                onEvent(DailyLogUiEvent.OnDismissExitDialog)
+                scope.launch {
+                    // Small delay to ensure the dialog is dismissed before navigation
+                    kotlinx.coroutines.delay(50)
+                    onNavigateBack()
+                }
+            }
         )
     }
 
@@ -263,35 +270,42 @@ private fun DailyLogTopBar(
     onBackClick: () -> Unit,
     onDateClick: () -> Unit
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    Surface(
+        color = MaterialTheme.colorScheme.background,
+        modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars)
     ) {
-        IconButton(onClick = onBackClick) {
-            Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
-        }
         Row(
-            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) { onDateClick() }
-                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            val formatter = DateTimeFormatter.ofPattern("EEEE, MMM d", Locale.ENGLISH)
-            Text(
-                text = date.format(formatter),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
-        }
-        IconButton(onClick = {}) {
-            Icon(Icons.Rounded.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onSurface)
+            IconButton(onClick = onBackClick) {
+                Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { onDateClick() }
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+            ) {
+                val formatter = DateTimeFormatter.ofPattern("EEEE, MMM d", Locale.ENGLISH)
+                Text(
+                    text = date.format(formatter),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
+            }
+            IconButton(onClick = {}) {
+                Icon(Icons.Rounded.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onSurface)
+            }
         }
     }
 }

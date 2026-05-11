@@ -12,13 +12,18 @@ class CreateDailyLogUseCase @Inject constructor(
         date: String,
         note: String?,
         sleepHours: Double?,
+        sleepStartTime: String?,
         isMenstruation: Boolean,
         menstruationPhase: String?,
         activityIds: List<String>?,
-        dailyPhotos: List<File>?
+        dailyPhotos: List<File>?,
+        steps: Int?,
+        musicRecord: String?,
+        calories: Int?,
+        distance: Double?
     ): Result<Unit> {
         return repository.createDailyLog(
-            baseMoodId, date, note, sleepHours, isMenstruation, menstruationPhase, activityIds, dailyPhotos
+            baseMoodId, date, note, sleepHours, sleepStartTime, isMenstruation, menstruationPhase, activityIds, dailyPhotos, steps, musicRecord, calories, distance
         )
     }
 }

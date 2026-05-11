@@ -26,16 +26,13 @@ class DailyLogRepositoryImpl @Inject constructor(
         date: String,
         note: String?,
         sleepHours: Double?,
+        sleepStartTime: String?,
         isMenstruation: Boolean,
         menstruationPhase: String?,
         activityIds: List<String>?,
         dailyPhotos: List<File>?,
-        songTitle: String?,
-        artistName: String?,
-        albumArtUrl: String?,
-        sleepBedTime: String?,
-        sleepWakeTime: String?,
         steps: Int?,
+        musicRecord: String?,
         calories: Int?,
         distance: Double?
     ): Result<Unit> {
@@ -44,17 +41,11 @@ class DailyLogRepositoryImpl @Inject constructor(
             val dateBody = date.toRequestBody("text/plain".toMediaTypeOrNull())
             val noteBody = note?.toRequestBody("text/plain".toMediaTypeOrNull())
             val sleepHoursBody = sleepHours?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val sleepStartTimeBody = sleepStartTime?.toRequestBody("text/plain".toMediaTypeOrNull())
             val isMenstruationBody = isMenstruation.toString().toRequestBody("text/plain".toMediaTypeOrNull())
             val menstruationPhaseBody = menstruationPhase?.toRequestBody("text/plain".toMediaTypeOrNull())
-            
-            val songTitleBody = songTitle?.toRequestBody("text/plain".toMediaTypeOrNull())
-            val artistNameBody = artistName?.toRequestBody("text/plain".toMediaTypeOrNull())
-            val albumArtUrlBody = albumArtUrl?.toRequestBody("text/plain".toMediaTypeOrNull())
-            
-            val sleepBedTimeBody = sleepBedTime?.toRequestBody("text/plain".toMediaTypeOrNull())
-            val sleepWakeTimeBody = sleepWakeTime?.toRequestBody("text/plain".toMediaTypeOrNull())
-            
             val stepsBody = steps?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val musicRecordBody = musicRecord?.toRequestBody("text/plain".toMediaTypeOrNull())
             val caloriesBody = calories?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
             val distanceBody = distance?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
 
@@ -68,8 +59,8 @@ class DailyLogRepositoryImpl @Inject constructor(
             }
 
             val response = api.createDailyLog(
-                baseMoodIdBody, dateBody, noteBody, sleepHoursBody, isMenstruationBody, menstruationPhaseBody, activityParts, photoParts,
-                songTitleBody, artistNameBody, albumArtUrlBody, sleepBedTimeBody, sleepWakeTimeBody, stepsBody, caloriesBody, distanceBody
+                baseMoodIdBody, dateBody, noteBody, sleepHoursBody, sleepStartTimeBody, isMenstruationBody, menstruationPhaseBody, stepsBody, musicRecordBody, activityParts, photoParts,
+                caloriesBody, distanceBody
             )
             
             if (response.isSuccessful) {

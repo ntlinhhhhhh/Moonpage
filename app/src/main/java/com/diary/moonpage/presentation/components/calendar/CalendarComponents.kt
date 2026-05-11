@@ -107,9 +107,9 @@ fun CalendarTopBar(
                     .padding(4.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.BreakfastDining,
-                    contentDescription = null,
-                    tint = Color(0xFFFFCC80),
+                    imageVector = Icons.Rounded.LocalFireDepartment,
+                    contentDescription = "Streak",
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -124,7 +124,7 @@ fun CalendarTopBar(
                 Icon(
                     imageVector = Icons.Rounded.Palette,
                     contentDescription = "Theme",
-                    tint = Color(0xFFFFE082),
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -139,7 +139,7 @@ fun CalendarTopBar(
                 Icon(
                     imageVector = Icons.Rounded.Menu,
                     contentDescription = "Menu",
-                    tint = MaterialTheme.colorScheme.onSurface,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(28.dp)
                 )
             }

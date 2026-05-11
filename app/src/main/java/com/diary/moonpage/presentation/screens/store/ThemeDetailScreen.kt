@@ -9,7 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.rounded.ArrowBackIosNew
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -93,6 +93,7 @@ fun ThemeDetailScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .statusBarsPadding()
                     .height(64.dp)
                     .background(backgroundColor),
                 contentAlignment = Alignment.Center
@@ -133,17 +134,12 @@ fun ThemeDetailScreen(
                                 .background(MaterialTheme.colorScheme.primary, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = "$",
-                                modifier = Modifier.offset(y = (-0.8).dp),
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                style = TextStyle(
-                                    platformStyle = PlatformTextStyle(includeFontPadding = false)
-                                )
-                            )
+                        Icon(
+                            imageVector = Icons.Rounded.FilterVintage,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(10.dp)
+                        )
                         }
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
@@ -190,8 +186,12 @@ fun ThemeDetailScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
+                val themePrimaryColor = remember(theme) {
+                    getThemeShades(theme).lastOrNull() ?: backgroundColor
+                }
+
                 MoonPrimaryButton(
-                    text = if (theme.isOwned) "Activate" else "Buy for ${theme.price} $",
+                    text = if (theme.isOwned) "Activate" else "Buy for ${theme.price}",
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         if (theme.isOwned) {
@@ -200,7 +200,7 @@ fun ThemeDetailScreen(
                             viewModel.initiatePurchase(theme)
                         }
                     },
-                    containerColor = MaterialTheme.colorScheme.primary,
+                    containerColor = themePrimaryColor,
                     modifier = Modifier.padding(horizontal = 12.dp)
                 )
 
@@ -233,10 +233,14 @@ fun ThemeDetailScreen(
             }
 
             if (uiState.showConfirmActivationDialog && uiState.selectedThemeDetail != null) {
+                val currentThemePrimaryColor = remember(uiState.selectedThemeDetail) {
+                    uiState.selectedThemeDetail?.let { getThemeShades(it).lastOrNull() }
+                }
                 ConfirmActivationDialog(
                     themeName = uiState.selectedThemeDetail?.name ?: "",
                     onConfirm = { viewModel.confirmActivation() },
-                    onCancel = { viewModel.cancelActivation() }
+                    onCancel = { viewModel.cancelActivation() },
+                    primaryColor = currentThemePrimaryColor
                 )
             }
 

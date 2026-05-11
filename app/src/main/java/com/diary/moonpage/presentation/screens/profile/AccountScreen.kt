@@ -119,39 +119,33 @@ fun AccountScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Scaffold(
-            containerColor = MaterialTheme.colorScheme.background
-        ) { padding ->
-        Box(modifier = Modifier.padding(padding)) {
-            AccountScreenContent(
-                username = user?.name ?: "",
-                gender = user?.gender ?: "Not specified",
-                birthday = user?.birthday ?: "Not specified",
-                userIdFull = user?.userId ?: "",
-                email = user?.email ?: "",
-                avatarUrl = user?.avatarUrl,
-                localAvatarPath = uiState.localAvatarPath,
-                tempAvatarPath = uiState.tempAvatarPath,
-                onNavigateBack = onNavigateBack,
-                onLogoutClick = { showLogoutDialog = true },
-                onBirthdayClick = { currentBottomSheet = BottomSheetType.BIRTHDAY },
-                onGenderClick = { currentBottomSheet = BottomSheetType.GENDER },
-                onAvatarEditClick = { avatarLauncher.launch("image/*") },
-                onUsernameEditClick = { currentBottomSheet = BottomSheetType.USERNAME }
-            )
+        AccountScreenContent(
+            username = user?.name ?: "",
+            gender = user?.gender ?: "Not specified",
+            birthday = user?.birthday ?: "Not specified",
+            userIdFull = user?.userId ?: "",
+            email = user?.email ?: "",
+            avatarUrl = user?.avatarUrl,
+            localAvatarPath = uiState.localAvatarPath,
+            tempAvatarPath = uiState.tempAvatarPath,
+            onNavigateBack = onNavigateBack,
+            onLogoutClick = { showLogoutDialog = true },
+            onBirthdayClick = { currentBottomSheet = BottomSheetType.BIRTHDAY },
+            onGenderClick = { currentBottomSheet = BottomSheetType.GENDER },
+            onAvatarEditClick = { avatarLauncher.launch("image/*") },
+            onUsernameEditClick = { currentBottomSheet = BottomSheetType.USERNAME }
+        )
 
-            if (uiState.isUpdating) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.3f))
-                        .clickable(enabled = false) {},
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                }
+        if (uiState.isUpdating) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.3f))
+                    .clickable(enabled = false) {},
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
-        }
         }
         MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
     }
@@ -364,52 +358,53 @@ fun AccountScreenContent(
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             containerColor = colorScheme.background,
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        "Account",
-                        fontWeight = FontWeight.Bold,
-                        color = colorScheme.onBackground
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            Icons.Rounded.ArrowBackIosNew,
-                            contentDescription = "Back",
-                            tint = colorScheme.onBackground
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            "Account",
+                            fontWeight = FontWeight.Bold,
+                            color = colorScheme.onBackground
                         )
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = colorScheme.background
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(
+                                Icons.Rounded.ArrowBackIosNew,
+                                contentDescription = "Back",
+                                tint = colorScheme.onBackground
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = colorScheme.background
+                    )
                 )
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(30.dp))
-
-            AccountAvatar(
-                onEditClick = onAvatarEditClick,
-                avatarUrl = avatarUrl,
-                localAvatarPath = localAvatarPath,
-                tempAvatarPath = tempAvatarPath
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+            },
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+        ) { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Spacer(modifier = Modifier.height(10.dp))
+
+                AccountAvatar(
+                    onEditClick = onAvatarEditClick,
+                    avatarUrl = avatarUrl,
+                    localAvatarPath = localAvatarPath,
+                    tempAvatarPath = tempAvatarPath
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
                 Text(
                     text = if (isUsernameEmpty) "Set Username" else username,
                     fontSize = 20.sp,

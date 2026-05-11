@@ -44,6 +44,7 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -64,6 +65,8 @@ dependencies {
 
     implementation(libs.hilt.android)
     implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.ui.geometry)
+    implementation(libs.ui)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 

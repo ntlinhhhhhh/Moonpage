@@ -6,16 +6,14 @@ data class DailyLog(
     val date: String,
     val note: String?,
     val sleepHours: Double?,
+    val sleepStartTime: String? = null,
     val isMenstruation: Boolean,
     val menstruationPhase: String?,
+    val steps: Int? = null,
+    val musicRecord: String? = null,
     val dailyPhotos: List<String>?,
     val activityIds: List<String>?,
-    val songTitle: String? = null,
-    val artistName: String? = null,
-    val albumArtUrl: String? = null,
-    val sleepBedTime: String? = null, // Format: HH:mm
-    val sleepWakeTime: String? = null, // Format: HH:mm
-    val steps: Int? = null,
+    val createdAt: String? = null,
     val calories: Int? = null,
     val distance: Double? = null
-    )
+)

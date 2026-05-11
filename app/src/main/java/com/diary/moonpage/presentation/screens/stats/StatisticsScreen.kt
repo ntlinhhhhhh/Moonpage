@@ -55,7 +55,8 @@ fun StatisticsScreenContent(
         topBar = {
             Surface(
                 color = MaterialTheme.colorScheme.background,
-                tonalElevation = 0.dp
+                tonalElevation = 0.dp,
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     CenterAlignedTopAppBar(
@@ -145,11 +146,11 @@ fun StatisticsScreenContent(
 
                         // 2. Sleep Analysis
                         StatsCard(title = "Sleep Analysis") {
-                            SleepAnalysisChart(stats?.sleepAnalysis ?: emptyList())
+                            SleepAnalysisChart(stats?.sleepAnalysis ?: emptyList(), themeType = uiState.themeType)
                         }
 
-                        // 3. Mood by Sleep
-                        StatsCard(title = "Mood by Sleep") {
+                        // 3. Moods by Sleep
+                        StatsCard(title = "Moods by Sleep") {
                             SleepMoodCorrelationChart(stats?.sleepAnalysis ?: emptyList(), uiState.themeType)
                         }
 

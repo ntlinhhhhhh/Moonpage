@@ -12,6 +12,7 @@ import com.diary.moonpage.domain.usecase.theme.SetActiveThemeUseCase
 import com.diary.moonpage.core.theme.MoonThemeType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -30,8 +31,8 @@ class StoreViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(StoreUiState())
     val uiState: StateFlow<StoreUiState> = _uiState.asStateFlow()
 
-    private val _uiEffect = Channel<StoreUiEffect>()
-    val uiEffect = _uiEffect.receiveAsFlow()
+    private val _uiEffect = MutableSharedFlow<StoreUiEffect>(extraBufferCapacity = 10)
+    val uiEffect = _uiEffect.asSharedFlow()
 
     init {
         loadData()
@@ -154,14 +155,14 @@ class StoreViewModel @Inject constructor(
             // 2. Fetch All Themes for Store (Background refresh)
             getThemesUseCase().onFailure { error ->
                 if (_uiState.value.themes.isEmpty()) {
-                    _uiEffect.send(StoreUiEffect.ShowSnackBar(error.message ?: "Failed to load store themes"))
+                    _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Failed to load store themes"))
                 }
             }
 
             // 3. Fetch Owned Themes (Background refresh)
             getOwnedThemesUseCase().onFailure { error ->
                 if (_uiState.value.ownedThemes.isEmpty()) {
-                    _uiEffect.send(StoreUiEffect.ShowSnackBar(error.message ?: "Failed to load owned themes"))
+                    _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Failed to load owned themes"))
                 }
             }
 
@@ -200,10 +201,10 @@ class StoreViewModel @Inject constructor(
                 // Refresh user for coins
                 userRepository.getCurrentUser()
                 
-                _uiEffect.send(StoreUiEffect.PurchaseSuccess)
+                _uiEffect.emit(StoreUiEffect.PurchaseSuccess)
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false) }
-                _uiEffect.send(StoreUiEffect.ShowSnackBar(error.message ?: "Purchase failed"))
+                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Purchase failed"))
             }
         }
     }
@@ -235,12 +236,12 @@ class StoreViewModel @Inject constructor(
                     themePreferencesManager.setThemeType(it.toMoonThemeType())
                 }
                 
-                _uiEffect.send(StoreUiEffect.ThemeActivated)
-                _uiEffect.send(StoreUiEffect.ShowSnackBar("Theme activated!"))
-                _uiEffect.send(StoreUiEffect.NavigateBack)
+                _uiEffect.emit(StoreUiEffect.NavigateBack)
+                delay(150)
+                _uiEffect.emit(StoreUiEffect.ShowSnackBar("Theme updated successfully!"))
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false) }
-                _uiEffect.send(StoreUiEffect.ShowSnackBar(error.message ?: "Activation failed"))
+                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Activation failed"))
             }
         }
     }

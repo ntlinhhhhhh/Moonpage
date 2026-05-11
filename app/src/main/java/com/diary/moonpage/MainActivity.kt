@@ -5,13 +5,17 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.diary.moonpage.core.theme.MoonPageTheme
 import com.diary.moonpage.core.util.LocaleUtils
@@ -37,7 +41,14 @@ class MainActivity : ComponentActivity() {
     lateinit var spotifyApi: SpotifyApi
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        
+        splashScreen.setKeepOnScreenCondition {
+            !mainViewModel.isReady.value
+        }
+        
         handleIntent(intent)
 
         setContent {
@@ -60,12 +71,18 @@ class MainActivity : ComponentActivity() {
                 themeType = themeType,
                 darkTheme = isDark
             ) {
-                Scaffold(
-                    snackbarHost = { SnackbarHost(snackbarHostState) },
+                Surface(
                     modifier = Modifier.fillMaxSize(),
-                    containerColor = MaterialTheme.colorScheme.background
-                ) { padding ->
-                    AppNavigation()
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        AppNavigation()
+                        
+                        SnackbarHost(
+                            hostState = snackbarHostState,
+                            modifier = Modifier.align(Alignment.BottomCenter)
+                        )
+                    }
                 }
             }
         }

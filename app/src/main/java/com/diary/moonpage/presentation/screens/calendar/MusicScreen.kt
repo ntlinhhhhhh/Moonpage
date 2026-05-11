@@ -28,34 +28,38 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.diary.moonpage.data.remote.api.SpotifyTrack
 import kotlinx.coroutines.launch
+
 @Composable
 fun MusicScreen(
     onNavigateBack: () -> Unit,
     onSongSelected: (String, String, String?) -> Unit,
     viewModel: MusicViewModel = hiltViewModel()
 ) {
-    // ... rest of code
-
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
 
     Scaffold(
         topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+            Surface(
+                color = MaterialTheme.colorScheme.background,
+                modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars)
             ) {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back")
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back")
+                    }
+                    Text(
+                        "Select Music",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
-                Text(
-                    "Select Music",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
             }
         },
         containerColor = MaterialTheme.colorScheme.background

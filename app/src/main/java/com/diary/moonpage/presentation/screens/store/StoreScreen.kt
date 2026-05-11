@@ -53,7 +53,7 @@ fun StoreScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
+                    .padding(bottom = paddingValues.calculateBottomPadding())
             ) {
                 StoreTopBar(
                     coins = uiState.userCoins,
@@ -122,10 +122,17 @@ fun StoreScreen(
             )
             
             if (uiState.showConfirmActivationDialog) {
+                val tempTheme = remember(uiState.temporarySelectedThemeId, uiState.ownedThemes) {
+                    uiState.ownedThemes.find { it.id == uiState.temporarySelectedThemeId }
+                }
+                val tempThemePrimaryColor = remember(tempTheme) {
+                    tempTheme?.let { getThemeShades(it).lastOrNull() }
+                }
                 ConfirmActivationDialog(
-                    themeName = uiState.ownedThemes.find { it.id == uiState.temporarySelectedThemeId }?.name ?: "this theme",
+                    themeName = tempTheme?.name ?: "this theme",
                     onConfirm = { viewModel.confirmActivation() },
-                    onCancel = { viewModel.cancelActivation() }
+                    onCancel = { viewModel.cancelActivation() },
+                    primaryColor = tempThemePrimaryColor
                 )
             }
             
@@ -193,10 +200,10 @@ fun HomeTabContent(
     onViewAllClick: () -> Unit
 ) {
     val filteredThemes = remember(themes, selectedCategory) {
-        if (selectedCategory == "ALL") {
-            themes.filter { it.type == ThemeType.THEME }
-        } else {
-            themes.filter { it.type == ThemeType.THEME && it.category == selectedCategory }
+        when (selectedCategory) {
+            "ALL" -> themes.filter { it.type == ThemeType.THEME }
+            "LIGHT", "DARK" -> themes.filter { it.type == ThemeType.THEME }
+            else -> themes.filter { it.type == ThemeType.THEME && it.category == selectedCategory }
         }
     }
     val iconPacks = themes.filter { it.type == ThemeType.ICON_PACK }

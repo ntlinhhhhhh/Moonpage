@@ -14,6 +14,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Path
@@ -36,6 +39,7 @@ import com.diary.moonpage.data.remote.dto.stats.MoodFlowDto
 import com.diary.moonpage.core.theme.*
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
+import java.util.Calendar
 import java.util.Locale
 
 @Composable
@@ -204,15 +208,15 @@ fun MoodFlowChart(
                     val x = width * i / gridCount
                     drawLine(
                         color = gridColor,
-                        start = androidx.compose.ui.geometry.Offset(x, 0f),
-                        end = androidx.compose.ui.geometry.Offset(x, height),
+                        start = Offset(x, 0f),
+                        end = Offset(x, height),
                         strokeWidth = 1.dp.toPx()
                     )
                 }
 
                 // Menstruation Background (Monthly only)
                 if (isMonthly && menstruationDates.isNotEmpty()) {
-                    val daysInMonth = java.time.YearMonth.of(year, month).lengthOfMonth()
+                    val daysInMonth = YearMonth.of(year, month).lengthOfMonth()
                     val dx = if (daysInMonth > 1) width / (daysInMonth - 1) else 0f
                     val currentMonthStr = String.format("%04d-%02d", year, month)
                     
@@ -222,8 +226,8 @@ fun MoodFlowChart(
                             val x = d * dx
                             drawRect(
                                 color = Color(0xFFFFCDD2).copy(alpha = 0.4f),
-                                topLeft = androidx.compose.ui.geometry.Offset(x - dx/2, 0f),
-                                size = androidx.compose.ui.geometry.Size(dx, height)
+                                topLeft = Offset(x - dx/2, 0f),
+                                size = Size(dx, height)
                             )
                         } catch (e: Exception) {}
                     }
@@ -239,7 +243,7 @@ fun MoodFlowChart(
 
                     val path = Path()
                     val maxSlots = if (isMonthly) {
-                        java.time.YearMonth.of(year, month).lengthOfMonth() - 1
+                        YearMonth.of(year, month).lengthOfMonth() - 1
                     } else {
                         11
                     }
@@ -258,7 +262,7 @@ fun MoodFlowChart(
                         val y = height * (5 - item.moodId).coerceIn(0, 4) / 4f
                         
                         if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
-                        drawCircle(color = primaryColor, radius = 4.dp.toPx(), center = androidx.compose.ui.geometry.Offset(x, y))
+                        drawCircle(color = primaryColor, radius = 4.dp.toPx(), center = Offset(x, y))
                     }
                     drawPath(path = path, color = primaryColor, style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round))
                 }
@@ -273,7 +277,7 @@ fun MoodFlowChart(
             ) {
                 val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
                 if (isMonthly) {
-                    val daysInMonth = java.time.YearMonth.of(year, month).lengthOfMonth()
+                    val daysInMonth = YearMonth.of(year, month).lengthOfMonth()
                     listOf("1", "6", "11", "16", "21", "26", daysInMonth.toString()).forEach {
                         Text(it, fontSize = 12.sp, color = labelColor)
                     }
@@ -316,11 +320,6 @@ fun MoodDistributionView(
                 val iconSize = 32.dp
                 val containerSize = 48.dp
                 val tintColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f) 
-                val colorFilter = if (rawPercent > 0) {
-                    androidx.compose.ui.graphics.ColorFilter.tint(Color.Black.copy(alpha = 0.7f)) // Or theme-aware?
-                } else {
-                    androidx.compose.ui.graphics.ColorFilter.tint(tintColor)
-                }
                 
                 val iconTint = if (rawPercent > 0) {
                     // Use a slightly darker color on light backgrounds
@@ -347,7 +346,7 @@ fun MoodDistributionView(
                                 painter = painterResource(id = mood.drawableRes!!),
                                 contentDescription = null,
                                 modifier = Modifier.size(iconSize),
-                                colorFilter = if (rawPercent > 0) androidx.compose.ui.graphics.ColorFilter.tint(iconTint) else androidx.compose.ui.graphics.ColorFilter.tint(tintColor)
+                                colorFilter = ColorFilter.tint(if (rawPercent > 0) iconTint else tintColor)
                             )
                         }
                     }
@@ -510,42 +509,193 @@ fun SleepSummaryView(
 }
 
 @Composable
-fun SleepAnalysisChart(sleepData: List<com.diary.moonpage.data.remote.dto.stats.SleepAnalysisDto>) {
+fun SleepAnalysisChart(
+    sleepData: List<com.diary.moonpage.data.remote.dto.stats.SleepAnalysisDto>,
+    themeType: MoonThemeType = MoonThemeType.DEFAULT
+) {
+    val shades = getThemeShades(themeType)
     val primaryColor = MaterialTheme.colorScheme.primary
-    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+    val labelColor = onSurfaceVariant.copy(alpha = 0.6f)
+
+    // Calculate averages for summary boxes
+    val avgDuration = if (sleepData.isNotEmpty()) sleepData.map { it.duration }.average() else 0.0
+    val latestSleep = sleepData.lastOrNull()
     
-    Column(modifier = Modifier.fillMaxWidth().height(200.dp)) {
-        Row(
-            modifier = Modifier.weight(1f).fillMaxWidth(),
-            verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            if (sleepData.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No sleep data yet", color = labelColor.copy(alpha = 0.5f))
+    Column {
+        // Summary Row
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            SleepStatBox(label = "Bedtime", value = latestSleep?.startTime ?: "--:--", modifier = Modifier.weight(1f))
+            val wakeUpTime = if (latestSleep?.startTime != null) {
+                try {
+                    val sdf = java.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH)
+                    val date = sdf.parse(latestSleep.startTime)
+                    if (date != null) {
+                        val cal = Calendar.getInstance().apply { time = date }
+                        cal.add(Calendar.MINUTE, (latestSleep.duration * 60).toInt())
+                        sdf.format(cal.time)
+                    } else "--:--"
+                } catch (e: Exception) { "--:--" }
+            } else "--:--"
+            SleepStatBox(label = "Wake up", value = wakeUpTime, modifier = Modifier.weight(1f))
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Chart Area
+        Box(modifier = Modifier.fillMaxWidth().height(250.dp)) {
+            // Y-Axis Labels
+            Column(
+                modifier = Modifier.fillMaxHeight().width(40.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                listOf("6PM", "10PM", "2AM", "6AM", "10AM", "2PM", "6PM").forEach {
+                    Text(it, fontSize = 11.sp, color = labelColor)
                 }
-            } else {
-                sleepData.forEach { data ->
-                    val heightFactor = (data.duration / 12.0).coerceIn(0.0, 1.0).toFloat()
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(heightFactor)
-                            .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-                            .background(if (data.duration >= 7.0 && data.duration <= 9.0) primaryColor else primaryColor.copy(alpha = 0.4f))
-                    )
+            }
+
+            // Grid & Bars
+            Box(modifier = Modifier.fillMaxSize().padding(start = 45.dp, end = 10.dp)) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val width = size.width
+                    val height = size.height
+                    val gridColor = onSurfaceVariant.copy(alpha = 0.1f)
+                    
+                    // Horizontal Grid Lines
+                    for (i in 0..6) {
+                        val y = height * i / 6f
+                        drawLine(
+                            color = gridColor,
+                            start = Offset(0f, y),
+                            end = Offset(width, y),
+                            strokeWidth = 1.dp.toPx(),
+                            pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
+                        )
+                    }
+
+                    // Floating Bars
+                    if (sleepData.isNotEmpty()) {
+                        val barWidth = (width / 31f) * 0.6f
+                        val spacing = width / 31f
+                        
+                        sleepData.forEachIndexed { index, data ->
+                            val x = index * spacing + spacing / 2f
+                            
+                            // Parse Start Time to Float (Hours from 6PM)
+                            val startTimeFloat = parseTimeToFloat(data.startTime)
+                            val duration = data.duration.toFloat()
+                            
+                            val startY = (startTimeFloat / 24f) * height
+                            val endY = ((startTimeFloat + duration) / 24f) * height
+                            
+                            val barColor = when {
+                                duration < 6.0f -> Color(0xFFEF5350) // Solid Red
+                                duration <= 8.0f -> primaryColor
+                                else -> shades[1] // Solid Light Theme Green
+                            }
+                            
+                            drawRoundRect(
+                                color = barColor,
+                                topLeft = Offset(x - barWidth/2, startY),
+                                size = Size(barWidth, (endY - startY).coerceAtLeast(4f)),
+                                cornerRadius = CornerRadius(barWidth/2, barWidth/2)
+                            )
+                        }
+                    }
                 }
             }
         }
         
-        Spacer(modifier = Modifier.height(12.dp))
-        
-        // Horizontal Target Line (8h)
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("0h", fontSize = 11.sp, color = labelColor)
-            Text("Ideal: 7-9h", fontSize = 11.sp, color = primaryColor, fontWeight = FontWeight.Bold)
-            Text("12h+", fontSize = 11.sp, color = labelColor)
+        // X-Axis Labels (Dates)
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 45.dp, end = 10.dp, top = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            listOf("5/1", "5/6", "5/11", "5/16", "5/21", "5/26", "5/31").forEach {
+                Text(it, fontSize = 11.sp, color = labelColor)
+            }
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Legend Box
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            color = MoonTheme.customColors.logItemBg
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SleepLegendItem(color = Color(0xFFEF5350), label = "Less than 6h", value = "${sleepData.count { it.duration < 6.0 }}/31 days", totalDays = 31)
+                SleepLegendItem(color = primaryColor, label = "6-8h", value = "${sleepData.count { it.duration in 6.0..8.0 }}/31 days", totalDays = 31)
+                SleepLegendItem(color = shades[1], label = "Over 8h", value = "${sleepData.count { it.duration > 8.0 }}/31 days", totalDays = 31)
+                SleepLegendItem(color = Color(0xFFE0E0E0), label = "No record", value = "${31 - sleepData.size}/31 days", totalDays = 31)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+        
+        val avgHrs = avgDuration.toInt()
+        val avgMins = ((avgDuration - avgHrs) * 60).toInt()
+        Text(
+            text = buildAnnotatedString {
+                append("On average, you slept ")
+                withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = primaryColor)) {
+                    append("${avgHrs}h ${avgMins}m.")
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+            fontSize = 15.sp,
+            color = labelColor
+        )
+    }
+}
+
+@Composable
+private fun SleepStatBox(label: String, value: String, modifier: Modifier) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
+        color = Color.Transparent
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(value, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+private fun SleepLegendItem(color: Color, label: String, value: String, totalDays: Int) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+        Box(modifier = Modifier.size(14.dp).clip(RoundedCornerShape(4.dp)).background(color))
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(label, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.weight(1f))
+        Text(value, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), fontWeight = FontWeight.Bold)
+    }
+}
+
+private fun parseTimeToFloat(timeStr: String?): Float {
+    if (timeStr == null) return 0f
+    try {
+        val sdf = java.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH)
+        val date = sdf.parse(timeStr) ?: return 0f
+        val cal = Calendar.getInstance().apply { time = date }
+        var hours = cal.get(Calendar.HOUR_OF_DAY).toFloat()
+        val minutes = cal.get(Calendar.MINUTE).toFloat()
+        val totalHoursFromMidnight = hours + minutes / 60f
+        
+        // Offset so 6PM is 0
+        // Midnight is 6 hours after 6PM
+        var offset = totalHoursFromMidnight + 6f
+        if (totalHoursFromMidnight >= 18f) {
+            offset = totalHoursFromMidnight - 18f
+        }
+        return offset
+    } catch (e: Exception) {
+        return 0f
     }
 }
 
@@ -554,47 +704,48 @@ fun SleepMoodCorrelationChart(sleepData: List<com.diary.moonpage.data.remote.dto
     if (sleepData.isEmpty()) return
 
     val ranges = listOf(
-        "Short" to (0.0..6.0),
-        "Healthy" to (6.0..9.0),
-        "Long" to (9.0..24.0)
+        "<4h" to (0.0..4.0),
+        "4-6h" to (4.0..6.0),
+        "6-8h" to (6.0..8.0),
+        "8-10h" to (8.0..10.0),
+        "10h<" to (10.0..24.0)
     )
 
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Row(
+        modifier = Modifier.fillMaxWidth().height(180.dp).padding(horizontal = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Bottom
+    ) {
+        // Y-Axis Mood Indicators
+        Column(
+            modifier = Modifier.fillMaxHeight().padding(bottom = 24.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            (5 downTo 1).forEach { moodId ->
+                Box(modifier = Modifier.size(8.dp).background(MoonIcons.Moods.getMoodColor(moodId, themeType), CircleShape))
+            }
+        }
+
         ranges.forEach { (label, range) ->
             val entriesInRange = sleepData.filter { it.duration in range }
-            if (entriesInRange.isNotEmpty()) {
-                val total = entriesInRange.size.toFloat()
-                val moodCounts = (1..5).associateWith { id -> entriesInRange.count { it.moodId == id } }
-
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = label,
-                        modifier = Modifier.width(60.dp),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    
-                    Row(
+            val avgMood = if (entriesInRange.isNotEmpty()) entriesInRange.map { it.moodId }.average().toFloat() else 0f
+            
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                if (avgMood > 0) {
+                    val heightFactor = (avgMood / 5f).coerceIn(0f, 1f)
+                    Box(
                         modifier = Modifier
-                            .weight(1f)
-                            .height(28.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(MoonTheme.customColors.logItemBg)
-                    ) {
-                        (1..5).forEach { moodId ->
-                            val count = moodCounts[moodId] ?: 0
-                            if (count > 0) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .weight(count / total)
-                                        .background(MoonIcons.Moods.getMoodColor(moodId, themeType))
-                                )
-                            }
-                        }
-                    }
+                            .width(28.dp)
+                            .fillMaxHeight(heightFactor)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MoonIcons.Moods.getMoodColor(avgMood.toInt().coerceIn(1, 5), themeType))
+                    )
+                } else {
+                    Spacer(modifier = Modifier.height(1.dp))
                 }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
             }
         }
     }
@@ -1116,19 +1267,7 @@ fun PremiumAnalysisSection(themeType: MoonThemeType = MoonThemeType.DEFAULT) {
                 color = onSurfaceVariant,
                 fontSize = 18.sp
             )
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = primaryColor,
-                onClick = {}
-            ) {
-                Text(
-                    "Sample",
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+            // Removed Sample Badge
         }
         
         Spacer(modifier = Modifier.height(32.dp))

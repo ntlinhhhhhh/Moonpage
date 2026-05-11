@@ -37,6 +37,7 @@ import com.diary.moonpage.presentation.components.calendar.*
 import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
 /**
@@ -92,14 +93,33 @@ fun CalendarScreenContent(
     onNavigateToThemeCalendar: () -> Unit,
     showSnackbar: (String) -> Unit
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-    val monthFormatter = remember { DateTimeFormatter.ofPattern("MMM yyyy") }
-    val currentMonthName = remember(uiState.currentYearMonth) { uiState.currentYearMonth.format(monthFormatter) }
-    val view = LocalView.current
     val coroutineScope = rememberCoroutineScope()
-    
+    val view = androidx.compose.ui.platform.LocalView.current
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var dateToDelete by remember { mutableStateOf<LocalDate?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    val initialPage = 500 * 12
+    val baseYearMonth = remember { YearMonth.from(LocalDate.now().withDayOfMonth(1)) }
+    val pagerState = rememberPagerState(initialPage = initialPage, pageCount = { initialPage * 2 })
+
+    // Sync Pager with ViewModel
+    LaunchedEffect(pagerState.currentPage) {
+        val offset = pagerState.currentPage - initialPage
+        val targetMonth = baseYearMonth.plusMonths(offset.toLong())
+        if (targetMonth != uiState.currentYearMonth) {
+            onEvent(CalendarUiEvent.OnMonthChanged(targetMonth))
+        }
+    }
+
+    // Sync ViewModel with Pager (e.g. from Picker)
+    LaunchedEffect(uiState.currentYearMonth) {
+        val targetOffset = java.time.temporal.ChronoUnit.MONTHS.between(baseYearMonth, uiState.currentYearMonth).toInt()
+        val targetPage = initialPage + targetOffset
+        if (pagerState.currentPage != targetPage) {
+            pagerState.animateScrollToPage(targetPage)
+        }
+    }
 
     LaunchedEffect(uiState.snackbarMessage) {
         uiState.snackbarMessage?.let {
@@ -111,68 +131,86 @@ fun CalendarScreenContent(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-            ) {
-                CalendarTopBar(
-                    onFilterClick = { onEvent(CalendarUiEvent.OnFilterClick) },
-                    onSettingsClick = onNavigateToSettings,
-                    onThemeClick = onNavigateToThemeCalendar,
-                    isFilterActive = uiState.selectedFilter != null
-                )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = paddingValues.calculateBottomPadding())
+        ) {
+            CalendarTopBar(
+                onFilterClick = { onEvent(CalendarUiEvent.OnFilterClick) },
+                onSettingsClick = onNavigateToSettings,
+                onThemeClick = onNavigateToThemeCalendar,
+                isFilterActive = uiState.selectedFilter != null,
+                modifier = Modifier.statusBarsPadding()
+            )
 
-                Spacer(modifier = Modifier.height(8.dp))
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.Top,
+                beyondViewportPageCount = 1
+            ) { page ->
+                val offset = page - initialPage
+                val pageYearMonth = baseYearMonth.plusMonths(offset.toLong())
+                val currentMonthName = pageYearMonth.format(java.time.format.DateTimeFormatter.ofPattern("MMM yyyy"))
 
-                CalendarMonthHeader(
-                    currentMonthName = currentMonthName,
-                    onMonthClick = { onEvent(CalendarUiEvent.OnMonthPickerClick) },
-                    onShareClick = { onEvent(CalendarUiEvent.OnShareClick) }
-                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    CalendarMonthHeader(
+                        currentMonthName = currentMonthName,
+                        onMonthClick = { onEvent(CalendarUiEvent.OnMonthPickerClick) },
+                        onShareClick = { onEvent(CalendarUiEvent.OnShareClick) }
+                    )
 
-                CalendarHeader()
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                CalendarPager(
-                    currentYearMonth = uiState.currentYearMonth,
-                    selectedDate = uiState.selectedDate,
-                    dailyLogs = uiState.dailyLogs,
-                    selectedFilter = uiState.selectedFilter,
-                    dynamicActivities = uiState.dynamicActivities,
-                    themeType = uiState.themeType,
-                    onDateSelected = { date ->
-                        if (date.isAfter(LocalDate.now())) {
-                            showSnackbar("You cannot record for a future date!")
-                        } else {
-                            onEvent(CalendarUiEvent.OnDateSelected(date))
-                            if (uiState.dailyLogs[date] == null) {
-                                onNavigateToDailyLog(date.toString())
+                    CalendarHeader()
+
+                    CalendarGrid(
+                        pageYearMonth = pageYearMonth,
+                        selectedDate = uiState.selectedDate,
+                        dailyLogs = uiState.dailyLogs,
+                        selectedFilter = uiState.selectedFilter,
+                        dynamicActivities = uiState.dynamicActivities,
+                        themeType = uiState.themeType,
+                        onDateSelected = { date ->
+                            if (date.isAfter(LocalDate.now())) {
+                                showSnackbar("You cannot record for a future date!")
+                            } else {
+                                onEvent(CalendarUiEvent.OnDateSelected(date))
+                                if (uiState.dailyLogs[date] == null) {
+                                    onNavigateToDailyLog(date.toString())
+                                }
                             }
                         }
-                    },
-                    onMonthChanged = { newMonth -> onEvent(CalendarUiEvent.OnMonthChanged(newMonth)) }
-                )
+                    )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                CalendarSelectedLogDetail(
-                    selectedDate = uiState.selectedDate,
-                    dailyLogs = uiState.dailyLogs,
-                    dynamicActivities = uiState.dynamicActivities,
-                    themeType = uiState.themeType,
-                    onEditLog = { date -> onNavigateToDailyLog(date.toString()) },
-                    onDeleteLog = { date -> 
-                        dateToDelete = date
-                        showDeleteConfirmDialog = true
-                    },
-                    onShareClick = { onEvent(CalendarUiEvent.OnShareClick) }
-                )
+                    CalendarSelectedLogDetail(
+                        selectedDate = uiState.selectedDate,
+                        dailyLogs = uiState.dailyLogs,
+                        dynamicActivities = uiState.dynamicActivities,
+                        themeType = uiState.themeType,
+                        onEditLog = { date -> onNavigateToDailyLog(date.toString()) },
+                        onDeleteLog = { date -> 
+                            dateToDelete = date
+                            showDeleteConfirmDialog = true
+                        },
+                        onShareClick = { onEvent(CalendarUiEvent.OnShareClick) }
+                    )
 
-                Spacer(modifier = Modifier.height(100.dp))
+                    Spacer(modifier = Modifier.height(100.dp))
+                }
             }
+        }
+        
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
@@ -222,7 +260,10 @@ fun CalendarScreenContent(
         ModalBottomSheet(
             onDismissRequest = { onEvent(CalendarUiEvent.OnFilterDismiss) },
             containerColor = MaterialTheme.colorScheme.background,
-            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+            dragHandle = {
+                BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.background)
+            }
         ) {
             FilterScreen(
                 currentFilter = uiState.selectedFilter,
@@ -399,137 +440,101 @@ fun CalendarMonthHeader(
 }
 
 @Composable
-fun CalendarPager(
-    currentYearMonth: java.time.YearMonth,
+fun CalendarGrid(
+    pageYearMonth: java.time.YearMonth,
     selectedDate: LocalDate?,
     dailyLogs: Map<LocalDate, com.diary.moonpage.domain.model.DailyLog>,
     selectedFilter: FilterItem?,
     dynamicActivities: List<com.diary.moonpage.domain.model.Activity>,
     themeType: com.diary.moonpage.core.theme.MoonThemeType,
-    onDateSelected: (LocalDate) -> Unit,
-    onMonthChanged: (java.time.YearMonth) -> Unit
+    onDateSelected: (LocalDate) -> Unit
 ) {
-    val baseYearMonth = remember { currentYearMonth }
-    val initialPage = 500 * 12
-    val pagerState = rememberPagerState(
-        initialPage = initialPage,
-        pageCount = { initialPage * 2 }
-    )
+    val daysInMonth = pageYearMonth.lengthOfMonth()
+    val firstDayOfMonth = pageYearMonth.atDay(1)
+    val firstDayOffset = if (firstDayOfMonth.dayOfWeek == java.time.DayOfWeek.SUNDAY) 0 else firstDayOfMonth.dayOfWeek.value
+    val today = LocalDate.now()
 
-    LaunchedEffect(pagerState.currentPage) {
-        val offset = pagerState.currentPage - initialPage
-        val targetMonth = baseYearMonth.plusMonths(offset.toLong())
-        if (targetMonth != currentYearMonth) {
-            onMonthChanged(targetMonth)
-        }
-    }
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        val totalCells = firstDayOffset + daysInMonth
+        val rows = (totalCells + 6) / 7
 
-    LaunchedEffect(currentYearMonth) {
-        val targetOffset = java.time.temporal.ChronoUnit.MONTHS.between(
-            baseYearMonth,
-            currentYearMonth
-        ).toInt()
-        val targetPage = initialPage + targetOffset
-        if (pagerState.currentPage != targetPage) {
-            pagerState.animateScrollToPage(targetPage)
-        }
-    }
+        for (rowIndex in 0 until rows) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                for (colIndex in 0 until 7) {
+                    val cellIndex = rowIndex * 7 + colIndex
+                    Box(
+                        modifier = Modifier.weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (cellIndex in firstDayOffset until totalCells) {
+                            val day = cellIndex - firstDayOffset + 1
+                            val date = pageYearMonth.atDay(day)
+                            val isSelected = date == selectedDate
+                            val isToday = date == today
+                            val logForDay = dailyLogs[date]
 
-    HorizontalPager(
-        state = pagerState,
-        modifier = Modifier.fillMaxWidth().wrapContentHeight(),
-        verticalAlignment = Alignment.Top
-    ) { page ->
-        val offset = page - initialPage
-        val pageYearMonth = baseYearMonth.plusMonths(offset.toLong())
-        val daysInMonth = pageYearMonth.lengthOfMonth()
-        val firstDayOfMonth = pageYearMonth.atDay(1)
-        val firstDayOffset = if (firstDayOfMonth.dayOfWeek == java.time.DayOfWeek.SUNDAY) 0 else firstDayOfMonth.dayOfWeek.value
-        val today = LocalDate.now()
-
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            val totalCells = firstDayOffset + daysInMonth
-            val rows = (totalCells + 6) / 7
-
-            for (rowIndex in 0 until rows) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    for (colIndex in 0 until 7) {
-                        val cellIndex = rowIndex * 7 + colIndex
-                        Box(
-                            modifier = Modifier.weight(1f),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (cellIndex in firstDayOffset until totalCells) {
-                                val day = cellIndex - firstDayOffset + 1
-                                val date = pageYearMonth.atDay(day)
-                                val isSelected = date == selectedDate
-                                val isToday = date == today
-                                val logForDay = dailyLogs[date]
-
-                                val isMatch = when (val filter = selectedFilter) {
-                                    null -> true
-                                    is FilterItem.Mood -> logForDay?.baseMoodId == filter.id
-                                    is FilterItem.Activity -> logForDay?.activityIds?.contains(filter.id) == true
-                                    is FilterItem.Special -> {
-                                        when (filter.id) {
-                                            "music" -> logForDay?.activityIds?.any { it.contains("music", ignoreCase = true) } == true
-                                            "sleep" -> (logForDay?.sleepHours ?: 0.0) > 0.0
-                                            "sleep_long" -> (logForDay?.sleepHours ?: 0.0) >= 6.0 && (logForDay?.sleepHours ?: 0.0) <= 8.0
-                                            "menstruation" -> logForDay?.isMenstruation == true
-                                            else -> false
-                                        }
+                            val isMatch = when (val filter = selectedFilter) {
+                                null -> true
+                                is FilterItem.Mood -> logForDay?.baseMoodId == filter.id
+                                is FilterItem.Activity -> logForDay?.activityIds?.contains(filter.id) == true
+                                is FilterItem.Special -> {
+                                    when (filter.id) {
+                                        "music" -> logForDay?.activityIds?.any { it.contains("music", ignoreCase = true) } == true
+                                        "sleep" -> (logForDay?.sleepHours ?: 0.0) > 0.0
+                                        "sleep_long" -> (logForDay?.sleepHours ?: 0.0) >= 6.0 && (logForDay?.sleepHours ?: 0.0) <= 8.0
+                                        "menstruation" -> logForDay?.isMenstruation == true
+                                        else -> false
                                     }
                                 }
+                            }
+                            
+                            val isFiltered = selectedFilter != null
+                            val isDimmed = isFiltered && !isMatch
+
+                            var moodColor: Color? = null
+                            var moodIcon: ImageVector? = null
+                            var moodDrawable: Int? = null
+
+                            if (logForDay != null) {
+                                val mv = MoonIcons.Moods.getMoodVisual(logForDay.baseMoodId, themeType)
+                                moodColor = mv.color
                                 
-                                val isFiltered = selectedFilter != null
-                                val isDimmed = isFiltered && !isMatch
-
-                                // Determine what to show in the circle
-                                var moodColor: Color? = null
-                                var moodIcon: ImageVector? = null
-                                var moodDrawable: Int? = null
-
-                                if (logForDay != null) {
-                                    val mv = MoonIcons.Moods.getMoodVisual(logForDay.baseMoodId, themeType)
-                                    moodColor = mv.color
-                                    
-                                    if (selectedFilter is FilterItem.Activity) {
-                                        val activity = dynamicActivities.find { it.id == selectedFilter.id }
-                                        if (activity != null) {
-                                            val activityIcon = MoonIcons.getIconForActivity(activity.name)
-                                            moodDrawable = activityIcon.drawableRes
-                                            moodIcon = activityIcon.vector
-                                        } else {
-                                            moodDrawable = mv.drawableRes
-                                        }
-                                    } else if (selectedFilter is FilterItem.Special) {
-                                        moodIcon = selectedFilter.icon
+                                if (selectedFilter is FilterItem.Activity) {
+                                    val activity = dynamicActivities.find { it.id == selectedFilter.id }
+                                    if (activity != null) {
+                                        val activityIcon = MoonIcons.getIconForActivity(activity.name)
+                                        moodDrawable = activityIcon.drawableRes
+                                        moodIcon = activityIcon.vector
                                     } else {
                                         moodDrawable = mv.drawableRes
                                     }
+                                } else if (selectedFilter is FilterItem.Special) {
+                                    moodIcon = selectedFilter.icon
+                                } else {
+                                    moodDrawable = mv.drawableRes
                                 }
-
-                                DayItem(
-                                    day = day,
-                                    isSelected = isSelected,
-                                    moodColor = moodColor,
-                                    moodIcon = moodIcon,
-                                    moodDrawable = moodDrawable,
-                                    isToday = isToday,
-                                    isDimmed = isDimmed,
-                                    isFiltered = isFiltered,
-                                    themeType = themeType,
-                                    onClick = { onDateSelected(date) }
-                                )
-                            } else {
-                                DayItem(day = null, isSelected = false, moodColor = null, onClick = {})
                             }
+
+                            DayItem(
+                                day = day,
+                                isSelected = isSelected,
+                                moodColor = moodColor,
+                                moodIcon = moodIcon,
+                                moodDrawable = moodDrawable,
+                                isToday = isToday,
+                                isDimmed = isDimmed,
+                                isFiltered = isFiltered,
+                                themeType = themeType,
+                                onClick = { onDateSelected(date) }
+                            )
+                        } else {
+                            DayItem(day = null, isSelected = false, moodColor = null, onClick = {})
                         }
                     }
                 }
