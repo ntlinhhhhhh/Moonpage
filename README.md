@@ -1,56 +1,107 @@
-# Moon Page - Ứng dụng Nhật ký Mặt trăng
+# 🌙 Moon Page - Your Personal Soul Diary
 
-Moon Page là một ứng dụng nhật ký cá nhân hiện đại, được xây dựng bằng Jetpack Compose và Kotlin, giúp bạn ghi lại những khoảnh khắc, cảm xúc và hoạt động hàng ngày một cách tinh tế và bảo mật.
+[![Build Status](https://img.shields.io/badge/Build-Success-brightgreen.svg)]()
+[![Platform](https://img.shields.io/badge/Platform-Android-3DDC84.svg?style=flat&logo=android)](https://www.android.com/)
+[![Kotlin](https://img.shields.io/badge/Kotlin-1.9.24-7F52FF.svg?style=flat&logo=kotlin)](https://kotlinlang.org/)
+[![Compose](https://img.shields.io/badge/Jetpack_Compose-2024.04-4285F4.svg?style=flat&logo=jetpackcompose)](https://developer.android.com/compose)
 
-## ✨ Tính năng nổi bật
-
-- **Ghi nhật ký đa phương tiện:** Lưu lại cảm xúc, hoạt động và hình ảnh mỗi ngày.
-- **Đa ngôn ngữ:** Hỗ trợ đầy đủ tiếng Việt, tiếng Anh và tiếng Pháp.
-- **Bảo mật tối đa:** Hỗ trợ khóa bằng mã PIN (Passcode) và xác thực vân tay (Biometric).
-- **Tùy biến giao diện:** Thay đổi chủ đề (Theme) và chế độ tối (Dark Mode) linh hoạt.
-- **Thống kê:** Theo dõi sự thay đổi tâm trạng và thói quen qua các biểu đồ trực quan.
-- **Tích hợp Spotify:** Kết nối với âm nhạc bạn yêu thích ngay trong ứng dụng.
-- **Đồng bộ hóa:** Hỗ trợ thông báo qua Firebase và lưu trữ dữ liệu an toàn.
-
-## 🛠 Công nghệ sử dụng
-
-- **Ngôn ngữ:** Kotlin
-- **UI Framework:** Jetpack Compose (Material 3)
-- **Kiến trúc:** MVVM (Model-View-ViewModel) + Clean Architecture
-- **Dependency Injection:** Dagger Hilt
-- **Lưu trữ dữ liệu:** Room Database (Local) & DataStore (Preferences)
-- **Mạng:** Retrofit & OkHttp
-- **Khác:** Firebase Messaging, Biometric API, Health Connect, Coil (Load ảnh).
-
-## 🚀 Cách cài đặt và Chạy ứng dụng
-
-### 1. Yêu cầu hệ thống
-- **Android Studio:** Phiên bản Ladybug (2024.2.1) hoặc mới hơn.
-- **JDK:** Java 17 hoặc cao hơn.
-- **Android SDK:** API 26 (Android 8.0) trở lên.
-
-### 2. Tải mã nguồn
-Bạn có thể tải mã nguồn bằng cách sử dụng git:
-```bash
-git clone <url-repository-cua-ban>
-```
-
-### 3. Mở và Chạy Project
-1. Mở **Android Studio**.
-2. Chọn **File > Open** và tìm đến thư mục `DiaryApp`.
-3. Đợi Android Studio hoàn tất việc đồng bộ Gradle (Gradle Sync).
-4. Kết nối thiết bị Android thật hoặc khởi động trình giả lập (Emulator).
-5. Nhấn nút **Run (Tam giác xanh)** hoặc phím tắt `Shift + F10` để khởi động ứng dụng.
-
-## 📁 Cấu trúc thư mục chính
-
-- `app/src/main/java/com/diary/moonpage/core`: Chứa các tiện ích, chủ đề (theme) và cấu hình dùng chung.
-- `app/src/main/java/com/diary/moonpage/data`: Xử lý dữ liệu (Local Room, Remote API, Repository Implementation).
-- `app/src/main/java/com/diary/moonpage/domain`: Chứa logic nghiệp vụ (Models, Interfaces, UseCases).
-- `app/src/main/java/com/diary/moonpage/presentation`: Thành phần UI (Screens, ViewModels, Components).
-- `app/src/main/res`: Chứa tài nguyên (Strings đa ngôn ngữ, Images, Layouts).
-
-## 📝 Thông tin thêm
-Ứng dụng đang trong quá trình hoàn thiện và liên tục được cập nhật thêm các tính năng mới để mang lại trải nghiệm tốt nhất cho người dùng.
+**Moon Page** is a modern, aesthetically pleasing diary application designed to help users track their moods, activities, and precious moments. With a focus on emotional well-being and intuitive design, Moon Page transforms daily logging into a delightful ritual.
 
 ---
+
+## Key Features
+
+### 📅 Intuitive Calendar Logging
+- **Daily Journaling:** Log your thoughts, activities, and feelings with a few taps.
+- **Mood Tracking:** Choose from 5 expressive mood levels with custom "Cute Beans" icons.
+- **Activity Enrichment:** Tag activities (Exercise, Reading, Gaming, etc.) to see how they impact your mood.
+- **Menstrual Cycle Tracking:** Integrated cycle logging for comprehensive health monitoring.
+
+### 📸 Moments & Memories
+- **In-App Camera:** Capture the essence of your day directly within the app.
+- **Moment Gallery:** Revisit your past photos and memories in a beautiful, organized gallery.
+- **Public/Private Moments:** Choose whether to keep your moments private or share them with the community.
+
+### 📊 Insightful Statistics
+- **Mood Distribution:** Detailed charts showing your emotional patterns over months and years.
+- **Activity Analysis:** Identify which activities are most associated with your happiest days.
+- **Streak System:** Stay motivated with daily login streaks and "Streak Freeze" items.
+
+### 🎨 Personalization & Store
+- **Premium Themes:** Unlock unique UI skins and icon packs (Blushing, Midnight, Forest, etc.) using in-app "Moon Coins."
+- **Dark/Light Mode:** Seamless support for System, Light, and Dark appearance.
+- **Dynamic Theming:** UI elements adapt their color palette based on your active theme.
+
+### 🔒 Security & Integrations
+- **Biometric Lock:** Secure your private diary with Fingerprint or Face ID.
+- **Spotify Integration:** Attach the song you were listening to when you wrote your log.
+- **Health Connect:** Sync steps and physical activity data for a holistic view of your day.
+
+---
+
+## 🏗Architecture
+
+Moon Page is built following **Clean Architecture** principles and the **MVVM** (Model-View-ViewModel) pattern. This ensuring the codebase is scalable, testable, and maintainable.
+
+### Layers:
+1.  **`core`**: Cross-cutting concerns including DI (Hilt), network configurations, and shared utilities.
+2.  **`domain`**: Pure business logic (UseCases, Repositories Interfaces, and Models). No Android dependencies.
+3.  **`data`**: Implementation of repositories, local database (Room), and remote API services (Retrofit).
+4.  **`presentation`**: UI layer powered by Jetpack Compose, handling state management with ViewModels and StateFlow.
+
+---
+
+## Tech Stack & Frameworks
+
+- **Language:** [Kotlin](https://kotlinlang.org/)
+- **UI:** [Jetpack Compose](https://developer.android.com/compose) (Modern Android Toolkit)
+- **Dependency Injection:** [Dagger Hilt](https://dagger.dev/hilt/)
+- **Database:** [Room Persistence Library](https://developer.android.com/training/data-storage/room)
+- **Networking:** [Retrofit 2](https://square.github.io/retrofit/) & [OkHttp](https://square.github.io/okhttp/)
+- **Image Loading:** [Coil](https://coil-kt.github.io/coil/)
+- **Asynchronous Flow:** [Kotlin Coroutines](https://kotlinlang.org/docs/coroutines-overview.html) & [Flow](https://kotlinlang.org/docs/flow.html)
+- **Navigation:** [Jetpack Compose Navigation](https://developer.android.com/jetpack/compose/navigation)
+- **Local Storage:** [DataStore Preferences](https://developer.android.com/topic/libraries/architecture/datastore)
+- **Firebase:** [Firebase Cloud Messaging (FCM)](https://firebase.google.com/docs/cloud-messaging) for Push Notifications.
+- **Camera:** [CameraX](https://developer.android.com/training/camerax)
+- **Google Integration:** [Credential Manager](https://developer.android.com/training/sign-in/credential-manager) for Google One Tap Sign-In.
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Android Studio Ladybug | 2024.2.1 or newer.
+- Android SDK 35 (Compile SDK).
+- A physical Android device or Emulator (API level 26+).
+
+### Installation
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/ntlinhhhhhh/Moonpage.git
+    ```
+2.  **Set up Firebase:**
+    - Place your `google-services.json` file in the `app/` directory.
+3.  **API Configuration:**
+    - Update your base URL and API keys in the `core/di/NetworkModule.kt` if necessary.
+4.  **Build and Run:**
+    - Sync Gradle and run the `:app` module on your device.
+
+---
+
+## Documentation
+
+- [Detailed Architecture Guide](ARCHITECTURE.md) - Deep dive into our implementation of Clean Architecture.
+- [API Specification](api.md) - Overview of Backend endpoints and data structures.
+
+---
+
+## Contributing
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+*Moon Page - Logging your soul, one bean at a time.* 🌙
