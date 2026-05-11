@@ -4,6 +4,7 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.camera.core.CameraSelector
 import androidx.compose.animation.*
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -45,6 +46,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -53,6 +55,9 @@ import com.diary.moonpage.presentation.components.moment.MomentTag
 import com.diary.moonpage.core.theme.nunitoFontFamily
 import kotlinx.coroutines.launch
 import java.io.File
+
+import androidx.compose.ui.util.lerp
+import kotlin.math.absoluteValue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,14 +86,15 @@ fun MomentUploadScreen(
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
+    val density = LocalDensity.current
+    val isKeyboardVisible = WindowInsets.ime.getBottom(density) > 0
+    val topSpacerHeight by animateDpAsState(targetValue = if (isKeyboardVisible) 8.dp else 60.dp, label = "")
+    val bottomSpacerHeight by animateDpAsState(targetValue = if (isKeyboardVisible) 40.dp else 100.dp, label = "")
     val onBgColor = MaterialTheme.colorScheme.onBackground
 
     LaunchedEffect(pagerState.currentPage) {
         val currentTag = allTags[pagerState.currentPage]
-        if (currentTag.id == "text") {
-            focusRequester.requestFocus()
-            keyboardController?.show()
-        } else {
+        if (currentTag.id != "text") {
             focusManager.clearFocus()
             keyboardController?.hide()
             if (currentTag.id == "location") onLocationClick()
@@ -119,7 +125,7 @@ fun MomentUploadScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(60.dp))
+        Spacer(modifier = Modifier.height(topSpacerHeight))
 
         var scale by remember { mutableFloatStateOf(1f) }
         var offsetX by remember { mutableFloatStateOf(0f) }
@@ -138,9 +144,15 @@ fun MomentUploadScreen(
                 .clip(RoundedCornerShape(32.dp))
                 .background(Color.Black)
                 .pointerInput(Unit) {
-                    detectTapGestures(onDoubleTap = {
-                        scale = 1f; offsetX = 0f; offsetY = 0f
-                    })
+                    detectTapGestures(
+                        onTap = {
+                            focusManager.clearFocus()
+                            keyboardController?.hide()
+                        },
+                        onDoubleTap = {
+                            scale = 1f; offsetX = 0f; offsetY = 0f
+                        }
+                    )
                 },
             contentAlignment = Alignment.Center
         ) {
@@ -196,18 +208,37 @@ fun MomentUploadScreen(
                 HorizontalPager(
                     state = pagerState,
                     modifier = Modifier.fillMaxWidth().height(60.dp),
-                    contentPadding = PaddingValues(horizontal = 48.dp)
+                    contentPadding = PaddingValues(horizontal = 0.dp),
+                    pageSpacing = 0.dp
                 ) { page ->
                     val tag = allTags[page]
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    val pageOffset = ((pagerState.currentPage - page) + pagerState.currentPageOffsetFraction).absoluteValue
+                    
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                val effectFraction = 1f - pageOffset.coerceIn(0f, 1f)
+                                alpha = lerp(0.5f, 1f, effectFraction)
+                                scaleX = lerp(0.8f, 1f, effectFraction)
+                                scaleY = lerp(0.8f, 1f, effectFraction)
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
                         Surface(
-                            color = tag.containerColor ?: Color.Black.copy(alpha = 0.5f),
+                            color = tag.containerColor ?: Color.Black.copy(alpha = 0.85f),
                             shape = RoundedCornerShape(24.dp),
                             modifier = Modifier.wrapContentSize()
                         ) {
                             Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                                 if (tag.id != "review") {
-                                    tag.icon?.let { Icon(it, null, tint = tag.contentColor, modifier = Modifier.size(18.dp).clickable { onShowTagSheet() }) ; Spacer(modifier = Modifier.width(8.dp)) }
+                                    val shouldShowIcon = tag.id != "text" || userMessage.isEmpty()
+                                    if (shouldShowIcon) {
+                                        tag.icon?.let { 
+                                            Icon(it, null, tint = tag.contentColor, modifier = Modifier.size(18.dp).clickable { onShowTagSheet() }) 
+                                            Spacer(modifier = Modifier.width(8.dp)) 
+                                        }
+                                    }
                                 }
                                 when(tag.id) {
                                     "text" -> {
@@ -218,6 +249,7 @@ fun MomentUploadScreen(
                                             textStyle = TextStyle(color = tag.contentColor, fontWeight = FontWeight.Medium, fontSize = 16.sp, textAlign = TextAlign.Center),
                                             cursorBrush = SolidColor(tag.contentColor),
                                             singleLine = true,
+                                            maxLines = 1,
                                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                                             keyboardActions = KeyboardActions(onDone = {
                                                 focusManager.clearFocus()
@@ -255,7 +287,14 @@ fun MomentUploadScreen(
                                         }
                                     }
                                     "location" -> {
-                                        Text(text = if (userLocation.isNotEmpty()) userLocation else "Tap to add location", color = tag.contentColor, fontWeight = FontWeight.Medium, modifier = Modifier.clickable { onLocationClick() })
+                                        Text(
+                                            text = if (userLocation.isNotEmpty()) userLocation else "Tap to add location", 
+                                            color = tag.contentColor, 
+                                            fontWeight = FontWeight.Medium, 
+                                            maxLines = 1,
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                            modifier = Modifier.clickable { onLocationClick() }
+                                        )
                                     }
                                     "weather" -> {
                                         Text(text = userWeather, color = tag.contentColor, fontWeight = FontWeight.Medium, modifier = Modifier.clickable { onWeatherClick() })
@@ -338,6 +377,6 @@ fun MomentUploadScreen(
                 Icon(Icons.Rounded.AutoAwesome, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
             }
         }
-        Spacer(modifier = Modifier.height(100.dp))
+        Spacer(modifier = Modifier.height(bottomSpacerHeight))
     }
 }

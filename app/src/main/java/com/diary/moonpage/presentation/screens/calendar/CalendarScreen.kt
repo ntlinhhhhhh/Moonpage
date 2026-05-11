@@ -451,7 +451,7 @@ fun CalendarGrid(
 ) {
     val daysInMonth = pageYearMonth.lengthOfMonth()
     val firstDayOfMonth = pageYearMonth.atDay(1)
-    val firstDayOffset = if (firstDayOfMonth.dayOfWeek == java.time.DayOfWeek.SUNDAY) 0 else firstDayOfMonth.dayOfWeek.value
+    val firstDayOffset = firstDayOfMonth.dayOfWeek.value % 7
     val today = LocalDate.now()
 
     Column(

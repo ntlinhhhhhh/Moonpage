@@ -221,7 +221,7 @@ class DailyLogViewModel @Inject constructor(
             is DailyLogUiEvent.OnPhotosChanged -> {
                 // event.photos is List<String> (URIs)
                 val current = _uiState.value.dailyPhotos
-                val combined = (current + event.photos).distinct().take(3)
+                val combined = (current + event.photos).distinct().take(10)
                 _uiState.update { it.copy(dailyPhotos = combined) }
             }
             is DailyLogUiEvent.OnPhotoRemoved -> {

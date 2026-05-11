@@ -86,7 +86,7 @@ fun DailyLogScreen(
     }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(3)
+        contract = ActivityResultContracts.PickMultipleVisualMedia(10)
     ) { uris ->
         if (uris.isNotEmpty()) {
             viewModel.onEvent(DailyLogUiEvent.OnPhotosChanged(uris.map { it.toString() }))
@@ -1035,19 +1035,18 @@ private fun DailyPhotoSection(
                     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Rounded.CameraAlt, contentDescription = null, modifier = Modifier.size(48.dp), tint = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.4f)) 
                         Spacer(modifier = Modifier.height(12.dp))
-                        Text("Select up to 3 photos", color = MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
+                        Text("Select photos", color = MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
                     }
                 }
             } else {
-                Row(
+                androidx.compose.foundation.lazy.LazyRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    photos.take(3).forEach { photoUri ->
+                    items(photos.take(10)) { photoUri ->
                         Box(
                             modifier = Modifier
-                                .weight(1f)
-                                .aspectRatio(1f)
+                                .size(100.dp)
                         ) {
                             Box(
                                 modifier = Modifier
@@ -1088,13 +1087,11 @@ private fun DailyPhotoSection(
                             }
                         }
                     }
-                    // Add empty slots if less than 3 photos
-                    if (photos.size < 3) {
-                        repeat(3 - photos.size) {
+                    if (photos.size < 10) {
+                        item {
                             Box(
                                 modifier = Modifier
-                                    .weight(1f)
-                                    .aspectRatio(1f)
+                                    .size(100.dp)
                                     .clip(RoundedCornerShape(12.dp))
                                     .background(MoonTheme.customColors.logItemBg.copy(alpha = 0.5f))
                                     .clickable(
@@ -1103,7 +1100,7 @@ private fun DailyPhotoSection(
                                     ) { onPhotoClick() },
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Rounded.Add, contentDescription = null, tint = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.3f))
+                                Icon(Icons.Rounded.Add, contentDescription = null, tint = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.4f))
                             }
                         }
                     }

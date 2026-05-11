@@ -168,13 +168,14 @@ fun StoreTopBar(
                             .background(MaterialTheme.colorScheme.primary, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Star,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(10.dp)
-                    )
+                        Icon(
+                            imageVector = Icons.Rounded.Star,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(12.dp)
+                        )
                     }
+
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "$coins",
@@ -276,8 +277,8 @@ fun ThemeCard(
                             Icon(
                                 imageVector = Icons.Rounded.Star,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimary, 
-                                modifier = Modifier.size(8.dp)
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(10.dp)
                             )
                         }
                         Spacer(modifier = Modifier.width(6.dp))

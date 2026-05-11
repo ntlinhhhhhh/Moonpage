@@ -26,6 +26,7 @@ class MomentViewModel @Inject constructor(
     private val getMomentUseCase: GetMomentUseCase,
     private val uploadMomentUseCase: UploadMomentUseCase,
     private val deleteMomentUseCase: DeleteMomentUseCase,
+    private val dailyLogRepository: com.diary.moonpage.domain.repository.DailyLogRepository,
     private val weatherRepository: com.diary.moonpage.domain.repository.WeatherRepository,
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
@@ -41,7 +42,6 @@ class MomentViewModel @Inject constructor(
         MomentTag("review", Icons.Rounded.Star, "Review"),
         MomentTag("location", Icons.Rounded.LocationOn, "Location"),
         MomentTag("weather", Icons.Rounded.WbSunny, "Weather"),
-        MomentTag("time", Icons.Rounded.AccessTime, SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date())),
         MomentTag("party", null, "Party Time!", containerColor = Color(0xFF80FFE8), contentColor = Color.Black),
         MomentTag("ootd", null, "OOTD", containerColor = Color.White, contentColor = Color.Black),
         MomentTag("missyou", null, "Miss you", containerColor = Color(0xFFFF4B4B), contentColor = Color.White)
@@ -141,11 +141,13 @@ class MomentViewModel @Inject constructor(
             timeZone = TimeZone.getTimeZone("UTC")
         }
         val capturedAtStr = sdf.format(Date())
+        val dateOnlyStr = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+        val actualLogId = if (dailyLogId == "default_log_id") dateOnlyStr else dailyLogId
 
         viewModelScope.launch {
             _uiState.update { it.copy(isUploading = true) }
             uploadMomentUseCase(
-                dailyLogId,
+                actualLogId,
                 imageFile,
                 caption,
                 isPublic,
@@ -155,6 +157,31 @@ class MomentViewModel @Inject constructor(
                 rating
             ).onSuccess {
                 _uiState.update { it.copy(isUploading = false) }
+                
+                // Automatically attach to daily log if it exists
+                viewModelScope.launch {
+                    dailyLogRepository.getDailyLogByDate(dateOnlyStr).onSuccess { log ->
+                        // Add the photo to the log. 
+                        // Note: DailyLogRepository.createDailyLog takes a list of Files.
+                        // We have the current imageFile.
+                        dailyLogRepository.createDailyLog(
+                            baseMoodId = log.baseMoodId,
+                            date = log.date,
+                            note = log.note,
+                            sleepHours = log.sleepHours,
+                            sleepStartTime = log.sleepStartTime,
+                            isMenstruation = log.isMenstruation,
+                            menstruationPhase = log.menstruationPhase,
+                            activityIds = log.activityIds,
+                            dailyPhotos = listOf(imageFile), // The repository handles merging/uploading
+                            steps = log.steps,
+                            musicRecord = log.musicRecord,
+                            calories = log.calories,
+                            distance = log.distance
+                        )
+                    }
+                }
+                
                 _uiEffect.send(MomentUiEffect.UploadSuccess)
                 _uiEffect.send(MomentUiEffect.ShowSnackBar(UiText.StringResource(R.string.moment_upload_success)))
             }.onFailure { error ->

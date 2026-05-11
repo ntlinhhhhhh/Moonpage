@@ -292,9 +292,20 @@ fun AppNavigation() {
                 }
             }
 
-            composable(Screen.Camera.route) {
+            composable(
+                route = Screen.Camera.route,
+                arguments = listOf(
+                    androidx.navigation.navArgument("momentId") {
+                        type = androidx.navigation.NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                )
+            ) { backStackEntry ->
+                val momentId = backStackEntry.arguments?.getString("momentId")
                 ScreenWrapper(Screen.Camera.route) {
                     MomentCameraScreen(
+                        initialMomentId = momentId,
                         onNavigateToGallery = { navController.navigate(Screen.Gallery.route) },
                         onNavigateToHistory = { /* TODO */ }
                     )
@@ -401,7 +412,7 @@ fun AppNavigation() {
                     GalleryScreen(
                         onNavigateBack = { navController.popBackStack() },
                         onNavigateToMomentDetail = { momentId ->
-                            navController.navigate("moment_detail_screen/$momentId")
+                            navController.navigate("camera_screen?momentId=$momentId")
                         }
                     )
                 }

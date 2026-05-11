@@ -16,7 +16,7 @@ sealed class Screen (val route: String) {
     // Main App Screens (Bottom Nav)
     object Calendar: Screen("calendar_screen")
     object Stats: Screen("stats_screen")
-    object Camera: Screen("camera_screen")
+    object Camera: Screen("camera_screen?momentId={momentId}")
     object Store: Screen("store_screen")
     object Profile: Screen("profile_screen")
 

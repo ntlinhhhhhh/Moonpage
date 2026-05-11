@@ -113,7 +113,7 @@ fun MomentFeedItem(
                     moment.caption == "Party Time!" -> MomentTag("party", null, "Party Time!", containerColor = Color(0xFF80FFE8), contentColor = Color.Black)
                     moment.caption == "OOTD" -> MomentTag("ootd", null, "OOTD", containerColor = Color.White, contentColor = Color.Black)
                     moment.caption == "Miss you" -> MomentTag("missyou", null, "Miss you", containerColor = Color(0xFFFF4B4B), contentColor = Color.White)
-                    else -> MomentTag("text", null, "Message", Color.White, Color.Black.copy(0.6f))
+                    else -> MomentTag("text", null, "Message", Color.White, Color.Black.copy(0.75f))
                 }
             }
 
@@ -130,7 +130,8 @@ fun MomentFeedItem(
 
                         if (shouldShow) {
                             Surface(
-                                color = inferredTag.containerColor ?: Color.Black.copy(alpha = 0.5f),
+                                color = inferredTag.containerColor ?: Color.Black.copy(alpha = 0.75f),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
                                 shape = RoundedCornerShape(24.dp),
                                 modifier = Modifier.wrapContentSize()
                             ) {

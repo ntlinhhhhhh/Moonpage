@@ -1035,10 +1035,9 @@ fun ShareCalendarCard(
 
             Spacer(modifier = Modifier.height(if (isSquare) 48.dp else 80.dp))
 
-            // Simplified Calendar Grid
-            val firstDay = yearMonth.atDay(1)
-            val firstDayOffset = if (firstDay.dayOfWeek == java.time.DayOfWeek.SUNDAY) 0 else firstDay.dayOfWeek.value
             val daysInMonth = yearMonth.lengthOfMonth()
+            val firstDayOfMonth = yearMonth.atDay(1)
+            val firstDayOffset = firstDayOfMonth.dayOfWeek.value % 7
 
             val daysOfWeek = listOf("S", "M", "T", "W", "T", "F", "S")
             Row(modifier = Modifier.fillMaxWidth()) {

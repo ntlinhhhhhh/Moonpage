@@ -58,6 +58,7 @@ import java.util.Locale
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun MomentCameraScreen(
+    initialMomentId: String? = null,
     onNavigateToGallery: () -> Unit,
     onNavigateToHistory: () -> Unit,
     viewModel: MomentViewModel = hiltViewModel(),
@@ -129,6 +130,7 @@ fun MomentCameraScreen(
             onEvent = viewModel::onEvent,
             onNavigateToGallery = onNavigateToGallery,
             onNavigateToHistory = onNavigateToHistory,
+            initialMomentId = initialMomentId,
             snackbarHostState = snackbarHostState,
             avatarUrl = profileState.user?.avatarUrl,
             localAvatarPath = profileState.localAvatarPath ?: profileState.tempAvatarPath,
@@ -155,6 +157,7 @@ fun MomentCameraScreenContent(
     onEvent: (MomentUiEvent) -> Unit,
     onNavigateToGallery: () -> Unit,
     onNavigateToHistory: () -> Unit,
+    initialMomentId: String? = null,
     snackbarHostState: SnackbarHostState,
     avatarUrl: String? = null,
     localAvatarPath: String? = null,
@@ -169,6 +172,13 @@ fun MomentCameraScreenContent(
     var capturedLensFacing by remember { mutableIntStateOf(CameraSelector.LENS_FACING_BACK) }
     
     val verticalPagerState = rememberPagerState(initialPage = 0, pageCount = { 2 })
+    
+    // Scroll to history if coming from gallery with a specific moment
+    LaunchedEffect(initialMomentId) {
+        if (initialMomentId != null) {
+            verticalPagerState.scrollToPage(1)
+        }
+    }
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -267,11 +277,13 @@ fun MomentCameraScreenContent(
                             localPaths = uiState.localPaths,
                             onNavigateToGallery = onNavigateToGallery,
                             onBackToCamera = { scope.launch { verticalPagerState.animateScrollToPage(0) } },
+                            initialMomentId = initialMomentId,
                             onShare = { onEvent(MomentUiEvent.ShareMoment(it.imageUrl)) },
                             onDownload = { onEvent(MomentUiEvent.DownloadMoment(it.imageUrl)) },
                             onDelete = { onEvent(MomentUiEvent.DeleteMoment(it.id)) },
                             avatarUrl = avatarUrl,
-                            localAvatarPath = localAvatarPath
+                            localAvatarPath = localAvatarPath,
+                            isVerticalVisible = verticalPagerState.currentPage == 1
                         )
                     }
                 }

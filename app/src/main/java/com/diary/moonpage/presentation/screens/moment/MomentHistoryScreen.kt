@@ -89,7 +89,8 @@ fun MomentHistoryScreen(
         onDelete = { moment -> viewModel.onEvent(MomentUiEvent.DeleteMoment(moment.id)) },
         snackbarHostState = snackbarHostState,
         avatarUrl = profileState.user?.avatarUrl,
-        localAvatarPath = profileState.localAvatarPath ?: profileState.tempAvatarPath
+        localAvatarPath = profileState.localAvatarPath ?: profileState.tempAvatarPath,
+        isVerticalVisible = true // MomentHistoryScreen is standalone in some routes
     )
 }
 
@@ -109,6 +110,7 @@ fun MomentHistoryScreenContent(
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     avatarUrl: String? = null,
     localAvatarPath: String? = null,
+    isVerticalVisible: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val sortedMoments = remember(moments) { moments.sortedByDescending { it.capturedAt } }
@@ -144,14 +146,29 @@ fun MomentHistoryScreenContent(
         }
     }
 
-    Scaffold() { paddingValues ->
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(bgColor)
-        ) {
-            if (sortedMoments.isEmpty()) {
+    // Handle initial scrolling from Gallery
+    LaunchedEffect(initialMomentId, sortedMoments) {
+        if (initialMomentId != null && sortedMoments.isNotEmpty()) {
+            val targetIndex = sortedMoments.indexOfFirst { it.id == initialMomentId }
+            if (targetIndex != -1 && feedPagerState.currentPage != targetIndex) {
+                feedPagerState.scrollToPage(targetIndex)
+            }
+        }
+    }
+
+    // Reset to top when user scrolls back to camera
+    LaunchedEffect(isVerticalVisible) {
+        if (!isVerticalVisible && feedPagerState.currentPage != 0) {
+            feedPagerState.scrollToPage(0)
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(bgColor)
+    ) {
+        if (sortedMoments.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("No moments yet", color = onBgColor.copy(alpha = 0.6f))
                 }
@@ -200,8 +217,7 @@ fun MomentHistoryScreenContent(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .padding(horizontal = 40.dp, vertical = 40.dp)
+                    .padding(horizontal = 40.dp, vertical = 24.dp)
                     .align(Alignment.BottomCenter),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -310,5 +326,4 @@ fun MomentHistoryScreenContent(
             
             MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
-    }
 }
