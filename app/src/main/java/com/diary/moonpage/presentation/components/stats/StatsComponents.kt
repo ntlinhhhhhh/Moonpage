@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -34,6 +35,8 @@ import com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto
 import com.diary.moonpage.data.remote.dto.stats.MoodFlowDto
 import com.diary.moonpage.core.theme.*
 import java.time.YearMonth
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
 fun TabItem(text: String, isSelected: Boolean, onClick: () -> Unit) {
@@ -476,7 +479,38 @@ fun YearlyGridChart(
 }
 
 @Composable
-fun SleepAnalysisChart(sleepData: List<com.diary.moonpage.data.remote.dto.stats.SleepDataDto>) {
+fun SleepSummaryView(
+    averageSleepHours: Double,
+    averageSleepStartTime: String?,
+    totalSteps: Int
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        SummaryItem(
+            label = "Avg Sleep", 
+            value = String.format(Locale.ENGLISH, "%.1fh", averageSleepHours), 
+            modifier = Modifier.weight(1f),
+            icon = Icons.Rounded.Bedtime
+        )
+        SummaryItem(
+            label = "Bedtime", 
+            value = averageSleepStartTime ?: "--:--", 
+            modifier = Modifier.weight(1f),
+            icon = Icons.Rounded.Alarm
+        )
+        SummaryItem(
+            label = "Steps", 
+            value = String.format(Locale.ENGLISH, "%,d", totalSteps), 
+            modifier = Modifier.weight(1f),
+            icon = Icons.AutoMirrored.Rounded.DirectionsRun
+        )
+    }
+}
+
+@Composable
+fun SleepAnalysisChart(sleepData: List<com.diary.moonpage.data.remote.dto.stats.SleepAnalysisDto>) {
     val primaryColor = MaterialTheme.colorScheme.primary
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     
@@ -492,13 +526,13 @@ fun SleepAnalysisChart(sleepData: List<com.diary.moonpage.data.remote.dto.stats.
                 }
             } else {
                 sleepData.forEach { data ->
-                    val heightFactor = (data.hours / 12.0).coerceIn(0.0, 1.0).toFloat()
+                    val heightFactor = (data.duration / 12.0).coerceIn(0.0, 1.0).toFloat()
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight(heightFactor)
                             .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-                            .background(if (data.hours >= 7.0) primaryColor else primaryColor.copy(alpha = 0.4f))
+                            .background(if (data.duration >= 7.0 && data.duration <= 9.0) primaryColor else primaryColor.copy(alpha = 0.4f))
                     )
                 }
             }
@@ -509,42 +543,55 @@ fun SleepAnalysisChart(sleepData: List<com.diary.moonpage.data.remote.dto.stats.
         // Horizontal Target Line (8h)
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("0h", fontSize = 11.sp, color = labelColor)
-            Text("Target: 8h", fontSize = 11.sp, color = primaryColor, fontWeight = FontWeight.Bold)
-            Text("12h", fontSize = 11.sp, color = labelColor)
+            Text("Ideal: 7-9h", fontSize = 11.sp, color = primaryColor, fontWeight = FontWeight.Bold)
+            Text("12h+", fontSize = 11.sp, color = labelColor)
         }
     }
 }
 
 @Composable
-fun MoodBySleepChart(moodBySleep: List<com.diary.moonpage.data.remote.dto.stats.MoodBySleepDto>, themeType: MoonThemeType) {
+fun SleepMoodCorrelationChart(sleepData: List<com.diary.moonpage.data.remote.dto.stats.SleepAnalysisDto>, themeType: MoonThemeType) {
+    if (sleepData.isEmpty()) return
+
+    val ranges = listOf(
+        "Short" to (0.0..6.0),
+        "Healthy" to (6.0..9.0),
+        "Long" to (9.0..24.0)
+    )
+
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        moodBySleep.forEach { category ->
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = category.range,
-                    modifier = Modifier.width(50.dp),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                
-                Row(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(32.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(MoonTheme.customColors.logItemBg)
-                ) {
-                    category.moodDistribution.forEachIndexed { index, dist ->
-                        val moodId = index + 1
-                        val weight = dist.percentage.toFloat()
-                        if (weight > 0) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .weight(weight)
-                                    .background(MoonIcons.Moods.getMoodColor(moodId, themeType))
-                            )
+        ranges.forEach { (label, range) ->
+            val entriesInRange = sleepData.filter { it.duration in range }
+            if (entriesInRange.isNotEmpty()) {
+                val total = entriesInRange.size.toFloat()
+                val moodCounts = (1..5).associateWith { id -> entriesInRange.count { it.moodId == id } }
+
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = label,
+                        modifier = Modifier.width(60.dp),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    
+                    Row(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(28.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(MoonTheme.customColors.logItemBg)
+                    ) {
+                        (1..5).forEach { moodId ->
+                            val count = moodCounts[moodId] ?: 0
+                            if (count > 0) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .weight(count / total)
+                                        .background(MoonIcons.Moods.getMoodColor(moodId, themeType))
+                                )
+                            }
                         }
                     }
                 }
@@ -589,6 +636,45 @@ fun MonthlyMoodAverageChart(yearlyMoodGrid: List<MoodFlowDto>, year: Int, themeT
 }
 
 @Composable
+fun MusicSummaryView(musicSummary: List<com.diary.moonpage.data.remote.dto.stats.MusicSummaryDto>) {
+    if (musicSummary.isEmpty()) {
+        Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+            Text("No music data for this period", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+        }
+        return
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        musicSummary.forEach { item ->
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Surface(
+                    modifier = Modifier.size(48.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    color = MoonTheme.customColors.logItemBg
+                ) {
+                    if (item.albumArtUrl != null) {
+                        coil.compose.AsyncImage(
+                            model = item.albumArtUrl,
+                            contentDescription = null,
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                        )
+                    } else {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(Icons.Rounded.MusicNote, null, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(item.songTitle, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
+                    Text(item.artistName, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                }
+                Text("${item.occurrence} times", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+            }
+        }
+    }
+}
+@Composable
 fun IconDeepDiveView(
     activityId: String?,
     allActivities: List<BestActivityDto>,
@@ -597,7 +683,7 @@ fun IconDeepDiveView(
     val shades = getThemeShades(themeType)
     val primaryColor = MaterialTheme.colorScheme.primary
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
-    
+
     val selectedActivity = remember(activityId, allActivities) {
         allActivities.find { it.activityId == activityId } ?: allActivities.firstOrNull()
     }

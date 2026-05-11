@@ -235,6 +235,12 @@ fun MomentCameraScreenContent(
         }
     }
 
+    LaunchedEffect(uiState.suggestedWeather) {
+        uiState.suggestedWeather?.let { weather ->
+            userWeather = "${weather.condition} ${weather.temp.toInt()}°C"
+        }
+    }
+
     Scaffold() { paddingValues ->
         Box(modifier = Modifier
             .fillMaxSize()

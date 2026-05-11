@@ -10,5 +10,6 @@ data class MomentUiState(
     val localPaths: Map<String, String> = emptyMap(),
     val selectedMoment: Moment? = null,
     val errorMessage: UiText? = null,
-    val successMessage: UiText? = null
+    val successMessage: UiText? = null,
+    val suggestedWeather: com.diary.moonpage.domain.repository.WeatherData? = null
 )

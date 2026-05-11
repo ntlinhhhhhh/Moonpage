@@ -25,7 +25,9 @@ class MomentViewModel @Inject constructor(
     private val getMyMomentsUseCase: GetMyMomentsUseCase,
     private val getMomentUseCase: GetMomentUseCase,
     private val uploadMomentUseCase: UploadMomentUseCase,
-    private val deleteMomentUseCase: DeleteMomentUseCase
+    private val deleteMomentUseCase: DeleteMomentUseCase,
+    private val weatherRepository: com.diary.moonpage.domain.repository.WeatherRepository,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MomentUiState())
@@ -48,6 +50,26 @@ class MomentViewModel @Inject constructor(
     init {
         observeRepository()
         onEvent(MomentUiEvent.LoadMoments)
+        fetchWeather()
+    }
+
+    private fun fetchWeather() {
+        viewModelScope.launch {
+            try {
+                val fusedLocationClient = com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(context)
+                if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                        if (location != null) {
+                            viewModelScope.launch {
+                                weatherRepository.getCurrentWeather(location.latitude, location.longitude).onSuccess { data ->
+                                    _uiState.update { it.copy(suggestedWeather = data) }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {}
+        }
     }
 
     private fun observeRepository() {

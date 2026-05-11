@@ -10,26 +10,27 @@ data class StatisticsResponse(
     @SerializedName("moodDistribution") val moodDistribution: List<MoodDistributionDto>,
     @SerializedName("moodFlow") val moodFlow: List<MoodFlowDto>,
     @SerializedName("bestActivities") val bestActivities: List<BestActivityDto>,
-    @SerializedName("sleepData") val sleepData: List<SleepDataDto>? = null,
-    @SerializedName("stepsData") val stepsData: List<StepsDataDto>? = null,
+    @SerializedName("totalSteps") val totalSteps: Int? = 0,
+    @SerializedName("averageSleepHours") val averageSleepHours: Double? = 0.0,
+    @SerializedName("averageSleepStartTime") val averageSleepStartTime: String? = null,
+    @SerializedName("sleepAnalysis") val sleepAnalysis: List<SleepAnalysisDto>? = null,
+    @SerializedName("musicSummary") val musicSummary: List<MusicSummaryDto>? = null,
     @SerializedName("menstruationData") val menstruationData: List<String>? = null,
-    @SerializedName("moodBySleep") val moodBySleep: List<MoodBySleepDto>? = null,
     @SerializedName("yearlyMoodGrid") val yearlyMoodGrid: List<MoodFlowDto>? = null
 )
 
-data class SleepDataDto(
+data class SleepAnalysisDto(
     @SerializedName("date") val date: String,
-    @SerializedName("hours") val hours: Double
+    @SerializedName("startTime") val startTime: String? = null,
+    @SerializedName("duration") val duration: Double,
+    @SerializedName("moodId") val moodId: Int
 )
 
-data class StepsDataDto(
-    @SerializedName("date") val date: String,
-    @SerializedName("count") val count: Int
-)
-
-data class MoodBySleepDto(
-    @SerializedName("range") val range: String, // "< 5h", "6-7h", "8h+"
-    @SerializedName("moodDistribution") val moodDistribution: List<MoodDistributionDto>
+data class MusicSummaryDto(
+    @SerializedName("songTitle") val songTitle: String,
+    @SerializedName("artistName") val artistName: String,
+    @SerializedName("albumArtUrl") val albumArtUrl: String?,
+    @SerializedName("occurrence") val occurrence: Int
 )
 
 data class MoodDistributionDto(

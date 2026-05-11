@@ -26,6 +26,8 @@ class DailyLogViewModel @Inject constructor(
     private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
     private val tokenManager: com.diary.moonpage.core.util.TokenManager,
     private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository,
+    private val weatherRepository: com.diary.moonpage.domain.repository.WeatherRepository,
+    private val spotifyApi: com.diary.moonpage.data.remote.api.SpotifyApi,
     val healthConnectManager: com.diary.moonpage.core.util.HealthConnectManager,
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
@@ -63,6 +65,73 @@ class DailyLogViewModel @Inject constructor(
         viewModelScope.launch {
             userRepository.currentUser.collect { user ->
                 _uiState.update { it.copy(gender = user?.gender) }
+            }
+        }
+    }
+
+    fun fetchExternalData() {
+        fetchWeather()
+        fetchRecentSpotifyTracks()
+        onEvent(DailyLogUiEvent.OnImportSteps)
+    }
+
+    private fun fetchWeather() {
+        viewModelScope.launch {
+            try {
+                val fusedLocationClient = com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(context)
+                if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                        if (location != null) {
+                            viewModelScope.launch {
+                                weatherRepository.getCurrentWeather(location.latitude, location.longitude).onSuccess { data ->
+                                    _uiState.update { it.copy(suggestedWeather = data) }
+                                    // Auto-select if no activities selected yet or if weather is prominent
+                                    suggestWeatherActivity(data.condition)
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                // Silently fail weather suggestions
+            }
+        }
+    }
+
+    private fun suggestWeatherActivity(condition: String) {
+        val weatherActivityId = when (condition.lowercase()) {
+            "clear" -> "cce4f580-0871-4c2e-8e07-39ff2967dea7" // Sunny
+            "clouds" -> "5aca98d5-e8d8-489e-a5f1-cf06125abb04" // Cloudy
+            "rain", "drizzle", "thunderstorm" -> "65784609-4593-494f-997d-6e2fb83dc74f" // Rainy
+            "snow" -> "34673dbc-618f-45d2-a739-26a51064a83b" // Snowy
+            else -> null
+        }
+        
+        if (weatherActivityId != null && !_uiState.value.selectedActivities.contains(weatherActivityId)) {
+            // We don't auto-toggle yet, but we could highlight it in the UI
+        }
+    }
+
+    private fun fetchRecentSpotifyTracks() {
+        viewModelScope.launch {
+            tokenManager.getSpotifyToken().firstOrNull()?.let { token ->
+                try {
+                    val response = spotifyApi.getRecentlyPlayedTracks(token)
+                    if (response.isSuccessful) {
+                        val tracks = response.body()?.items?.map { it.track } ?: emptyList()
+                        _uiState.update { it.copy(recentTracks = tracks) }
+                        
+                        // Auto-fill if empty
+                        if (_uiState.value.musicTitle.isNullOrBlank() && tracks.isNotEmpty()) {
+                            val lastTrack = tracks.first()
+                            _uiState.update { it.copy(
+                                musicTitle = lastTrack.name,
+                                artistName = lastTrack.artists.firstOrNull()?.name,
+                                albumArtUrl = lastTrack.album.images.firstOrNull()?.url
+                            ) }
+                        }
+                    }
+                } catch (e: Exception) {}
             }
         }
     }
@@ -121,6 +190,9 @@ class DailyLogViewModel @Inject constructor(
         if (_uiState.value.isInitialized && _uiState.value.date == date) return
         _uiState.update { it.copy(date = date, isInitialized = true) }
         fetchLogForDate(date)
+        if (date == LocalDate.now()) {
+            fetchExternalData()
+        }
     }
 
     fun onEvent(event: DailyLogUiEvent) {

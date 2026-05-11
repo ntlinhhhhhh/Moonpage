@@ -12,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -30,6 +31,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
@@ -361,6 +363,7 @@ private fun DailyLogMainContent(
                 selectedMood = uiState.selectedMood,
                 themeType = themeType,
                 customMoods = uiState.customMoods,
+                suggestedWeather = uiState.suggestedWeather,
                 onMoodSelected = { onEvent(DailyLogUiEvent.OnMoodSelected(it)) }
             )
         }
@@ -371,8 +374,16 @@ private fun DailyLogMainContent(
                 artistName = uiState.artistName,
                 albumArtUrl = uiState.albumArtUrl,
                 isLinked = uiState.isSpotifyLinked,
+                recentTracks = uiState.recentTracks,
                 onMusicClick = onNavigateToMusic,
-                onLinkAccount = onLinkMusicAccount
+                onLinkAccount = onLinkMusicAccount,
+                onTrackSelected = { track ->
+                    onEvent(DailyLogUiEvent.OnMusicSelected(
+                        title = track.name,
+                        artist = track.artists.firstOrNull()?.name ?: "Unknown",
+                        imageUrl = track.album.images.firstOrNull()?.url ?: ""
+                    ))
+                }
             )
         }
 
@@ -445,6 +456,7 @@ private fun DailyMoodSection(
     selectedMood: Int?,
     themeType: MoonThemeType,
     customMoods: Map<Int, MoonIcon>? = null,
+    suggestedWeather: com.diary.moonpage.domain.repository.WeatherData? = null,
     onMoodSelected: (Int) -> Unit
 ) {
     Card(
@@ -453,6 +465,26 @@ private fun DailyMoodSection(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
+            if (suggestedWeather != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    coil.compose.AsyncImage(
+                        model = suggestedWeather.iconUrl,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "${suggestedWeather.cityName}: ${suggestedWeather.temp.toInt()}°C, ${suggestedWeather.condition}",
+                        fontSize = 13.sp,
+                        color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.7f)
+                    )
+                }
+            }
+
             Text("How was your day?", color = MoonTheme.customColors.logCardOnBg, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 (5 downTo 1).forEach { id ->
@@ -490,9 +522,11 @@ private fun DailyMusicSection(
     musicTitle: String?, 
     artistName: String?,
     albumArtUrl: String?,
-    isLinked: Boolean, 
+    isLinked: Boolean,
+    recentTracks: List<com.diary.moonpage.data.remote.api.SpotifyTrack> = emptyList(),
     onMusicClick: () -> Unit, 
-    onLinkAccount: () -> Unit
+    onLinkAccount: () -> Unit,
+    onTrackSelected: (com.diary.moonpage.data.remote.api.SpotifyTrack) -> Unit
 ) {
     Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -553,6 +587,32 @@ private fun DailyMusicSection(
                         Icon(Icons.Rounded.MusicNote, contentDescription = null, modifier = Modifier.size(20.dp), tint = MoonTheme.customColors.logCardOnBg)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Add a song", fontSize = 14.sp, color = MoonTheme.customColors.logCardOnBg)
+                    }
+                }
+            }
+
+            if (musicTitle == null && recentTracks.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Recently Played", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), modifier = Modifier.padding(bottom = 8.dp))
+                androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    items(recentTracks) { track ->
+                        Card(
+                            modifier = Modifier.width(120.dp).clickable { onTrackSelected(track) },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logItemBg)
+                        ) {
+                            Column(modifier = Modifier.padding(8.dp)) {
+                                coil.compose.AsyncImage(
+                                    model = track.album.images.firstOrNull()?.url,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(104.dp).clip(RoundedCornerShape(8.dp)),
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(track.name, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, color = MoonTheme.customColors.logCardOnBg)
+                                Text(track.artists.firstOrNull()?.name ?: "", fontSize = 10.sp, maxLines = 1, color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.6f))
+                            }
+                        }
                     }
                 }
             }
@@ -718,7 +778,7 @@ private fun DailyHealthSection(steps: Int, calories: Int, distance: Double, onIm
                     modifier = Modifier.weight(1f),
                     label = "Steps",
                     value = steps.toString(),
-                    icon = Icons.Rounded.DirectionsWalk,
+                    icon = Icons.AutoMirrored.Rounded.DirectionsWalk,
                     color = Color(0xFF66BB6A)
                 )
                 HealthStatItem(

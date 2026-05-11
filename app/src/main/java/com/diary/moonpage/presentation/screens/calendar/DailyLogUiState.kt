@@ -38,5 +38,7 @@ data class DailyLogUiState(
     val themeType: MoonThemeType = MoonThemeType.DEFAULT,
     val customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null,
     val gender: String? = null,
+    val suggestedWeather: com.diary.moonpage.domain.repository.WeatherData? = null,
+    val recentTracks: List<com.diary.moonpage.data.remote.api.SpotifyTrack> = emptyList(),
     val isInitialized: Boolean = false
 )

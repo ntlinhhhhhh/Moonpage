@@ -121,6 +121,15 @@ fun StatisticsScreenContent(
                                 longestStreak = s.longestStreak
                             )
                         }
+
+                        // 0.1 Sleep & Steps Summary
+                        stats?.let { s ->
+                            SleepSummaryView(
+                                averageSleepHours = s.averageSleepHours ?: 0.0,
+                                averageSleepStartTime = s.averageSleepStartTime,
+                                totalSteps = s.totalSteps ?: 0
+                            )
+                        }
                         
                         // 1. Mood Flow & Menstruation
                         StatsCard(title = "Mood Flow" + if (!isMale) " & Cycle" else "") {
@@ -136,12 +145,12 @@ fun StatisticsScreenContent(
 
                         // 2. Sleep Analysis
                         StatsCard(title = "Sleep Analysis") {
-                            SleepAnalysisChart(stats?.sleepData ?: emptyList())
+                            SleepAnalysisChart(stats?.sleepAnalysis ?: emptyList())
                         }
 
                         // 3. Mood by Sleep
                         StatsCard(title = "Mood by Sleep") {
-                            MoodBySleepChart(stats?.moodBySleep ?: emptyList(), uiState.themeType)
+                            SleepMoodCorrelationChart(stats?.sleepAnalysis ?: emptyList(), uiState.themeType)
                         }
 
                         // 4. Mood Distribution
@@ -170,6 +179,11 @@ fun StatisticsScreenContent(
                                 allActivities = stats?.bestActivities ?: emptyList(),
                                 themeType = uiState.themeType
                             )
+                        }
+
+                        // 8. Music Summary
+                        StatsCard(title = "Top Music") {
+                            MusicSummaryView(stats?.musicSummary ?: emptyList())
                         }
 
                     } else {
