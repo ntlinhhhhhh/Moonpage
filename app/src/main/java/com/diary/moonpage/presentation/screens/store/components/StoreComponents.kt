@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.rounded.CheckCircleOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -198,7 +199,7 @@ fun ThemeCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
-            .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else Color.Transparent)
+            .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else Color.White)
             .clickable { onClick() }
             .padding(vertical = 12.dp, horizontal = 8.dp)
     ) {
@@ -458,7 +459,7 @@ fun CurrentThemeCard(theme: Theme) {
         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = Color.White
         )
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -477,12 +478,18 @@ fun CurrentThemeCard(theme: Theme) {
                 Text(
                     text = theme.name, 
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = Color.Black
                 )
+                val activatedDate = remember(theme.activatedAt) {
+                    if (theme.activatedAt != null) {
+                        val sdf = java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.ENGLISH)
+                        sdf.format(java.util.Date(theme.activatedAt))
+                    } else "Recently"
+                }
                 Text(
-                    text = "Active since Oct 24, 2023", 
+                    text = "Active since $activatedDate", 
                     style = MaterialTheme.typography.bodySmall, 
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    color = Color.Black.copy(alpha = 0.6f)
                 )
             }
         }

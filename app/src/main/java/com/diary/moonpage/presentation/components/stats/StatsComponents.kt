@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -63,6 +64,49 @@ fun TabItem(text: String, isSelected: Boolean, onClick: () -> Unit) {
             )
         } else {
             Spacer(modifier = Modifier.height(3.dp))
+        }
+    }
+}
+
+@Composable
+fun SummaryStatsView(
+    totalLogs: Int,
+    totalPhotos: Int,
+    currentStreak: Int,
+    longestStreak: Int
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        SummaryItem(label = "Logs", value = totalLogs.toString(), modifier = Modifier.weight(1f))
+        SummaryItem(label = "Photos", value = totalPhotos.toString(), modifier = Modifier.weight(1f))
+        SummaryItem(label = "Streak", value = currentStreak.toString(), modifier = Modifier.weight(1f), icon = Icons.Rounded.Whatshot)
+        SummaryItem(label = "Record", value = longestStreak.toString(), modifier = Modifier.weight(1f))
+    }
+}
+
+@Composable
+fun SummaryItem(label: String, value: String, modifier: Modifier = Modifier, icon: ImageVector? = null) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(20.dp),
+        color = MoonTheme.customColors.logItemBg.copy(alpha = 0.5f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (icon != null) {
+                    Icon(icon, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
+                    Spacer(modifier = Modifier.width(4.dp))
+                }
+                Text(value, fontSize = 18.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onSurface)
+            }
         }
     }
 }
@@ -145,7 +189,7 @@ fun MoodFlowChart(
             }
         }
 
-        Column(modifier = Modifier.fillMaxSize().padding(start = 35.dp, end = 10.dp)) {
+        Column(modifier = Modifier.fillMaxSize().padding(start = 35.dp, end = 10.dp, bottom = 16.dp)) {
             val gridColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
             Canvas(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 val width = size.width
@@ -165,7 +209,7 @@ fun MoodFlowChart(
 
                 // Menstruation Background (Monthly only)
                 if (isMonthly && menstruationDates.isNotEmpty()) {
-                    val daysInMonth = YearMonth.of(year, month).lengthOfMonth()
+                    val daysInMonth = java.time.YearMonth.of(year, month).lengthOfMonth()
                     val dx = if (daysInMonth > 1) width / (daysInMonth - 1) else 0f
                     val currentMonthStr = String.format("%04d-%02d", year, month)
                     
@@ -192,7 +236,7 @@ fun MoodFlowChart(
 
                     val path = Path()
                     val maxSlots = if (isMonthly) {
-                        YearMonth.of(year, month).lengthOfMonth() - 1
+                        java.time.YearMonth.of(year, month).lengthOfMonth() - 1
                     } else {
                         11
                     }
@@ -216,13 +260,17 @@ fun MoodFlowChart(
                     drawPath(path = path, color = primaryColor, style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round))
                 }
             }
-        }
             
-            // X-Axis Labels
-            Row(modifier = Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // X-Axis Labels - Reverted to bottom
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
                 if (isMonthly) {
-                    val daysInMonth = YearMonth.of(year, month).lengthOfMonth()
+                    val daysInMonth = java.time.YearMonth.of(year, month).lengthOfMonth()
                     listOf("1", "6", "11", "16", "21", "26", daysInMonth.toString()).forEach {
                         Text(it, fontSize = 12.sp, color = labelColor)
                     }
@@ -230,6 +278,7 @@ fun MoodFlowChart(
                     (1..12).forEach { Text("$it", fontSize = 12.sp, color = labelColor) }
                 }
             }
+        }
     }
 }
 
@@ -249,15 +298,16 @@ fun MoodDistributionView(
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.Bottom) {
             moods.forEach { mood ->
-                val dist = distribution.find { 
+                val matchingDists = distribution.filter { 
                     it.label.equals(mood.name, ignoreCase = true) ||
                     (mood.name == "Happy" && it.label.equals("Rad", ignoreCase = true)) ||
+                    (mood.name == "Good" && it.label.equals("Glad", ignoreCase = true)) ||
                     (mood.name == "Neutral" && it.label.equals("Meh", ignoreCase = true)) ||
-                    (mood.name == "Angry" && it.label.equals("Bad", ignoreCase = true)) ||
-                    (mood.name == "Angry" && it.label.equals("Awful", ignoreCase = true))
+                    (mood.name == "Sad" && it.label.equals("Gloomy", ignoreCase = true)) ||
+                    (mood.name == "Angry" && (it.label.equals("Bad", ignoreCase = true) || it.label.equals("Awful", ignoreCase = true)))
                 }
-                // Precise Mapping for both UI tags and the Bar
-                val rawPercent = dist?.percentage ?: 0.0
+                
+                val rawPercent = matchingDists.sumOf { it.percentage }
                 val currentMoodPercent: Int = Math.round(rawPercent).toInt()
                 
                 val iconSize = 32.dp
@@ -269,9 +319,6 @@ fun MoodDistributionView(
                     androidx.compose.ui.graphics.ColorFilter.tint(tintColor)
                 }
                 
-                // Actually, let's use White/Black depending on background or just keep original if preferred.
-                // But the user wants it to "match the theme".
-                // Usually this means the icon itself should be tinted.
                 val iconTint = if (rawPercent > 0) {
                     // Use a slightly darker color on light backgrounds
                     Color.Black.copy(alpha = 0.7f)
@@ -325,32 +372,31 @@ fun MoodDistributionView(
         Row(modifier = Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(24.dp)).background(MoonTheme.customColors.logItemBg)) {
             val moodMappings = listOf(
                 listOf("Happy", "Rad", "Very Happy"),
-                listOf("Good", "Content", "Nice"),
+                listOf("Good", "Glad", "Content", "Nice"),
                 listOf("Neutral", "Meh", "Normal"),
-                listOf("Sad", "Low", "Bad"),
-                listOf("Angry", "Awful", "Very Sad")
+                listOf("Sad", "Gloomy", "Low"),
+                listOf("Angry", "Bad", "Awful", "Very Sad")
             )
 
             moods.forEachIndexed { index, mood ->
                 val aliases = moodMappings[index]
-                val dist = distribution.find { d ->
-                    aliases.any { alias -> d.label.equals(alias, ignoreCase = true) }
-                }
+                val weight = distribution
+                    .filter { d -> aliases.any { alias -> d.label.equals(alias, ignoreCase = true) } }
+                    .sumOf { it.percentage }
+                    .toFloat()
                 
-                val weight = dist?.percentage?.toFloat() ?: 0f
                 if (weight > 0) {
                     Box(modifier = Modifier.fillMaxHeight().weight(weight).background(mood.color))
                 }
             }
             
-            // Check for any remaining data from API
+            // Check for any remaining data from API (Optional safety check)
             val totalApiWeight = distribution.sumOf { it.percentage }.toFloat()
             val matchedWeight = moods.indices.sumOf { index ->
                 val aliases = moodMappings[index]
-                val dist = distribution.find { d ->
-                    aliases.any { alias -> d.label.equals(alias, ignoreCase = true) }
-                }
-                dist?.percentage ?: 0.0
+                distribution
+                    .filter { d -> aliases.any { alias -> d.label.equals(alias, ignoreCase = true) } }
+                    .sumOf { it.percentage }
             }.toFloat()
             
             if (totalApiWeight > matchedWeight && (totalApiWeight - matchedWeight) > 0.1f) {
@@ -546,63 +592,159 @@ fun MonthlyMoodAverageChart(yearlyMoodGrid: List<MoodFlowDto>, year: Int, themeT
 fun IconDeepDiveView(
     activityId: String?,
     allActivities: List<BestActivityDto>,
-    themeType: MoonThemeType
+    themeType: MoonThemeType = MoonThemeType.DEFAULT
 ) {
+    val shades = getThemeShades(themeType)
     val primaryColor = MaterialTheme.colorScheme.primary
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
     
-    val activity = allActivities.find { it.activityId == activityId } ?: allActivities.firstOrNull()
-    if (activity == null) return
+    val selectedActivity = remember(activityId, allActivities) {
+        allActivities.find { it.activityId == activityId } ?: allActivities.firstOrNull()
+    }
 
-    val icon = MoonIcons.getIconForActivity(activity.activityName)
-    
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+    if (selectedActivity == null) {
+        Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+            Text("Select an activity to see details", color = onSurfaceVariant.copy(alpha = 0.5f))
+        }
+        return
+    }
+
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Box(
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(72.dp)
                     .clip(CircleShape)
                     .background(MoonTheme.customColors.logItemBg),
                 contentAlignment = Alignment.Center
             ) {
-                if (icon.drawableRes != null) {
-                    Image(painter = painterResource(id = icon.drawableRes), contentDescription = null, modifier = Modifier.size(44.dp))
-                }
+                val icon = MoonIcons.getIconForActivity(selectedActivity.activityName)
+                MoonActivityIcon(icon = icon, size = 44.dp)
             }
             
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(20.dp))
             
             Column {
-                Text(activity.activityName, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                Text("${activity.occurrence} times recorded", color = onSurfaceVariant, fontSize = 14.sp)
+                Text(
+                    text = selectedActivity.activityName,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "${selectedActivity.occurrence} recordings this period",
+                    color = onSurfaceVariant,
+                    fontSize = 14.sp
+                )
             }
         }
+
+        Spacer(modifier = Modifier.height(32.dp))
         
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        Text("Mood Correlation", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = onSurfaceVariant)
+        Text("Average Mood Impact", style = MaterialTheme.typography.labelLarge, color = onSurfaceVariant)
         Spacer(modifier = Modifier.height(12.dp))
         
-        // Simplified mood distribution bar for this specific icon
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = String.format("%.1f", selectedActivity.averageMoodScore),
+                style = MaterialTheme.typography.displaySmall,
+                fontWeight = FontWeight.Black,
+                color = primaryColor
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                val impact = selectedActivity.averageMoodScore - 3.0
+                val impactText = if (impact > 0) "Positive influence" else "Negative influence"
+                val impactColor = if (impact > 0) MoonTheme.customColors.successColor else MoonTheme.customColors.errorColor
+                
+                Text(impactText, color = impactColor, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text("compared to neutral", color = onSurfaceVariant, fontSize = 12.sp)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        Text("Mood Distribution", style = MaterialTheme.typography.labelLarge, color = onSurfaceVariant)
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        // Premium segmented distribution bar
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(40.dp)
-                .clip(RoundedCornerShape(20.dp))
+                .height(28.dp)
+                .clip(RoundedCornerShape(14.dp))
                 .background(MoonTheme.customColors.logItemBg)
         ) {
-            // Mocking specific correlation for deep dive
-            val correlation = listOf(0.4f, 0.3f, 0.2f, 0.1f, 0.0f)
-            correlation.forEachIndexed { index, weight ->
+            // Mocking distribution: 50% Happy, 30% Good, 10% Neutral, 10% Sad, 0% Angry
+            val distribution = listOf(0.5f, 0.3f, 0.1f, 0.1f, 0.0f)
+            distribution.forEachIndexed { i, weight ->
                 if (weight > 0) {
-                    Box(modifier = Modifier.fillMaxHeight().weight(weight).background(MoonIcons.Moods.getMoodColor(index + 1, themeType)))
+                    Box(
+                        modifier = Modifier
+                            .weight(weight)
+                            .fillMaxHeight()
+                            .background(shades.getOrElse(i) { Color.Gray })
+                            .border(1.dp, Color.White.copy(alpha = 0.2f))
+                    )
                 }
             }
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
-        val positiveMsg = "80% of days with this activity were Good or Rad."
-        Text(positiveMsg, color = primaryColor, fontSize = 14.sp, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("Happy", fontSize = 11.sp, color = shades[0], fontWeight = FontWeight.Bold)
+            Text("Angry", fontSize = 11.sp, color = shades[4], fontWeight = FontWeight.Bold)
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = MoonTheme.customColors.logItemBg.copy(alpha = 0.4f),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier.size(32.dp).background(primaryColor.copy(alpha = 0.2f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Rounded.Lightbulb, contentDescription = null, tint = primaryColor, modifier = Modifier.size(18.dp))
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = "When you record ${selectedActivity.activityName}, your mood is typically ${if (selectedActivity.averageMoodScore > 3.5) "significantly higher" else "more stable"} than usual.",
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun MoonActivityIcon(icon: com.diary.moonpage.core.util.MoonIcon, size: androidx.compose.ui.unit.Dp = 44.dp) {
+    if (icon.drawableRes != null) {
+        Image(
+            painter = painterResource(id = icon.drawableRes),
+            contentDescription = null,
+            modifier = Modifier.size(size)
+        )
+    } else if (icon.vector != null) {
+        Icon(
+            imageVector = icon.vector,
+            contentDescription = null,
+            modifier = Modifier.size(size),
+            tint = icon.color
+        )
     }
 }
 
@@ -650,38 +792,57 @@ fun FrequentlyRecordedView(activities: List<BestActivityDto>, onIconClick: (Stri
 @Composable
 fun ActivityRankCard(rank: Int, name: String, count: Int, modifier: Modifier = Modifier, onClick: () -> Unit = {}) {
     val icon = MoonIcons.getIconForActivity(name)
+    val primaryColor = MaterialTheme.colorScheme.primary
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
     
-    Card(
+    Surface(
         modifier = modifier
-            .height(160.dp)
+            .height(150.dp)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
             ) { onClick() },
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
-        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.outlineVariant)
+        color = MoonTheme.customColors.logItemBg.copy(alpha = 0.5f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
     ) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
+            modifier = Modifier.fillMaxSize().padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("$rank", modifier = Modifier.align(Alignment.Start), color = onSurfaceVariant, fontSize = 14.sp)
+            Text(
+                text = "#$rank", 
+                modifier = Modifier.align(Alignment.Start), 
+                color = primaryColor.copy(alpha = 0.7f), 
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold
+            )
+            
             Box(
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(56.dp)
                     .clip(CircleShape)
-                    .background(MoonTheme.customColors.logItemBg),
+                    .background(Color.White.copy(alpha = 0.6f)),
                 contentAlignment = Alignment.Center
             ) {
-                if (icon.drawableRes != null) {
-                    Image(painter = painterResource(id = icon.drawableRes), contentDescription = null, modifier = Modifier.size(44.dp))
-                }
+                MoonActivityIcon(icon = icon, size = 32.dp)
             }
-            Text(name, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1, textAlign = TextAlign.Center)
-            Text("x$count", color = onSurfaceVariant, fontSize = 14.sp)
+            
+            Text(
+                text = name, 
+                fontWeight = FontWeight.SemiBold, 
+                fontSize = 13.sp, 
+                maxLines = 1, 
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            
+            Text(
+                text = "$count times", 
+                color = onSurfaceVariant, 
+                fontSize = 12.sp, 
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }
@@ -689,28 +850,78 @@ fun ActivityRankCard(rank: Int, name: String, count: Int, modifier: Modifier = M
 @Composable
 fun BestAndWorstView(best: List<BestActivityDto>, worst: List<BestActivityDto>) {
     val primaryColor = MaterialTheme.colorScheme.primary
+    val errorColor = MaterialTheme.colorScheme.error
     
-    Column {
-        Text(
-            text = buildAnnotatedString {
-                append("When you were feeling ")
-                withStyle(style = SpanStyle(color = primaryColor, fontWeight = FontWeight.Bold)) {
-                    append("good")
+    Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
+        // Best Section
+        Column {
+            Text(
+                text = buildAnnotatedString {
+                    append("When you were feeling ")
+                    withStyle(style = SpanStyle(color = primaryColor, fontWeight = FontWeight.Bold)) {
+                        append("good")
+                    }
+                    append("...")
+                },
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(bottom = 16.dp),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            
+            if (best.isEmpty()) {
+                Text("No data yet", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), fontSize = 14.sp)
+            } else {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    best.take(3).forEachIndexed { index, activity ->
+                        ActivityScoreCard(
+                            rank = index + 1, 
+                            name = activity.activityName, 
+                            score = activity.averageMoodScore, 
+                            color = primaryColor,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    // Fill remaining space if less than 3
+                    repeat(3 - best.size.coerceAtMost(3)) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
                 }
-                append("...")
-            },
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(bottom = 20.dp),
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            repeat(3) { index ->
-                if (index < best.size) {
-                    val activity = best[index]
-                    ActivityScoreCard(rank = index + 1, name = activity.activityName, score = activity.averageMoodScore, modifier = Modifier.weight(1f))
-                } else {
-                    Box(modifier = Modifier.weight(1f))
+            }
+        }
+
+        // Worst Section
+        Column {
+            Text(
+                text = buildAnnotatedString {
+                    append("When you were feeling ")
+                    withStyle(style = SpanStyle(color = errorColor, fontWeight = FontWeight.Bold)) {
+                        append("not so good")
+                    }
+                    append("...")
+                },
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(bottom = 16.dp),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            
+            if (worst.isEmpty()) {
+                Text("No data yet", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), fontSize = 14.sp)
+            } else {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    worst.take(3).forEachIndexed { index, activity ->
+                        ActivityScoreCard(
+                            rank = index + 1, 
+                            name = activity.activityName, 
+                            score = activity.averageMoodScore, 
+                            color = errorColor,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    repeat(3 - worst.size.coerceAtMost(3)) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
                 }
             }
         }
@@ -718,54 +929,71 @@ fun BestAndWorstView(best: List<BestActivityDto>, worst: List<BestActivityDto>) 
 }
 
 @Composable
-fun ActivityScoreCard(rank: Int, name: String, score: Double, modifier: Modifier = Modifier) {
+fun ActivityScoreCard(rank: Int, name: String, score: Double, color: Color, modifier: Modifier = Modifier) {
     val icon = MoonIcons.getIconForActivity(name)
-    val primaryColor = MaterialTheme.colorScheme.primary
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
     
-    Card(
-        modifier = modifier.height(160.dp),
+    Surface(
+        modifier = modifier.height(150.dp),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
-        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.outlineVariant)
+        color = MoonTheme.customColors.logItemBg.copy(alpha = 0.5f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
     ) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
+            modifier = Modifier.fillMaxSize().padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("$rank", modifier = Modifier.align(Alignment.Start), color = onSurfaceVariant, fontSize = 14.sp)
+            Text(
+                text = "#$rank", 
+                modifier = Modifier.align(Alignment.Start), 
+                color = color.copy(alpha = 0.7f), 
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold
+            )
+            
             Box(
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(56.dp)
                     .clip(CircleShape)
-                    .background(MoonTheme.customColors.logItemBg),
+                    .background(Color.White.copy(alpha = 0.6f)),
                 contentAlignment = Alignment.Center
             ) {
-                if (icon.drawableRes != null) {
-                    Image(painter = painterResource(id = icon.drawableRes), contentDescription = null, modifier = Modifier.size(44.dp))
-                }
+                MoonActivityIcon(icon = icon, size = 32.dp)
             }
-            Text(name, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1, textAlign = TextAlign.Center)
-            Surface(
-                shape = RoundedCornerShape(14.dp),
-                color = primaryColor.copy(alpha = 0.2f)
+            
+            Text(
+                text = name, 
+                fontWeight = FontWeight.SemiBold, 
+                fontSize = 13.sp, 
+                maxLines = 1, 
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(color.copy(alpha = 0.1f))
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    repeat(5) { i ->
-                        val active = (i + 1) <= score.toInt()
-                        Icon(
-                            Icons.Rounded.Star, 
-                            contentDescription = null, 
-                            modifier = Modifier.size(13.dp), 
-                            tint = if (active) primaryColor else primaryColor.copy(alpha = 0.3f)
-                        )
-                    }
-                    Text(String.format(" %.1f", score), color = primaryColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                repeat(5) { i ->
+                    val active = (i + 1) <= score.toInt()
+                    Icon(
+                        Icons.Rounded.Star, 
+                        contentDescription = null, 
+                        modifier = Modifier.size(10.dp), 
+                        tint = if (active) color else color.copy(alpha = 0.2f)
+                    )
                 }
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = String.format("%.1f", score), 
+                    color = color, 
+                    fontSize = 11.sp, 
+                    fontWeight = FontWeight.ExtraBold
+                )
             }
         }
     }
@@ -828,9 +1056,7 @@ fun PremiumAnalysisSection(themeType: MoonThemeType = MoonThemeType.DEFAULT) {
                 contentAlignment = Alignment.Center
             ) {
                 val icon = MoonIcons.getIconForActivity("Coffee")
-                if (icon.drawableRes != null) {
-                    Image(painter = painterResource(id = icon.drawableRes), contentDescription = null, modifier = Modifier.size(52.dp))
-                }
+                MoonActivityIcon(icon = icon, size = 52.dp)
             }
             
             Spacer(modifier = Modifier.width(20.dp))

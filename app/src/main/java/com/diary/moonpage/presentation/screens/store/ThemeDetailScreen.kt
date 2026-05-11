@@ -36,6 +36,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,12 +55,17 @@ fun ThemeDetailScreen(
         return
     }
 
+    val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
-            if (effect is StoreUiEffect.ShowSnackBar) {
-                snackbarHostState.showSnackbar(effect.message)
-            } else if (effect is StoreUiEffect.NavigateBack) {
-                onNavigateBack()
+            when (effect) {
+                is StoreUiEffect.ShowSnackBar -> {
+                    scope.launch { snackbarHostState.showSnackbar(effect.message) }
+                }
+                is StoreUiEffect.NavigateBack -> {
+                    onNavigateBack()
+                }
+                else -> {}
             }
         }
     }

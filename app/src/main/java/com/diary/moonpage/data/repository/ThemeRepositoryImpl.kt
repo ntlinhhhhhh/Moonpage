@@ -194,7 +194,7 @@ class ThemeRepositoryImpl @Inject constructor(
             val response = api.setActiveTheme(SetActiveThemeRequest(themeId))
             if (response.isSuccessful) {
                 dao.clearActiveTheme()
-                dao.setActiveTheme(themeId)
+                dao.setActiveTheme(themeId, System.currentTimeMillis())
                 Result.success(Unit)
             } else {
                 Result.failure(Exception(parseErrorResponse(response.errorBody()?.string())))

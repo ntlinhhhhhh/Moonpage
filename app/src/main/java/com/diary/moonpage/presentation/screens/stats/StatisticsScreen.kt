@@ -112,6 +112,16 @@ fun StatisticsScreenContent(
                     if (uiState.isMonthly) {
                         // --- MONTHLY VIEW ---
                         
+                        // 0. Summary Stats
+                        stats?.let { s ->
+                            SummaryStatsView(
+                                totalLogs = s.totalLogs,
+                                totalPhotos = s.totalPhotos,
+                                currentStreak = s.currentStreak,
+                                longestStreak = s.longestStreak
+                            )
+                        }
+                        
                         // 1. Mood Flow & Menstruation
                         StatsCard(title = "Mood Flow" + if (!isMale) " & Cycle" else "") {
                             MoodFlowChart(

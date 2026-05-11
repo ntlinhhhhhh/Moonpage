@@ -203,11 +203,12 @@ fun HomeTabContent(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp)
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
             LazyRow(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item { MoonFilterChip("All Themes", selectedCategory == "ALL") { onCategoryClick("ALL") } }
@@ -221,8 +222,7 @@ fun HomeTabContent(
         item {
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -250,8 +250,7 @@ fun HomeTabContent(
         item {
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 24.dp, bottom = 16.dp),
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -272,19 +271,17 @@ fun HomeTabContent(
             }
         }
 
-        item {
-            iconPacks.chunked(2).forEach { row ->
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    row.forEach { pack ->
-                        Box(modifier = Modifier.weight(1f)) {
-                            IconPackCard(pack) { onThemeClick(pack) }
-                        }
+        items(iconPacks.chunked(2)) { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                row.forEach { pack ->
+                    Box(modifier = Modifier.weight(1f)) {
+                        IconPackCard(pack) { onThemeClick(pack) }
                     }
-                    if (row.size == 1) Spacer(modifier = Modifier.weight(1f))
                 }
+                if (row.size == 1) Spacer(modifier = Modifier.weight(1f))
             }
         }
     }
@@ -302,7 +299,8 @@ fun MyThemeTabContent(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp)
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         if (currentTheme != null) {
             item {
@@ -314,7 +312,6 @@ fun MyThemeTabContent(
                     letterSpacing = 1.sp
                 )
                 CurrentThemeCard(currentTheme)
-                Spacer(modifier = Modifier.height(16.dp))
             }
         }
 
@@ -340,7 +337,8 @@ fun CollectionsTabContent(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp)
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
             Text(

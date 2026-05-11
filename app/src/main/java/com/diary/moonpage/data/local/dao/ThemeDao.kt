@@ -22,8 +22,8 @@ interface ThemeDao {
     @Query("UPDATE themes SET isActive = 0")
     suspend fun clearActiveTheme()
 
-    @Query("UPDATE themes SET isActive = 1 WHERE id = :id")
-    suspend fun setActiveTheme(id: String)
+    @Query("UPDATE themes SET isActive = 1, activatedAt = :timestamp WHERE id = :id")
+    suspend fun setActiveTheme(id: String, timestamp: Long)
 
     @Query("SELECT * FROM themes WHERE isActive = 1 LIMIT 1")
     suspend fun getActiveTheme(): com.diary.moonpage.data.local.entity.ThemeEntity?

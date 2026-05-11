@@ -26,6 +26,7 @@ import com.diary.moonpage.MainViewModel
 import com.diary.moonpage.core.util.ThemeConstants
 import com.diary.moonpage.core.theme.MoonThemeType
 import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
+import kotlinx.coroutines.launch
 
 @Composable
 fun ThemeCalendarScreen(
@@ -65,10 +66,17 @@ fun ThemeCalendarScreen(
     val allSelectableThemes = (systemThemes + ownedThemes).distinctBy { it.first }
 
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
         storeViewModel.uiEffect.collect { effect ->
-            if (effect is com.diary.moonpage.presentation.screens.store.StoreUiEffect.ShowSnackBar) {
-                snackbarHostState.showSnackbar(effect.message)
+            when (effect) {
+                is com.diary.moonpage.presentation.screens.store.StoreUiEffect.ShowSnackBar -> {
+                    scope.launch { snackbarHostState.showSnackbar(effect.message) }
+                }
+                is com.diary.moonpage.presentation.screens.store.StoreUiEffect.NavigateBack -> {
+                    onNavigateBack()
+                }
+                else -> {}
             }
         }
     }

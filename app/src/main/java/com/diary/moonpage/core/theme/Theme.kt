@@ -169,7 +169,7 @@ fun MoonPageTheme(
 ) {
     val themePrimary = if (darkTheme) {
         when (themeType) {
-            MoonThemeType.DEFAULT -> MoonActionDark
+            MoonThemeType.DEFAULT -> Color(0xFFE8D5C4) // More sophisticated cream/gold for dark
             MoonThemeType.SPROUT -> Color(0xFFB6E388)
             MoonThemeType.BLUSHING -> Color(0xFFECA79D)
             MoonThemeType.KITTY -> Color(0xFFB7C2FF)
@@ -192,7 +192,12 @@ fun MoonPageTheme(
             MoonThemeType.HEART_FELT -> Color(0xFFE91E63)
             MoonThemeType.WEATHER_CYCLE -> Color(0xFF607D8B)
         }
-    } else MoonActionDark
+    } else {
+        when (themeType) {
+            MoonThemeType.DEFAULT -> Color(0xFF8C7E6A) // Deep elegant taupe for light
+            else -> MoonActionLight // Fallback to original
+        }
+    }
 
     val colorScheme = if (darkTheme) {
         DarkColorScheme.copy(primary = themePrimary)
@@ -351,39 +356,39 @@ fun MoonPageTheme(
 
     val customColors = if (darkTheme) {
         MoonCustomColors(
-            logItemBg = Color(0xFF404040),
-            logItemSelect = colorScheme.primary.copy(alpha = 0.3f),
-            logItemAccent = MoonLogItemAccentDark,
-            logItemIconUnselected = Color(0xFFAEAEAE),
+            logItemBg = Color(0xFF333333),
+            logItemSelect = colorScheme.primary.copy(alpha = 0.25f),
+            logItemAccent = Color(0xFF424242),
+            logItemIconUnselected = Color(0xFF888888),
             logItemIconSelected = colorScheme.primary,
-            logCardBg = Color(0xFF292929),
-            logCardOnBg = Color(0xFFE4E4E4),
-            snackbarBg = Color(0xFF161921),
-            snackbarOnBg = MoonTextLight,
-            successColor = Color(0xFF66BB6A),
-            warningColor = Color(0xFFFFCA28),
-            errorColor = Color(0xFFEF5350),
-            popupBgColor = Color(0xFF2C2C2C),
-            cancelBtnBgColor = Color(0xFF454545),
-            cancelBtnTextColor = Color(0xFFE0E0E0)
+            logCardBg = Color(0xFF212121),
+            logCardOnBg = Color(0xFFF5F5F5),
+            snackbarBg = Color(0xFF1A1A1A),
+            snackbarOnBg = Color(0xFFE0E0E0),
+            successColor = Color(0xFF81C784),
+            warningColor = Color(0xFFFFD54F),
+            errorColor = Color(0xFFE57373),
+            popupBgColor = Color(0xFF262626),
+            cancelBtnBgColor = Color(0xFF383838),
+            cancelBtnTextColor = Color(0xFFBDBDBD)
         )
     } else {
         MoonCustomColors(
-            logItemBg = Color(0xFFF0F2F5),
-            logItemSelect = colorScheme.primary.copy(alpha = 0.15f),
-            logItemAccent = MoonLogItemAccentLight,
-            logItemIconUnselected = MoonUnselectedLight.copy(alpha = 0.4f),
-            logItemIconSelected = Color.Unspecified,
+            logItemBg = Color(0xFFF8F9FA),
+            logItemSelect = colorScheme.primary.copy(alpha = 0.12f),
+            logItemAccent = Color(0xFFE9ECEF),
+            logItemIconUnselected = Color(0xFFADB5BD),
+            logItemIconSelected = colorScheme.primary,
             logCardBg = Color.White,
-            logCardOnBg = MoonTextDark,
-            snackbarBg = Color(0xFFE8E1DA),
-            snackbarOnBg = MoonTextDark,
-            successColor = Color(0xFF4CAF50),
+            logCardOnBg = Color(0xFF212529),
+            snackbarBg = Color(0xFF343A40),
+            snackbarOnBg = Color.White,
+            successColor = Color(0xFF28A745),
             warningColor = Color(0xFFFFC107),
-            errorColor = Color(0xFFF44336),
+            errorColor = Color(0xFFDC3545),
             popupBgColor = Color.White,
-            cancelBtnBgColor = Color(0xFFEBEBEB), // Slightly darker than White (0xFFF2F2F2 was too light)
-            cancelBtnTextColor = Color(0xFF616161) // Slightly darker than 0xFF757575
+            cancelBtnBgColor = Color(0xFFF1F3F5),
+            cancelBtnTextColor = Color(0xFF495057)
         )
     }
 
