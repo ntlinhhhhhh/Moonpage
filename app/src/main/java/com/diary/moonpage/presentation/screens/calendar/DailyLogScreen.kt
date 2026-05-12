@@ -21,6 +21,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -77,10 +78,35 @@ fun DailyLogScreen(
         viewModel.setInitialDate(LocalDate.parse(dateString))
     }
 
+    // Permission Launcher for Health Connect
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = viewModel.healthConnectManager.requestPermissionsContract()
+    ) { granted ->
+        // Notify VM of the result so it can reset loading state and proceed if granted
+        viewModel.onEvent(DailyLogUiEvent.OnHealthPermissionResult(
+            granted.containsAll(viewModel.healthConnectManager.permissions)
+        ))
+    }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
-            if (effect is DailyLogUiEffect.SaveSuccess) {
-                onDone(effect.message)
+            when (effect) {
+                is DailyLogUiEffect.SaveSuccess -> onDone(effect.message)
+                is DailyLogUiEffect.LaunchHealthPermissions -> {
+                    // Safe launch of permission activity with a small delay to avoid transition conflicts on MIUI
+                    scope.launch {
+                        kotlinx.coroutines.delay(100)
+                        permissionLauncher.launch(effect.permissions)
+                    }
+                }
+                is DailyLogUiEffect.ShowSnackBar -> {
+                    scope.launch {
+                        snackbarHostState.showSnackbar(effect.message)
+                    }
+                }
+                else -> {}
             }
         }
     }
@@ -93,14 +119,6 @@ fun DailyLogScreen(
         }
     }
 
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = viewModel.healthConnectManager.requestPermissionsContract()
-    ) { granted ->
-        if (granted.containsAll(viewModel.healthConnectManager.permissions)) {
-            viewModel.onEvent(DailyLogUiEvent.OnImportSteps)
-        }
-    }
-
     DailyLogScreenContent(
         uiState = uiState,
         onEvent = viewModel::onEvent,
@@ -110,20 +128,13 @@ fun DailyLogScreen(
         onNavigateToDailyPhoto = {
             photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         },
-        onImportSteps = {
-            scope.launch {
-                if (viewModel.healthConnectManager.hasAllPermissions()) {
-                    viewModel.onEvent(DailyLogUiEvent.OnImportSteps)
-                } else {
-                    permissionLauncher.launch(viewModel.healthConnectManager.permissions)
-                }
-            }
-        },
+        onImportSteps = { viewModel.onEvent(DailyLogUiEvent.OnImportClick) },
         onLinkMusicAccount = { viewModel.onEvent(DailyLogUiEvent.OnLinkMusicAccount) },
         checkLogExists = { date, callback -> viewModel.checkLogExists(date, callback) },
         setPendingDate = { date -> viewModel.setPendingDate(date) },
         getSpotifyAuthUrl = { viewModel.getSpotifyAuthUrl() },
-        scope = scope
+        scope = scope,
+        snackbarHostState = snackbarHostState
     )
 }
 
@@ -143,21 +154,40 @@ fun DailyLogScreenContent(
     checkLogExists: (LocalDate, (Boolean) -> Unit) -> Unit,
     setPendingDate: (LocalDate) -> Unit,
     getSpotifyAuthUrl: suspend () -> String,
-    scope: kotlinx.coroutines.CoroutineScope
+    scope: kotlinx.coroutines.CoroutineScope,
+    snackbarHostState: SnackbarHostState
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-    val hasChanges = remember(uiState) {
-        uiState.selectedMood != null || uiState.selectedActivities.isNotEmpty() || uiState.noteText.isNotBlank()
-    }
-
-    BackHandler(enabled = hasChanges) { onEvent(DailyLogUiEvent.OnExitClick) }
-
-    LaunchedEffect(uiState.snackbarMessage) {
-        uiState.snackbarMessage?.let {
-            snackbarHostState.showSnackbar(it)
-            onEvent(DailyLogUiEvent.DismissMessage)
+    val isChanged = remember<Boolean>(uiState) {
+        val existing = uiState.existingLog
+        if (existing == null) {
+            // New Log: Enabled if mood or activities are selected
+            (uiState.selectedMood != null && uiState.selectedMood != 0) || uiState.selectedActivities.isNotEmpty()
+        } else {
+            // Edit Log: Enabled if any field differs from the existing record
+            val moodChanged = uiState.selectedMood != existing.baseMoodId
+            
+            // Compare activities as sets to be order-insensitive
+            val currentActivities = uiState.selectedActivities.toSet()
+            val existingActivities = (existing.activityIds ?: emptyList<String>()).toSet()
+            val activitiesChanged = currentActivities != existingActivities
+            
+            val noteChanged = uiState.noteText != (existing.note ?: "")
+            val sleepChanged = kotlin.math.abs(uiState.sleepHours - (existing.sleepHours?.toFloat() ?: 0f)) > 0.1f
+            val menstruationChanged = uiState.isMenstruation != existing.isMenstruation
+            
+            // For photos, we strip the BASE_URL prefix to compare correctly with stored paths
+            val baseUrl = "https://hieu-wikipedia.io.vn/"
+            val currentPhotosNormalized = uiState.dailyPhotos.map { it.removePrefix(baseUrl).trimStart('/') }.toSet()
+            val existingPhotos = (existing.dailyPhotos ?: emptyList<String>()).map { it.trimStart('/') }.toSet()
+            val photosChanged = currentPhotosNormalized != existingPhotos
+            
+            val musicChanged = uiState.musicTitle != existing.musicRecord
+            
+            moodChanged || activitiesChanged || noteChanged || sleepChanged || menstruationChanged || photosChanged || musicChanged
         }
     }
+
+    BackHandler(enabled = isChanged) { onEvent(DailyLogUiEvent.OnExitClick) }
 
     val focusManager = LocalFocusManager.current
     val uriHandler = LocalUriHandler.current
@@ -171,21 +201,22 @@ fun DailyLogScreenContent(
         topBar = {
             DailyLogTopBar(
                 date = uiState.date,
-                onBackClick = { if (hasChanges) onEvent(DailyLogUiEvent.OnExitClick) else onNavigateBack() },
+                onBackClick = { if (isChanged) onEvent(DailyLogUiEvent.OnExitClick) else onNavigateBack() },
                 onDateClick = { onEvent(DailyLogUiEvent.OnDatePickerClick) }
             )
         },
         bottomBar = {
             DailyLogBottomBar(
                 isLoading = uiState.isLoading,
-                onSaveClick = { onEvent(DailyLogUiEvent.OnSaveClick) }
+                onSaveClick = { onEvent(DailyLogUiEvent.OnSaveClick) },
+                enabled = isChanged
             )
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             DailyLogMainContent(
-                modifier = Modifier.padding(paddingValues),
+                modifier = Modifier.fillMaxSize(),
                 uiState = uiState,
                 onEvent = onEvent,
                 onNavigateToMusic = onNavigateToMusic,
@@ -218,7 +249,6 @@ fun DailyLogScreenContent(
             onExit = {
                 onEvent(DailyLogUiEvent.OnDismissExitDialog)
                 scope.launch {
-                    // Small delay to ensure the dialog is dismissed before navigation
                     kotlinx.coroutines.delay(50)
                     onNavigateBack()
                 }
@@ -301,7 +331,7 @@ private fun DailyLogTopBar(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
+                Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             }
             IconButton(onClick = {}) {
                 Icon(Icons.Rounded.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onSurface)
@@ -313,7 +343,8 @@ private fun DailyLogTopBar(
 @Composable
 private fun DailyLogBottomBar(
     isLoading: Boolean,
-    onSaveClick: () -> Unit
+    onSaveClick: () -> Unit,
+    enabled: Boolean
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surface,
@@ -322,13 +353,19 @@ private fun DailyLogBottomBar(
     ) {
         Button(
             onClick = onSaveClick,
-            modifier = Modifier.fillMaxWidth().padding(16.dp).height(56.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .height(56.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
             ),
             shape = RoundedCornerShape(16.dp),
-            enabled = !isLoading
+            enabled = enabled && !isLoading,
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
         ) {
             if (isLoading) {
                 CircularProgressIndicator(
@@ -337,7 +374,12 @@ private fun DailyLogBottomBar(
                     strokeWidth = 3.dp
                 )
             } else {
-                Text("Done", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    "Done", 
+                    fontSize = 18.sp, 
+                    fontWeight = FontWeight.Bold,
+                    color = if (enabled && !isLoading) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
+                )
             }
         }
     }
@@ -378,7 +420,11 @@ private fun DailyLogMainContent(
                 themeType = themeType,
                 customMoods = uiState.customMoods,
                 suggestedWeather = uiState.suggestedWeather,
-                onMoodSelected = { onEvent(DailyLogUiEvent.OnMoodSelected(it)) }
+                onMoodSelected = { onMoodId ->
+                    if (onMoodId != 0) {
+                        onEvent(DailyLogUiEvent.OnMoodSelected(onMoodId))
+                    }
+                }
             )
         }
 
@@ -421,6 +467,7 @@ private fun DailyLogMainContent(
                 steps = uiState.steps,
                 calories = uiState.calories,
                 distance = uiState.distance,
+                isImporting = uiState.isImportingHealth,
                 onImportClick = onImportSteps
             )
         }
@@ -430,6 +477,7 @@ private fun DailyLogMainContent(
                 sleepHours = uiState.sleepHours,
                 bedTime = uiState.sleepBedTime,
                 wakeTime = uiState.sleepWakeTime,
+                isImporting = uiState.isImportingHealth,
                 onSleepClick = { onEvent(DailyLogUiEvent.OnSleepRecordClick) },
                 onImportClick = onImportSteps
             )
@@ -770,20 +818,24 @@ fun DailyLogGrid(
 }
 
 @Composable
-private fun DailyHealthSection(steps: Int, calories: Int, distance: Double, onImportClick: () -> Unit) {
+private fun DailyHealthSection(steps: Int, calories: Int, distance: Double, isImporting: Boolean, onImportClick: () -> Unit) {
     Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text("Health & Steps", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 16.sp)
-                Text(
-                    "Import", 
-                    fontSize = 12.sp, 
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) { onImportClick() }
-                )
+                if (isImporting) {
+                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                } else {
+                    Text(
+                        "Import", 
+                        fontSize = 12.sp, 
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { onImportClick() }
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(12.dp))
             
@@ -819,6 +871,7 @@ private fun DailySleepSection(
     sleepHours: Float,
     bedTime: LocalTime,
     wakeTime: LocalTime,
+    isImporting: Boolean,
     onSleepClick: () -> Unit,
     onImportClick: () -> Unit
 ) {
@@ -834,15 +887,19 @@ private fun DailySleepSection(
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text("Sleep", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
-                Text(
-                    "Import", 
-                    fontSize = 12.sp, 
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) { onImportClick() }
-                )
+                if (isImporting) {
+                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                } else {
+                    Text(
+                        "Import", 
+                        fontSize = 12.sp, 
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { onImportClick() }
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(12.dp))
             
@@ -873,7 +930,6 @@ private fun DailySleepSection(
                         modifier = Modifier.padding(16.dp).fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Moon Icon
                         Icon(
                             Icons.Rounded.Nightlight, 
                             contentDescription = null, 
@@ -881,13 +937,11 @@ private fun DailySleepSection(
                             modifier = Modifier.size(28.dp).weight(0.12f)
                         )
                         
-                        // Went to bed
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(0.25f)) {
                             Text(bedTime.format(fmt), fontWeight = FontWeight.Bold, color = if (sleepHours > 0) MaterialTheme.colorScheme.primary else MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
                             Text("Went to bed", color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
                         }
                         
-                        // Duration
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(0.26f)) {
                             Text(
                                 if (mins == 0) "${hrs}h" else "${hrs}h ${mins}m", 
@@ -898,13 +952,11 @@ private fun DailySleepSection(
                             Text("Asleep", color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
                         }
                         
-                        // Woke up
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(0.25f)) {
                             Text(wakeTime.format(fmt), fontWeight = FontWeight.Bold, color = if (sleepHours > 0) MaterialTheme.colorScheme.primary else MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
                             Text("Woke up", color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
                         }
                         
-                        // Alarm Icon
                         Icon(
                             Icons.Rounded.AlarmOn, 
                             contentDescription = null, 
@@ -1065,7 +1117,6 @@ private fun DailyPhotoSection(
                                 )
                             }
                             
-                            // Remove Button
                             Surface(
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)
@@ -1164,8 +1215,8 @@ fun DailyLogDatePickerDialog(initialDate: LocalDate, onDateSelected: (LocalDate)
                     val currentPageMonth = baseYearMonth.plusMonths((pagerState.currentPage - initialPage).toLong())
                     Text(text = currentPageMonth.format(DateTimeFormatter.ofPattern("MMM yyyy")), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                     Row {
-                        IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } }) { Icon(Icons.Rounded.KeyboardArrowLeft, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
-                        IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } }) { Icon(Icons.Rounded.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
+                        IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } }) { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
+                        IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } }) { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
                     }
                 }
                 HorizontalPager(state = pagerState, modifier = Modifier.fillMaxWidth().height(260.dp)) { page ->

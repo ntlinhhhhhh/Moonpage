@@ -28,17 +28,9 @@ sealed class DailyLogUiEvent {
     object OnDatePickerClick : DailyLogUiEvent()
     object OnDatePickerDismiss : DailyLogUiEvent()
     object OnImportSteps : DailyLogUiEvent()
+    object OnImportClick : DailyLogUiEvent()
+    data class OnHealthPermissionResult(val isGranted: Boolean) : DailyLogUiEvent()
     object OnLinkMusicAccount : DailyLogUiEvent()
     object OnSpotifyAuthConfirm : DailyLogUiEvent()
     object OnSpotifyAuthDismiss : DailyLogUiEvent()
-    object DismissMessage : DailyLogUiEvent()
-}
-
-/**
- * Effects: VM -> UI
- */
-sealed class DailyLogUiEffect {
-    data class ShowSnackBar(val message: String) : DailyLogUiEffect()
-    data class SaveSuccess(val message: String) : DailyLogUiEffect()
-    object NavigateBack : DailyLogUiEffect()
 }

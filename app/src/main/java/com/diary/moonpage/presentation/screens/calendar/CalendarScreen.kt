@@ -53,6 +53,7 @@ fun CalendarScreen(
     onMessageShown: () -> Unit = {},
     onNavigateToSettings: () -> Unit,
     onNavigateToDailyLog: (String) -> Unit,
+    onNavigateToShareLog: (String) -> Unit,
     onNavigateToThemeCalendar: () -> Unit = {},
     viewModel: CalendarViewModel = hiltViewModel()
 ) {
@@ -78,6 +79,7 @@ fun CalendarScreen(
         onEvent = viewModel::onEvent,
         onNavigateToSettings = onNavigateToSettings,
         onNavigateToDailyLog = onNavigateToDailyLog,
+        onNavigateToShareLog = onNavigateToShareLog,
         onNavigateToThemeCalendar = onNavigateToThemeCalendar,
         showSnackbar = viewModel::showSnackbar
     )
@@ -92,6 +94,7 @@ fun CalendarScreenContent(
     onEvent: (CalendarUiEvent) -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToDailyLog: (String) -> Unit,
+    onNavigateToShareLog: (String) -> Unit,
     onNavigateToThemeCalendar: () -> Unit,
     showSnackbar: (String) -> Unit
 ) {
@@ -205,7 +208,11 @@ fun CalendarScreenContent(
                             dateToDelete = date
                             showDeleteConfirmDialog = true
                         },
-                        onShareClick = { onEvent(CalendarUiEvent.OnShareClick) }
+                        onShareClick = { 
+                            uiState.selectedDate?.let { date ->
+                                onNavigateToShareLog(date.toString())
+                            }
+                        }
                     )
 
                     Spacer(modifier = Modifier.height(100.dp))
@@ -269,7 +276,8 @@ fun CalendarScreenContent(
             tonalElevation = 0.dp,
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
             dragHandle = {
-                BottomSheetDefaults.DragHandle(color = sheetBgColor)
+                val handleColor = if (isActuallyDark) Color(0xFF424242) else Color(0xFFE0E0E0)
+                BottomSheetDefaults.DragHandle(color = handleColor)
             }
         ) {
             FilterScreen(
@@ -469,15 +477,15 @@ fun CalendarGrid(
     val daysInMonth = pageYearMonth.lengthOfMonth()
     val firstDayOfMonth = pageYearMonth.atDay(1)
     val firstDayOffset = firstDayOfMonth.dayOfWeek.value % 7
+    val totalCells = firstDayOffset + daysInMonth
+    val rows = (totalCells + 6) / 7
     val today = LocalDate.now()
+    val isActuallyDark = MaterialTheme.colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
 
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        val totalCells = firstDayOffset + daysInMonth
-        val rows = (totalCells + 6) / 7
-
         for (rowIndex in 0 until rows) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -548,10 +556,11 @@ fun CalendarGrid(
                                 isDimmed = isDimmed,
                                 isFiltered = isFiltered,
                                 themeType = themeType,
+                                isActuallyDark = isActuallyDark,
                                 onClick = { onDateSelected(date) }
                             )
                         } else {
-                            DayItem(day = null, isSelected = false, moodColor = null, onClick = {})
+                            DayItem(day = null, isSelected = false, moodColor = null, isActuallyDark = isActuallyDark, onClick = {})
                         }
                     }
                 }

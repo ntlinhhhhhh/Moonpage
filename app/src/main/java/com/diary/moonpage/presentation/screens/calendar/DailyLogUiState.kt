@@ -9,6 +9,7 @@ import java.time.LocalTime
 data class DailyLogUiState(
     val date: LocalDate = LocalDate.now(),
     val isLoading: Boolean = false,
+    val isImportingHealth: Boolean = false,
     val existingLog: DailyLog? = null,
     val selectedMood: Int? = null,
     val selectedActivities: List<String> = emptyList(),
@@ -34,7 +35,6 @@ data class DailyLogUiState(
     val showOverwriteDialog: Boolean = false,
     val showSpotifyAuthDialog: Boolean = false,
     val pendingDate: LocalDate? = null,
-    val snackbarMessage: String? = null,
     val themeType: MoonThemeType = MoonThemeType.DEFAULT,
     val customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null,
     val gender: String? = null,

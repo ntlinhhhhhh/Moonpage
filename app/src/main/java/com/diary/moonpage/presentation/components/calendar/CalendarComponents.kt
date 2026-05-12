@@ -195,6 +195,7 @@ fun DayItem(
     isDimmed: Boolean = false,
     isFiltered: Boolean = false,
     themeType: com.diary.moonpage.core.theme.MoonThemeType = com.diary.moonpage.core.theme.MoonThemeType.DEFAULT,
+    isActuallyDark: Boolean = androidx.compose.foundation.isSystemInDarkTheme(),
     onClick: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -211,16 +212,13 @@ fun DayItem(
         return
     }
 
-    // Robust check for dark mode based on current theme's background
-    val isActuallyDark = colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
-    val shades = com.diary.moonpage.core.theme.getThemeShades(themeType)
-    val highlightColor = if (shades.size > 3) shades[3] else colorScheme.primary
+    val shades = remember(themeType) { com.diary.moonpage.core.theme.getThemeShades(themeType) }
     
-    // Logic: If it's a logged day that matches the filter (or no filter), show its mood color.
-    // Otherwise, show the default placeholder color (Fixed gray for Dark, Theme shade for Light).
-    val circleBg = when {
-        moodColor != null && (!isFiltered || !isDimmed) -> moodColor
-        else -> if (isActuallyDark) Color(0xFF505457) else shades[0].copy(alpha = 0.4f)
+    val circleBg = remember(moodColor, isFiltered, isDimmed, isActuallyDark, shades) {
+        when {
+            moodColor != null && (!isFiltered || !isDimmed) -> moodColor
+            else -> if (isActuallyDark) Color(0xFF505457) else shades[0].copy(alpha = 0.4f)
+        }
     }
 
     Column(
@@ -271,9 +269,9 @@ fun DayItem(
             fontWeight = if (isToday || isSelected) FontWeight.Bold else FontWeight.Normal,
             color = when {
                 isToday -> if (isActuallyDark) {
-                    if (shades.size > 1) shades[1] else highlightColor
+                    if (shades.size > 1) shades[1] else shades[0]
                 } else {
-                    if (shades.size > 4) shades[4] else highlightColor
+                    if (shades.size > 4) shades[4] else shades[0]
                 }
                 isFiltered && isDimmed -> colorScheme.onSurface.copy(alpha = 0.2f)
                 isSelected -> colorScheme.primary

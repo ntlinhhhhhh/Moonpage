@@ -16,6 +16,7 @@ fun NavController.navigateToCalendar(navOptions: NavOptions? = null) {
 fun NavGraphBuilder.calendarScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToDailyLog: (String) -> Unit,
+    onNavigateToShareLog: (String) -> Unit,
     onNavigateToThemeCalendar: () -> Unit
 ) {
     composable(route = Screen.Calendar.route) { backStackEntry ->
@@ -32,6 +33,7 @@ fun NavGraphBuilder.calendarScreen(
             onMessageShown = { savedStateHandle.set("logSavedMessage", null) },
             onNavigateToSettings = onNavigateToSettings,
             onNavigateToDailyLog = onNavigateToDailyLog,
+            onNavigateToShareLog = onNavigateToShareLog,
             onNavigateToThemeCalendar = onNavigateToThemeCalendar
         )
     }
