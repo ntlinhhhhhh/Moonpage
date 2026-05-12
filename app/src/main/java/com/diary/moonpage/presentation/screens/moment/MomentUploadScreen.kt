@@ -161,12 +161,12 @@ fun MomentUploadScreen(
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxSize()
-                    .graphicsLayer(
-                        scaleX = scale * if (capturedLensFacing == CameraSelector.LENS_FACING_FRONT) -1f else 1f,
-                        scaleY = scale,
-                        translationX = offsetX,
+                    .graphicsLayer {
+                        scaleX = scale * if (capturedLensFacing == CameraSelector.LENS_FACING_FRONT) -1f else 1f
+                        scaleY = scale
+                        translationX = offsetX
                         translationY = offsetY
-                    )
+                    }
                     .transformable(state = transformState),
                 contentScale = ContentScale.Crop
             )
