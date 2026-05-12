@@ -117,9 +117,31 @@ class AuthViewModel @Inject constructor (
                 val step = remainingProgress / jobs.size
                 jobs.forEach { job ->
                     try {
-                        job.await()
+                        val result = job.await()
+                        // If result is from getMyThemes, check for active theme
+                        if (result is Result<*> && result.isSuccess) {
+                            val data = result.getOrNull()
+                            if (data is List<*> && data.isNotEmpty() && data.first() is com.diary.moonpage.domain.model.Theme) {
+                                val themes = data as List<com.diary.moonpage.domain.model.Theme>
+                                val activeTheme = themes.find { it.isActive }
+                                if (activeTheme != null) {
+                                    try {
+                                        val themeType = com.diary.moonpage.core.theme.MoonThemeType.valueOf(activeTheme.id.uppercase())
+                                        themePreferencesManager.setThemeType(themeType)
+                                        
+                                        // Also set dark mode if theme category suggests it
+                                        if (activeTheme.category == "DARK") {
+                                            themePreferencesManager.setDarkMode(true)
+                                        } else if (activeTheme.category == "LIGHT") {
+                                            themePreferencesManager.setDarkMode(false)
+                                        }
+                                    } catch (e: Exception) {
+                                        // Ignore if theme name doesn't match enum
+                                    }
+                                }
+                            }
+                        }
                     } catch (e: Exception) {
-                        // Log error but continue loading other resources
                         e.printStackTrace()
                     }
                     _uiState.update { it.copy(loadingProgress = (it.loadingProgress + step).coerceAtMost(1f)) }

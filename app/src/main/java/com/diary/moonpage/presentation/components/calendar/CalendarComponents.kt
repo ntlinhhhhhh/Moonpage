@@ -459,14 +459,14 @@ fun DayDetailArea(
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 12.dp)) {
                         Icon(Icons.Rounded.LocalFireDepartment, contentDescription = null, tint = Color(0xFFFF7043), modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text("Strength Training 28m", color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
+                        Text(stringResource(R.string.strength_training, 28), color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
                     }
 
                     // Menstruation
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 12.dp)) {
                         Icon(Icons.Rounded.WaterDrop, contentDescription = null, tint = Color(0xFFF48FB1), modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(if (isMenstruation) "On day 3" else "Not started", color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
+                        Text(if (isMenstruation) stringResource(R.string.on_day_x, 3) else stringResource(R.string.not_started), color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
                     }
 
                     // Steps Placeholder
@@ -1033,11 +1033,7 @@ fun ShareCalendarCard(
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val currentLanguage = LocalLocale.current
-    val monthName = if (currentLanguage == "vi") {
-        "Tháng ${yearMonth.monthValue} ${yearMonth.year}"
-    } else {
-        yearMonth.format(java.time.format.DateTimeFormatter.ofPattern("MMMM yyyy"))
-    }
+    val monthName = stringResource(R.string.month_format, yearMonth.monthValue, yearMonth.year)
 
     Box(
         modifier = Modifier
@@ -1149,7 +1145,7 @@ fun ShareCalendarCard(
             if (!isSquare) {
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
-                    text = "Reflect on your journey with MoonPage",
+                    text = stringResource(R.string.reflect_journey),
                     style = MaterialTheme.typography.bodyLarge,
                     color = colorScheme.onSurface.copy(alpha = 0.5f),
                     textAlign = TextAlign.Center

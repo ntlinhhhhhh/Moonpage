@@ -19,7 +19,7 @@ object ComposeCaptureUtils {
         view: View,
         content: @Composable () -> Unit,
         width: Int,
-        height: Int,
+        height: Int = -1, // -1 means wrap content height
         onBitmapCaptured: (Bitmap) -> Unit
     ) {
         val context = view.context
@@ -28,18 +28,26 @@ object ComposeCaptureUtils {
         }
 
         val frameLayout = FrameLayout(context).apply {
-            addView(composeView, ViewGroup.LayoutParams(width, height))
+            addView(composeView, ViewGroup.LayoutParams(width, if (height > 0) height else ViewGroup.LayoutParams.WRAP_CONTENT))
         }
 
-        // Measure and layout the view
+        // Measure
+        val heightSpec = if (height > 0) {
+            View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY)
+        } else {
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        }
+        
         frameLayout.measure(
             View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
-            View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY)
+            heightSpec
         )
-        frameLayout.layout(0, 0, width, height)
+        
+        val finalHeight = if (height > 0) height else frameLayout.measuredHeight
+        frameLayout.layout(0, 0, width, finalHeight)
 
         // Draw to bitmap
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val bitmap = Bitmap.createBitmap(width, finalHeight, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         frameLayout.draw(canvas)
         

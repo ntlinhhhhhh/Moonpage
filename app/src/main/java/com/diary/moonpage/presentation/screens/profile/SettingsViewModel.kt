@@ -24,28 +24,33 @@ class SettingsViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = combine(
-        settingsPreferencesManager.language,
-        themePreferencesManager.themeType,
-        themePreferencesManager.isDarkMode,
-        settingsPreferencesManager.isPasscodeEnabled,
-        settingsPreferencesManager.isBiometricEnabled,
+        combine(
+            settingsPreferencesManager.language,
+            themePreferencesManager.themeType,
+            themePreferencesManager.isDarkMode,
+            settingsPreferencesManager.isPasscodeEnabled,
+            settingsPreferencesManager.isBiometricEnabled
+        ) { language, themeType, isDarkMode, isPasscodeEnabled, isBiometricEnabled ->
+            FiveParams(language, themeType, isDarkMode, isPasscodeEnabled, isBiometricEnabled)
+        },
         _uiState
-    ) { args: Array<Any?> ->
-        val language = args[0] as String
-        val themeType = args[1] as MoonThemeType
-        val isDarkMode = args[2] as Boolean?
-        val isPasscodeEnabled = args[3] as Boolean
-        val isBiometricEnabled = args[4] as Boolean
-        val currentState = args[5] as SettingsUiState
-        
+    ) { params, currentState ->
         currentState.copy(
-            language = language,
-            themeType = themeType,
-            isDarkMode = isDarkMode,
-            isPasscodeEnabled = isPasscodeEnabled,
-            isBiometricEnabled = isBiometricEnabled
+            language = params.language,
+            themeType = params.themeType,
+            isDarkMode = params.isDarkMode,
+            isPasscodeEnabled = params.isPasscodeEnabled,
+            isBiometricEnabled = params.isBiometricEnabled
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
+
+    private data class FiveParams(
+        val language: String,
+        val themeType: MoonThemeType,
+        val isDarkMode: Boolean?,
+        val isPasscodeEnabled: Boolean,
+        val isBiometricEnabled: Boolean
+    )
 
     fun setLanguage(lang: String, onLanguageChanged: () -> Unit) {
         viewModelScope.launch {

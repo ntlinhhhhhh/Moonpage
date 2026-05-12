@@ -19,19 +19,29 @@ class MainViewModel @Inject constructor(
     private val _isReady = MutableStateFlow(false)
     val isReady = _isReady.asStateFlow()
 
+    private val _isAppLocked = MutableStateFlow(false)
+    val isAppLocked = _isAppLocked.asStateFlow()
+
+    fun setLocked(locked: Boolean) {
+        _isAppLocked.value = locked
+    }
+
     init {
         viewModelScope.launch {
+            // Pre-fetch critical data
             userRepository.getCurrentUser()
-            val now = java.time.LocalDate.now()
-            statisticsRepository.getStatisticsSummary(now.year, now.monthValue, true)
             
-            // Wait for first emission of theme settings
-            combine(themePreferencesManager.themeType, themePreferencesManager.isDarkMode) { _, _ -> true }
-                .take(1)
-                .collect {
-                    kotlinx.coroutines.delay(200) // Small delay to prevent white flash
-                    _isReady.value = true
-                }
+            // Wait for both theme and dark mode to be loaded from DataStore
+            // We combine them to ensure we have both before proceeding
+            combine(
+                themePreferencesManager.themeType,
+                themePreferencesManager.isDarkMode
+            ) { _, _ -> }.first()
+            
+            // Small additional delay to ensure the StateFlows have updated 
+            // and the UI has collected the new values
+            kotlinx.coroutines.delay(600)
+            _isReady.value = true
         }
     }
 

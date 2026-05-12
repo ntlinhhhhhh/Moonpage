@@ -46,7 +46,7 @@ fun StatisticsScreenContent(
     uiState: StatisticsUiState,
     onMonthChange: (Int, Int) -> Unit,
     onTabChange: (Boolean) -> Unit,
-    onIconClick: (String) -> Unit
+    onIconClick: (String?) -> Unit
 ) {
     val scrollState = rememberScrollState()
     var showDatePicker by remember { mutableStateOf(false) }
@@ -87,14 +87,10 @@ fun StatisticsScreenContent(
                             .padding(horizontal = 12.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        val date = LocalDate.of(uiState.selectedYear, uiState.selectedMonth, 1)
-                        val currentLanguage = com.diary.moonpage.core.theme.LocalLocale.current
                         val dateText = if (uiState.isMonthly) {
-                            if (currentLanguage == "vi") {
-                                "Tháng ${uiState.selectedMonth} ${uiState.selectedYear}"
-                            } else {
-                                date.format(DateTimeFormatter.ofPattern("MMM yyyy"))
-                            }
+                            val yearMonth = YearMonth.of(uiState.selectedYear, uiState.selectedMonth)
+                            val formatter = DateTimeFormatter.ofPattern("MMMM yyyy")
+                            yearMonth.format(formatter)
                         } else {
                             uiState.selectedYear.toString()
                         }
@@ -229,7 +225,7 @@ fun StatisticsScreenContent(
                             Column {
                                 Text(
                                     text = buildAnnotatedString {
-                                        append("Look back on your ")
+                                        append(stringResource(R.string.look_back, "").replace("%1${'$'}s", "").trim() + " ")
                                         withStyle(
                                             SpanStyle(
                                                 fontWeight = FontWeight.Bold,
@@ -272,14 +268,14 @@ fun StatisticsScreenContent(
                         // 6. Trends
                         if (!isMale) {
                             StatsCard(title = stringResource(R.string.yearly_cycle_trends)) {
-                                Text("Average Cycle: 28 days", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                                Text("Average Period: 5 days", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(R.string.avg_cycle, 28), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                Text(stringResource(R.string.avg_period, 5), color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                         
                         StatsCard(title = stringResource(R.string.yearly_sleep_trends)) {
-                            Text("Avg Sleep: 7.2h", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                            Text("Sleep Quality: Good", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.avg_sleep, 7.2f), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            Text(stringResource(R.string.sleep_quality, stringResource(R.string.good)), color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
 

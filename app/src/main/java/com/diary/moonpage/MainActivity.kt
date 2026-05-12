@@ -16,6 +16,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.diary.moonpage.core.theme.MoonPageTheme
 import com.diary.moonpage.core.util.LocaleUtils
@@ -25,10 +29,11 @@ import com.diary.moonpage.data.remote.api.SpotifyApi
 import com.diary.moonpage.presentation.navigation.AppNavigation
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     private val mainViewModel: MainViewModel by viewModels()
 
     @Inject
@@ -50,6 +55,25 @@ class MainActivity : ComponentActivity() {
         }
         
         handleIntent(intent)
+
+        // Lock app on start if enabled
+        lifecycleScope.launch {
+            if (settingsPreferencesManager.isPasscodeEnabled.first()) {
+                mainViewModel.setLocked(true)
+            }
+        }
+
+        // App lock observer
+        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onStop(owner: LifecycleOwner) {
+                // When app goes to background, set locked to true if enabled
+                lifecycleScope.launch {
+                    if (settingsPreferencesManager.isPasscodeEnabled.first()) {
+                        mainViewModel.setLocked(true)
+                    }
+                }
+            }
+        })
 
         setContent {
             val themeType by mainViewModel.themeType.collectAsState()

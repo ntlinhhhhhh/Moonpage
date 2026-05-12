@@ -41,6 +41,10 @@ sealed class Screen (val route: String) {
     // Moment Sub-screens
     object MomentDetail: Screen("moment_detail_screen/{momentId}")
 
+    // Security Screens
+    object CreatePasscode: Screen("create_passcode_screen")
+    object Lock: Screen("lock_screen")
+
     // Store Sub-screens
     object ThemeDetail: Screen("theme_detail_screen")
 }

@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -60,9 +61,10 @@ fun ShareLogScreen(
             CenterAlignedTopAppBar(
                 title = { 
                     Text(
-                        "Share", 
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        "Share Log", 
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     ) 
                 },
                 navigationIcon = {
@@ -70,78 +72,109 @@ fun ShareLogScreen(
                         Icon(Icons.Rounded.ArrowBackIosNew, "Back")
                     }
                 },
-                actions = {
-                    IconButton(onClick = {
-                        scope.launch {
-                            val width = (view.width * 0.8f).toInt().coerceIn(720, 1080)
-                            val height = (width * 1.5f).toInt()
-                            ComposeCaptureUtils.captureComposable(
-                                view = view,
-                                content = {
-                                    Surface(color = MaterialTheme.colorScheme.background) {
-                                        ShareLogCard(uiState = uiState)
-                                    }
-                                },
-                                width = width,
-                                height = height,
-                                onBitmapCaptured = { bitmap ->
-                                    ImageUtils.saveBitmapToGallery(context, bitmap)
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar("Image saved to gallery!")
-                                    }
-                                }
-                            )
-                        }
-                    }) {
-                        Icon(Icons.Rounded.Download, "Download")
-                    }
-                },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                    containerColor = Color.Transparent
                 )
             )
         },
         bottomBar = {
             Surface(
                 modifier = Modifier.fillMaxWidth().navigationBarsPadding(),
-                color = MaterialTheme.colorScheme.background,
+                color = Color.Transparent,
                 tonalElevation = 0.dp
             ) {
-                Button(
-                    onClick = {
-                        scope.launch {
-                            val width = (view.width * 0.8f).toInt().coerceIn(720, 1080)
-                            val height = (width * 1.5f).toInt()
-                            ComposeCaptureUtils.captureComposable(
-                                view = view,
-                                content = {
-                                    Surface(color = MaterialTheme.colorScheme.background) {
-                                        ShareLogCard(uiState = uiState)
-                                    }
-                                },
-                                width = width,
-                                height = height,
-                                onBitmapCaptured = { bitmap ->
-                                    ImageUtils.shareImage(context, bitmap, "Moonpage Log")
-                                }
-                            )
-                        }
-                    },
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
-                        .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("Share", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    // Download Button
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                val width = 1080
+                                ComposeCaptureUtils.captureComposable(
+                                    view = view,
+                                    content = {
+                                        Box(
+                                            modifier = Modifier
+                                                .width(1080.dp / 2.625f) // Adjust for capturing
+                                                .background(Color(0xFFF7F7F5)) // Premium beige background
+                                                .padding(24.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            ShareLogCard(uiState = uiState)
+                                        }
+                                    },
+                                    width = width,
+                                    onBitmapCaptured = { bitmap ->
+                                        ImageUtils.saveBitmapToGallery(context, bitmap)
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar("Image saved to gallery!")
+                                        }
+                                    }
+                                )
+                            }
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+                    ) {
+                        Icon(Icons.Rounded.Download, null, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Save", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    // Share Button
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                val width = 1080
+                                ComposeCaptureUtils.captureComposable(
+                                    view = view,
+                                    content = {
+                                        Box(
+                                            modifier = Modifier
+                                                .width(1080.dp / 2.625f)
+                                                .background(Color(0xFFF7F7F5))
+                                                .padding(24.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            ShareLogCard(uiState = uiState)
+                                        }
+                                    },
+                                    width = width,
+                                    onBitmapCaptured = { bitmap ->
+                                        ImageUtils.shareImage(context, bitmap, "My Moonpage Log")
+                                    }
+                                )
+                            }
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+                    ) {
+                        Icon(Icons.Rounded.Share, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Share", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = Color(0xFFF7F7F5) // Use the same beige background for the screen
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -152,11 +185,14 @@ fun ShareLogScreen(
         ) {
             Spacer(modifier = Modifier.height(24.dp))
             
-            // Preview of the card
-            Box(
+            // Preview of the card with shadow
+            Surface(
                 modifier = Modifier
-                    .width(320.dp)
-                    .clip(RoundedCornerShape(24.dp))
+                    .padding(horizontal = 24.dp)
+                    .width(360.dp),
+                shape = RoundedCornerShape(24.dp),
+                shadowElevation = 12.dp,
+                color = Color.White
             ) {
                 ShareLogCard(uiState = uiState)
             }
@@ -170,265 +206,217 @@ fun ShareLogScreen(
 fun ShareLogCard(uiState: DailyLogUiState) {
     val date = uiState.date
     val themeType = uiState.themeType
-    val formatter = DateTimeFormatter.ofPattern("EEEE, MMMM d", Locale.ENGLISH)
+    
+    // Formatting date
+    val dayFormatter = DateTimeFormatter.ofPattern("d", Locale.ENGLISH)
+    val dayOfWeekFormatter = DateTimeFormatter.ofPattern("EEE", Locale.ENGLISH)
+    val dateBadgeText = "${date.format(dayFormatter)} ${date.format(dayOfWeekFormatter)}"
+    
     val moodVisual = MoonIcons.Moods.getMoodVisual(uiState.selectedMood ?: 3, themeType, uiState.customMoods)
     
-    val isActuallyDark = MaterialTheme.colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
-    val cardBg = if (isActuallyDark) Color(0xFF2C2C2E) else Color(0xFFF1F2ED)
-    val itemBg = if (isActuallyDark) Color(0xFF3A3A3C) else Color.White
-    val onCard = if (isActuallyDark) Color.White else Color(0xFF424242)
-    val brandColor = Color(0xFF66BB6A)
+    val metricBg = Color(0xFFF7F8FA)
+    val onSurface = Color(0xFF424242)
 
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(cardBg)
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(Color.White)
+            .padding(24.dp),
+        verticalAlignment = Alignment.Top
     ) {
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        // Mood Icon (Ảnh 1 style)
-        Box(
-            modifier = Modifier
-                .size(72.dp)
-                .background(moodVisual.color, CircleShape),
-            contentAlignment = Alignment.Center
+        // Left Column: Mood and Date
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.width(IntrinsicSize.Min)
         ) {
-            if (moodVisual.drawableRes != null) {
-                Image(
-                    painter = painterResource(id = moodVisual.drawableRes),
-                    contentDescription = null,
-                    modifier = Modifier.size(48.dp)
+            // Mood Icon
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .background(moodVisual.color, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                if (moodVisual.drawableRes != null) {
+                    Image(
+                        painter = painterResource(id = moodVisual.drawableRes),
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Date Badge
+            Surface(
+                color = Color(0xFFE0E0E0).copy(alpha = 0.5f),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = dateBadgeText,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = onSurface
                 )
             }
         }
         
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.width(20.dp))
         
-        // Date Label
-        Surface(
-            color = onCard.copy(alpha = 0.05f),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Text(
-                text = date.format(formatter),
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                color = onCard.copy(alpha = 0.6f)
-            )
-        }
+        // Vertical Divider
+        Box(
+            modifier = Modifier
+                .width(1.dp)
+                .height(IntrinsicSize.Min)
+                .background(Color(0xFFEEEEEE))
+                .padding(vertical = 8.dp)
+        )
         
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.width(20.dp))
         
-        Surface(
-            color = itemBg,
-            shape = RoundedCornerShape(20.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                if (uiState.selectedActivities.isEmpty()) {
-                    Box(
-                        modifier = Modifier.fillMaxWidth().height(80.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("No activities recorded", color = onCard.copy(alpha = 0.3f), fontSize = 14.sp)
-                    }
-                } else {
-                    val chunks = uiState.selectedActivities.chunked(6)
-                    chunks.forEach { rowIds ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
-                        ) {
-                            rowIds.forEach { activityId ->
-                                val activity = uiState.dynamicActivities.find { it.id == activityId }
-                                val icon = MoonIcons.getIconForActivity(activity?.name ?: "")
-                                Box(
-                                    modifier = Modifier
-                                        .size(40.dp)
-                                        .background(onCard.copy(alpha = 0.04f), CircleShape),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    if (icon.drawableRes != null) {
-                                        Image(
-                                            painter = painterResource(id = icon.drawableRes),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                    } else if (icon.vector != null) {
-                                        Icon(icon.vector, null, tint = icon.color, modifier = Modifier.size(22.dp))
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Health Stats Card (Horizontal style)
-        val hasHealthData = uiState.sleepHours > 0 || uiState.steps > 0 || uiState.isMenstruation || uiState.calories > 0
-        if (hasHealthData) {
+        // Right Column: Metrics, Music, Photos
+        Column(modifier = Modifier.weight(1f)) {
+            // Metrics Section
             Surface(
-                color = itemBg.copy(alpha = 0.7f),
-                shape = RoundedCornerShape(20.dp),
+                color = metricBg,
+                shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
-                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceAround,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     // Sleep
-                    if (uiState.sleepHours > 0) {
-                        StatItem(
-                            icon = Icons.Rounded.Brightness2,
-                            iconColor = Color(0xFFFFB74D),
-                            label = formatSleep(uiState.sleepHours)
+                    MetricItem(
+                        icon = Icons.Rounded.NightsStay,
+                        iconColor = Color(0xFFFFC107),
+                        text = "${(uiState.sleepHours).toInt()}h ${( (uiState.sleepHours % 1) * 60).toInt()}m"
+                    )
+                    
+                    // Primary Activity (if any)
+                    if (uiState.selectedActivities.isNotEmpty()) {
+                        val firstActivityId = uiState.selectedActivities.first()
+                        val activity = uiState.dynamicActivities.find { it.id == firstActivityId }
+                        MetricItem(
+                            icon = Icons.Rounded.Whatshot,
+                            iconColor = Color(0xFFFF5722),
+                            text = activity?.name ?: "Activity"
+                        )
+                    }
+
+                    // Menstruation
+                    if (uiState.isMenstruation) {
+                        MetricItem(
+                            icon = Icons.Rounded.WaterDrop,
+                            iconColor = Color(0xFFF06292),
+                            text = uiState.menstruationPhase ?: "On cycle"
                         )
                     }
                     
                     // Steps
-                    if (uiState.steps > 0) {
-                        StatItem(
-                            icon = Icons.AutoMirrored.Rounded.DirectionsWalk,
-                            iconColor = Color(0xFF4FC3F7),
-                            label = "${String.format("%, d", uiState.steps)}"
-                        )
-                    }
-                    
-                    // Menstruation
-                    if (uiState.isMenstruation) {
-                        StatItem(
-                            icon = Icons.Rounded.WaterDrop,
-                            iconColor = Color(0xFFF06292),
-                            label = uiState.menstruationPhase?.take(5) ?: "Period"
-                        )
-                    }
-                    
-                    // Calories
-                    if (uiState.calories > 0) {
-                        StatItem(
-                            icon = Icons.Rounded.LocalFireDepartment,
-                            iconColor = Color(0xFFFF8A65),
-                            label = "${uiState.calories}"
-                        )
-                    }
+                    MetricItem(
+                        icon = Icons.AutoMirrored.Rounded.DirectionsWalk,
+                        iconColor = Color(0xFF42A5F5),
+                        text = "%,d steps".format(uiState.steps)
+                    )
                 }
             }
+            
             Spacer(modifier = Modifier.height(16.dp))
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Note
-        if (uiState.noteText.isNotBlank()) {
-            Text(
-                text = uiState.noteText,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
-                fontSize = 15.sp,
-                color = onCard.copy(alpha = 0.8f),
-                textAlign = TextAlign.Start
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-        
-        // Music Card
-        if (!uiState.musicTitle.isNullOrBlank()) {
-            Surface(
-                color = itemBg,
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+            
+            // Music Card
+            if (!uiState.musicTitle.isNullOrBlank()) {
+                Surface(
+                    color = metricBg,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    if (uiState.albumArtUrl != null) {
-                        AsyncImage(
-                            model = uiState.albumArtUrl,
-                            contentDescription = null,
-                            modifier = Modifier.size(52.dp).clip(RoundedCornerShape(8.dp)),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Box(
-                            modifier = Modifier.size(52.dp).background(onCard.copy(alpha = 0.08f), RoundedCornerShape(8.dp)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Rounded.MusicNote, null, tint = onCard.copy(alpha = 0.3f))
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (uiState.albumArtUrl != null) {
+                            AsyncImage(
+                                model = uiState.albumArtUrl,
+                                contentDescription = null,
+                                modifier = Modifier.size(52.dp).clip(RoundedCornerShape(12.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier.size(52.dp).background(Color(0xFFF06292).copy(alpha = 0.2f), RoundedCornerShape(12.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Rounded.MusicNote, null, tint = Color(0xFFF06292))
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.width(12.dp))
+                        
+                        Column {
+                            Text(
+                                uiState.musicTitle,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = onSurface,
+                                maxLines = 1
+                            )
+                            Text(
+                                uiState.artistName ?: "Unknown Artist",
+                                fontSize = 13.sp,
+                                color = onSurface.copy(alpha = 0.6f),
+                                maxLines = 1
+                            )
                         }
                     }
-                    
-                    Spacer(modifier = Modifier.width(12.dp))
-                    
-                    Column {
-                        Text(uiState.musicTitle, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = onCard, maxLines = 1)
-                        Text(uiState.artistName ?: "Unknown Artist", fontSize = 12.sp, color = onCard.copy(alpha = 0.6f), maxLines = 1)
-                    }
                 }
+                Spacer(modifier = Modifier.height(16.dp))
             }
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-        
-        // Photos (Ảnh 2 style)
-        if (uiState.dailyPhotos.isNotEmpty()) {
-            Column(modifier = Modifier.fillMaxWidth()) {
+            
+            // Photos Section
+            if (uiState.dailyPhotos.isNotEmpty()) {
                 Text(
-                    "Daily Photos", 
-                    fontSize = 13.sp, 
-                    fontWeight = FontWeight.Bold, 
-                    color = onCard,
+                    "Daily Photos",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = onSurface,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    uiState.dailyPhotos.take(3).forEach { photoUrl ->
+                
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    uiState.dailyPhotos.take(2).forEach { photoPath ->
                         AsyncImage(
-                            model = photoUrl,
+                            model = photoPath,
                             contentDescription = null,
                             modifier = Modifier
-                                .weight(1f)
-                                .aspectRatio(1f)
-                                .clip(RoundedCornerShape(12.dp)),
+                                .size(if (uiState.dailyPhotos.size > 1) 100.dp else 160.dp)
+                                .clip(RoundedCornerShape(16.dp)),
                             contentScale = ContentScale.Crop
                         )
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(24.dp))
         }
-        
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                "Moonpage",
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
-                color = brandColor
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(4.dp))
     }
 }
 
 @Composable
-fun StatItem(icon: androidx.compose.ui.graphics.vector.ImageVector, iconColor: Color, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Icon(icon, null, tint = iconColor, modifier = Modifier.size(20.dp))
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), fontWeight = FontWeight.Medium)
+private fun MetricItem(
+    icon: ImageVector,
+    iconColor: Color,
+    text: String
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = iconColor,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = text,
+            fontSize = 14.sp,
+            color = Color(0xFF424242),
+            fontWeight = FontWeight.Medium
+        )
     }
-}
-
-private fun formatSleep(hours: Float): String {
-    val h = hours.toInt()
-    val m = ((hours - h) * 60).toInt()
-    return if (h > 0 || m > 0) "${h}h ${m}m" else "No sleep data"
 }

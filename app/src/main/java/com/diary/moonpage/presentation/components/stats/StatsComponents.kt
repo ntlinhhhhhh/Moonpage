@@ -1009,7 +1009,7 @@ fun MoonActivityIcon(icon: com.diary.moonpage.core.util.MoonIcon, size: androidx
 }
 
 @Composable
-fun FrequentlyRecordedView(activities: List<BestActivityDto>, onIconClick: (String) -> Unit = {}) {
+fun FrequentlyRecordedView(activities: List<BestActivityDto>, onIconClick: (String?) -> Unit = {}) {
     val primaryColor = MaterialTheme.colorScheme.primary
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
     

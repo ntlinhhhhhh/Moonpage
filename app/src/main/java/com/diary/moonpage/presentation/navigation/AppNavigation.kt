@@ -4,9 +4,7 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.LayoutDirection
@@ -32,16 +30,23 @@ import com.diary.moonpage.presentation.screens.stats.StatisticsScreen
 import com.diary.moonpage.presentation.screens.store.StoreScreen
 import com.diary.moonpage.presentation.screens.store.StoreViewModel
 import com.diary.moonpage.presentation.screens.store.ThemeDetailScreen
+import com.diary.moonpage.presentation.screens.security.CreatePasscodeScreen
+import com.diary.moonpage.presentation.screens.security.LockScreen
+import com.diary.moonpage.MainViewModel
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(
+    mainViewModel: MainViewModel = hiltViewModel()
+) {
     val navController = rememberNavController()
     val navBackStackEntry = navController.currentBackStackEntryAsState().value
     val currentRoute = navBackStackEntry?.destination?.route
+    val isAppLocked by mainViewModel.isAppLocked.collectAsState()
 
     val authViewModel: AuthViewModel = hiltViewModel()
     val onboardingViewModel: OnboardingViewModel = hiltViewModel()
     val activityCategoryViewModel: ActivityCategoryViewModel = hiltViewModel()
+    val securityViewModel: com.diary.moonpage.presentation.screens.security.SecurityViewModel = hiltViewModel()
 
     val mainAppRoutes = listOf(
         Screen.Calendar.route,
@@ -50,7 +55,7 @@ fun AppNavigation() {
         Screen.Store.route,
         Screen.Profile.route
     )
-    val showBottomBar = currentRoute in mainAppRoutes
+    val showBottomBar = currentRoute in mainAppRoutes && !isAppLocked
 
     Scaffold(
         // We keep BottomBar outside AnimatedVisibility for main routes to prevent jitter
@@ -109,6 +114,11 @@ fun AppNavigation() {
                     ScreenWrapper(Screen.Loading.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         LoadingScreen(
                             onFinished = { isLoggedIn, needsOnboarding ->
+                                val isPasscodeEnabled = securityViewModel.isPasscodeEnabled.value
+                                if (isPasscodeEnabled) {
+                                    mainViewModel.setLocked(true)
+                                }
+                                
                                 val nextDestination = when {
                                     !isLoggedIn      -> Screen.Landing.route
                                     needsOnboarding  -> Screen.OnboardingBirthday.route
@@ -140,7 +150,8 @@ fun AppNavigation() {
                                 popUpTo(0) { inclusive = true }
                             }
                         } else {
-                            navController.navigate(Screen.Calendar.route) {
+                            // Go to Loading screen first to sync resources/themes from backend
+                            navController.navigate(Screen.Loading.route) {
                                 popUpTo(0) { inclusive = true }
                             }
                         }
@@ -377,9 +388,16 @@ fun AppNavigation() {
                                 }
                             },
                             onNavigateToCreatePasscode = {
-                                // Navigate to passcode setup screen if it exists
-                                // navController.navigate("passcode_setup")
+                                navController.navigate(Screen.CreatePasscode.route)
                             }
+                        )
+                    }
+                }
+
+                composable(Screen.CreatePasscode.route) {
+                    ScreenWrapper(Screen.CreatePasscode.route, mainAppRoutes, totalBottomPadding, paddingValues) {
+                        CreatePasscodeScreen(
+                            onNavigateBack = { navController.popBackStack() }
                         )
                     }
                 }
@@ -471,6 +489,12 @@ fun AppNavigation() {
                             }
                         }
                     }
+                )
+            }
+
+            if (isAppLocked) {
+                LockScreen(
+                    onUnlockSuccess = { mainViewModel.setLocked(false) }
                 )
             }
         }

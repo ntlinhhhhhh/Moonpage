@@ -27,6 +27,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.res.stringResource
+import com.diary.moonpage.R
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.domain.model.ThemeType
 import com.diary.moonpage.presentation.components.core.buttons.MoonPrimaryButton
@@ -34,6 +36,7 @@ import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import com.diary.moonpage.presentation.screens.store.components.*
 import com.diary.moonpage.core.theme.*
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
@@ -48,6 +51,7 @@ fun ThemeDetailScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val theme = uiState.selectedThemeDetail
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     if (theme == null) {
         LaunchedEffect(Unit) {
@@ -63,7 +67,7 @@ fun ThemeDetailScreen(
                     snackbarHostState.showSnackbar(effect.message)
                 }
                 is StoreUiEffect.ThemeActivated -> {
-                    snackbarHostState.showSnackbar("Theme updated successfully!")
+                    snackbarHostState.showSnackbar(context.getString(R.string.theme_updated_success))
                 }
                 is StoreUiEffect.NavigateBack -> {
                     onNavigateBack()
@@ -75,7 +79,7 @@ fun ThemeDetailScreen(
 
     LaunchedEffect(uiState.activationSuccess) {
         if (uiState.activationSuccess) {
-            snackbarHostState.showSnackbar("Theme updated successfully!")
+            snackbarHostState.showSnackbar(context.getString(R.string.theme_updated_success))
             delay(1000)
             viewModel.dismissSuccessMessage()
         }
@@ -115,13 +119,13 @@ fun ThemeDetailScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.ArrowBackIosNew,
-                        contentDescription = "Back",
+                        contentDescription = stringResource(R.string.back),
                         tint = onBackground
                     )
                 }
 
                 Text(
-                    text = "Theme Detail",
+                    text = stringResource(R.string.theme_detail),
                     style = MaterialTheme.typography.titleMedium,
                     color = onBackground
                 )
@@ -186,7 +190,7 @@ fun ThemeDetailScreen(
                 )
 
                 Text(
-                    text = theme.description ?: "Experience the beauty of this unique set.",
+                    text = theme.description ?: stringResource(R.string.theme_description_default),
                     style = MaterialTheme.typography.bodyLarge,
                     color = onBackground.copy(alpha = 0.6f),
                     textAlign = TextAlign.Center,
@@ -203,8 +207,9 @@ fun ThemeDetailScreen(
                     getThemeShades(theme).lastOrNull() ?: backgroundColor
                 }
 
+                val buttonText = if (theme.isOwned) stringResource(R.string.activate) else stringResource(R.string.buy_for, theme.price)
                 MoonPrimaryButton(
-                    text = if (theme.isOwned) "Activate" else "Buy for ${theme.price}",
+                    text = buttonText,
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         if (theme.isOwned) {
@@ -220,7 +225,7 @@ fun ThemeDetailScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "INCLUDES: CALENDAR ICONS, PREMIUM BACKGROUND, CUSTOM UI TONES",
+                    text = stringResource(R.string.theme_includes),
                     style = MaterialTheme.typography.labelSmall,
                     color = onBackground.copy(alpha = 0.5f),
                     textAlign = TextAlign.Center,
@@ -302,7 +307,15 @@ fun ThemeCalendarPreview(theme: Theme) {
         Spacer(modifier = Modifier.height(24.dp))
 
         // Days of week
-        val days = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+        val days = listOf(
+        stringResource(R.string.sun),
+        stringResource(R.string.mon),
+        stringResource(R.string.tue),
+        stringResource(R.string.wed),
+        stringResource(R.string.thu),
+        stringResource(R.string.fri),
+        stringResource(R.string.sat)
+    )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly

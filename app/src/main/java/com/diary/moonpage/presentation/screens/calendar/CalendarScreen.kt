@@ -599,7 +599,12 @@ fun CalendarSelectedLogDetail(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Spacer(Modifier.size(28.dp)) // Placeholder to maintain alignment if needed, or just remove
+            Icon(
+                imageVector = Icons.Rounded.Eco,
+                contentDescription = null,
+                tint = Color(0xFF81C784),
+                modifier = Modifier.size(28.dp)
+            )
 
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 IconButton(onClick = onShareClick) {

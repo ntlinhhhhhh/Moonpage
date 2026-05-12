@@ -55,6 +55,9 @@
     <string name="widgets">Tiện ích</string>
     <string name="invite_friends">Mời bạn bè</string>
     <string name="logout">Đăng xuất</string>
+    <string name="log_out">Đăng xuất</string>
+    <string name="logout_confirmation">Bạn có chắc chắn muốn đăng xuất?</string>
+    <string name="logout_warning">Các ngày đã ghi khi đăng xuất có thể không được lưu.</string>
 
     <!-- Days of Week -->
     <string name="sun">CN</string>
@@ -122,4 +125,75 @@
     <string name="discard_changes">Hủy bỏ thay đổi?</string>
     <string name="discard_confirmation">Bạn có thay đổi chưa lưu. Bạn có chắc muốn hủy bỏ chúng?</string>
     <string name="discard">Hủy bỏ</string>
+
+    <!-- Store -->
+    <string name="home">Trang chủ</string>
+    <string name="my_theme">Của tôi</string>
+    <string name="collections">Bộ sưu tập</string>
+    <string name="all_themes">Tất cả</string>
+    <string name="light_mode">Chế độ sáng</string>
+    <string name="dark_mode">Chế độ tối</string>
+    <string name="exclusive">Độc quyền</string>
+    <string name="newest">Mới nhất</string>
+    <string name="featured_collections">Bộ sưu tập nổi bật</string>
+    <string name="view_all">Xem tất cả</string>
+    <string name="icon_collections">Bộ sưu tập biểu tượng</string>
+    <string name="current_theme">GIAO DIỆN HIỆN TẠI</string>
+    <string name="theme_updated_success">Cập nhật giao diện thành công!</string>
+    <string name="confirm_activation">Xác nhận kích hoạt</string>
+    <string name="confirm_activation_msg">Bạn có chắc chắn muốn kích hoạt %1$s?</string>
+    <string name="purchase_success">Mua thành công!</string>
+    <string name="purchase_success_msg">Bạn đã mua thành công %1$s.</string>
+
+    <!-- Security -->
+    <string name="enter_passcode">Nhập mã PIN</string>
+    <string name="create_passcode">Tạo mã PIN</string>
+    <string name="confirm_passcode">Xác nhận mã PIN</string>
+    <string name="passcodes_do_not_match">Mã PIN không khớp. Vui lòng thử lại.</string>
+    <string name="wrong_passcode">Sai mã PIN. Vui lòng thử lại.</string>
+    <string name="use_biometric">Sử dụng vân tay để mở khóa</string>
+    <string name="unlock_app">Mở khóa Moon Page</string>
+    <string name="forgot_passcode">Quên mã PIN?</string>
+
+    <!-- Stats Extra -->
+    <string name="look_back">Nhìn lại năm %1$s của bạn.</string>
+    <string name="avg_cycle">Chu kỳ trung bình: %1$d ngày</string>
+    <string name="avg_period">Kinh nguyệt trung bình: %1$d ngày</string>
+    <string name="avg_sleep">Ngủ trung bình: %1$.1fh</string>
+    <string name="sleep_quality">Chất lượng giấc ngủ: %1$s</string>
+    <string name="good">Tốt</string>
+    <string name="fair">Bình thường</string>
+    <string name="poor">Kém</string>
+
+    <!-- Calendar Extra -->
+    <string name="delete_moment">Xóa khoảnh khắc</string>
+    <string name="delete_moment_confirmation">Bạn có chắc chắn muốn xóa khoảnh khắc này?</string>
+    <string name="delete_moment_warning">Hành động này không thể hoàn tác và bản ghi sẽ bị mất vĩnh viễn.</string>
+    <string name="future_date_error">Bạn không thể ghi chép cho ngày trong tương lai!</string>
+    <string name="month_format">Tháng %1$d %2$d</string>
+    <string name="reflect_journey">Nhìn lại hành trình của bạn với MoonPage</string>
+    <string name="strength_training">Tập thể lực %1$dp</string>
+    <string name="not_started">Chưa bắt đầu</string>
+    <string name="on_day_x">Ngày thứ %1$d</string>
+    <string name="streak">Chuỗi</string>
+    <string name="back">Quay lại</string>
+    <string name="theme_detail">Chi tiết giao diện</string>
+    <string name="theme_description_default">Trải nghiệm vẻ đẹp của bộ giao diện độc đáo này.</string>
+    <string name="activate">Kích hoạt</string>
+    <string name="buy_for">Mua với %1$d</string>
+    <string name="theme_includes">BAO GỒM: BIỂU TƯỢNG LỊCH, HÌNH NỀN CAO CẤP, TÔNG MÀU UI RIÊNG</string>
+
+    <!-- Account & Settings Extra -->
+    <string name="set_username">Đổi tên người dùng</string>
+    <string name="user_id">Mã người dùng</string>
+    <string name="copy">Sao chép</string>
+    <string name="user_id_copied">Đã sao chép mã người dùng!</string>
+    <string name="birthday">Ngày sinh</string>
+    <string name="gender">Giới tính</string>
+    <string name="login_information">Thông tin đăng nhập</string>
+    <string name="my_social_account">Tài khoản xã hội</string>
+    <string name="change_social_account">Đổi tài khoản xã hội</string>
+    <string name="not_specified">Chưa xác định</string>
+    <string name="current_passcode">Mã PIN hiện tại</string>
+    <string name="wrong_passcode_try_again">Sai mã PIN. Vui lòng thử lại.</string>
 </resources>
