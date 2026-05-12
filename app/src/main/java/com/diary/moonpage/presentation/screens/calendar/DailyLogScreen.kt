@@ -49,6 +49,8 @@ import androidx.compose.ui.graphics.ColorFilter
 import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import com.diary.moonpage.core.theme.MoonTheme
 import com.diary.moonpage.core.theme.MoonThemeType
+import com.diary.moonpage.presentation.tutorial.TutorialOverlay
+import com.diary.moonpage.presentation.tutorial.TutorialStep
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.YearMonth
@@ -68,6 +70,9 @@ fun DailyLogScreen(
     onNavigateToMenstrualCycle: () -> Unit,
     onNavigateToDailyPhoto: () -> Unit,
     onDone: (String) -> Unit,
+    tutorialStep: TutorialStep? = null,
+    onTutorialNext: () -> Unit = {},
+    onSkipTutorial: () -> Unit = {},
     viewModel: DailyLogViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -123,6 +128,9 @@ fun DailyLogScreen(
         checkLogExists = { date, callback -> viewModel.checkLogExists(date, callback) },
         setPendingDate = { date -> viewModel.setPendingDate(date) },
         getSpotifyAuthUrl = { viewModel.getSpotifyAuthUrl() },
+        tutorialStep = tutorialStep,
+        onTutorialNext = onTutorialNext,
+        onSkipTutorial = onSkipTutorial,
         scope = scope
     )
 }
@@ -143,6 +151,9 @@ fun DailyLogScreenContent(
     checkLogExists: (LocalDate, (Boolean) -> Unit) -> Unit,
     setPendingDate: (LocalDate) -> Unit,
     getSpotifyAuthUrl: suspend () -> String,
+    tutorialStep: TutorialStep?,
+    onTutorialNext: () -> Unit,
+    onSkipTutorial: () -> Unit,
     scope: kotlinx.coroutines.CoroutineScope
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -162,40 +173,55 @@ fun DailyLogScreenContent(
     val focusManager = LocalFocusManager.current
     val uriHandler = LocalUriHandler.current
 
-    Scaffold(
-        modifier = Modifier.pointerInput(Unit) {
-            detectTapGestures(onTap = {
-                focusManager.clearFocus()
-            })
-        },
-        topBar = {
-            DailyLogTopBar(
-                date = uiState.date,
-                onBackClick = { if (hasChanges) onEvent(DailyLogUiEvent.OnExitClick) else onNavigateBack() },
-                onDateClick = { onEvent(DailyLogUiEvent.OnDatePickerClick) }
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            modifier = Modifier.pointerInput(Unit) {
+                detectTapGestures(onTap = {
+                    focusManager.clearFocus()
+                })
+            },
+            topBar = {
+                DailyLogTopBar(
+                    date = uiState.date,
+                    onBackClick = { if (hasChanges) onEvent(DailyLogUiEvent.OnExitClick) else onNavigateBack() },
+                    onDateClick = { onEvent(DailyLogUiEvent.OnDatePickerClick) }
+                )
+            },
+            bottomBar = {
+                DailyLogBottomBar(
+                    isLoading = uiState.isLoading,
+                    onSaveClick = { onEvent(DailyLogUiEvent.OnSaveClick) }
+                )
+            },
+            containerColor = MaterialTheme.colorScheme.background
+        ) { paddingValues ->
+            Box(modifier = Modifier.fillMaxSize()) {
+                DailyLogMainContent(
+                    modifier = Modifier.padding(paddingValues),
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    onNavigateToMusic = onNavigateToMusic,
+                    onNavigateToMenstrualCycle = onNavigateToMenstrualCycle,
+                    onNavigateToDailyPhoto = onNavigateToDailyPhoto,
+                    onImportSteps = onImportSteps,
+                    onLinkMusicAccount = onLinkMusicAccount
+                )
+                
+                MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
+            }
+        }
+
+        if (tutorialStep in setOf(TutorialStep.DailyActivities, TutorialStep.DailySleep, TutorialStep.DailyNote, TutorialStep.DailyPhoto)) {
+            TutorialOverlay(
+                step = tutorialStep!!,
+                onSkipStep = {
+                    onTutorialNext()
+                    if (tutorialStep == TutorialStep.DailyPhoto) {
+                        onNavigateBack()
+                    }
+                },
+                onSkipTutorial = onSkipTutorial
             )
-        },
-        bottomBar = {
-            DailyLogBottomBar(
-                isLoading = uiState.isLoading,
-                onSaveClick = { onEvent(DailyLogUiEvent.OnSaveClick) }
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            DailyLogMainContent(
-                modifier = Modifier.padding(paddingValues),
-                uiState = uiState,
-                onEvent = onEvent,
-                onNavigateToMusic = onNavigateToMusic,
-                onNavigateToMenstrualCycle = onNavigateToMenstrualCycle,
-                onNavigateToDailyPhoto = onNavigateToDailyPhoto,
-                onImportSteps = onImportSteps,
-                onLinkMusicAccount = onLinkMusicAccount
-            )
-            
-            MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 

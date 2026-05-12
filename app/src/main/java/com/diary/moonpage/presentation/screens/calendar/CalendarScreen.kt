@@ -37,6 +37,8 @@ import com.diary.moonpage.core.util.ComposeCaptureUtils
 import com.diary.moonpage.core.util.ImageUtils
 import com.diary.moonpage.presentation.components.calendar.*
 import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
+import com.diary.moonpage.presentation.tutorial.TutorialOverlay
+import com.diary.moonpage.presentation.tutorial.TutorialStep
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
@@ -54,6 +56,9 @@ fun CalendarScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToDailyLog: (String) -> Unit,
     onNavigateToThemeCalendar: () -> Unit = {},
+    tutorialStep: TutorialStep? = null,
+    onTutorialNext: () -> Unit = {},
+    onSkipTutorial: () -> Unit = {},
     viewModel: CalendarViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -79,6 +84,9 @@ fun CalendarScreen(
         onNavigateToSettings = onNavigateToSettings,
         onNavigateToDailyLog = onNavigateToDailyLog,
         onNavigateToThemeCalendar = onNavigateToThemeCalendar,
+        tutorialStep = tutorialStep,
+        onTutorialNext = onTutorialNext,
+        onSkipTutorial = onSkipTutorial,
         showSnackbar = viewModel::showSnackbar
     )
 }
@@ -93,6 +101,9 @@ fun CalendarScreenContent(
     onNavigateToSettings: () -> Unit,
     onNavigateToDailyLog: (String) -> Unit,
     onNavigateToThemeCalendar: () -> Unit,
+    tutorialStep: TutorialStep?,
+    onTutorialNext: () -> Unit,
+    onSkipTutorial: () -> Unit,
     showSnackbar: (String) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -130,38 +141,39 @@ fun CalendarScreenContent(
         }
     }
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = paddingValues.calculateBottomPadding())
-        ) {
-            CalendarTopBar(
-                onFilterClick = { onEvent(CalendarUiEvent.OnFilterClick) },
-                onSettingsClick = onNavigateToSettings,
-                onThemeClick = onNavigateToThemeCalendar,
-                isFilterActive = uiState.selectedFilter != null,
-                modifier = Modifier.statusBarsPadding()
-            )
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background
+        ) { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = paddingValues.calculateBottomPadding())
+            ) {
+                CalendarTopBar(
+                    onFilterClick = { onEvent(CalendarUiEvent.OnFilterClick) },
+                    onSettingsClick = onNavigateToSettings,
+                    onThemeClick = onNavigateToThemeCalendar,
+                    isFilterActive = uiState.selectedFilter != null,
+                    modifier = Modifier.statusBarsPadding()
+                )
 
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.Top,
-                beyondViewportPageCount = 1
-            ) { page ->
-                val offset = page - initialPage
-                val pageYearMonth = baseYearMonth.plusMonths(offset.toLong())
-                val currentMonthName = pageYearMonth.format(java.time.format.DateTimeFormatter.ofPattern("MMM yyyy"))
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.Top,
+                    beyondViewportPageCount = 1
+                ) { page ->
+                    val offset = page - initialPage
+                    val pageYearMonth = baseYearMonth.plusMonths(offset.toLong())
+                    val currentMonthName = pageYearMonth.format(java.time.format.DateTimeFormatter.ofPattern("MMM yyyy"))
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        Spacer(modifier = Modifier.height(8.dp))
 
                     CalendarMonthHeader(
                         currentMonthName = currentMonthName,
@@ -186,7 +198,10 @@ fun CalendarScreenContent(
                                 showSnackbar("You cannot record for a future date!")
                             } else {
                                 onEvent(CalendarUiEvent.OnDateSelected(date))
-                                if (uiState.dailyLogs[date] == null) {
+                                if (tutorialStep == TutorialStep.PickToday && date != LocalDate.now()) {
+                                    showSnackbar("Choose today to start the tutorial.")
+                                } else if (uiState.dailyLogs[date] == null) {
+                                    if (tutorialStep == TutorialStep.PickToday) onTutorialNext()
                                     onNavigateToDailyLog(date.toString())
                                 }
                             }
@@ -209,12 +224,24 @@ fun CalendarScreenContent(
                     )
 
                     Spacer(modifier = Modifier.height(100.dp))
+                    }
                 }
             }
+            
+            Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
+            }
         }
-        
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
+
+        if (tutorialStep == TutorialStep.PickToday) {
+            TutorialOverlay(
+                step = tutorialStep,
+                onSkipStep = {
+                    onTutorialNext()
+                    onNavigateToDailyLog(LocalDate.now().toString())
+                },
+                onSkipTutorial = onSkipTutorial
+            )
         }
     }
 

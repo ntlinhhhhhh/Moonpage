@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.LayoutDirection
@@ -30,6 +31,10 @@ import com.diary.moonpage.presentation.screens.stats.StatisticsScreen
 import com.diary.moonpage.presentation.screens.store.StoreScreen
 import com.diary.moonpage.presentation.screens.store.StoreViewModel
 import com.diary.moonpage.presentation.screens.store.ThemeDetailScreen
+import com.diary.moonpage.presentation.tutorial.TutorialOverlay
+import com.diary.moonpage.presentation.tutorial.TutorialStep
+import com.diary.moonpage.presentation.tutorial.TutorialViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun AppNavigation() {
@@ -40,6 +45,14 @@ fun AppNavigation() {
     val authViewModel: AuthViewModel = hiltViewModel()
     val onboardingViewModel: OnboardingViewModel = hiltViewModel()
     val activityCategoryViewModel: ActivityCategoryViewModel = hiltViewModel()
+    val tutorialViewModel: TutorialViewModel = hiltViewModel()
+    val tutorialState by tutorialViewModel.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(currentRoute) {
+        if (currentRoute == Screen.Calendar.route) {
+            tutorialViewModel.refresh()
+        }
+    }
 
     val mainAppRoutes = listOf(
         Screen.Calendar.route,
@@ -206,7 +219,10 @@ fun AppNavigation() {
             calendarScreen(
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 onNavigateToDailyLog = { dateStr -> navController.navigate("daily_log_screen/$dateStr") },
-                onNavigateToThemeCalendar = { navController.navigate(Screen.ThemeCalendar.route) }
+                onNavigateToThemeCalendar = { navController.navigate(Screen.ThemeCalendar.route) },
+                tutorialStep = tutorialState.step.takeIf { tutorialState.isVisible && it == TutorialStep.PickToday },
+                onTutorialNext = { tutorialViewModel.next() },
+                onSkipTutorial = { tutorialViewModel.complete() }
             )
 
             composable(Screen.Filter.route) {
@@ -234,12 +250,33 @@ fun AppNavigation() {
                         onNavigateToMenstrualCycle = { navController.navigate(Screen.MenstrualCycle.route) },
                         onNavigateToDailyPhoto = { navController.navigate(Screen.DailyPhoto.route) },
                         onDone = { message ->
+                            if (tutorialState.isVisible && tutorialState.step in setOf(
+                                    TutorialStep.DailyActivities,
+                                    TutorialStep.DailySleep,
+                                    TutorialStep.DailyNote,
+                                    TutorialStep.DailyPhoto
+                                )
+                            ) {
+                                while (tutorialViewModel.state.value.step != TutorialStep.Stats) {
+                                    tutorialViewModel.next()
+                                }
+                            }
                             navController.previousBackStackEntry?.savedStateHandle?.apply {
                                 set("created_log_date", dateStr)
                                 set("logSavedMessage", message)
                             }
                             navController.popBackStack()
-                        }
+                        },
+                        tutorialStep = tutorialState.step.takeIf {
+                            tutorialState.isVisible && it in setOf(
+                                TutorialStep.DailyActivities,
+                                TutorialStep.DailySleep,
+                                TutorialStep.DailyNote,
+                                TutorialStep.DailyPhoto
+                            )
+                        },
+                        onTutorialNext = { tutorialViewModel.next() },
+                        onSkipTutorial = { tutorialViewModel.complete() }
                     )
                     
                     // Trigger the VM update when a song is returned from MusicScreen
@@ -446,6 +483,20 @@ fun AppNavigation() {
                     )
                 }
             }
+        }
+
+        if (tutorialState.isVisible && currentRoute == Screen.Calendar.route && tutorialState.step in setOf(
+                TutorialStep.Stats,
+                TutorialStep.Camera,
+                TutorialStep.Store,
+                TutorialStep.Profile
+            )
+        ) {
+            TutorialOverlay(
+                step = tutorialState.step,
+                onSkipStep = { tutorialViewModel.next() },
+                onSkipTutorial = { tutorialViewModel.complete() }
+            )
         }
     }
 }

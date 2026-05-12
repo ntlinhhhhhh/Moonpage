@@ -22,6 +22,7 @@ class OnboardingPrefsManager @Inject constructor(
     companion object {
         // Lưu danh sách userId đã hoàn thành onboarding (cách nhau bằng dấu phẩy)
         private val COMPLETED_USERS_KEY = stringPreferencesKey("completed_user_ids")
+        private val COMPLETED_TUTORIAL_USERS_KEY = stringPreferencesKey("completed_tutorial_user_ids")
     }
 
     /** Kiểm tra xem userId này đã hoàn thành onboarding chưa */
@@ -49,6 +50,22 @@ class OnboardingPrefsManager @Inject constructor(
             val set = current.split(",").filter { it.isNotBlank() }.toMutableSet()
             set.remove(userId)
             prefs[COMPLETED_USERS_KEY] = set.joinToString(",")
+        }
+    }
+
+    suspend fun checkTutorialCompleted(userId: String): Boolean {
+        val completedIds = context.onboardingDataStore.data
+            .map { prefs -> prefs[COMPLETED_TUTORIAL_USERS_KEY] ?: "" }
+            .first()
+        return userId in completedIds.split(",").filter { it.isNotBlank() }
+    }
+
+    suspend fun setTutorialCompleted(userId: String) {
+        context.onboardingDataStore.edit { prefs ->
+            val current = prefs[COMPLETED_TUTORIAL_USERS_KEY] ?: ""
+            val set = current.split(",").filter { it.isNotBlank() }.toMutableSet()
+            set.add(userId)
+            prefs[COMPLETED_TUTORIAL_USERS_KEY] = set.joinToString(",")
         }
     }
 }
