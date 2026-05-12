@@ -35,7 +35,7 @@ class StatisticsRepositoryImpl @Inject constructor(
         }
 
         return try {
-            val response = statisticsApi.getStatisticsSummary(year, month)
+            val response = statisticsApi.getStatisticsSummary(year, month, isMonthly)
             if (response.isSuccessful && response.body() != null) {
                 statisticsDao.insertStatistics(
                     StatisticsEntity(userId, year, month, isMonthly, response.body()!!)

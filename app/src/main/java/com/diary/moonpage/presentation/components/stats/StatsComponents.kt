@@ -177,6 +177,25 @@ fun MoodFlowChart(
         shades[4]
     )
     
+    val filteredMoods = remember(moodFlow, year, month, isMonthly) {
+        if (isMonthly) {
+            val monthStr = String.format(Locale.ENGLISH, "%04d-%02d", year, month)
+            moodFlow.filter { it.date.startsWith(monthStr) }
+        } else {
+            // Aggregate by month for Annual View
+            val yearStr = year.toString()
+            val yearLogs = moodFlow.filter { it.date.startsWith(yearStr) }
+            (1..12).mapNotNull { m ->
+                val mStr = String.format(Locale.ENGLISH, "%s-%02d", yearStr, m)
+                val monthLogs = yearLogs.filter { it.date.startsWith(mStr) }
+                if (monthLogs.isNotEmpty()) {
+                    val avgMood = monthLogs.map { it.moodId }.average().toInt()
+                    MoodFlowDto(date = "$mStr-01", moodId = avgMood)
+                } else null
+            }
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -218,7 +237,7 @@ fun MoodFlowChart(
                 if (isMonthly && menstruationDates.isNotEmpty()) {
                     val daysInMonth = YearMonth.of(year, month).lengthOfMonth()
                     val dx = if (daysInMonth > 1) width / (daysInMonth - 1) else 0f
-                    val currentMonthStr = String.format("%04d-%02d", year, month)
+                    val currentMonthStr = String.format(Locale.ENGLISH, "%04d-%02d", year, month)
                     
                     menstruationDates.filter { it.startsWith(currentMonthStr) }.forEach { dateStr ->
                         try {
@@ -233,14 +252,7 @@ fun MoodFlowChart(
                     }
                 }
 
-                if (moodFlow.isNotEmpty()) {
-                    val currentMonthStr = String.format("%04d-%02d", year, month)
-                    val filteredMoods = if (isMonthly) {
-                        moodFlow.filter { it.date.startsWith(currentMonthStr) }
-                    } else {
-                        moodFlow.filter { it.date.startsWith(year.toString()) }
-                    }
-
+                if (filteredMoods.isNotEmpty()) {
                     val path = Path()
                     val maxSlots = if (isMonthly) {
                         YearMonth.of(year, month).lengthOfMonth() - 1
@@ -413,11 +425,20 @@ fun MoodDistributionView(
 @Composable
 fun YearlyGridChart(
     yearlyMoodGrid: List<MoodFlowDto>,
+    year: Int,
     menstruationDates: List<String> = emptyList(),
     themeType: MoonThemeType = MoonThemeType.DEFAULT
 ) {
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
     val gridColor = MoonTheme.customColors.logItemBg
+    
+    // Optimize lookups by converting list to map
+    val moodMap = remember(yearlyMoodGrid) { 
+        yearlyMoodGrid.associateBy { it.date } 
+    }
+    val periodSet = remember(menstruationDates) { 
+        menstruationDates.toSet() 
+    }
     
     Column(modifier = Modifier.fillMaxWidth()) {
         Box(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
@@ -449,9 +470,9 @@ fun YearlyGridChart(
                             textAlign = TextAlign.Start
                         )
                         (1..12).forEach { month ->
-                            val dateStr = String.format("%04d-%02d-%02d", 2026, month, day)
-                            val mood = yearlyMoodGrid.find { it.date == dateStr }
-                            val isPeriod = menstruationDates.contains(dateStr)
+                            val dateStr = String.format(Locale.ENGLISH, "%04d-%02d-%02d", year, month, day)
+                            val mood = moodMap[dateStr]
+                            val isPeriod = periodSet.contains(dateStr)
                             
                             val color = if (mood != null) {
                                 MoonIcons.Moods.getMoodColor(mood.moodId, themeType)

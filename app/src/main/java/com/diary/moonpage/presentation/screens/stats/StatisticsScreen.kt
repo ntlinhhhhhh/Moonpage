@@ -10,7 +10,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -89,7 +92,7 @@ fun StatisticsScreenContent(
                             fontSize = 18.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                        Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                 }
@@ -154,8 +157,8 @@ fun StatisticsScreenContent(
                             SleepMoodCorrelationChart(stats?.sleepAnalysis ?: emptyList(), uiState.themeType)
                         }
 
-                        // 4. Mood Distribution
-                        StatsCard(title = "Mood Distribution") {
+                        // 4. Mood Bar
+                        StatsCard(title = "Mood Bar") {
                             MoodDistributionView(stats?.moodDistribution ?: emptyList(), themeType = uiState.themeType)
                         }
                         
@@ -190,16 +193,54 @@ fun StatisticsScreenContent(
                     } else {
                         // --- ANNUAL VIEW ---
                         
-                        // 1. Yearly Grid (Mood Mandala)
-                        StatsCard(title = "Mood Mandala") {
-                            YearlyGridChart(
-                                yearlyMoodGrid = stats?.yearlyMoodGrid ?: emptyList(),
-                                menstruationDates = if (!isMale) stats?.menstruationData ?: emptyList() else emptyList(),
+                        // 1. Mood Flow (Yearly)
+                        StatsCard(title = "Mood Flow") {
+                            MoodFlowChart(
+                                moodFlow = stats?.moodFlow ?: emptyList(), 
+                                year = uiState.selectedYear, 
+                                month = uiState.selectedMonth, 
+                                isMonthly = false, 
                                 themeType = uiState.themeType
                             )
                         }
 
-                        // 2. Monthly Mood Average
+                        // 2. Mood Bar (Yearly)
+                        StatsCard(title = "Mood Bar") {
+                            MoodDistributionView(
+                                distribution = stats?.moodDistribution ?: emptyList(), 
+                                themeType = uiState.themeType
+                            )
+                        }
+
+                        // 3. Year in Beans
+                        StatsCard(title = "Year in Beans") {
+                            Column {
+                                Text(
+                                    text = buildAnnotatedString {
+                                        append("Look back on your ")
+                                        withStyle(
+                                            SpanStyle(
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        ) {
+                                            append("${uiState.selectedYear}.")
+                                        }
+                                    },
+                                    fontSize = 16.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(bottom = 16.dp)
+                                )
+                                YearlyGridChart(
+                                    yearlyMoodGrid = stats?.yearlyMoodGrid ?: emptyList(),
+                                    year = uiState.selectedYear,
+                                    menstruationDates = if (!isMale) stats?.menstruationData ?: emptyList() else emptyList(),
+                                    themeType = uiState.themeType
+                                )
+                            }
+                        }
+
+                        // 4. Monthly Mood Average
                         StatsCard(title = "Monthly Average") {
                             MonthlyMoodAverageChart(
                                 yearlyMoodGrid = stats?.yearlyMoodGrid ?: emptyList(), 
@@ -208,7 +249,15 @@ fun StatisticsScreenContent(
                             )
                         }
 
-                        // 3. Yearly Trends (Cycle & Sleep)
+                        // 5. Yearly Top Activities
+                        StatsCard(title = "Yearly Top Activities") {
+                            FrequentlyRecordedView(
+                                activities = frequentlyRecorded,
+                                onIconClick = onIconClick
+                            )
+                        }
+
+                        // 6. Trends
                         if (!isMale) {
                             StatsCard(title = "Yearly Cycle Trends") {
                                 Text("Average Cycle: 28 days", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
@@ -219,14 +268,6 @@ fun StatisticsScreenContent(
                         StatsCard(title = "Yearly Sleep Trends") {
                             Text("Avg Sleep: 7.2h", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                             Text("Sleep Quality: Good", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-
-                        // 4. Yearly Top Activities
-                        StatsCard(title = "Yearly Top Activities") {
-                            FrequentlyRecordedView(
-                                activities = frequentlyRecorded,
-                                onIconClick = onIconClick
-                            )
                         }
                     }
 
