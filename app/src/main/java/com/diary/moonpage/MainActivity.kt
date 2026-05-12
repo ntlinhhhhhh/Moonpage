@@ -116,6 +116,9 @@ class MainActivity : ComponentActivity() {
                                 val token = response.body()!!.accessToken
                                 tokenManager.saveSpotifyToken("Bearer $token")
                                 mainViewModel.showSnackbar("Spotify linked successfully!")
+                            } else {
+                                val errorMsg = response.errorBody()?.string() ?: "Unknown error"
+                                mainViewModel.showSnackbar("Linking failed: $errorMsg")
                             }
                         } catch (e: Exception) {
                             mainViewModel.showSnackbar("Connection error: ${e.message}")

@@ -63,7 +63,7 @@ fun ThemeDetailScreen(
                     snackbarHostState.showSnackbar(effect.message)
                 }
                 is StoreUiEffect.ThemeActivated -> {
-                    // Handled via uiState.activationSuccess for better persistence during theme recomposition
+                    snackbarHostState.showSnackbar("Theme updated successfully!")
                 }
                 is StoreUiEffect.NavigateBack -> {
                     onNavigateBack()
@@ -76,6 +76,7 @@ fun ThemeDetailScreen(
     LaunchedEffect(uiState.activationSuccess) {
         if (uiState.activationSuccess) {
             snackbarHostState.showSnackbar("Theme updated successfully!")
+            delay(1000)
             viewModel.dismissSuccessMessage()
         }
     }

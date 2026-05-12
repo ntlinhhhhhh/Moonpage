@@ -259,14 +259,17 @@ fun CalendarScreenContent(
     }
 
     if (uiState.showFilterSheet) {
+        val isActuallyDark = MaterialTheme.colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
+        val sheetBgColor = if (isActuallyDark) com.diary.moonpage.core.theme.MoonBgDark else Color.White
+
         @OptIn(ExperimentalMaterial3Api::class)
         ModalBottomSheet(
             onDismissRequest = { onEvent(CalendarUiEvent.OnFilterDismiss) },
+            containerColor = sheetBgColor,
             tonalElevation = 0.dp,
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
             dragHandle = {
-                val dragHandleColor = if (androidx.compose.foundation.isSystemInDarkTheme()) MaterialTheme.colorScheme.background else Color.White
-                BottomSheetDefaults.DragHandle(color = dragHandleColor)
+                BottomSheetDefaults.DragHandle(color = sheetBgColor)
             }
         ) {
             FilterScreen(
