@@ -17,11 +17,13 @@ class AuthInterceptor @Inject constructor(
             tokenManager.getToken().first()
         }
         
-        val request = chain.request().newBuilder()
-        if (token != null) {
-            request.addHeader("Authorization", "Bearer $token")
+        val requestBuilder = chain.request().newBuilder()
+        val host = chain.request().url.host
+        
+        if (token != null && host == "hieu-wikipedia.io.vn") {
+            requestBuilder.addHeader("Authorization", "Bearer $token")
         }
         
-        return chain.proceed(request.build())
+        return chain.proceed(requestBuilder.build())
     }
 }

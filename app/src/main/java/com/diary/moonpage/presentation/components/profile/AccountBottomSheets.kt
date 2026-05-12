@@ -268,8 +268,8 @@ fun BirthdayBottomSheetContent(
         ) {
             // Lines
             Column(modifier = Modifier.fillMaxWidth().height(44.dp), verticalArrangement = Arrangement.SpaceBetween) {
-                Divider(color = colorScheme.onSurface.copy(alpha = 0.15f), thickness = 1.dp)
-                Divider(color = colorScheme.onSurface.copy(alpha = 0.15f), thickness = 1.dp)
+                HorizontalDivider(color = colorScheme.onSurface.copy(alpha = 0.15f), thickness = 1.dp)
+                HorizontalDivider(color = colorScheme.onSurface.copy(alpha = 0.15f), thickness = 1.dp)
             }
 
             Row(

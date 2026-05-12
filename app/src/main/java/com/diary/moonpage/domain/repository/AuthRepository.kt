@@ -10,4 +10,5 @@ interface AuthRepository {
     suspend fun forgotPassword(request: ForgotPasswordRequestDTO): Result<Unit>
     suspend fun verifyOtp(request: VerifyOtpRequestDTO): Result<VerifyOtpResponseDTO>
     suspend fun resetPassword(request: ResetPasswordRequestDTO): Result<Unit>
+    suspend fun deleteAccount(): Result<Unit>
 }
