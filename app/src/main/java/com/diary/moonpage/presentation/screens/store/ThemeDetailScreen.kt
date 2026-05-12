@@ -133,7 +133,9 @@ fun ThemeDetailScreen(
                         .height(32.dp)
                         .padding(end = 16.dp)
                         .align(Alignment.CenterEnd)
-                        .graphicsLayer(translationX = shakeOffset.value)
+                        .graphicsLayer {
+                            translationX = shakeOffset.value
+                        }
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 8.dp),

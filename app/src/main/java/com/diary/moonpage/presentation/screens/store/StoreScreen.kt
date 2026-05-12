@@ -75,20 +75,9 @@ fun StoreScreen(
                     onTabSelected = { viewModel.onTabSelected(it) }
                 )
 
-                AnimatedContent(
+                Crossfade(
                     targetState = uiState.selectedTabIndex,
-                    transitionSpec = {
-                        val slideSpec = tween<IntOffset>(300)
-                        if (targetState > initialState) {
-                            (slideInHorizontally(animationSpec = slideSpec) { it } + fadeIn()).togetherWith(
-                                slideOutHorizontally(animationSpec = slideSpec) { -it } + fadeOut()
-                            )
-                        } else {
-                            (slideInHorizontally(animationSpec = slideSpec) { -it } + fadeIn()).togetherWith(
-                                slideOutHorizontally(animationSpec = slideSpec) { it } + fadeOut()
-                            )
-                        }.using(SizeTransform(clip = false))
-                    },
+                    animationSpec = tween(300),
                     label = "TabAnimation"
                 ) { targetIndex ->
                     when (targetIndex) {
