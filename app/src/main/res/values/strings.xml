@@ -32,4 +32,10 @@
     <string name="delete_account">Delete Account</string>
     <string name="select_language">Select Language</string>
     <string name="close">Close</string>
+    <string name="dark">Dark</string>
+    <string name="light">Light</string>
+    <string name="system">System</string>
+    <string name="delete_account_confirmation">Are you sure you want to delete your account? This action cannot be undone.</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
 </resources>

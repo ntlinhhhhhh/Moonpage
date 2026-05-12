@@ -23,6 +23,7 @@ import com.diary.moonpage.presentation.screens.calendar.DailyPhotoScreen
 import com.diary.moonpage.presentation.screens.calendar.FilterScreen
 import com.diary.moonpage.presentation.screens.calendar.MenstrualCycleScreen
 import com.diary.moonpage.presentation.screens.calendar.MusicScreen
+import com.diary.moonpage.presentation.screens.calendar.ShareLogScreen
 import com.diary.moonpage.presentation.screens.calendar.calendarScreen
 import com.diary.moonpage.presentation.screens.moment.MomentCameraScreen
 import com.diary.moonpage.presentation.screens.moment.MomentDetailScreen
@@ -52,32 +53,11 @@ fun AppNavigation() {
     val showBottomBar = currentRoute in mainAppRoutes
 
     Scaffold(
-        // Remove bottomBar from Scaffold to handle it as an overlay for smoother transitions
+        // We keep BottomBar outside AnimatedVisibility for main routes to prevent jitter
     ) { paddingValues ->
         val systemBottomPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
         val barHeight = 64.dp
         val totalBottomPadding = barHeight + systemBottomPadding
-        @Composable
-        fun ScreenWrapper(route: String, content: @Composable () -> Unit) {
-            val isMainRoute = route in mainAppRoutes
-            // Screens that handle their own status bar padding for a more custom layout
-            val isEdgeToEdge = route == Screen.Store.route || 
-                               route == Screen.ThemeDetail.route || 
-                               route.startsWith("daily_log_screen")
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .then(if (!isEdgeToEdge) Modifier.statusBarsPadding() else Modifier)
-                    .padding(
-                        bottom = if (isMainRoute) totalBottomPadding else 0.dp,
-                        start = paddingValues.calculateStartPadding(LayoutDirection.Ltr),
-                        end = paddingValues.calculateEndPadding(LayoutDirection.Ltr)
-                    )
-            ) {
-                content()
-            }
-        }
 
         Box(modifier = Modifier.fillMaxSize()) {
             NavHost(
@@ -85,16 +65,32 @@ fun AppNavigation() {
                 startDestination = Screen.Loading.route,
                 modifier = Modifier,
                 enterTransition = {
-                    fadeIn(animationSpec = tween(400)) + slideInHorizontally(
-                        initialOffsetX = { 300 },
-                        animationSpec = tween(400)
-                    )
+                    val target = targetState.destination.route
+                    val initial = initialState.destination.route
+                    val isTabSwitch = target in mainAppRoutes && initial in mainAppRoutes
+                    
+                    if (isTabSwitch) {
+                        fadeIn(animationSpec = tween(200))
+                    } else {
+                        fadeIn(animationSpec = tween(400)) + slideInHorizontally(
+                            initialOffsetX = { 300 },
+                            animationSpec = tween(400)
+                        )
+                    }
                 },
                 exitTransition = {
-                    fadeOut(animationSpec = tween(400)) + slideOutHorizontally(
-                        targetOffsetX = { -300 },
-                        animationSpec = tween(400)
-                    )
+                    val target = targetState.destination.route
+                    val initial = initialState.destination.route
+                    val isTabSwitch = target in mainAppRoutes && initial in mainAppRoutes
+
+                    if (isTabSwitch) {
+                        fadeOut(animationSpec = tween(200))
+                    } else {
+                        fadeOut(animationSpec = tween(400)) + slideOutHorizontally(
+                            targetOffsetX = { -300 },
+                            animationSpec = tween(400)
+                        )
+                    }
                 },
                 popEnterTransition = {
                     fadeIn(animationSpec = tween(400)) + slideInHorizontally(
@@ -110,7 +106,7 @@ fun AppNavigation() {
                 }
             ) {
                 composable(Screen.Loading.route) {
-                    ScreenWrapper(Screen.Loading.route) {
+                    ScreenWrapper(Screen.Loading.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         LoadingScreen(
                             onFinished = { isLoggedIn, needsOnboarding ->
                                 val nextDestination = when {
@@ -127,7 +123,7 @@ fun AppNavigation() {
                 }
 
                 composable(Screen.Landing.route) {
-                    ScreenWrapper(Screen.Landing.route) {
+                    ScreenWrapper(Screen.Landing.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         LandingScreen(
                             onNavigateToLogin = { navController.navigate(Screen.Login.route) },
                             onNavigateToRegister = { navController.navigate(Screen.Register.route) }
@@ -157,7 +153,7 @@ fun AppNavigation() {
                 )
 
                 composable(Screen.OnboardingBirthday.route) {
-                    ScreenWrapper(Screen.OnboardingBirthday.route) {
+                    ScreenWrapper(Screen.OnboardingBirthday.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         OnboardingBirthdayScreen(
                             viewModel = onboardingViewModel,
                             onNavigateBack = { navController.popBackStack() },
@@ -167,7 +163,7 @@ fun AppNavigation() {
                 }
 
                 composable(Screen.OnboardingGender.route) {
-                    ScreenWrapper(Screen.OnboardingGender.route) {
+                    ScreenWrapper(Screen.OnboardingGender.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         OnboardingGenderScreen(
                             viewModel = onboardingViewModel,
                             onNavigateBack = { navController.popBackStack() },
@@ -179,7 +175,7 @@ fun AppNavigation() {
                 }
 
                 composable(Screen.ActivityCategorySelection.route) {
-                    ScreenWrapper(Screen.ActivityCategorySelection.route) {
+                    ScreenWrapper(Screen.ActivityCategorySelection.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         ActivityCategorySelectionScreen(
                             viewModel = activityCategoryViewModel,
                             onNext = {
@@ -195,11 +191,12 @@ fun AppNavigation() {
                 calendarScreen(
                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                     onNavigateToDailyLog = { dateStr -> navController.navigate("daily_log_screen/$dateStr") },
+                    onNavigateToShareLog = { dateStr -> navController.navigate("share_log_screen/$dateStr") },
                     onNavigateToThemeCalendar = { navController.navigate(Screen.ThemeCalendar.route) }
                 )
 
                 composable(Screen.Filter.route) {
-                    ScreenWrapper(Screen.Filter.route) {
+                    ScreenWrapper(Screen.Filter.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         FilterScreen(
                             onDismiss = { navController.popBackStack() },
                             onSeeResults = { navController.popBackStack() }
@@ -215,7 +212,7 @@ fun AppNavigation() {
                     val selectedSongArtist = savedStateHandle.get<String>("selected_song_artist")
                     val selectedSongUrl = savedStateHandle.get<String>("selected_song_url")
                     
-                    ScreenWrapper(Screen.DailyLog.route) {
+                    ScreenWrapper(Screen.DailyLog.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         DailyLogScreen(
                             dateString = dateStr,
                             onNavigateBack = { navController.popBackStack() },
@@ -249,7 +246,7 @@ fun AppNavigation() {
                 }
 
                 composable(Screen.Music.route) {
-                    ScreenWrapper(Screen.Music.route) {
+                    ScreenWrapper(Screen.Music.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         MusicScreen(
                             onNavigateBack = { navController.popBackStack() },
                             onSongSelected = { title, artist, url ->
@@ -264,19 +261,29 @@ fun AppNavigation() {
                 }
 
                 composable(Screen.MenstrualCycle.route) {
-                    ScreenWrapper(Screen.MenstrualCycle.route) {
+                    ScreenWrapper(Screen.MenstrualCycle.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         MenstrualCycleScreen(onNavigateBack = { navController.popBackStack() })
                     }
                 }
 
                 composable(Screen.DailyPhoto.route) {
-                    ScreenWrapper(Screen.DailyPhoto.route) {
+                    ScreenWrapper(Screen.DailyPhoto.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         DailyPhotoScreen(onNavigateBack = { navController.popBackStack() })
+                    }
+                }
+                
+                composable(Screen.ShareLog.route) { backStackEntry ->
+                    val dateStr = backStackEntry.arguments?.getString("date") ?: ""
+                    ScreenWrapper(Screen.ShareLog.route, mainAppRoutes, totalBottomPadding, paddingValues) {
+                        ShareLogScreen(
+                            dateString = dateStr,
+                            onNavigateBack = { navController.popBackStack() }
+                        )
                     }
                 }
 
                 composable(Screen.Stats.route) {
-                    ScreenWrapper(Screen.Stats.route) {
+                    ScreenWrapper(Screen.Stats.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         StatisticsScreen()
                     }
                 }
@@ -292,7 +299,7 @@ fun AppNavigation() {
                     )
                 ) { backStackEntry ->
                     val momentId = backStackEntry.arguments?.getString("momentId")
-                    ScreenWrapper(Screen.Camera.route) {
+                    ScreenWrapper(Screen.Camera.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         MomentCameraScreen(
                             initialMomentId = momentId,
                             onNavigateToGallery = { navController.navigate(Screen.Gallery.route) },
@@ -303,7 +310,7 @@ fun AppNavigation() {
 
                 composable(Screen.Store.route) { backStackEntry ->
                     val storeViewModel: StoreViewModel = hiltViewModel(backStackEntry)
-                    ScreenWrapper(Screen.Store.route) {
+                    ScreenWrapper(Screen.Store.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         StoreScreen(
                             viewModel = storeViewModel,
                             onNavigateToDetail = { navController.navigate(Screen.ThemeDetail.route) },
@@ -322,7 +329,7 @@ fun AppNavigation() {
                     }
                     val storeViewModel: StoreViewModel = hiltViewModel(storeEntry)
 
-                    ScreenWrapper(Screen.ThemeDetail.route) {
+                    ScreenWrapper(Screen.ThemeDetail.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         ThemeDetailScreen(
                             viewModel = storeViewModel,
                             onNavigateBack = { navController.popBackStack() }
@@ -331,7 +338,7 @@ fun AppNavigation() {
                 }
 
                 composable(Screen.Profile.route) {
-                    ScreenWrapper(Screen.Profile.route) {
+                    ScreenWrapper(Screen.Profile.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         ProfileScreen(
                             onNavigateToAccount = { navController.navigate(Screen.Account.route) },
                             onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
@@ -346,7 +353,7 @@ fun AppNavigation() {
                 }
 
                 composable(Screen.Account.route) {
-                    ScreenWrapper(Screen.Account.route) {
+                    ScreenWrapper(Screen.Account.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         AccountScreen(
                             onNavigateBack = { navController.popBackStack() },
                             onLogoutClick = {
@@ -361,15 +368,24 @@ fun AppNavigation() {
                 }
 
                 composable(Screen.Settings.route) {
-                    ScreenWrapper(Screen.Settings.route) {
+                    ScreenWrapper(Screen.Settings.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         SettingsScreen(
-                            onNavigateBack = { navController.popBackStack() }
+                            onNavigateBack = { navController.popBackStack() },
+                            onNavigateToLogin = {
+                                navController.navigate(Screen.Landing.route) {
+                                    popUpTo(0) { inclusive = true }
+                                }
+                            },
+                            onNavigateToCreatePasscode = {
+                                // Navigate to passcode setup screen if it exists
+                                // navController.navigate("passcode_setup")
+                            }
                         )
                     }
                 }
 
                 composable(Screen.Notifications.route) {
-                    ScreenWrapper(Screen.Notifications.route) {
+                    ScreenWrapper(Screen.Notifications.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         NotificationsScreen(
                             onNavigateBack = { navController.popBackStack() }
                         )
@@ -377,7 +393,7 @@ fun AppNavigation() {
                 }
 
                 composable(Screen.Widgets.route) {
-                    ScreenWrapper(Screen.Widgets.route) {
+                    ScreenWrapper(Screen.Widgets.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         WidgetsScreen(
                             onNavigateBack = { navController.popBackStack() }
                         )
@@ -385,7 +401,7 @@ fun AppNavigation() {
                 }
 
                 composable(Screen.InviteFriend.route) {
-                    ScreenWrapper(Screen.InviteFriend.route) {
+                    ScreenWrapper(Screen.InviteFriend.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         InviteFriendScreen(
                             onNavigateBack = { navController.popBackStack() }
                         )
@@ -393,7 +409,7 @@ fun AppNavigation() {
                 }
 
                 composable(Screen.Photos.route) {
-                    ScreenWrapper(Screen.Photos.route) {
+                    ScreenWrapper(Screen.Photos.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         ChangeProfilePictureScreen(
                             onNavigateBack = { navController.popBackStack() },
                             onApply = { navController.popBackStack() }
@@ -402,7 +418,7 @@ fun AppNavigation() {
                 }
 
                 composable(Screen.Gallery.route) {
-                    ScreenWrapper(Screen.Gallery.route) {
+                    ScreenWrapper(Screen.Gallery.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         GalleryScreen(
                             onNavigateBack = { navController.popBackStack() },
                             onNavigateToMomentDetail = { momentId ->
@@ -414,7 +430,7 @@ fun AppNavigation() {
 
                 composable(Screen.MomentDetail.route) { backStackEntry ->
                     val momentId = backStackEntry.arguments?.getString("momentId") ?: ""
-                    ScreenWrapper(Screen.MomentDetail.route) {
+                    ScreenWrapper(Screen.MomentDetail.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         MomentDetailScreen(
                             momentId = momentId,
                             onNavigateBack = { navController.popBackStack() },
@@ -424,7 +440,7 @@ fun AppNavigation() {
                 }
 
                 composable(Screen.ThemeCalendar.route) {
-                    ScreenWrapper(Screen.ThemeCalendar.route) {
+                    ScreenWrapper(Screen.ThemeCalendar.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         ThemeCalendarScreen(
                             onNavigateBack = { navController.popBackStack() },
                             onActivated = {
@@ -437,25 +453,15 @@ fun AppNavigation() {
                 }
             }
 
-            // Animated Bottom Bar Overlay
-            AnimatedVisibility(
-                visible = showBottomBar,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .navigationBarsPadding(),
-                enter = fadeIn(animationSpec = tween(400)) + slideInVertically(
-                    initialOffsetY = { it },
-                    animationSpec = tween(400)
-                ),
-                exit = fadeOut(animationSpec = tween(400)) + slideOutVertically(
-                    targetOffsetY = { it },
-                    animationSpec = tween(400)
-                )
-            ) {
+            // Fixed Bottom Bar - No more AnimatedVisibility for Tab Switches
+            if (showBottomBar) {
                 MoonBottomNavBar(
                     selectedRoute = currentRoute ?: Screen.Calendar.route,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .navigationBarsPadding(),
                     onItemSelected = { route ->
-                        if (currentRoute != route || route == Screen.Camera.route) {
+                        if (currentRoute != route) {
                             navController.navigate(route) {
                                 popUpTo(navController.graph.startDestinationId) {
                                     saveState = true
@@ -468,5 +474,33 @@ fun AppNavigation() {
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun ScreenWrapper(
+    route: String,
+    mainAppRoutes: List<String>,
+    totalBottomPadding: androidx.compose.ui.unit.Dp,
+    paddingValues: PaddingValues,
+    content: @Composable () -> Unit
+) {
+    val isMainRoute = route in mainAppRoutes
+    // Screens that handle their own status bar padding for a more custom layout
+    val isEdgeToEdge = route == Screen.Store.route || 
+                       route == Screen.ThemeDetail.route || 
+                       route.startsWith("daily_log_screen")
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .then(if (!isEdgeToEdge) Modifier.statusBarsPadding() else Modifier)
+            .padding(
+                bottom = if (isMainRoute) totalBottomPadding else 0.dp,
+                start = paddingValues.calculateStartPadding(LayoutDirection.Ltr),
+                end = paddingValues.calculateEndPadding(LayoutDirection.Ltr)
+            )
+    ) {
+        content()
     }
 }

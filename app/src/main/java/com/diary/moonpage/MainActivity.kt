@@ -89,42 +89,80 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(newBase)
+        val lang = LocaleUtils.getSavedLanguage(newBase)
+        super.attachBaseContext(LocaleUtils.applyLocale(newBase, lang))
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
         handleIntent(intent)
     }
 
     private fun handleIntent(intent: Intent?) {
         val uri = intent?.data
-        if (uri != null && uri.scheme == "moonpage" && uri.host == "spotify-callback") {
-            val code = uri.getQueryParameter("code")
-            if (code != null) {
-                lifecycleScope.launch {
-                    val verifier = tokenManager.getSpotifyVerifier()
-                    if (verifier != null) {
-                        try {
-                            val response = spotifyApi.exchangeToken(
-                                clientId = SpotifyApi.CLIENT_ID,
-                                code = code,
-                                redirectUri = SpotifyApi.REDIRECT_URI,
-                                codeVerifier = verifier
-                            )
-                            if (response.isSuccessful && response.body() != null) {
-                                val token = response.body()!!.accessToken
-                                tokenManager.saveSpotifyToken("Bearer $token")
-                                mainViewModel.showSnackbar("Spotify linked successfully!")
-                            } else {
-                                val errorMsg = response.errorBody()?.string() ?: "Unknown error"
-                                mainViewModel.showSnackbar("Linking failed: $errorMsg")
+        android.util.Log.d("SpotifyAuth", "handleIntent called with URI: $uri and action: ${intent?.action}")
+        if (uri != null && uri.scheme == "moonpage") {
+            android.util.Log.d("SpotifyAuth", "Received URI: $uri")
+            if (uri.host == "spotify-callback") {
+                val code = uri.getQueryParameter("code")
+                val error = uri.getQueryParameter("error")
+                
+                if (error != null) {
+                    android.util.Log.e("SpotifyAuth", "Spotify returned error: $error")
+                    android.widget.Toast.makeText(this, "Spotify Error: $error", android.widget.Toast.LENGTH_LONG).show()
+                    mainViewModel.showSnackbar("Spotify Error: $error")
+                    return
+                }
+
+                if (code != null) {
+                    android.util.Log.d("SpotifyAuth", "Code received: $code")
+                    lifecycleScope.launch {
+                        val verifier = tokenManager.getSpotifyVerifier()
+                        android.util.Log.d("SpotifyAuth", "Verifier from storage: $verifier")
+                        
+                        if (verifier != null) {
+                            try {
+                                val response = spotifyApi.exchangeToken(
+                                    clientId = SpotifyApi.CLIENT_ID,
+                                    code = code,
+                                    redirectUri = SpotifyApi.REDIRECT_URI,
+                                    codeVerifier = verifier
+                                )
+                                if (response.isSuccessful && response.body() != null) {
+                                    val body = response.body()!!
+                                    tokenManager.saveSpotifyToken(
+                                        token = "Bearer ${body.accessToken}",
+                                        refreshToken = body.refreshToken,
+                                        expiresIn = body.expiresIn
+                                    )
+                                    android.util.Log.d("SpotifyAuth", "Token exchange successful!")
+                                    android.widget.Toast.makeText(this@MainActivity, "Spotify Linked!", android.widget.Toast.LENGTH_SHORT).show()
+                                    mainViewModel.showSnackbar("Spotify linked successfully!")
+                                } else {
+                                    val errorBody = response.errorBody()?.string() ?: "Unknown error"
+                                    android.util.Log.e("SpotifyAuth", "Token exchange failed: $errorBody")
+                                    android.widget.Toast.makeText(this@MainActivity, "Exchange Failed: $errorBody", android.widget.Toast.LENGTH_LONG).show()
+                                    mainViewModel.showSnackbar("Token exchange failed: $errorBody")
+                                }
+                            } catch (e: Exception) {
+                                android.util.Log.e("SpotifyAuth", "API Error", e)
+                                android.widget.Toast.makeText(this@MainActivity, "API Error: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+                                mainViewModel.showSnackbar("API Error: ${e.message}")
                             }
-                        } catch (e: Exception) {
-                            mainViewModel.showSnackbar("Connection error: ${e.message}")
+                        } else {
+                            android.util.Log.e("SpotifyAuth", "Missing verifier in storage!")
+                            android.widget.Toast.makeText(this@MainActivity, "Error: Missing Verifier", android.widget.Toast.LENGTH_LONG).show()
+                            mainViewModel.showSnackbar("Error: Missing local verifier")
                         }
                     }
+                } else {
+                    android.util.Log.e("SpotifyAuth", "No code found in URI")
+                    mainViewModel.showSnackbar("Error: No code received from Spotify")
                 }
+            } else {
+                android.util.Log.e("SpotifyAuth", "Unknown host: ${uri.host}")
+                mainViewModel.showSnackbar("Error: Unknown host ${uri.host}")
             }
         }
     }

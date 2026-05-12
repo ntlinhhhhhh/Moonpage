@@ -21,15 +21,22 @@ class TokenManager @Inject constructor(@ApplicationContext private val context: 
     companion object {
         private val TOKEN_KEY     = stringPreferencesKey("jwt_token")
         private val SPOTIFY_TOKEN_KEY = stringPreferencesKey("spotify_token")
+        private val SPOTIFY_REFRESH_TOKEN_KEY = stringPreferencesKey("spotify_refresh_token")
+        private val SPOTIFY_EXPIRES_AT_KEY = androidx.datastore.preferences.core.longPreferencesKey("spotify_expires_at")
         private val SPOTIFY_VERIFIER_KEY = stringPreferencesKey("spotify_verifier")
         private val SPOTIFY_STATE_KEY = stringPreferencesKey("spotify_state")
         private val USER_ID_KEY   = stringPreferencesKey("user_id")
         private val USER_NAME_KEY = stringPreferencesKey("user_name")
     }
 
-    suspend fun saveSpotifyToken(token: String) {
+    suspend fun saveSpotifyToken(token: String, refreshToken: String?, expiresIn: Int) {
+        val expiresAt = System.currentTimeMillis() + (expiresIn * 1000L)
         context.dataStore.edit { preferences ->
             preferences[SPOTIFY_TOKEN_KEY] = token
+            if (refreshToken != null) {
+                preferences[SPOTIFY_REFRESH_TOKEN_KEY] = refreshToken
+            }
+            preferences[SPOTIFY_EXPIRES_AT_KEY] = expiresAt
         }
     }
 
@@ -37,6 +44,20 @@ class TokenManager @Inject constructor(@ApplicationContext private val context: 
         return context.dataStore.data.map { preferences ->
             preferences[SPOTIFY_TOKEN_KEY]
         }
+    }
+
+    fun getSpotifyRefreshToken(): Flow<String?> {
+        return context.dataStore.data.map { preferences ->
+            preferences[SPOTIFY_REFRESH_TOKEN_KEY]
+        }
+    }
+
+    suspend fun getSpotifyExpiresAt(): Long {
+        return context.dataStore.data.map { it[SPOTIFY_EXPIRES_AT_KEY] ?: 0L }.first()
+    }
+
+    suspend fun getSpotifyAuthState(): String? {
+        return context.dataStore.data.map { it[SPOTIFY_STATE_KEY] }.first()
     }
 
     suspend fun saveSpotifyAuthData(verifier: String, state: String) {
@@ -48,10 +69,6 @@ class TokenManager @Inject constructor(@ApplicationContext private val context: 
 
     suspend fun getSpotifyVerifier(): String? {
         return context.dataStore.data.map { it[SPOTIFY_VERIFIER_KEY] }.first()
-    }
-
-    suspend fun getSpotifyAuthState(): String? {
-        return context.dataStore.data.map { it[SPOTIFY_STATE_KEY] }.first()
     }
 
     suspend fun saveToken(token: String) {
