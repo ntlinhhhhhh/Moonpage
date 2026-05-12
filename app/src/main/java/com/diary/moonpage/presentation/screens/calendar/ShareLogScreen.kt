@@ -222,46 +222,43 @@ fun ShareLogCard(uiState: DailyLogUiState) {
         
         Spacer(modifier = Modifier.height(20.dp))
         
-        // Activity Card with Sprout (Ảnh 1 style)
-        Box(modifier = Modifier.fillMaxWidth()) {
-            Surface(
-                color = itemBg,
-                shape = RoundedCornerShape(20.dp),
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    if (uiState.selectedActivities.isEmpty()) {
-                        Box(
-                            modifier = Modifier.fillMaxWidth().height(80.dp),
-                            contentAlignment = Alignment.Center
+        Surface(
+            color = itemBg,
+            shape = RoundedCornerShape(20.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                if (uiState.selectedActivities.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(80.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("No activities recorded", color = onCard.copy(alpha = 0.3f), fontSize = 14.sp)
+                    }
+                } else {
+                    val chunks = uiState.selectedActivities.chunked(6)
+                    chunks.forEach { rowIds ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
                         ) {
-                            Text("No activities recorded", color = onCard.copy(alpha = 0.3f), fontSize = 14.sp)
-                        }
-                    } else {
-                        val chunks = uiState.selectedActivities.chunked(6)
-                        chunks.forEach { rowIds ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
-                            ) {
-                                rowIds.forEach { activityId ->
-                                    val activity = uiState.dynamicActivities.find { it.id == activityId }
-                                    val icon = MoonIcons.getIconForActivity(activity?.name ?: "")
-                                    Box(
-                                        modifier = Modifier
-                                            .size(40.dp)
-                                            .background(onCard.copy(alpha = 0.04f), CircleShape),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        if (icon.drawableRes != null) {
-                                            Image(
-                                                painter = painterResource(id = icon.drawableRes),
-                                                contentDescription = null,
-                                                modifier = Modifier.size(24.dp)
-                                            )
-                                        } else if (icon.vector != null) {
-                                            Icon(icon.vector, null, tint = icon.color, modifier = Modifier.size(22.dp))
-                                        }
+                            rowIds.forEach { activityId ->
+                                val activity = uiState.dynamicActivities.find { it.id == activityId }
+                                val icon = MoonIcons.getIconForActivity(activity?.name ?: "")
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .background(onCard.copy(alpha = 0.04f), CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (icon.drawableRes != null) {
+                                        Image(
+                                            painter = painterResource(id = icon.drawableRes),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    } else if (icon.vector != null) {
+                                        Icon(icon.vector, null, tint = icon.color, modifier = Modifier.size(22.dp))
                                     }
                                 }
                             }
@@ -269,59 +266,61 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                     }
                 }
             }
-            
-            // Sprout Icon (Ảnh 1)
-            Icon(
-                imageVector = Icons.Rounded.Eco,
-                contentDescription = null,
-                tint = brandColor,
-                modifier = Modifier.size(24.dp).padding(start = 16.dp)
-            )
         }
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // Health Stats Card (Ảnh 2 style)
-        Surface(
-            color = itemBg.copy(alpha = 0.7f),
-            shape = RoundedCornerShape(20.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                // Sleep
-                StatRow(
-                    icon = Icons.Rounded.Brightness2,
-                    iconColor = Color(0xFFFFB74D),
-                    label = formatSleep(uiState.sleepHours)
-                )
-                
-                // Steps
-                if (uiState.steps > 0) {
-                    StatRow(
-                        icon = Icons.AutoMirrored.Rounded.DirectionsWalk,
-                        iconColor = Color(0xFF4FC3F7),
-                        label = "${String.format("%, d", uiState.steps)} steps"
-                    )
-                }
-                
-                // Menstruation
-                if (uiState.isMenstruation) {
-                    StatRow(
-                        icon = Icons.Rounded.WaterDrop,
-                        iconColor = Color(0xFFF06292),
-                        label = uiState.menstruationPhase ?: "On period"
-                    )
-                }
-                
-                // Calories/Distance (Optional)
-                if (uiState.calories > 0) {
-                    StatRow(
-                        icon = Icons.Rounded.LocalFireDepartment,
-                        iconColor = Color(0xFFFF8A65),
-                        label = "${uiState.calories} kcal"
-                    )
+        // Health Stats Card (Horizontal style)
+        val hasHealthData = uiState.sleepHours > 0 || uiState.steps > 0 || uiState.isMenstruation || uiState.calories > 0
+        if (hasHealthData) {
+            Surface(
+                color = itemBg.copy(alpha = 0.7f),
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceAround,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Sleep
+                    if (uiState.sleepHours > 0) {
+                        StatItem(
+                            icon = Icons.Rounded.Brightness2,
+                            iconColor = Color(0xFFFFB74D),
+                            label = formatSleep(uiState.sleepHours)
+                        )
+                    }
+                    
+                    // Steps
+                    if (uiState.steps > 0) {
+                        StatItem(
+                            icon = Icons.AutoMirrored.Rounded.DirectionsWalk,
+                            iconColor = Color(0xFF4FC3F7),
+                            label = "${String.format("%, d", uiState.steps)}"
+                        )
+                    }
+                    
+                    // Menstruation
+                    if (uiState.isMenstruation) {
+                        StatItem(
+                            icon = Icons.Rounded.WaterDrop,
+                            iconColor = Color(0xFFF06292),
+                            label = uiState.menstruationPhase?.take(5) ?: "Period"
+                        )
+                    }
+                    
+                    // Calories
+                    if (uiState.calories > 0) {
+                        StatItem(
+                            icon = Icons.Rounded.LocalFireDepartment,
+                            iconColor = Color(0xFFFF8A65),
+                            label = "${uiState.calories}"
+                        )
+                    }
                 }
             }
+            Spacer(modifier = Modifier.height(16.dp))
         }
         
         Spacer(modifier = Modifier.height(16.dp))
@@ -406,15 +405,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
             Spacer(modifier = Modifier.height(24.dp))
         }
         
-        // Branding (Ảnh 1 style)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = Icons.Rounded.Eco,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-                tint = brandColor
-            )
-            Spacer(modifier = Modifier.width(6.dp))
             Text(
                 "Moonpage",
                 fontSize = 15.sp,
@@ -428,11 +419,11 @@ fun ShareLogCard(uiState: DailyLogUiState) {
 }
 
 @Composable
-fun StatRow(icon: androidx.compose.ui.graphics.vector.ImageVector, iconColor: Color, label: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+fun StatItem(icon: androidx.compose.ui.graphics.vector.ImageVector, iconColor: Color, label: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Icon(icon, null, tint = iconColor, modifier = Modifier.size(20.dp))
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(label, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f))
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), fontWeight = FontWeight.Medium)
     }
 }
 

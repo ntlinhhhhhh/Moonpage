@@ -38,4 +38,88 @@
     <string name="delete_account_confirmation">Are you sure you want to delete your account? This action cannot be undone.</string>
     <string name="delete">Delete</string>
     <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+
+    <!-- Calendar & Stats -->
+    <string name="report">Report</string>
+    <string name="monthly">Monthly</string>
+    <string name="annual">Annual</string>
+    <string name="select_date">Select date</string>
+    <string name="select_year">Select year</string>
+    <string name="share">Share</string>
+    <string name="edit">Edit</string>
+    <string name="my_info">My Info</string>
+    <string name="recorded_days">Recorded Days</string>
+    <string name="photos">Photos</string>
+    <string name="theme_store">Theme Store</string>
+    <string name="widgets">Widgets</string>
+    <string name="invite_friends">Invite Friends</string>
+    <string name="logout">Logout</string>
+
+    <!-- Days of Week -->
+    <string name="sun">Sun</string>
+    <string name="mon">Mon</string>
+    <string name="tue">Tue</string>
+    <string name="wed">Wed</string>
+    <string name="thu">Thu</string>
+    <string name="fri">Fri</string>
+    <string name="sat">Sat</string>
+
+    <!-- Short Days of Week -->
+    <string name="sun_short">S</string>
+    <string name="mon_short">M</string>
+    <string name="tue_short">T</string>
+    <string name="wed_short">W</string>
+    <string name="thu_short">T</string>
+    <string name="fri_short">F</string>
+    <string name="sat_short">S</string>
+
+    <!-- Profile -->
+    <string name="account">Account</string>
+    <string name="my_records">My records</string>
+    <string name="my_photos">My photos</string>
+    <string name="theme_calendar">Theme Calendar</string>
+    <string name="more">More</string>
+    <string name="invite_a_friend">Invite a Friend</string>
+
+    <!-- Stats Titles -->
+    <string name="mood_flow">Mood Flow</string>
+    <string name="sleep_analysis">Sleep Analysis</string>
+    <string name="moods_by_sleep">Moods by Sleep</string>
+    <string name="mood_bar">Mood Bar</string>
+    <string name="activity_stats">Activity Stats</string>
+    <string name="best_worst">Best &amp; Worst</string>
+    <string name="icon_deep_dive">Icon Deep Dive</string>
+    <string name="top_music">Top Music</string>
+    <string name="year_in_beans">Year in Beans</string>
+    <string name="monthly_average">Monthly Average</string>
+    <string name="yearly_top_activities">Yearly Top Activities</string>
+    <string name="trends">Trends</string>
+    <string name="yearly_cycle_trends">Yearly Cycle Trends</string>
+    <string name="yearly_sleep_trends">Yearly Sleep Trends</string>
+
+    <!-- Filter -->
+    <string name="filter_title">Filter Your Month</string>
+    <string name="clear_all">Clear All</string>
+    <string name="filter_by_mood">Filter by Mood</string>
+    <string name="filter_by_activities">Filter by Activities</string>
+    <string name="show_results">Show Results</string>
+
+    <!-- Share -->
+    <string name="share_title">Share Mood Calendar</string>
+    <string name="square">Square (1:1)</string>
+    <string name="portrait">Portrait (9:16)</string>
+
+    <!-- Daily Log -->
+    <string name="select_mood">How was your day?</string>
+    <string name="select_activities">What did you do today?</string>
+    <string name="sleep_question">How much did you sleep?</string>
+    <string name="period_cycle">Period cycle</string>
+    <string name="daily_photo">Daily photo</string>
+    <string name="note">Note</string>
+    <string name="done">Done</string>
+    <string name="save">Save</string>
+    <string name="discard_changes">Discard changes?</string>
+    <string name="discard_confirmation">You have unsaved changes. Are you sure you want to discard them?</string>
+    <string name="discard">Discard</string>
 </resources>

@@ -157,7 +157,12 @@ fun CalendarScreenContent(
             ) { page ->
                 val offset = page - initialPage
                 val pageYearMonth = baseYearMonth.plusMonths(offset.toLong())
-                val currentMonthName = pageYearMonth.format(java.time.format.DateTimeFormatter.ofPattern("MMM yyyy"))
+                val currentLanguage = com.diary.moonpage.core.theme.LocalLocale.current
+                val currentMonthName = if (currentLanguage == "vi") {
+                    "Tháng ${pageYearMonth.monthValue} ${pageYearMonth.year}"
+                } else {
+                    pageYearMonth.format(java.time.format.DateTimeFormatter.ofPattern("MMM yyyy"))
+                }
 
                 Column(
                     modifier = Modifier
@@ -594,12 +599,7 @@ fun CalendarSelectedLogDetail(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Rounded.Eco,
-                contentDescription = null,
-                tint = Color(0xFF81C784),
-                modifier = Modifier.size(28.dp)
-            )
+            Spacer(Modifier.size(28.dp)) // Placeholder to maintain alignment if needed, or just remove
 
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 IconButton(onClick = onShareClick) {

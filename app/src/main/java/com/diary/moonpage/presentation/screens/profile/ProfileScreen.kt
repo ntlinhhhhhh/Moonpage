@@ -15,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.res.stringResource
+import com.diary.moonpage.R
 import com.diary.moonpage.presentation.components.profile.*
 import com.diary.moonpage.presentation.components.core.layout.SectionTitle
 import com.diary.moonpage.core.theme.*
@@ -90,7 +92,7 @@ fun ProfileScreenContent(
         containerColor = colorScheme.background,
         topBar = {
             ProfileHeader(
-                title = "My Info",
+                title = stringResource(R.string.my_info),
                 onNotificationClick = onNotificationClick,
                 onSettingsClick = onSettingsClick
             )
@@ -103,7 +105,7 @@ fun ProfileScreenContent(
                 .padding(horizontal = 20.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            SectionTitle("Account")
+            SectionTitle(stringResource(R.string.account))
             UserInfoCard(
                 userId = if (userId.isNotEmpty()) "#$userId" else "",
                 userName = userName,
@@ -111,32 +113,32 @@ fun ProfileScreenContent(
                 onClick = onAccountClick
             )
 
-            SectionTitle("My records")
+            SectionTitle(stringResource(R.string.my_records))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 ActionCard(
-                    title = "Report",
+                    title = stringResource(R.string.report),
                     value = recordedDays, 
                     icon = Icons.Rounded.CalendarToday,
                     modifier = Modifier.weight(1f), 
                     onClick = onStatsClick
                 )
-                ActionCard(title = "My photos", value = photoCount, modifier = Modifier.weight(1f), onClick = onPhotosClick)
+                ActionCard(title = stringResource(R.string.my_photos), value = photoCount, modifier = Modifier.weight(1f), onClick = onPhotosClick)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            ProfileMenuItem(title = "Theme Calendar", icon = Icons.Rounded.CalendarMonth, onClick = onThemeCalendarClick)
+            ProfileMenuItem(title = stringResource(R.string.theme_calendar), icon = Icons.Rounded.CalendarMonth, onClick = onThemeCalendarClick)
 
-            SectionTitle("More")
+            SectionTitle(stringResource(R.string.more))
 
-            ProfileMenuItem(title = "Widgets", icon = Icons.Rounded.Widgets, onClick = onWidgetsClick)
+            ProfileMenuItem(title = stringResource(R.string.widgets), icon = Icons.Rounded.Widgets, onClick = onWidgetsClick)
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            ProfileMenuItem(title = "Invite a Friend", icon = Icons.Rounded.PersonAdd, onClick = onInviteFriendClick)
+            ProfileMenuItem(title = stringResource(R.string.invite_a_friend), icon = Icons.Rounded.PersonAdd, onClick = onInviteFriendClick)
 
             Spacer(modifier = Modifier.height(32.dp))
         }

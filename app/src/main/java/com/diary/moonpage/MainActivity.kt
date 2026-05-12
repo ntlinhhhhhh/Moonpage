@@ -71,17 +71,21 @@ class MainActivity : ComponentActivity() {
                 themeType = themeType,
                 darkTheme = isDark
             ) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                CompositionLocalProvider(
+                    com.diary.moonpage.core.theme.LocalLocale provides language
                 ) {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        AppNavigation()
-                        
-                        SnackbarHost(
-                            hostState = snackbarHostState,
-                            modifier = Modifier.align(Alignment.BottomCenter)
-                        )
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            AppNavigation()
+                            
+                            SnackbarHost(
+                                hostState = snackbarHostState,
+                                modifier = Modifier.align(Alignment.BottomCenter)
+                            )
+                        }
                     }
                 }
             }

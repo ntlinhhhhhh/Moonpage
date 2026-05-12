@@ -36,6 +36,8 @@ import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import com.diary.moonpage.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -56,7 +58,7 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlinx.coroutines.launch
-import androidx.compose.ui.platform.LocalLocale
+import com.diary.moonpage.core.theme.LocalLocale
 
 /**
  * Stateful Component
@@ -312,7 +314,7 @@ private fun DailyLogTopBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBackClick) {
-                Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
+                Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = stringResource(R.string.close), tint = MaterialTheme.colorScheme.onSurface)
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -324,17 +326,24 @@ private fun DailyLogTopBar(
                     ) { onDateClick() }
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
-                val formatter = DateTimeFormatter.ofPattern("EEEE, MMM d", Locale.ENGLISH)
+                val currentLanguage = LocalLocale.current
+                val formatter = remember(currentLanguage) {
+                    if (currentLanguage == "vi") {
+                        DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale("vi"))
+                    } else {
+                        DateTimeFormatter.ofPattern("EEEE, MMM d", Locale.ENGLISH)
+                    }
+                }
                 Text(
                     text = date.format(formatter),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
             }
             IconButton(onClick = {}) {
-                Icon(Icons.Rounded.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onSurface)
+                Icon(Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings), tint = MaterialTheme.colorScheme.onSurface)
             }
         }
     }
@@ -375,7 +384,7 @@ private fun DailyLogBottomBar(
                 )
             } else {
                 Text(
-                    "Done", 
+                    stringResource(R.string.done), 
                     fontSize = 18.sp, 
                     fontWeight = FontWeight.Bold,
                     color = if (enabled && !isLoading) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
@@ -547,7 +556,7 @@ private fun DailyMoodSection(
                 }
             }
 
-            Text("How was your day?", color = MoonTheme.customColors.logCardOnBg, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
+            Text(stringResource(R.string.select_mood), color = MoonTheme.customColors.logCardOnBg, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 (5 downTo 1).forEach { id ->
                     val isSelected = selectedMood == id
@@ -857,7 +866,7 @@ private fun DailyHealthSection(steps: Int, calories: Int, distance: Double, isIm
                 HealthStatItem(
                     modifier = Modifier.weight(1f),
                     label = "Distance",
-                    value = String.format(LocalLocale.current.platformLocale, "%.1f km", distance),
+                    value = String.format(java.util.Locale.getDefault(), "%.1f km", distance),
                     icon = Icons.Rounded.Route,
                     color = Color(0xFF42A5F5)
                 )
@@ -875,7 +884,14 @@ private fun DailySleepSection(
     onSleepClick: () -> Unit,
     onImportClick: () -> Unit
 ) {
-    val fmt = DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH)
+    val currentLanguage = LocalLocale.current
+    val fmt = remember(currentLanguage) {
+        if (currentLanguage == "vi") {
+            DateTimeFormatter.ofPattern("HH:mm", Locale("vi"))
+        } else {
+            DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH)
+        }
+    }
     val hrs = sleepHours.toInt()
     val mins = ((sleepHours - hrs) * 60).toInt()
     
@@ -886,7 +902,7 @@ private fun DailySleepSection(
     ) {      
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Sleep", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
+                Text(stringResource(R.string.sleep_analysis), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
                 if (isImporting) {
                     CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                 } else {
@@ -923,7 +939,7 @@ private fun DailySleepSection(
                             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
                         )
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text("Record sleep", color = MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
+                        Text(stringResource(R.string.sleep_question), color = MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
                     }
                 } else {
                     Row(
@@ -939,7 +955,7 @@ private fun DailySleepSection(
                         
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(0.25f)) {
                             Text(bedTime.format(fmt), fontWeight = FontWeight.Bold, color = if (sleepHours > 0) MaterialTheme.colorScheme.primary else MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
-                            Text("Went to bed", color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
+                            Text(if (currentLanguage == "vi") "Đi ngủ" else "Went to bed", color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
                         }
                         
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(0.26f)) {
@@ -949,12 +965,12 @@ private fun DailySleepSection(
                                 color = MaterialTheme.colorScheme.primary,
                                 fontSize = 16.sp
                             )
-                            Text("Asleep", color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
+                            Text(if (currentLanguage == "vi") "Đã ngủ" else "Asleep", color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
                         }
                         
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(0.25f)) {
                             Text(wakeTime.format(fmt), fontWeight = FontWeight.Bold, color = if (sleepHours > 0) MaterialTheme.colorScheme.primary else MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
-                            Text("Woke up", color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
+                            Text(if (currentLanguage == "vi") "Thức dậy" else "Woke up", color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
                         }
                         
                         Icon(
@@ -997,7 +1013,7 @@ private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean
         ) { onMenstrualClick() }
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Menstruation", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
+            Text(stringResource(R.string.period_cycle), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
             Spacer(modifier = Modifier.height(16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.CenterVertically) {
                 repeat(5) { i ->
@@ -1032,7 +1048,12 @@ private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Rounded.WaterDrop, contentDescription = null, modifier = Modifier.size(14.dp), tint = MoonTheme.customColors.logCardOnBg)
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Menstrual tracking enabled", fontSize = 12.sp, color = MoonTheme.customColors.logCardOnBg)
+                val currentLanguage = LocalLocale.current
+                Text(
+                    if (currentLanguage == "vi") "Đã bật theo dõi kinh nguyệt" else "Menstrual tracking enabled", 
+                    fontSize = 12.sp, 
+                    color = MoonTheme.customColors.logCardOnBg
+                )
             }
         }
     }
@@ -1042,12 +1063,13 @@ private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean
 private fun DailyNoteSection(noteText: String, onNoteChanged: (String) -> Unit) {
     Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {      
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Today's note", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
+            Text(stringResource(R.string.note), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
             Spacer(modifier = Modifier.height(12.dp))
             Surface(color = MoonTheme.customColors.logItemBg, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
+                val currentLanguage = LocalLocale.current
                 OutlinedTextField(
                     value = noteText, onValueChange = onNoteChanged, modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
-                    placeholder = { Text("Write here...", color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 14.sp) },
+                    placeholder = { Text(if (currentLanguage == "vi") "Viết tại đây..." else "Write here...", color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 14.sp) },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
@@ -1072,7 +1094,7 @@ private fun DailyPhotoSection(
 ) {
     Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {      
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Today's photo", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
+            Text(stringResource(R.string.daily_photo), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
             Spacer(modifier = Modifier.height(12.dp))
             
             if (photos.isEmpty()) {
@@ -1087,7 +1109,8 @@ private fun DailyPhotoSection(
                     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Rounded.CameraAlt, contentDescription = null, modifier = Modifier.size(48.dp), tint = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.4f)) 
                         Spacer(modifier = Modifier.height(12.dp))
-                        Text("Select photos", color = MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
+                        val currentLanguage = LocalLocale.current
+                        Text(if (currentLanguage == "vi") "Chọn ảnh" else "Select photos", color = MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
                     }
                 }
             } else {
@@ -1166,11 +1189,11 @@ private fun DailyLogExitDialog(onDismiss: () -> Unit, onExit: () -> Unit) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(shape = RoundedCornerShape(20.dp), color = MoonTheme.customColors.popupBgColor, modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
             Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = "Changes have not been saved.", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
+                Text(text = stringResource(R.string.discard_confirmation), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(32.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = MoonTheme.customColors.cancelBtnBgColor, contentColor = MoonTheme.customColors.cancelBtnTextColor), shape = RoundedCornerShape(12.dp)) { Text("Cancel", fontWeight = FontWeight.Bold) }
-                    Button(onClick = onExit, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary), shape = RoundedCornerShape(12.dp)) { Text("Exit", fontWeight = FontWeight.Bold) }
+                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = MoonTheme.customColors.cancelBtnBgColor, contentColor = MoonTheme.customColors.cancelBtnTextColor), shape = RoundedCornerShape(12.dp)) { Text(stringResource(R.string.cancel), fontWeight = FontWeight.Bold) }
+                    Button(onClick = onExit, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary), shape = RoundedCornerShape(12.dp)) { Text(stringResource(R.string.discard), fontWeight = FontWeight.Bold) }
                 }
             }
         }
@@ -1184,13 +1207,14 @@ private fun DailyLogOverwriteDialog(onDismiss: () -> Unit, onConfirm: () -> Unit
             Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(Icons.Rounded.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(48.dp))
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(text = "Data already exists", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)  
+                val currentLanguage = LocalLocale.current
+                Text(text = if (currentLanguage == "vi") "Dữ liệu đã tồn tại" else "Data already exists", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)  
                 Spacer(modifier = Modifier.height(12.dp))
-                Text(text = "There is already a record for this day. Do you want to overwrite it?", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                Text(text = if (currentLanguage == "vi") "Đã có bản ghi cho ngày này. Bạn có muốn ghi đè không?" else "There is already a record for this day. Do you want to overwrite it?", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(32.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = MoonTheme.customColors.cancelBtnBgColor, contentColor = MoonTheme.customColors.cancelBtnTextColor), shape = RoundedCornerShape(12.dp)) { Text("Cancel", fontWeight = FontWeight.Bold) }
-                    Button(onClick = { onConfirm() }, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError), shape = RoundedCornerShape(12.dp)) { Text("Overwrite", fontWeight = FontWeight.Bold) }
+                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = MoonTheme.customColors.cancelBtnBgColor, contentColor = MoonTheme.customColors.cancelBtnTextColor), shape = RoundedCornerShape(12.dp)) { Text(stringResource(R.string.cancel), fontWeight = FontWeight.Bold) }
+                    Button(onClick = { onConfirm() }, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError), shape = RoundedCornerShape(12.dp)) { Text(if (currentLanguage == "vi") "Ghi đè" else "Overwrite", fontWeight = FontWeight.Bold) }
                 }
             }
         }
@@ -1206,17 +1230,28 @@ fun DailyLogDatePickerDialog(initialDate: LocalDate, onDateSelected: (LocalDate)
     val pagerState = rememberPagerState(initialPage = initialPage, pageCount = { initialPage * 2 })
     var selectedDateInPicker by remember { mutableStateOf(initialDate) }
     val scope = rememberCoroutineScope()
+    val currentLanguage = LocalLocale.current
 
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Surface(shape = RoundedCornerShape(28.dp), color = MoonTheme.customColors.popupBgColor, modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
             Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Which day is this record for?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(vertical = 16.dp))
-                Row(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text(if (currentLanguage == "vi") "Bản ghi này cho ngày nào?" else "Which day is this record for?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(vertical = 16.dp))
+                Box(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp), contentAlignment = Alignment.Center) {
                     val currentPageMonth = baseYearMonth.plusMonths((pagerState.currentPage - initialPage).toLong())
-                    Text(text = currentPageMonth.format(DateTimeFormatter.ofPattern("MMM yyyy")), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                    Row {
-                        IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } }) { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
-                        IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } }) { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
+                    val monthText = if (currentLanguage == "vi") {
+                        "Tháng ${currentPageMonth.monthValue} ${currentPageMonth.year}"
+                    } else {
+                        currentPageMonth.format(DateTimeFormatter.ofPattern("MMM yyyy"))
+                    }
+                    Text(
+                        text = monthText, 
+                        style = MaterialTheme.typography.titleSmall, 
+                        fontWeight = FontWeight.Bold, 
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } }) { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)) }
+                        IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } }) { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)) }
                     }
                 }
                 HorizontalPager(state = pagerState, modifier = Modifier.fillMaxWidth().height(260.dp)) { page ->
@@ -1237,8 +1272,8 @@ fun DailyLogDatePickerDialog(initialDate: LocalDate, onDateSelected: (LocalDate)
                 }
                 Spacer(modifier = Modifier.height(24.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(52.dp), colors = ButtonDefaults.buttonColors(containerColor = MoonTheme.customColors.cancelBtnBgColor, contentColor = MoonTheme.customColors.cancelBtnTextColor), shape = RoundedCornerShape(12.dp)) { Text("Cancel", fontWeight = FontWeight.Bold) }
-                    Button(onClick = { onDateSelected(selectedDateInPicker) }, modifier = Modifier.weight(1f).height(52.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary), shape = RoundedCornerShape(12.dp)) { Text("OK", fontWeight = FontWeight.Bold) }
+                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(52.dp), colors = ButtonDefaults.buttonColors(containerColor = MoonTheme.customColors.cancelBtnBgColor, contentColor = MoonTheme.customColors.cancelBtnTextColor), shape = RoundedCornerShape(12.dp)) { Text(stringResource(R.string.cancel), fontWeight = FontWeight.Bold) }
+                    Button(onClick = { onDateSelected(selectedDateInPicker) }, modifier = Modifier.weight(1f).height(52.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary), shape = RoundedCornerShape(12.dp)) { Text(stringResource(R.string.ok), fontWeight = FontWeight.Bold) }
                 }
             }
         }
@@ -1252,13 +1287,14 @@ fun SpotifyAuthDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
             Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(Icons.Rounded.MusicNote, contentDescription = null, tint = Color(0xFF1DB954), modifier = Modifier.size(48.dp))
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(text = "Connect to Spotify", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                val currentLanguage = LocalLocale.current
+                Text(text = if (currentLanguage == "vi") "Kết nối Spotify" else "Connect to Spotify", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(modifier = Modifier.height(12.dp))
-                Text(text = "MoonPage wants to access your Spotify account to search and add music to your logs.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), textAlign = TextAlign.Center)
+                Text(text = if (currentLanguage == "vi") "MoonPage muốn truy cập tài khoản Spotify của bạn để tìm kiếm và thêm nhạc vào nhật ký." else "MoonPage wants to access your Spotify account to search and add music to your logs.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), textAlign = TextAlign.Center)
                 Spacer(modifier = Modifier.height(32.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = MoonTheme.customColors.cancelBtnBgColor, contentColor = MoonTheme.customColors.cancelBtnTextColor), shape = RoundedCornerShape(12.dp)) { Text("Cancel", fontWeight = FontWeight.Bold) }
-                    Button(onClick = onConfirm, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1DB954), contentColor = Color.White), shape = RoundedCornerShape(12.dp)) { Text("Allow Access", fontWeight = FontWeight.Bold) }
+                    Button(onClick = onDismiss, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = MoonTheme.customColors.cancelBtnBgColor, contentColor = MoonTheme.customColors.cancelBtnTextColor), shape = RoundedCornerShape(12.dp)) { Text(stringResource(R.string.cancel), fontWeight = FontWeight.Bold) }
+                    Button(onClick = onConfirm, modifier = Modifier.weight(1f).height(48.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1DB954), contentColor = Color.White), shape = RoundedCornerShape(12.dp)) { Text(if (currentLanguage == "vi") "Cho phép truy cập" else "Allow Access", fontWeight = FontWeight.Bold) }
                 }
             }
         }

@@ -21,4 +21,16 @@ object LocaleUtils {
         return context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
             .getString("language", "en") ?: "en"
     }
+
+    /**
+     * Helper to get a readable month name, especially for Vietnamese where
+     * standard formatters might return "Thg 1" which is ambiguous.
+     */
+    fun getFormattedMonthName(month: Int, languageCode: String): String {
+        return if (languageCode == "vi") {
+            "Tháng $month"
+        } else {
+            java.time.Month.of(month).getDisplayName(java.time.format.TextStyle.SHORT, Locale(languageCode))
+        }
+    }
 }

@@ -19,6 +19,8 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import android.app.Activity
 
+val LocalLocale = staticCompositionLocalOf { "en" }
+
 @Immutable
 data class MoonCustomColors(
     val logItemBg: Color,
@@ -407,7 +409,8 @@ fun MoonPageTheme(
     }
 
     CompositionLocalProvider(
-        LocalMoonCustomColors provides customColors
+        LocalMoonCustomColors provides customColors,
+        LocalLocale provides "en" // This should be updated in MainActivity to provide the real value
     ) {
         MaterialTheme(
             colorScheme = colorScheme,

@@ -32,4 +32,94 @@
     <string name="delete_account">Xóa tài khoản</string>
     <string name="select_language">Chọn ngôn ngữ</string>
     <string name="close">Đóng</string>
+    <string name="dark">Tối</string>
+    <string name="light">Sáng</string>
+    <string name="system">Hệ thống</string>
+    <string name="delete_account_confirmation">Bạn có chắc chắn muốn xóa tài khoản? Hành động này không thể hoàn tác.</string>
+    <string name="delete">Xóa</string>
+    <string name="cancel">Hủy</string>
+    <string name="ok">OK</string>
+
+    <!-- Calendar & Stats -->
+    <string name="report">Báo cáo</string>
+    <string name="monthly">Hàng tháng</string>
+    <string name="annual">Hàng năm</string>
+    <string name="select_date">Chọn ngày</string>
+    <string name="select_year">Chọn năm</string>
+    <string name="share">Chia sẻ</string>
+    <string name="edit">Sửa</string>
+    <string name="my_info">Thông tin</string>
+    <string name="recorded_days">Ngày đã ghi</string>
+    <string name="photos">Ảnh</string>
+    <string name="theme_store">Cửa hàng giao diện</string>
+    <string name="widgets">Tiện ích</string>
+    <string name="invite_friends">Mời bạn bè</string>
+    <string name="logout">Đăng xuất</string>
+
+    <!-- Days of Week -->
+    <string name="sun">CN</string>
+    <string name="mon">T2</string>
+    <string name="tue">T3</string>
+    <string name="wed">T4</string>
+    <string name="thu">T5</string>
+    <string name="fri">T6</string>
+    <string name="sat">T7</string>
+
+    <!-- Short Days of Week -->
+    <string name="sun_short">CN</string>
+    <string name="mon_short">T2</string>
+    <string name="tue_short">T3</string>
+    <string name="wed_short">T4</string>
+    <string name="thu_short">T5</string>
+    <string name="fri_short">T6</string>
+    <string name="sat_short">T7</string>
+
+    <!-- Profile -->
+    <string name="account">Tài khoản</string>
+    <string name="my_records">Ghi chép của tôi</string>
+    <string name="my_photos">Ảnh của tôi</string>
+    <string name="theme_calendar">Lịch giao diện</string>
+    <string name="more">Thêm</string>
+    <string name="invite_a_friend">Mời bạn bè</string>
+
+    <!-- Stats Titles -->
+    <string name="mood_flow">Dòng cảm xúc</string>
+    <string name="sleep_analysis">Phân tích giấc ngủ</string>
+    <string name="moods_by_sleep">Cảm xúc theo giấc ngủ</string>
+    <string name="mood_bar">Phân bổ cảm xúc</string>
+    <string name="activity_stats">Thống kê hoạt động</string>
+    <string name="best_worst">Tốt nhất &amp; Tệ nhất</string>
+    <string name="icon_deep_dive">Phân tích chuyên sâu</string>
+    <string name="top_music">Nhạc hàng đầu</string>
+    <string name="year_in_beans">Một năm nhìn lại</string>
+    <string name="monthly_average">Trung bình hàng tháng</string>
+    <string name="yearly_top_activities">Hoạt động hàng đầu năm</string>
+    <string name="trends">Xu hướng</string>
+    <string name="yearly_cycle_trends">Xu hướng chu kỳ năm</string>
+    <string name="yearly_sleep_trends">Xu hướng giấc ngủ năm</string>
+
+    <!-- Filter -->
+    <string name="filter_title">Lọc dữ liệu tháng</string>
+    <string name="clear_all">Xóa tất cả</string>
+    <string name="filter_by_mood">Lọc theo cảm xúc</string>
+    <string name="filter_by_activities">Lọc theo hoạt động</string>
+    <string name="show_results">Hiển thị kết quả</string>
+
+    <!-- Share -->
+    <string name="share_title">Chia sẻ lịch cảm xúc</string>
+    <string name="square">Hình vuông (1:1)</string>
+    <string name="portrait">Hình dọc (9:16)</string>
+
+    <!-- Daily Log -->
+    <string name="select_mood">Ngày hôm nay của bạn thế nào?</string>
+    <string name="select_activities">Bạn đã làm gì hôm nay?</string>
+    <string name="sleep_question">Bạn đã ngủ bao lâu?</string>
+    <string name="period_cycle">Chu kỳ kinh nguyệt</string>
+    <string name="daily_photo">Ảnh trong ngày</string>
+    <string name="note">Ghi chú</string>
+    <string name="done">Xong</string>
+    <string name="save">Lưu</string>
+    <string name="discard_changes">Hủy bỏ thay đổi?</string>
+    <string name="discard_confirmation">Bạn có thay đổi chưa lưu. Bạn có chắc muốn hủy bỏ chúng?</string>
+    <string name="discard">Hủy bỏ</string>
 </resources>
