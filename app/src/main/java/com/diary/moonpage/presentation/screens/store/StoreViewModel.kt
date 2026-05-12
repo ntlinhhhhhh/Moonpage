@@ -130,16 +130,21 @@ class StoreViewModel @Inject constructor(
                 _uiState.update { it.copy(showConfirmActivationDialog = true, temporarySelectedThemeId = event.themeId) }
             }
             StoreUiEvent.ConfirmActivation -> {
-                _uiState.value.temporarySelectedThemeId?.let { performActivateTheme(it) }
+                val themeId = _uiState.value.temporarySelectedThemeId
                 _uiState.update { it.copy(showConfirmActivationDialog = false, temporarySelectedThemeId = null) }
+                themeId?.let { performActivateTheme(it) }
             }
             StoreUiEvent.CancelActivation -> {
                 _uiState.update { it.copy(showConfirmActivationDialog = false, temporarySelectedThemeId = null) }
             }
             StoreUiEvent.DismissDialog -> {
-                _uiState.update { it.copy(showPurchaseSuccessDialog = false, showConfirmActivationDialog = false) }
+                _uiState.update { it.copy(showPurchaseSuccessDialog = false, showConfirmActivationDialog = false, activationSuccess = false) }
             }
         }
+    }
+
+    fun dismissSuccessMessage() {
+        _uiState.update { it.copy(activationSuccess = false) }
     }
 
     private fun loadData() {
@@ -226,7 +231,8 @@ class StoreViewModel @Inject constructor(
                     state.copy(
                         ownedThemes = updatedOwned, 
                         isLoading = false,
-                        selectedThemeDetail = updatedDetail
+                        selectedThemeDetail = updatedDetail,
+                        activationSuccess = true
                     )
                 }
                 

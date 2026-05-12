@@ -117,7 +117,7 @@ fun ProfileScreenContent(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 ActionCard(
-                    title = "Record days", 
+                    title = "Report",
                     value = recordedDays, 
                     icon = Icons.Rounded.CalendarToday,
                     modifier = Modifier.weight(1f), 

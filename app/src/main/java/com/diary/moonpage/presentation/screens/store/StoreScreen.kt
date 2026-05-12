@@ -67,13 +67,7 @@ fun StoreScreen(
                     .padding(bottom = paddingValues.calculateBottomPadding())
             ) {
                 StoreTopBar(
-                    coins = uiState.userCoins,
-                    onDoneClick = if (uiState.temporarySelectedThemeId != null) {
-                        { viewModel.applyTheme() }
-                    } else {
-                        onNavigateBack
-                    },
-                    isActivate = uiState.temporarySelectedThemeId != null
+                    coins = uiState.userCoins
                 )
 
                 StoreTabs(

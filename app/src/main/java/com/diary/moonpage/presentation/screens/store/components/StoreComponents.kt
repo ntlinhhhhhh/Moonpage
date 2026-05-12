@@ -111,9 +111,7 @@ fun CuteBeanIcon(
 
 @Composable
 fun StoreTopBar(
-    coins: Int,
-    onDoneClick: (() -> Unit)? = null,
-    isActivate: Boolean = false
+    coins: Int
 ) {
     Box(
         modifier = Modifier
@@ -130,61 +128,39 @@ fun StoreTopBar(
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        if (onDoneClick != null) {
-            Button(
-                onClick = onDoneClick,
-                modifier = Modifier
-                    .padding(end = 12.dp)
-                    .height(36.dp)
-                    .align(Alignment.CenterEnd),
-                shape = RoundedCornerShape(18.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            modifier = Modifier
+                .padding(end = 16.dp)
+                .height(32.dp)
+                .align(Alignment.CenterEnd)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = if (isActivate) "Activate" else "Done",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        } else {
-            Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                modifier = Modifier
-                    .padding(end = 16.dp)
-                    .height(32.dp)
-                    .align(Alignment.CenterEnd)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Box(
+                    modifier = Modifier
+                        .size(16.dp)
+                        .background(MaterialTheme.colorScheme.primary, CircleShape),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(16.dp)
-                            .background(MaterialTheme.colorScheme.primary, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Star,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(12.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "$coins",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 11.sp
+                    Icon(
+                        imageVector = Icons.Rounded.Star,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(12.dp)
                     )
                 }
+
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "$coins",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 11.sp
+                )
             }
         }
     }

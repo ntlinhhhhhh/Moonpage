@@ -63,13 +63,20 @@ fun ThemeDetailScreen(
                     snackbarHostState.showSnackbar(effect.message)
                 }
                 is StoreUiEffect.ThemeActivated -> {
-                    snackbarHostState.showSnackbar("Theme updated successfully!")
+                    // Handled via uiState.activationSuccess for better persistence during theme recomposition
                 }
                 is StoreUiEffect.NavigateBack -> {
                     onNavigateBack()
                 }
                 else -> {}
             }
+        }
+    }
+
+    LaunchedEffect(uiState.activationSuccess) {
+        if (uiState.activationSuccess) {
+            snackbarHostState.showSnackbar("Theme updated successfully!")
+            viewModel.dismissSuccessMessage()
         }
     }
 
@@ -138,10 +145,10 @@ fun ThemeDetailScreen(
                             contentAlignment = Alignment.Center
                         ) {
                         Icon(
-                            imageVector = Icons.Rounded.FilterVintage,
+                            imageVector = Icons.Rounded.Star,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(10.dp)
+                            modifier = Modifier.size(12.dp)
                         )
                         }
                         Spacer(modifier = Modifier.width(4.dp))
