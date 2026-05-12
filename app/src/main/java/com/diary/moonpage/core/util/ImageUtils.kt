@@ -21,41 +21,49 @@ import kotlin.math.min
 
 import android.content.Intent
 import androidx.core.content.FileProvider
+import kotlinx.coroutines.*
 
 object ImageUtils {
     /**
      */
     fun shareImage(context: Context, bitmap: Bitmap, title: String = "Share Mood") {
-        try {
-            val cachePath = File(context.cacheDir, "shared_images")
-            if (!cachePath.exists()) cachePath.mkdirs()
-            
-            val file = File(cachePath, "share_${System.currentTimeMillis()}.jpg")
-            val stream = FileOutputStream(file)
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream)
-            stream.close()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val cachePath = File(context.cacheDir, "shared_images")
+                if (!cachePath.exists()) cachePath.mkdirs()
+                
+                val file = File(cachePath, "share_${System.currentTimeMillis()}.jpg")
+                val stream = FileOutputStream(file)
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream)
+                stream.close()
 
-            val contentUri = FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                file
-            )
+                val contentUri = FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    file
+                )
 
-            if (contentUri != null) {
-                val shareIntent = Intent().apply {
-                    action = Intent.ACTION_SEND
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    setDataAndType(contentUri, context.contentResolver.getType(contentUri))
-                    putExtra(Intent.EXTRA_STREAM, contentUri)
-                    type = "image/jpeg"
+                if (contentUri != null) {
+                    val shareIntent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        setDataAndType(contentUri, context.contentResolver.getType(contentUri))
+                        putExtra(Intent.EXTRA_STREAM, contentUri)
+                        type = "image/jpeg"
+                    }
+                    val chooser = Intent.createChooser(shareIntent, title).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                    withContext(Dispatchers.Main) {
+                        context.startActivity(chooser)
+                    }
                 }
-                context.startActivity(Intent.createChooser(shareIntent, title).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                })
+            } catch (e: Exception) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Failed to share image", Toast.LENGTH_SHORT).show()
+                }
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(context, "Failed to share image", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -99,13 +107,19 @@ object ImageUtils {
             if (lensFacing == CameraSelector.LENS_FACING_FRONT) matrix.postScale(-1f, 1f)
 
             val processedBitmap = if (rotation != 0 || lensFacing == CameraSelector.LENS_FACING_FRONT) {
-                Bitmap.createBitmap(originalBitmap, 0, 0, originalBitmap.width, originalBitmap.height, matrix, true)
+                if (originalBitmap.width > 0 && originalBitmap.height > 0) {
+                    Bitmap.createBitmap(originalBitmap, 0, 0, originalBitmap.width, originalBitmap.height, matrix, true)
+                } else {
+                    originalBitmap
+                }
             } else {
                 originalBitmap
             }
 
             // 2. Center Crop Square
             val size = min(processedBitmap.width, processedBitmap.height)
+            if (size <= 0) return@withContext null
+
             val x = (processedBitmap.width - size) / 2
             val y = (processedBitmap.height - size) / 2
             val squareBitmap = Bitmap.createBitmap(processedBitmap, x, y, size, size)
@@ -191,24 +205,73 @@ object ImageUtils {
     }
 
     fun saveBitmapToGallery(context: Context, bitmap: Bitmap) {
-        val filename = "MP_${System.currentTimeMillis()}.jpg"
-        val outputStream = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val resolver = context.contentResolver
-            val contentValues = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
-                put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/MoonPage")
-            }
-            val imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-            imageUri?.let { resolver.openOutputStream(it) }
-        } else {
-            val imagesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString()
-            val file = File(imagesDir, filename)
-            FileOutputStream(file)
-        }
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val filename = "MP_${System.currentTimeMillis()}.jpg"
+                val resolver = context.contentResolver
+                
+                val outputStream = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val contentValues = ContentValues().apply {
+                        put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
+                        put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+                        // Use standard "Pictures/MoonPage" path
+                        put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/MoonPage")
+                        put(MediaStore.MediaColumns.IS_PENDING, 1)
+                    }
+                    
+                    val imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+                    if (imageUri != null) {
+                        val os = resolver.openOutputStream(imageUri)
+                        if (os != null) {
+                            // Write bitmap
+                            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, os)
+                            os.close()
+                            
+                            // Remove pending status
+                            contentValues.clear()
+                            contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
+                            resolver.update(imageUri, contentValues, null, null)
+                            os
+                        } else {
+                            resolver.delete(imageUri, null, null)
+                            null
+                        }
+                    } else null
+                } else {
+                    // Legacy path (< Android 10)
+                    val imagesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString()
+                    val dir = File(imagesDir, "MoonPage")
+                    if (!dir.exists()) {
+                        if (!dir.mkdirs()) {
+                            android.util.Log.e("ImageUtils", "Failed to create directory: ${dir.absolutePath}")
+                        }
+                    }
+                    val file = File(dir, filename)
+                    try {
+                        FileOutputStream(file).apply {
+                            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, this)
+                            close()
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("ImageUtils", "Failed to open FileOutputStream: ${e.message}")
+                        null
+                    }
+                }
 
-        outputStream?.use {
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, it)
+                if (outputStream != null) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Image saved to gallery", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    throw Exception("Failed to create output stream for gallery")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                android.util.Log.e("ImageUtils", "Error saving to gallery: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Failed to save image: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 }

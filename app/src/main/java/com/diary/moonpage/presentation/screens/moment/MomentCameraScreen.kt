@@ -61,6 +61,7 @@ fun MomentCameraScreen(
     initialMomentId: String? = null,
     onNavigateToGallery: () -> Unit,
     onNavigateToHistory: () -> Unit,
+    onNavigateToAccount: () -> Unit,
     viewModel: MomentViewModel = hiltViewModel(),
     profileViewModel: com.diary.moonpage.presentation.screens.profile.ProfileViewModel = hiltViewModel()
 ) {
@@ -130,6 +131,7 @@ fun MomentCameraScreen(
             onEvent = viewModel::onEvent,
             onNavigateToGallery = onNavigateToGallery,
             onNavigateToHistory = onNavigateToHistory,
+            onNavigateToAccount = onNavigateToAccount,
             initialMomentId = initialMomentId,
             snackbarHostState = snackbarHostState,
             avatarUrl = profileState.user?.avatarUrl,
@@ -157,6 +159,7 @@ fun MomentCameraScreenContent(
     onEvent: (MomentUiEvent) -> Unit,
     onNavigateToGallery: () -> Unit,
     onNavigateToHistory: () -> Unit,
+    onNavigateToAccount: () -> Unit,
     initialMomentId: String? = null,
     snackbarHostState: SnackbarHostState,
     avatarUrl: String? = null,
@@ -269,7 +272,8 @@ fun MomentCameraScreenContent(
                                 capturedImageUri = uri
                                 capturedLensFacing = lensFacing
                             },
-                            avatarUrl = avatarUrl
+                            avatarUrl = avatarUrl,
+                            onAvatarClick = onNavigateToAccount
                         )
                     } else {
                         MomentHistoryScreenContent(
@@ -277,6 +281,7 @@ fun MomentCameraScreenContent(
                             localPaths = uiState.localPaths,
                             onNavigateToGallery = onNavigateToGallery,
                             onBackToCamera = { scope.launch { verticalPagerState.animateScrollToPage(0) } },
+                            onNavigateToAccount = onNavigateToAccount,
                             initialMomentId = initialMomentId,
                             onShare = { onEvent(MomentUiEvent.ShareMoment(it.imageUrl)) },
                             onDownload = { onEvent(MomentUiEvent.DownloadMoment(it.imageUrl)) },

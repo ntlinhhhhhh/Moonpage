@@ -2,6 +2,7 @@ package com.diary.moonpage.presentation.components.moment
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -43,7 +44,8 @@ fun MomentFeedItem(
     moment: Moment, 
     localPath: String? = null,
     avatarUrl: String? = null,
-    localAvatarPath: String? = null
+    localAvatarPath: String? = null,
+    onImageClick: () -> Unit = {}
 ) {
     val onBgColor = MaterialTheme.colorScheme.onBackground
     val context = LocalContext.current
@@ -92,7 +94,8 @@ fun MomentFeedItem(
                 .fillMaxWidth(0.9f)
                 .aspectRatio(1f)
                 .clip(RoundedCornerShape(32.dp))
-                .background(if (isLoaded) Color.Transparent else onBgColor.copy(alpha = shimmerAlpha)),
+                .background(if (isLoaded) Color.Transparent else onBgColor.copy(alpha = shimmerAlpha))
+                .clickable { onImageClick() },
             contentAlignment = Alignment.BottomCenter
         ) {
             AsyncImage(

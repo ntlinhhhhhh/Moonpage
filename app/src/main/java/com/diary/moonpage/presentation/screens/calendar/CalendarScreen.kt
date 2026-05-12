@@ -100,6 +100,7 @@ fun CalendarScreenContent(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val view = androidx.compose.ui.platform.LocalView.current
+    val compositionContext = rememberCompositionContext()
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var dateToDelete by remember { mutableStateOf<LocalDate?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -248,6 +249,7 @@ fun CalendarScreenContent(
 
                     ComposeCaptureUtils.captureComposable(
                         view = view,
+                        parentContext = compositionContext,
                         content = {
                             // Wrap in theme to ensure correct colors
                             Surface(color = MaterialTheme.colorScheme.background) {
@@ -599,12 +601,7 @@ fun CalendarSelectedLogDetail(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Rounded.Eco,
-                contentDescription = null,
-                tint = Color(0xFF81C784),
-                modifier = Modifier.size(28.dp)
-            )
+            Spacer(modifier = Modifier.width(28.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 IconButton(onClick = onShareClick) {

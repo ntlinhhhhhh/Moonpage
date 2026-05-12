@@ -314,7 +314,8 @@ fun AppNavigation(
                         MomentCameraScreen(
                             initialMomentId = momentId,
                             onNavigateToGallery = { navController.navigate(Screen.Gallery.route) },
-                            onNavigateToHistory = { /* TODO */ }
+                            onNavigateToHistory = { /* TODO */ },
+                            onNavigateToAccount = { navController.navigate(Screen.Account.route) }
                         )
                     }
                 }
@@ -452,7 +453,8 @@ fun AppNavigation(
                         MomentDetailScreen(
                             momentId = momentId,
                             onNavigateBack = { navController.popBackStack() },
-                            onNavigateToGallery = { navController.popBackStack() }
+                            onNavigateToGallery = { navController.popBackStack() },
+                            onNavigateToAccount = { navController.navigate(Screen.Account.route) }
                         )
                     }
                 }

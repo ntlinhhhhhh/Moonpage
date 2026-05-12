@@ -30,6 +30,11 @@ import com.diary.moonpage.domain.model.Moment
 import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import com.diary.moonpage.presentation.components.moment.MomentFeedItem
 import com.diary.moonpage.presentation.components.moment.CaptureButton
+import com.diary.moonpage.presentation.components.moment.MomentZoomOverlay
+
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 
 /**
  * Stateful Component
@@ -39,6 +44,7 @@ fun MomentHistoryScreen(
     onBackToCamera: () -> Unit,
     onNavigateToGallery: () -> Unit,
     onNavigateToDetail: (String) -> Unit,
+    onNavigateToAccount: () -> Unit,
     viewModel: MomentViewModel = hiltViewModel(),
     profileViewModel: com.diary.moonpage.presentation.screens.profile.ProfileViewModel = hiltViewModel()
 ) {
@@ -79,19 +85,59 @@ fun MomentHistoryScreen(
         }
     }
 
+    var zoomImage by remember { mutableStateOf<String?>(null) }
+    var momentToDelete by remember { mutableStateOf<Moment?>(null) }
+    
+    if (momentToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { momentToDelete = null },
+            containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor,
+            title = { Text("Delete Moment", fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) },
+            text = { Text("Are you sure you want to delete this moment? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.onEvent(MomentUiEvent.DeleteMoment(momentToDelete!!.id))
+                        momentToDelete = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { momentToDelete = null },
+                    colors = ButtonDefaults.textButtonColors(contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor)
+                ) { Text("Cancel") }
+            }
+        )
+    }
+
     MomentHistoryScreenContent(
         moments = uiState.moments,
         localPaths = uiState.localPaths,
         onNavigateToGallery = onNavigateToGallery,
         onBackToCamera = onBackToCamera,
+        onNavigateToAccount = onNavigateToAccount,
         onShare = { moment -> viewModel.onEvent(MomentUiEvent.ShareMoment(moment.imageUrl)) },
         onDownload = { moment -> viewModel.onEvent(MomentUiEvent.DownloadMoment(moment.imageUrl)) },
-        onDelete = { moment -> viewModel.onEvent(MomentUiEvent.DeleteMoment(moment.id)) },
+        onDelete = { moment -> momentToDelete = moment },
+        onImageZoom = { url -> zoomImage = url },
         snackbarHostState = snackbarHostState,
         avatarUrl = profileState.user?.avatarUrl,
         localAvatarPath = profileState.localAvatarPath ?: profileState.tempAvatarPath,
-        isVerticalVisible = true // MomentHistoryScreen is standalone in some routes
+        isVerticalVisible = true 
     )
+
+    if (zoomImage != null) {
+        MomentZoomOverlay(
+            imageUrl = zoomImage!!,
+            localPath = uiState.localPaths[zoomImage!!],
+            onDismiss = { zoomImage = null },
+            onShare = {
+                viewModel.onEvent(MomentUiEvent.ShareMoment(zoomImage!!))
+            }
+        )
+    }
 }
 
 /**
@@ -103,10 +149,12 @@ fun MomentHistoryScreenContent(
     localPaths: Map<String, String>,
     onNavigateToGallery: () -> Unit,
     onBackToCamera: () -> Unit,
+    onNavigateToAccount: () -> Unit,
     initialMomentId: String? = null,
     onShare: (Moment) -> Unit = {},
     onDownload: (Moment) -> Unit = {},
     onDelete: (Moment) -> Unit = {},
+    onImageZoom: (String) -> Unit = {},
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     avatarUrl: String? = null,
     localAvatarPath: String? = null,
@@ -183,7 +231,8 @@ fun MomentHistoryScreenContent(
                         moment = moment, 
                         localPath = localPaths[moment.imageUrl],
                         avatarUrl = avatarUrl,
-                        localAvatarPath = localAvatarPath
+                        localAvatarPath = localAvatarPath,
+                        onImageClick = { onImageZoom(moment.imageUrl) }
                     )
                 }
             }
@@ -201,7 +250,8 @@ fun MomentHistoryScreenContent(
                         .size(48.dp)
                         .clip(CircleShape)
                         .background(onBgColor.copy(alpha = 0.15f))
-                        .align(Alignment.CenterStart),
+                        .align(Alignment.CenterStart)
+                        .clickable { onNavigateToAccount() },
                     contentAlignment = Alignment.Center
                 ) {
                     AsyncImage(
@@ -327,3 +377,4 @@ fun MomentHistoryScreenContent(
             MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
 }
+

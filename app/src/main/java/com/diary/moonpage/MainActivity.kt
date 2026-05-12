@@ -76,6 +76,7 @@ class MainActivity : FragmentActivity() {
         })
 
         setContent {
+            val isReady by mainViewModel.isReady.collectAsState()
             val themeType by mainViewModel.themeType.collectAsState()
             val isDarkModePref by mainViewModel.isDarkMode.collectAsState()
             val isDark = isDarkModePref ?: isSystemInDarkTheme()
@@ -103,7 +104,9 @@ class MainActivity : FragmentActivity() {
                         color = MaterialTheme.colorScheme.background
                     ) {
                         Box(modifier = Modifier.fillMaxSize()) {
-                            AppNavigation()
+                            if (isReady) {
+                                AppNavigation()
+                            }
                             
                             SnackbarHost(
                                 hostState = snackbarHostState,

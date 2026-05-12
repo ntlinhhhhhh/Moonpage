@@ -73,6 +73,7 @@ fun DailyLogScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
+    var photoToDelete by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(dateString) {
         viewModel.setInitialDate(LocalDate.parse(dateString))
@@ -134,8 +135,33 @@ fun DailyLogScreen(
         setPendingDate = { date -> viewModel.setPendingDate(date) },
         getSpotifyAuthUrl = { viewModel.getSpotifyAuthUrl() },
         scope = scope,
-        snackbarHostState = snackbarHostState
+        snackbarHostState = snackbarHostState,
+        onPhotoDeleteRequest = { photoToDelete = it }
     )
+    
+    if (photoToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { photoToDelete = null },
+            containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor,
+            title = { Text("Delete Photo", fontWeight = FontWeight.Bold) },
+            text = { Text("Are you sure you want to remove this photo from your log?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.onEvent(DailyLogUiEvent.OnPhotoRemoved(photoToDelete!!))
+                        photoToDelete = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { photoToDelete = null },
+                    colors = ButtonDefaults.textButtonColors(contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor)
+                ) { Text("Cancel") }
+            }
+        )
+    }
 }
 
 /**
@@ -155,7 +181,8 @@ fun DailyLogScreenContent(
     setPendingDate: (LocalDate) -> Unit,
     getSpotifyAuthUrl: suspend () -> String,
     scope: kotlinx.coroutines.CoroutineScope,
-    snackbarHostState: SnackbarHostState
+    snackbarHostState: SnackbarHostState,
+    onPhotoDeleteRequest: (String) -> Unit
 ) {
     val isChanged = remember<Boolean>(uiState) {
         val existing = uiState.existingLog
@@ -212,7 +239,8 @@ fun DailyLogScreenContent(
                 onNavigateToMenstrualCycle = onNavigateToMenstrualCycle,
                 onNavigateToDailyPhoto = onNavigateToDailyPhoto,
                 onImportSteps = onImportSteps,
-                onLinkMusicAccount = onLinkMusicAccount
+                onLinkMusicAccount = onLinkMusicAccount,
+                onPhotoDeleteRequest = onPhotoDeleteRequest
             )
             
             MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
@@ -383,7 +411,8 @@ private fun DailyLogMainContent(
     onNavigateToMenstrualCycle: () -> Unit,
     onNavigateToDailyPhoto: () -> Unit,
     onImportSteps: () -> Unit,
-    onLinkMusicAccount: () -> Unit
+    onLinkMusicAccount: () -> Unit,
+    onPhotoDeleteRequest: (String) -> Unit
 ) {
     val themeType = uiState.themeType
 
@@ -494,7 +523,7 @@ private fun DailyLogMainContent(
             DailyPhotoSection(
                 photos = uiState.dailyPhotos, 
                 onPhotoClick = onNavigateToDailyPhoto,
-                onPhotoRemove = { onEvent(DailyLogUiEvent.OnPhotoRemoved(it)) }
+                onPhotoRemove = onPhotoDeleteRequest
             )
         }
 
