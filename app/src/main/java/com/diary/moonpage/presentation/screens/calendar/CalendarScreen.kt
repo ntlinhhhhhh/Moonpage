@@ -37,6 +37,7 @@ import com.diary.moonpage.core.util.ComposeCaptureUtils
 import com.diary.moonpage.core.util.ImageUtils
 import com.diary.moonpage.presentation.components.calendar.*
 import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
+import com.diary.moonpage.presentation.components.core.feedback.MoonDeleteConfirmDialog
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
@@ -263,7 +264,9 @@ fun CalendarScreenContent(
                         width = width,
                         height = height,
                         onBitmapCaptured = { bitmap ->
-                            ImageUtils.shareImage(view.context, bitmap, "My Mood Calendar")
+                            coroutineScope.launch {
+                                ImageUtils.shareImage(view.context, bitmap, "My Mood Calendar")
+                            }
                         }
                     )
                     onEvent(CalendarUiEvent.OnShareDismiss)
@@ -300,7 +303,9 @@ fun CalendarScreenContent(
     }
 
     if (showDeleteConfirmDialog && dateToDelete != null) {
-        DeleteConfirmDialog(
+        MoonDeleteConfirmDialog(
+            title = "Delete Log",
+            message = "Are you sure you want to delete this log? This action cannot be undone.",
             onConfirm = {
                 onEvent(CalendarUiEvent.OnDeleteLog(dateToDelete!!))
                 showDeleteConfirmDialog = false
@@ -313,111 +318,8 @@ fun CalendarScreenContent(
         )
     }
 }
+// Removed local DeleteConfirmDialog in favor of MoonDeleteConfirmDialog
 
-@Composable
-fun DeleteConfirmDialog(
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    val colorScheme = MaterialTheme.colorScheme
-
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true,
-            usePlatformDefaultWidth = false
-        )
-    ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth(0.88f)
-                .wrapContentHeight(),
-            shape = RoundedCornerShape(20.dp),
-            color = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor,
-            tonalElevation = 0.dp
-        ) {
-            Column(
-                modifier = Modifier.padding(28.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Title
-                Text(
-                    text = "Delete Moment",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = colorScheme.onSurface,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Main message
-                Text(
-                    text = "Are you sure you want to delete this moment?",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colorScheme.onSurface.copy(alpha = 0.8f),
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Warning message
-                Text(
-                    text = "This action cannot be undone and the record will be lost forever.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colorScheme.error,
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Medium
-                )
-
-                Spacer(modifier = Modifier.height(28.dp))
-
-                // Buttons
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // Cancel button
-                    Button(
-                        onClick = onDismiss,
-                        modifier = Modifier.weight(1f).height(52.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnBgColor,
-                            contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor
-                        ),
-                        elevation = ButtonDefaults.buttonElevation(0.dp)
-                    ) {
-                        Text(
-                            "Cancel",
-                            fontWeight = FontWeight.SemiBold,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
-
-                    // Delete button
-                    Button(
-                        onClick = onConfirm,
-                        modifier = Modifier.weight(1f).height(52.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colorScheme.error,
-                            contentColor = colorScheme.onError
-                        ),
-                        elevation = ButtonDefaults.buttonElevation(0.dp)
-                    ) {
-                        Text(
-                            "Delete",
-                            fontWeight = FontWeight.SemiBold,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
 
 @Composable
 fun CalendarMonthHeader(
@@ -465,7 +367,7 @@ fun CalendarMonthHeader(
             Icon(
                 imageVector = Icons.Rounded.IosShare,
                 contentDescription = "Share",
-                tint = MaterialTheme.colorScheme.onSurface
+                tint = headerColor
             )
         }
     }

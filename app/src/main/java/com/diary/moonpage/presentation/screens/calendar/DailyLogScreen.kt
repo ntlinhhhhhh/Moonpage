@@ -6,6 +6,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -48,6 +49,7 @@ import com.diary.moonpage.core.util.MoonIcon
 import com.diary.moonpage.core.util.MoonIcons
 import androidx.compose.ui.graphics.ColorFilter
 import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
+import com.diary.moonpage.presentation.components.core.feedback.MoonDeleteConfirmDialog
 import com.diary.moonpage.core.theme.MoonTheme
 import com.diary.moonpage.core.theme.MoonThemeType
 import java.time.LocalDate
@@ -68,6 +70,7 @@ fun DailyLogScreen(
     onNavigateToMusic: () -> Unit,
     onNavigateToMenstrualCycle: () -> Unit,
     onNavigateToDailyPhoto: () -> Unit,
+    onNavigateToShare: (String) -> Unit,
     onDone: (String) -> Unit,
     viewModel: DailyLogViewModel = hiltViewModel()
 ) {
@@ -136,30 +139,32 @@ fun DailyLogScreen(
         getSpotifyAuthUrl = { viewModel.getSpotifyAuthUrl() },
         scope = scope,
         snackbarHostState = snackbarHostState,
-        onPhotoDeleteRequest = { photoToDelete = it }
+        onNavigateToShare = onNavigateToShare,
+        onPhotoDeleteRequest = { photoToDelete = it },
+        onPhotoZoomRequest = { url -> viewModel.onEvent(DailyLogUiEvent.OnPhotoZoom(url)) }
     )
     
-    if (photoToDelete != null) {
-        AlertDialog(
-            onDismissRequest = { photoToDelete = null },
-            containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor,
-            title = { Text("Delete Photo", fontWeight = FontWeight.Bold) },
-            text = { Text("Are you sure you want to remove this photo from your log?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.onEvent(DailyLogUiEvent.OnPhotoRemoved(photoToDelete!!))
-                        photoToDelete = null
-                    },
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                ) { Text("Delete") }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { photoToDelete = null },
-                    colors = ButtonDefaults.textButtonColors(contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor)
-                ) { Text("Cancel") }
+    if (uiState.zoomImageUrl != null) {
+        com.diary.moonpage.presentation.components.moment.MomentZoomOverlay(
+            imageUrl = uiState.zoomImageUrl!!,
+            localPath = null,
+            onDismiss = { viewModel.onEvent(DailyLogUiEvent.OnPhotoZoom(null)) },
+            onShare = {
+                // For now, share is handled via the main bottom bar, 
+                // but we can add logic here if needed.
             }
+        )
+    }
+    
+    if (photoToDelete != null) {
+        MoonDeleteConfirmDialog(
+            title = "Delete Photo",
+            message = "Are you sure you want to remove this photo from your log?",
+            onConfirm = {
+                viewModel.onEvent(DailyLogUiEvent.OnPhotoRemoved(photoToDelete!!))
+                photoToDelete = null
+            },
+            onDismiss = { photoToDelete = null }
         )
     }
 }
@@ -175,6 +180,7 @@ fun DailyLogScreenContent(
     onNavigateToMusic: () -> Unit,
     onNavigateToMenstrualCycle: () -> Unit,
     onNavigateToDailyPhoto: () -> Unit,
+    onNavigateToShare: (String) -> Unit,
     onImportSteps: () -> Unit,
     onLinkMusicAccount: () -> Unit,
     checkLogExists: (LocalDate, (Boolean) -> Unit) -> Unit,
@@ -182,7 +188,8 @@ fun DailyLogScreenContent(
     getSpotifyAuthUrl: suspend () -> String,
     scope: kotlinx.coroutines.CoroutineScope,
     snackbarHostState: SnackbarHostState,
-    onPhotoDeleteRequest: (String) -> Unit
+    onPhotoDeleteRequest: (String) -> Unit,
+    onPhotoZoomRequest: (String) -> Unit
 ) {
     val isChanged = remember<Boolean>(uiState) {
         val existing = uiState.existingLog
@@ -207,6 +214,9 @@ fun DailyLogScreenContent(
 
     val focusManager = LocalFocusManager.current
     val uriHandler = LocalUriHandler.current
+    val view = androidx.compose.ui.platform.LocalView.current
+    val compositionContext = rememberCompositionContext()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Scaffold(
         modifier = Modifier.pointerInput(Unit) {
@@ -225,7 +235,35 @@ fun DailyLogScreenContent(
             DailyLogBottomBar(
                 isLoading = uiState.isLoading,
                 onSaveClick = { onEvent(DailyLogUiEvent.OnSaveClick) },
-                enabled = isChanged
+                onShareClick = { onNavigateToShare(uiState.date.toString()) },
+                onDownloadClick = {
+                    scope.launch {
+                        val width = 1080
+                        com.diary.moonpage.core.util.ComposeCaptureUtils.captureComposable(
+                            view = view,
+                            parentContext = compositionContext,
+                            content = {
+                                Box(
+                                    modifier = Modifier
+                                        .width(with(androidx.compose.ui.platform.LocalDensity.current) { 1080.toDp() })
+                                        .background(Color(0xFFF1F1ED))
+                                        .padding(40.dp),
+                                    contentAlignment = Alignment.TopStart
+                                ) {
+                                    com.diary.moonpage.presentation.screens.calendar.ShareLogCard(uiState = uiState)
+                                }
+                            },
+                            width = width,
+                            onBitmapCaptured = { bitmap ->
+                                scope.launch {
+                                    com.diary.moonpage.core.util.ImageUtils.saveBitmapToGallery(context, bitmap)
+                                }
+                            }
+                        )
+                    }
+                },
+                enabled = isChanged,
+                themeColor = MaterialTheme.colorScheme.primary
             )
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -240,7 +278,8 @@ fun DailyLogScreenContent(
                 onNavigateToDailyPhoto = onNavigateToDailyPhoto,
                 onImportSteps = onImportSteps,
                 onLinkMusicAccount = onLinkMusicAccount,
-                onPhotoDeleteRequest = onPhotoDeleteRequest
+                onPhotoDeleteRequest = onPhotoDeleteRequest,
+                onPhotoZoomRequest = onPhotoZoomRequest
             )
             
             MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
@@ -361,42 +400,72 @@ private fun DailyLogTopBar(
 private fun DailyLogBottomBar(
     isLoading: Boolean,
     onSaveClick: () -> Unit,
-    enabled: Boolean
+    onShareClick: () -> Unit,
+    onDownloadClick: () -> Unit,
+    enabled: Boolean,
+    themeColor: Color
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 2.dp,
+        tonalElevation = 4.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Button(
-            onClick = onSaveClick,
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
-                .height(56.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
-            ),
-            shape = RoundedCornerShape(16.dp),
-            enabled = enabled && !isLoading,
-            elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    strokeWidth = 3.dp
-                )
-            } else {
-                Text(
-                    "Done", 
-                    fontSize = 18.sp, 
-                    fontWeight = FontWeight.Bold,
-                    color = if (enabled && !isLoading) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
-                )
+            // Share Button
+            OutlinedButton(
+                onClick = onShareClick,
+                modifier = Modifier
+                    .weight(0.4f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.5.dp, themeColor),
+                contentPadding = PaddingValues(0.dp)
+            ) {
+                Icon(Icons.Rounded.Share, null, tint = themeColor, modifier = Modifier.size(20.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Share", color = themeColor, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            }
+
+            // Download Button
+            OutlinedButton(
+                onClick = onDownloadClick,
+                modifier = Modifier
+                    .weight(0.4f)
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.5.dp, themeColor),
+                contentPadding = PaddingValues(0.dp)
+            ) {
+                Icon(Icons.Rounded.Download, null, tint = themeColor, modifier = Modifier.size(20.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Save", color = themeColor, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            }
+
+            // Done Button
+            Button(
+                onClick = onSaveClick,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(52.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = themeColor,
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp),
+                enabled = enabled && !isLoading,
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 3.dp)
+                } else {
+                    Text("Done", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
             }
         }
     }
@@ -412,7 +481,8 @@ private fun DailyLogMainContent(
     onNavigateToDailyPhoto: () -> Unit,
     onImportSteps: () -> Unit,
     onLinkMusicAccount: () -> Unit,
-    onPhotoDeleteRequest: (String) -> Unit
+    onPhotoDeleteRequest: (String) -> Unit,
+    onPhotoZoomRequest: (String) -> Unit
 ) {
     val themeType = uiState.themeType
 
@@ -523,7 +593,8 @@ private fun DailyLogMainContent(
             DailyPhotoSection(
                 photos = uiState.dailyPhotos, 
                 onPhotoClick = onNavigateToDailyPhoto,
-                onPhotoRemove = onPhotoDeleteRequest
+                onPhotoRemove = onPhotoDeleteRequest,
+                onPhotoZoom = onPhotoZoomRequest
             )
         }
 
@@ -1086,7 +1157,8 @@ private fun DailyNoteSection(noteText: String, onNoteChanged: (String) -> Unit) 
 private fun DailyPhotoSection(
     photos: List<String>, 
     onPhotoClick: () -> Unit,
-    onPhotoRemove: (String) -> Unit
+    onPhotoRemove: (String) -> Unit,
+    onPhotoZoom: (String) -> Unit
 ) {
     Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {      
         Column(modifier = Modifier.padding(16.dp)) {
@@ -1125,7 +1197,7 @@ private fun DailyPhotoSection(
                                     .clickable(
                                         interactionSource = remember { MutableInteractionSource() },
                                         indication = null
-                                    ) { onPhotoClick() }
+                                    ) { onPhotoZoom(photoUri) }
                             ) {
                                 coil.compose.AsyncImage(
                                     model = photoUri,
@@ -1358,12 +1430,27 @@ fun DailyLogDatePickerDialog(initialDate: LocalDate, onDateSelected: (LocalDate)
         Surface(shape = RoundedCornerShape(28.dp), color = MoonTheme.customColors.popupBgColor, modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
             Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("Which day is this record for?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(vertical = 16.dp))
-                Row(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } }) { 
+                        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = null, tint = MaterialTheme.colorScheme.primary) 
+                    }
+                    
                     val currentPageMonth = baseYearMonth.plusMonths((pagerState.currentPage - initialPage).toLong())
-                    Text(text = currentPageMonth.format(DateTimeFormatter.ofPattern("MMM yyyy")), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                    Row {
-                        IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } }) { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
-                        IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } }) { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
+                    Text(
+                        text = currentPageMonth.format(DateTimeFormatter.ofPattern("MMM yyyy")), 
+                        style = MaterialTheme.typography.titleMedium, 
+                        fontWeight = FontWeight.Bold, 
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.weight(1f),
+                        textAlign = TextAlign.Center
+                    )
+                    
+                    IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } }) { 
+                        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.primary) 
                     }
                 }
                 HorizontalPager(state = pagerState, modifier = Modifier.fillMaxWidth().height(260.dp)) { page ->

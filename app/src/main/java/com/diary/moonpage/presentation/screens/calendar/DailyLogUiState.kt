@@ -40,5 +40,6 @@ data class DailyLogUiState(
     val gender: String? = null,
     val suggestedWeather: com.diary.moonpage.domain.repository.WeatherData? = null,
     val recentTracks: List<com.diary.moonpage.data.remote.api.SpotifyTrack> = emptyList(),
-    val isInitialized: Boolean = false
+    val isInitialized: Boolean = false,
+    val zoomImageUrl: String? = null
 )

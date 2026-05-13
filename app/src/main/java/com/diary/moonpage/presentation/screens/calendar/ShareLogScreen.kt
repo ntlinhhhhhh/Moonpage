@@ -36,6 +36,7 @@ import com.diary.moonpage.core.util.ComposeCaptureUtils
 import com.diary.moonpage.core.util.ImageUtils
 import com.diary.moonpage.core.util.MoonIcons
 import kotlinx.coroutines.launch
+import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -68,7 +69,7 @@ fun ShareLogScreen(
             CenterAlignedTopAppBar(
                 title = { 
                     Text(
-                        "Share", 
+                        "Share Log", 
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF424242)
@@ -79,49 +80,19 @@ fun ShareLogScreen(
                         Icon(Icons.Rounded.ArrowBackIosNew, "Back", modifier = Modifier.size(20.dp), tint = Color(0xFF757575))
                     }
                 },
-                actions = {
-                    // Download icon in Top Bar
-                    IconButton(
-                        enabled = !uiState.isLoading,
-                        onClick = {
-                            scope.launch {
-                                val width = 1080
-                                ComposeCaptureUtils.captureComposable(
-                                    view = view,
-                                    parentContext = compositionContext,
-                                    content = {
-                                        Box(
-                                            modifier = Modifier
-                                                .width(with(density) { 1080.toDp() })
-                                                .background(Color(0xFFF7F7F5))
-                                                .padding(16.dp),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            ShareLogCard(uiState = uiState)
-                                        }
-                                    },
-                                    width = width,
-                                    onBitmapCaptured = { bitmap ->
-                                        ImageUtils.saveBitmapToGallery(context, bitmap)
-                                    }
-                                )
-                            }
-                        }
-                    ) {
-                        Icon(Icons.Rounded.Download, "Save", tint = Color(0xFF757575))
-                    }
-                },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color(0xFFF7F7F5)
+                    containerColor = Color.Transparent
                 )
             )
         },
         bottomBar = {
-            Surface(
-                modifier = Modifier.fillMaxWidth().navigationBarsPadding(),
-                color = Color.Transparent,
-                tonalElevation = 0.dp
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // Download Button
                 Button(
                     enabled = !uiState.isLoading,
                     onClick = {
@@ -134,36 +105,78 @@ fun ShareLogScreen(
                                     Box(
                                         modifier = Modifier
                                             .width(with(density) { 1080.toDp() })
-                                            .background(Color(0xFFF7F7F5))
-                                            .padding(24.dp),
-                                        contentAlignment = Alignment.Center
+                                            .background(Color(0xFFF1F1ED))
+                                            .padding(40.dp),
+                                        contentAlignment = Alignment.TopStart
                                     ) {
                                         ShareLogCard(uiState = uiState)
                                     }
                                 },
                                 width = width,
                                 onBitmapCaptured = { bitmap ->
-                                    ImageUtils.shareImage(context, bitmap, "My Daily Log")
+                                    scope.launch {
+                                        ImageUtils.saveBitmapToGallery(context, bitmap)
+                                    }
                                 }
                             )
                         }
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .height(60.dp),
-                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.weight(1f).height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    ),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+                        containerColor = themeColor.copy(alpha = 0.1f),
+                        contentColor = themeColor
+                    )
                 ) {
-                    Text("Share", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Icon(Icons.Rounded.Download, null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Download", fontWeight = FontWeight.Bold)
+                }
+
+                // Share Button
+                Button(
+                    enabled = !uiState.isLoading,
+                    onClick = {
+                        scope.launch {
+                            val width = 1080
+                            ComposeCaptureUtils.captureComposable(
+                                view = view,
+                                parentContext = compositionContext,
+                                content = {
+                                    Box(
+                                        modifier = Modifier
+                                            .width(with(density) { 1080.toDp() })
+                                            .background(Color(0xFFF1F1ED))
+                                            .padding(40.dp),
+                                        contentAlignment = Alignment.TopStart
+                                    ) {
+                                        ShareLogCard(uiState = uiState)
+                                    }
+                                },
+                                width = width,
+                                onBitmapCaptured = { bitmap ->
+                                    scope.launch {
+                                        ImageUtils.shareImage(context, bitmap, "Share My Daily Log")
+                                    }
+                                }
+                            )
+                        }
+                    },
+                    modifier = Modifier.weight(1f).height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = themeColor,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Icon(Icons.Rounded.Share, null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Share", fontWeight = FontWeight.Bold)
                 }
             }
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = Color(0xFFF7F7F5)
+        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         if (uiState.isLoading) {
             Box(
@@ -183,18 +196,18 @@ fun ShareLogScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.height(24.dp))
-                
+
                 // Preview of the card
                 Box(
                     modifier = Modifier
-                        .padding(horizontal = 24.dp)
-                        .width(360.dp)
+                        .padding(horizontal = 16.dp)
+                        .fillMaxWidth()
                         .clip(RoundedCornerShape(24.dp))
-                        .background(Color(0xFFF1F1ED))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                 ) {
                     ShareLogCard(uiState = uiState)
                 }
-                
+
                 Spacer(modifier = Modifier.height(40.dp))
             }
         }
@@ -205,44 +218,41 @@ fun ShareLogScreen(
 fun ShareLogCard(uiState: DailyLogUiState) {
     val date = uiState.date
     val themeType = uiState.themeType
-    
+
     // Formatting date: Monday, May 4
     val dayOfWeek = date.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, Locale.ENGLISH)
     val monthName = date.month.getDisplayName(java.time.format.TextStyle.FULL, Locale.ENGLISH)
     val dayOfMonth = date.dayOfMonth
     val dateText = "$dayOfWeek, $monthName $dayOfMonth"
-    
+
     val moodVisual = MoonIcons.Moods.getMoodVisual(uiState.selectedMood ?: 3, themeType, uiState.customMoods)
-    val themeColor = moodVisual.color
+    val themeColor = MaterialTheme.colorScheme.primary
     
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(Color(0xFFF1F1ED))
+            .background(Color(0xFFF1F1ED)) // Slightly darker beige for the card background
             .padding(24.dp),
-        horizontalAlignment = Alignment.Start
+        horizontalAlignment = Alignment.Start // Left aligned as requested
     ) {
-        // Header with Logo (Left) and Year (Right)
+        // Header with Logo
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = painterResource(id = R.drawable.logo),
-                    contentDescription = null,
-                    modifier = Modifier.size(28.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    "MoonPage",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = themeColor
-                )
-            }
+            Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = null,
+                modifier = Modifier.size(28.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                "MoonPage",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = themeColor
+            )
+            Spacer(modifier = Modifier.weight(1f))
             Text(
                 text = date.format(DateTimeFormatter.ofPattern("yyyy")),
                 fontSize = 14.sp,
@@ -253,41 +263,37 @@ fun ShareLogCard(uiState: DailyLogUiState) {
         
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Mood Icon (Center)
-        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-                    .background(themeColor.copy(alpha = 0.8f)),
-                contentAlignment = Alignment.Center
-            ) {
-                if (moodVisual.drawableRes != null) {
-                    Image(
-                        painter = painterResource(id = moodVisual.drawableRes),
-                        contentDescription = null,
-                        modifier = Modifier.size(42.dp)
-                    )
-                }
+        // Mood Icon (Smaller and Left Aligned)
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .clip(CircleShape)
+                .background(moodVisual.color.copy(alpha = 0.8f)),
+            contentAlignment = Alignment.Center
+        ) {
+            if (moodVisual.drawableRes != null) {
+                Image(
+                    painter = painterResource(id = moodVisual.drawableRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(36.dp)
+                )
             }
         }
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // Date Pill (Center)
-        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            Surface(
-                color = Color.White.copy(alpha = 0.6f),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Text(
-                    text = dateText,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-                    fontSize = 14.sp,
-                    color = Color(0xFF616161),
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+        // Date Pill (Left Aligned)
+        Surface(
+            color = Color.White.copy(alpha = 0.6f),
+            shape = RoundedCornerShape(10.dp)
+        ) {
+            Text(
+                text = dateText,
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                fontSize = 14.sp,
+                color = Color(0xFF616161),
+                fontWeight = FontWeight.SemiBold
+            )
         }
         
         Spacer(modifier = Modifier.height(24.dp))
@@ -300,12 +306,12 @@ fun ShareLogCard(uiState: DailyLogUiState) {
         
         Spacer(modifier = Modifier.height(24.dp))
         
-        // Content Section (Activities, Note, Photos, Music) - LEFT ALIGNED
+        // Content Section (Activities, Note, Photos, Music)
         Column(
             modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.Start
+            horizontalAlignment = Alignment.Start // Left aligned content
         ) {
-            // Activities (Max 6)
+            // Activities (Max 6, Left Aligned)
             val activities = uiState.selectedActivities.mapNotNull { id ->
                 uiState.dynamicActivities.find { it.id == id }
             }.take(6)
@@ -320,38 +326,40 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                         val icon = MoonIcons.getIconForActivity(activity.name)
                         Box(
                             modifier = Modifier
-                                .size(44.dp)
+                                .size(40.dp)
                                 .clip(CircleShape)
                                 .background(icon.color.copy(alpha = 0.1f)),
                             contentAlignment = Alignment.Center
                         ) {
                             if (icon.drawableRes != null) {
-                                Image(painterResource(id = icon.drawableRes), null, modifier = Modifier.size(24.dp))
+                                Image(painterResource(id = icon.drawableRes), null, modifier = Modifier.size(22.dp))
                             } else {
-                                Icon(icon.vector!!, null, modifier = Modifier.size(22.dp), tint = icon.color)
+                                Icon(icon.vector!!, null, modifier = Modifier.size(20.dp), tint = icon.color)
                             }
                         }
-                        if (index < activities.size - 1) Spacer(modifier = Modifier.width(12.dp))
+                        if (index < activities.size - 1) Spacer(modifier = Modifier.width(10.dp))
                     }
                 }
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(24.dp))
             }
 
-            // Note Text
+            // Note Text (Left Aligned)
             if (!uiState.noteText.isNullOrBlank()) {
                 Text(
                     text = uiState.noteText,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp),
                     fontSize = 15.sp,
                     color = Color(0xFF424242),
                     textAlign = TextAlign.Start,
                     lineHeight = 22.sp,
                     fontWeight = FontWeight.Medium
                 )
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(24.dp))
             }
 
-            // Photos Grid (Max 3 per row)
+            // Photos Grid (Max 3 per row, Left Aligned)
             if (uiState.dailyPhotos.isNotEmpty()) {
                 val photos = uiState.dailyPhotos
                 photos.chunked(3).forEachIndexed { rowIndex, chunk ->
@@ -364,7 +372,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                                 model = photoUrl,
                                 contentDescription = null,
                                 modifier = Modifier
-                                    .size(90.dp)
+                                    .size(96.dp)
                                     .clip(RoundedCornerShape(12.dp)),
                                 contentScale = ContentScale.Crop
                             )
@@ -373,10 +381,10 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                     }
                     if (rowIndex < (photos.size - 1) / 3) Spacer(modifier = Modifier.height(8.dp))
                 }
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(24.dp))
             }
 
-            // Music Card
+            // Music Card (Left Aligned)
             if (!uiState.musicTitle.isNullOrBlank()) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
@@ -438,7 +446,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Bottom
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
                 Text(
@@ -448,7 +456,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                     color = themeColor
                 )
                 Text(
-                    text = "REF: ${uiState.date.toEpochDay()}${System.currentTimeMillis() % 10000}",
+                    text = "REF: ${System.currentTimeMillis() / 1000}",
                     fontSize = 10.sp,
                     color = Color(0xFF9E9E9E)
                 )
@@ -457,7 +465,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
             Image(
                 painter = painterResource(id = R.drawable.logo),
                 contentDescription = null,
-                modifier = Modifier.size(40.dp).alpha(0.6f)
+                modifier = Modifier.size(36.dp).alpha(0.4f)
             )
         }
     }

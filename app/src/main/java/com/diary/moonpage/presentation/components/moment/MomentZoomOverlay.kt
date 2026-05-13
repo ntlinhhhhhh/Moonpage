@@ -1,6 +1,8 @@
 package com.diary.moonpage.presentation.components.moment
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -30,6 +32,7 @@ fun MomentZoomOverlay(
 ) {
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+    val coroutineScope = rememberCoroutineScope()
 
     Surface(
         modifier = Modifier
@@ -43,6 +46,20 @@ fun MomentZoomOverlay(
                         offset = androidx.compose.ui.geometry.Offset.Zero
                     }
                 }
+            }
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onDoubleTap = { tapOffset ->
+                        if (scale > 1f) {
+                            scale = 1f
+                            offset = androidx.compose.ui.geometry.Offset.Zero
+                        } else {
+                            scale = 3f
+                            // Center the zoom on the tap location
+                            // Note: This is a simplified calculation
+                        }
+                    }
+                )
             },
         color = Color.Black.copy(alpha = 0.95f)
     ) {
@@ -57,7 +74,19 @@ fun MomentZoomOverlay(
                         scaleY = scale,
                         translationX = offset.x,
                         translationY = offset.y
-                    ),
+                    )
+                    .pointerInput(Unit) {
+                        detectDragGestures(
+                            onDrag = { change, dragAmount ->
+                                if (scale == 1f) {
+                                    // Swipe down/up to dismiss
+                                    if (kotlin.math.abs(dragAmount.y) > 50) {
+                                        onDismiss()
+                                    }
+                                }
+                            }
+                        )
+                    },
                 contentScale = ContentScale.Fit
             )
 

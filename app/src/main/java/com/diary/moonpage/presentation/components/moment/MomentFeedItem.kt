@@ -3,7 +3,10 @@ package com.diary.moonpage.presentation.components.moment
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -89,19 +92,45 @@ fun MomentFeedItem(
         Box(modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 24.dp, vertical = 16.dp).height(56.dp))
         Spacer(modifier = Modifier.height(60.dp))
 
+        var scale by remember { mutableFloatStateOf(1f) }
+        var offset by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+
         Box(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
                 .aspectRatio(1f)
                 .clip(RoundedCornerShape(32.dp))
                 .background(if (isLoaded) Color.Transparent else onBgColor.copy(alpha = shimmerAlpha))
-                .clickable { onImageClick() },
+                .pointerInput(Unit) {
+                    detectTransformGestures { _, pan, zoom, _ ->
+                        scale = (scale * zoom).coerceIn(1f, 3f)
+                        if (scale > 1f) {
+                            offset += pan
+                        } else {
+                            offset = androidx.compose.ui.geometry.Offset.Zero
+                        }
+                    }
+                }
+                .clickable { 
+                    if (scale == 1f) onImageClick() 
+                    else {
+                        scale = 1f
+                        offset = androidx.compose.ui.geometry.Offset.Zero
+                    }
+                },
             contentAlignment = Alignment.BottomCenter
         ) {
             AsyncImage(
                 model = imageRequest,
                 contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer(
+                        scaleX = scale,
+                        scaleY = scale,
+                        translationX = offset.x,
+                        translationY = offset.y
+                    ),
                 contentScale = ContentScale.Crop,
                 onSuccess = { isLoaded = true }
             )

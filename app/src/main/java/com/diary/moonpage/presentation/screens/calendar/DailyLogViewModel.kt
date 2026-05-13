@@ -255,6 +255,9 @@ class DailyLogViewModel @Inject constructor(
                     dailyPhotos = it.dailyPhotos.filter { uri -> uri != event.photoUri }
                 ) }
             }
+            is DailyLogUiEvent.OnPhotoZoom -> {
+                _uiState.update { it.copy(zoomImageUrl = event.imageUrl) }
+            }
             is DailyLogUiEvent.OnMusicChanged -> {
                 _uiState.update { it.copy(musicTitle = event.musicTitle) }
             }

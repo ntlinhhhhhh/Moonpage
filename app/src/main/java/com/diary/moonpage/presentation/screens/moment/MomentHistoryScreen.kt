@@ -27,7 +27,13 @@ import androidx.compose.ui.layout.ContentScale
 import kotlinx.coroutines.launch
 import com.diary.moonpage.core.theme.MoonPageTheme
 import com.diary.moonpage.domain.model.Moment
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.Velocity
 import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
+import com.diary.moonpage.presentation.components.core.feedback.MoonDeleteConfirmDialog
 import com.diary.moonpage.presentation.components.moment.MomentFeedItem
 import com.diary.moonpage.presentation.components.moment.CaptureButton
 import com.diary.moonpage.presentation.components.moment.MomentZoomOverlay
@@ -86,32 +92,6 @@ fun MomentHistoryScreen(
     }
 
     var zoomImage by remember { mutableStateOf<String?>(null) }
-    var momentToDelete by remember { mutableStateOf<Moment?>(null) }
-    
-    if (momentToDelete != null) {
-        AlertDialog(
-            onDismissRequest = { momentToDelete = null },
-            containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor,
-            title = { Text("Delete Moment", fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) },
-            text = { Text("Are you sure you want to delete this moment? This action cannot be undone.") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.onEvent(MomentUiEvent.DeleteMoment(momentToDelete!!.id))
-                        momentToDelete = null
-                    },
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                ) { Text("Delete") }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { momentToDelete = null },
-                    colors = ButtonDefaults.textButtonColors(contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor)
-                ) { Text("Cancel") }
-            }
-        )
-    }
-
     MomentHistoryScreenContent(
         moments = uiState.moments,
         localPaths = uiState.localPaths,
@@ -120,7 +100,7 @@ fun MomentHistoryScreen(
         onNavigateToAccount = onNavigateToAccount,
         onShare = { moment -> viewModel.onEvent(MomentUiEvent.ShareMoment(moment.imageUrl)) },
         onDownload = { moment -> viewModel.onEvent(MomentUiEvent.DownloadMoment(moment.imageUrl)) },
-        onDelete = { moment -> momentToDelete = moment },
+        onDelete = { moment -> viewModel.onEvent(MomentUiEvent.DeleteMoment(moment.id)) },
         onImageZoom = { url -> zoomImage = url },
         snackbarHostState = snackbarHostState,
         avatarUrl = profileState.user?.avatarUrl,
@@ -211,10 +191,51 @@ fun MomentHistoryScreenContent(
         }
     }
 
+    var momentToDelete by remember { mutableStateOf<Moment?>(null) }
+
+    if (momentToDelete != null) {
+        MoonDeleteConfirmDialog(
+            title = "Delete Moment",
+            message = "Are you sure you want to delete this moment? This action cannot be undone.",
+            onConfirm = {
+                onDelete(momentToDelete!!)
+                momentToDelete = null
+            },
+            onDismiss = { momentToDelete = null }
+        )
+    }
+
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource
+            ): Offset {
+                // If we're at the top and still scrolling down, allow parent to handle
+                return if (feedPagerState.currentPage == 0 && available.y > 0) {
+                    Offset.Zero
+                } else {
+                    Offset.Zero
+                }
+            }
+
+            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+                // If the user flings down at the top of the history, go back to camera
+                if (available.y > 1000f && feedPagerState.currentPage == 0) {
+                    onBackToCamera()
+                    return available
+                }
+                return super.onPostFling(consumed, available)
+            }
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(bgColor)
+            .nestedScroll(nestedScrollConnection)
     ) {
         if (sortedMoments.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -349,7 +370,7 @@ fun MomentHistoryScreenContent(
                                 .clickable { 
                                     showMenu = false
                                     if (sortedMoments.isNotEmpty()) {
-                                        onDelete(sortedMoments[feedPagerState.currentPage])
+                                        momentToDelete = sortedMoments[feedPagerState.currentPage]
                                     }
                                 }
                                 .padding(horizontal = 24.dp, vertical = 16.dp),

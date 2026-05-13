@@ -24,18 +24,22 @@ import androidx.core.content.FileProvider
 import kotlinx.coroutines.*
 
 object ImageUtils {
-    /**
-     */
-    fun shareImage(context: Context, bitmap: Bitmap, title: String = "Share Mood") {
-        CoroutineScope(Dispatchers.IO).launch {
+
+    suspend fun shareImage(context: Context, bitmap: Bitmap, title: String = "Share Mood") {
+        withContext(Dispatchers.IO) {
             try {
                 val cachePath = File(context.cacheDir, "shared_images")
                 if (!cachePath.exists()) cachePath.mkdirs()
                 
-                val file = File(cachePath, "share_${System.currentTimeMillis()}.jpg")
-                val stream = FileOutputStream(file)
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
-                stream.close()
+                // Cleanup old shares (older than 1 hour)
+                cachePath.listFiles()?.forEach { 
+                    if (it.lastModified() < System.currentTimeMillis() - 3600000) it.delete() 
+                }
+
+                val file = File(cachePath, "MP_Share_${System.currentTimeMillis()}.jpg")
+                FileOutputStream(file).use { stream ->
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+                }
 
                 val contentUri = FileProvider.getUriForFile(
                     context,
@@ -45,9 +49,9 @@ object ImageUtils {
 
                 if (contentUri != null) {
                     val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         putExtra(Intent.EXTRA_STREAM, contentUri)
                         type = "image/jpeg"
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     }
                     val chooser = Intent.createChooser(shareIntent, title)
                     if (context !is android.app.Activity) {
@@ -56,11 +60,32 @@ object ImageUtils {
                     withContext(Dispatchers.Main) {
                         context.startActivity(chooser)
                     }
+                } else {
+                    throw Exception("Failed to generate content URI")
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                android.util.Log.e("ImageUtils", "Share failed: ${e.message}", e)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Failed to share image", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Failed to share image: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    suspend fun shareImageFromUrl(context: Context, imageUrl: String) {
+        withContext(Dispatchers.IO) {
+            try {
+                val url = URL(imageUrl)
+                val bitmap = BitmapFactory.decodeStream(url.openConnection().getInputStream())
+                if (bitmap != null) {
+                    withContext(Dispatchers.Main) {
+                        shareImage(context, bitmap, "Share Photo")
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("ImageUtils", "shareImageFromUrl failed", e)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Failed to load image for sharing", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -70,7 +95,7 @@ object ImageUtils {
         context: Context,
         uri: Uri,
         lensFacing: Int = CameraSelector.LENS_FACING_BACK,
-        quality: Int = 80 // 80% là mức vàng để giữ chất lượng và nhẹ dung lượng
+        quality: Int = 80
     ): File? = withContext(Dispatchers.IO) {
         return@withContext try {
             val options = BitmapFactory.Options().apply {
@@ -80,7 +105,6 @@ object ImageUtils {
                 BitmapFactory.decodeStream(it, null, options) 
             }
 
-            // Tính toán inSampleSize để không load full ảnh gốc vào RAM
             val targetSize = 1080
             var inSampleSize = 1
             if (options.outHeight > targetSize || options.outWidth > targetSize) {
@@ -99,7 +123,6 @@ object ImageUtils {
                 BitmapFactory.decodeStream(it, null, decodeOptions)
             } ?: return@withContext null
 
-            // 1. Fix xoay ảnh
             val rotation = getRotation(context, uri)
             val matrix = Matrix()
             if (rotation != 0) matrix.postRotate(rotation.toFloat())
@@ -115,7 +138,6 @@ object ImageUtils {
                 originalBitmap
             }
 
-            // 2. Center Crop Square
             val size = min(processedBitmap.width, processedBitmap.height)
             if (size <= 0) return@withContext null
 
@@ -123,14 +145,12 @@ object ImageUtils {
             val y = (processedBitmap.height - size) / 2
             val squareBitmap = Bitmap.createBitmap(processedBitmap, x, y, size, size)
 
-            // 3. Final Resize to 1080px
             val finalBitmap = if (size > targetSize) {
                 Bitmap.createScaledBitmap(squareBitmap, targetSize, targetSize, true)
             } else {
                 squareBitmap
             }
 
-            // 4. Save with high compression
             val compressedFile = File(context.cacheDir, "up_${System.currentTimeMillis()}.webp")
             FileOutputStream(compressedFile).use { out ->
                 val format = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -142,7 +162,6 @@ object ImageUtils {
                 finalBitmap.compress(format, quality, out)
             }
 
-            // Cleanup RAM
             if (originalBitmap != processedBitmap) originalBitmap.recycle()
             if (processedBitmap != squareBitmap) processedBitmap.recycle()
             if (squareBitmap != finalBitmap) squareBitmap.recycle()
@@ -185,90 +204,80 @@ object ImageUtils {
         }
     }
 
-    suspend fun downloadAndSaveImage(context: Context, imageUrl: String) {
+    suspend fun saveBitmapToGallery(context: Context, bitmap: Bitmap) {
         withContext(Dispatchers.IO) {
+            var success = false
             try {
-                val url = URL(imageUrl)
-                val bitmap = BitmapFactory.decodeStream(url.openConnection().getInputStream())
-                saveBitmapToGallery(context, bitmap)
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Image saved to gallery", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Failed to download image", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
-
-    fun saveBitmapToGallery(context: Context, bitmap: Bitmap) {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val filename = "MP_${System.currentTimeMillis()}.jpg"
+                val filename = "MP_Log_${System.currentTimeMillis()}.jpg"
                 val resolver = context.contentResolver
                 
-                val outputStream = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     val contentValues = ContentValues().apply {
                         put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
                         put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-                        // Use standard "Pictures/MoonPage" path
                         put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/MoonPage")
                         put(MediaStore.MediaColumns.IS_PENDING, 1)
                     }
                     
                     val imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
                     if (imageUri != null) {
-                        val os = resolver.openOutputStream(imageUri)
-                        if (os != null) {
-                            // Write bitmap
-                            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, os)
-                            os.close()
-                            
-                            // Remove pending status
+                        resolver.openOutputStream(imageUri).use { os ->
+                            if (os != null) {
+                                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, os)
+                                success = true
+                            }
+                        }
+                        
+                        if (success) {
                             contentValues.clear()
                             contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
                             resolver.update(imageUri, contentValues, null, null)
-                            os
                         } else {
                             resolver.delete(imageUri, null, null)
-                            null
                         }
-                    } else null
+                    }
                 } else {
-                    // Legacy path (< Android 10)
                     val imagesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).toString()
                     val dir = File(imagesDir, "MoonPage")
-                    if (!dir.exists()) {
-                        if (!dir.mkdirs()) {
-                            android.util.Log.e("ImageUtils", "Failed to create directory: ${dir.absolutePath}")
-                        }
-                    }
+                    if (!dir.exists()) dir.mkdirs()
+                    
                     val file = File(dir, filename)
-                    try {
-                        FileOutputStream(file).apply {
-                            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, this)
-                            close()
-                        }
-                    } catch (e: Exception) {
-                        android.util.Log.e("ImageUtils", "Failed to open FileOutputStream: ${e.message}")
-                        null
+                    FileOutputStream(file).use { out ->
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+                        success = true
                     }
+                    
+                    val intent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
+                    intent.data = Uri.fromFile(file)
+                    context.sendBroadcast(intent)
                 }
 
-                if (outputStream != null) {
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "Image saved to gallery", Toast.LENGTH_SHORT).show()
+                withContext(Dispatchers.Main) {
+                    if (success) {
+                        Toast.makeText(context, "Saved to gallery!", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, "Failed to save image", Toast.LENGTH_SHORT).show()
                     }
-                } else {
-                    throw Exception("Failed to create output stream for gallery")
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
-                android.util.Log.e("ImageUtils", "Error saving to gallery: ${e.message}")
+                android.util.Log.e("ImageUtils", "Save to gallery failed: ${e.message}", e)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Failed to save image: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Error saving: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    suspend fun downloadAndSaveImage(context: Context, imageUrl: String) {
+        withContext(Dispatchers.IO) {
+            try {
+                val url = URL(imageUrl)
+                val bitmap = BitmapFactory.decodeStream(url.openConnection().getInputStream())
+                saveBitmapToGallery(context, bitmap)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Failed to download image", Toast.LENGTH_SHORT).show()
                 }
             }
         }
