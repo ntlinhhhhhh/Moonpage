@@ -8,6 +8,8 @@ data class SettingsUiState(
     val isDarkMode: Boolean? = null, // null for System
     val isPasscodeEnabled: Boolean = false,
     val isBiometricEnabled: Boolean = false,
+    val reminderTime: String = "21:00",
+    val isReminderEnabled: Boolean = false,
     val isDeleteAccountDialogShown: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null

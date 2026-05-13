@@ -1,11 +1,18 @@
 package com.diary.moonpage.domain.usecase.notification
 
+import android.content.Context
+import com.diary.moonpage.R
 import com.diary.moonpage.data.remote.dto.notification.CreateNotificationRequest
 import com.diary.moonpage.data.remote.dto.notification.NotificationType
 import com.diary.moonpage.domain.repository.*
 import com.diary.moonpage.core.util.UserManager
+import com.diary.moonpage.core.util.SettingsPreferencesManager
+import com.diary.moonpage.core.util.LocaleUtils
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
@@ -13,7 +20,9 @@ class CheckAndTriggerNotificationsUseCase @Inject constructor(
     private val notificationRepository: NotificationRepository,
     private val statsRepository: StatisticsRepository,
     private val dailyLogRepository: DailyLogRepository,
-    private val userManager: UserManager
+    private val userManager: UserManager,
+    private val settingsPreferencesManager: SettingsPreferencesManager,
+    @ApplicationContext private val context: Context
 ) {
     suspend operator fun invoke() {
         val user = userManager.getUser().firstOrNull()
@@ -22,97 +31,140 @@ class CheckAndTriggerNotificationsUseCase @Inject constructor(
             return
         }
         
-        android.util.Log.d("TriggerNotify", "Starting check for user: $userId")
+        val language = settingsPreferencesManager.language.first()
+        val localizedContext = LocaleUtils.applyLocale(context, language)
         
-        // 1. Check Streak Milestones
-        checkStreakMilestones(userId)
+        android.util.Log.d("TriggerNotify", "Starting comprehensive check for user: $userId (lang: $language)")
         
-        // 2. Check Memory Lane (1 year ago)
-        checkMemoryLane(userId)
+        // 1. Daily Reminder: "How was your day?"
+        checkDailyReminder(userId, localizedContext)
         
-        // 3. Check Mood Trend (Last 3 days negative)
-        checkMoodTrend(userId)
+        // 2. Streak Milestones
+        checkStreakMilestones(userId, localizedContext)
+        
+        // 3. Memory Lane
+        checkMemoryLane(userId, localizedContext)
+        
+        // 4. Mood Trend
+        checkMoodTrend(userId, localizedContext)
+        
+        // 5. Monthly Report
+        checkMonthlyReport(userId, localizedContext)
+
+        // 6. Weather Check (Morning)
+        checkWeather(userId, localizedContext)
     }
 
-    private suspend fun checkStreakMilestones(userId: String) {
+    private suspend fun checkDailyReminder(userId: String, context: Context) {
+        val today = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
+        dailyLogRepository.getDailyLogByDate(today).onFailure {
+            notificationRepository.createNotification(
+                CreateNotificationRequest(
+                    userId = userId,
+                    title = context.getString(R.string.noti_reminder_title),
+                    message = context.getString(R.string.noti_reminder_body),
+                    type = NotificationType.REMINDER
+                )
+            )
+        }
+    }
+
+    private suspend fun checkStreakMilestones(userId: String, context: Context) {
         try {
             val statsResponse = statsRepository.getGlobalSummary()
             if (statsResponse.isSuccessful) {
                 val currentStreak = statsResponse.body()?.currentStreak ?: 0
-                android.util.Log.d("TriggerNotify", "Current streak: $currentStreak")
+                val (titleRes, bodyRes) = when (currentStreak) {
+                    3 -> R.string.noti_milestone_3d_title to R.string.noti_milestone_3d_body
+                    7 -> R.string.noti_milestone_7d_title to R.string.noti_milestone_7d_body
+                    else -> null to null
+                }
                 
-                if (currentStreak > 0 && (currentStreak % 7 == 0 || currentStreak == 3 || currentStreak == 30)) {
-                    val response = notificationRepository.createNotification(
+                if (titleRes != null && bodyRes != null) {
+                    notificationRepository.createNotification(
                         CreateNotificationRequest(
                             userId = userId,
-                            title = "Amazing Streak!",
-                            message = "You've recorded for $currentStreak days in a row! Keep it up! 🔥",
+                            title = context.getString(titleRes),
+                            message = context.getString(bodyRes),
                             type = NotificationType.STREAK
                         )
                     )
-                    android.util.Log.d("TriggerNotify", "Streak notification response: ${response.code()}")
                 }
-            } else {
-                android.util.Log.e("TriggerNotify", "Failed to get stats: ${statsResponse.code()}")
             }
         } catch (e: Exception) {
             android.util.Log.e("TriggerNotify", "Streak check error", e)
         }
     }
 
-    private suspend fun checkMemoryLane(userId: String) {
-        try {
-            val oneYearAgo = LocalDate.now().minusYears(1)
-            val dateStr = oneYearAgo.format(DateTimeFormatter.ISO_DATE)
-            
-            dailyLogRepository.getDailyLogByDate(dateStr).onSuccess { log ->
-                android.util.Log.d("TriggerNotify", "Found log from last year")
-                val response = notificationRepository.createNotification(
-                    CreateNotificationRequest(
-                        userId = userId,
-                        title = "Memory Lane",
-                        message = "Take a look at what you were doing on this day last year! ✨",
-                        type = NotificationType.MEMORY_LANE
-                    )
+    private suspend fun checkMemoryLane(userId: String, context: Context) {
+        val oneYearAgo = LocalDate.now().minusYears(1).format(DateTimeFormatter.ISO_DATE)
+        dailyLogRepository.getDailyLogByDate(oneYearAgo).onSuccess {
+            notificationRepository.createNotification(
+                CreateNotificationRequest(
+                    userId = userId,
+                    title = context.getString(R.string.noti_memory_title),
+                    message = context.getString(R.string.noti_memory_body),
+                    type = NotificationType.MEMORY_LANE
                 )
-                android.util.Log.d("TriggerNotify", "Memory Lane notification response: ${response.code()}")
-            }.onFailure {
-                android.util.Log.d("TriggerNotify", "No log found for last year ($dateStr)")
-            }
-        } catch (e: Exception) {
-            android.util.Log.e("TriggerNotify", "Memory Lane check error", e)
+            )
         }
     }
 
-    private suspend fun checkMoodTrend(userId: String) {
-        try {
-            val today = LocalDate.now()
-            var negativeCount = 0
-            
-            android.util.Log.d("TriggerNotify", "Checking mood trend...")
-            for (i in 0..2) {
-                val date = today.minusDays(i.toLong()).format(DateTimeFormatter.ISO_DATE)
-                dailyLogRepository.getDailyLogByDate(date).onSuccess { log ->
-                    if (log.baseMoodId <= 2) { // 1: Very Sad, 2: Sad
-                        negativeCount++
-                    }
-                }
+    private suspend fun checkMoodTrend(userId: String, context: Context) {
+        val today = LocalDate.now()
+        var negativeCount = 0
+        for (i in 0..2) {
+            val date = today.minusDays(i.toLong()).format(DateTimeFormatter.ISO_DATE)
+            dailyLogRepository.getDailyLogByDate(date).onSuccess { log ->
+                if (log.baseMoodId <= 2) negativeCount++
             }
-            
-            android.util.Log.d("TriggerNotify", "Negative count: $negativeCount")
-            if (negativeCount == 3) {
-                val response = notificationRepository.createNotification(
-                    CreateNotificationRequest(
-                        userId = userId,
-                        title = "Mood Trend Check-in",
-                        message = "I noticed you've been feeling a bit down lately. Remember to be kind to yourself. You're doing great! 💙",
-                        type = NotificationType.MOOD_TREND
-                    )
+        }
+        
+        if (negativeCount == 3) {
+            notificationRepository.createNotification(
+                CreateNotificationRequest(
+                    userId = userId,
+                    title = context.getString(R.string.noti_empathy_title),
+                    message = context.getString(R.string.noti_empathy_body),
+                    type = NotificationType.MOOD_TREND
                 )
-                android.util.Log.d("TriggerNotify", "Mood Trend notification response: ${response.code()}")
+            )
+        }
+    }
+
+    private suspend fun checkMonthlyReport(userId: String, context: Context) {
+        val today = LocalDate.now()
+        if (today.dayOfMonth == 1) {
+            notificationRepository.createNotification(
+                CreateNotificationRequest(
+                    userId = userId,
+                    title = context.getString(R.string.noti_report_monthly_title),
+                    message = context.getString(R.string.noti_report_monthly_body),
+                    type = NotificationType.MONTHLY_REPORT
+                )
+            )
+        }
+    }
+
+    private suspend fun checkWeather(userId: String, context: Context) {
+        val now = LocalTime.now()
+        if (now.hour in 7..8) {
+            // Simulate weather based on month (Winter/Rainy)
+            val month = LocalDate.now().monthValue
+            val (titleRes, bodyRes) = if (month in 5..10) {
+                R.string.noti_weather_rainy_title to R.string.noti_weather_rainy_body
+            } else {
+                R.string.noti_weather_sunny_title to R.string.noti_weather_sunny_body
             }
-        } catch (e: Exception) {
-            android.util.Log.e("TriggerNotify", "Mood Trend check error", e)
+
+            notificationRepository.createNotification(
+                CreateNotificationRequest(
+                    userId = userId,
+                    title = context.getString(titleRes),
+                    message = context.getString(bodyRes),
+                    type = NotificationType.WEATHER
+                )
+            )
         }
     }
 }

@@ -31,5 +31,6 @@ data class CreateNotificationRequest(
 data class SendPushRequest(
     @SerializedName("token") val token: String,
     @SerializedName("title") val title: String,
-    @SerializedName("body") val body: String
+    @SerializedName("body") val body: String,
+    @SerializedName("imageUrl") val imageUrl: String? = null
 )

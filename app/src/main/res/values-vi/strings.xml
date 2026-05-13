@@ -196,4 +196,29 @@
     <string name="not_specified">Chưa xác định</string>
     <string name="current_passcode">Mã PIN hiện tại</string>
     <string name="wrong_passcode_try_again">Sai mã PIN. Vui lòng thử lại.</string>
+
+    <!-- Notifications -->
+    <string name="noti_reminder_title">Ngày hôm nay của bạn thế nào? 🌱</string>
+    <string name="noti_reminder_body">Dành 1 phút kể cho mình nghe nhé. Dù vui hay buồn, ở đây luôn có chỗ để bạn tựa vào.</string>
+    
+    <string name="noti_empathy_title">Gửi bạn một cái ôm thật chặt 🫂</string>
+    <string name="noti_empathy_body">Có vẻ mấy hôm nay bạn đang mang nhiều tâm sự. Nghỉ ngơi một chút nhé, mọi chuyện rồi sẽ ổn thôi!</string>
+    
+    <string name="noti_weather_sunny_title">Nắng lên rực rỡ rồi 🌻</string>
+    <string name="noti_weather_sunny_body">Một ngày mới trong lành đang chờ bạn. Nhớ bôi kem chống nắng và mang theo một nụ cười thật tươi nhé!</string>
+    <string name="noti_weather_rainy_title">Trời đổ mưa rồi, nhớ mang ô bạn nhé ☔</string>
+    <string name="noti_weather_rainy_body">Dù bên ngoài ướt át, mong rằng trong lòng bạn hôm nay vẫn có một ngày thật ấm áp và bình yên.</string>
+    
+    <string name="noti_milestone_3d_title">Khởi đầu tuyệt vời! ✨</string>
+    <string name="noti_milestone_3d_body">Bạn đã ghi lại cảm xúc 3 ngày liên tiếp rồi. Thói quen nhỏ, niềm vui to. Cứ thế phát huy nhé!</string>
+    <string name="noti_milestone_7d_title">Ta-da! 1 tuần gắn bó cùng nhau 🎉</string>
+    <string name="noti_milestone_7d_body">Bạn đã dành trọn vẹn 7 ngày để yêu thương bản thân. Phần thưởng là một huy hiệu mới vừa được mở khóa, vào xem ngay nào!</string>
+    <string name="noti_milestone_broken_title">Trạm dừng chân nhỏ ⛺</string>
+    <string name="noti_milestone_broken_body">Hôm qua bạn đã bận rộn quá đúng không? Không sao cả, chuỗi ngày có thể bắt đầu lại, quan trọng là bạn đã quay về đây!</string>
+    
+    <string name="noti_report_monthly_title">Hộp thư tháng trước đã đến! 💌</string>
+    <string name="noti_report_monthly_body">Cuốn phim cảm xúc tháng qua của bạn đã được cuộn lại. Cùng mở ra xem tháng này màu sắc nào đang thống trị nhé!</string>
+    
+    <string name="noti_memory_title">Cỗ máy thời gian khởi động 🕰️</string>
+    <string name="noti_memory_body">Đúng ngày này 1 năm trước, bạn đã lưu lại một khoảnh khắc ở đây. Có muốn quay về quá khứ một chút không?</string>
 </resources>

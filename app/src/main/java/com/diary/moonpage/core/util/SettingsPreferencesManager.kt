@@ -21,10 +21,20 @@ class SettingsPreferencesManager @Inject constructor(
         private val PASSCODE_KEY = stringPreferencesKey("passcode")
         private val IS_PASSCODE_ENABLED_KEY = booleanPreferencesKey("is_passcode_enabled")
         private val IS_BIOMETRIC_ENABLED_KEY = booleanPreferencesKey("is_biometric_enabled")
+        private val REMINDER_TIME_KEY = stringPreferencesKey("reminder_time")
+        private val IS_REMINDER_ENABLED_KEY = booleanPreferencesKey("is_reminder_enabled")
     }
 
     val language: Flow<String> = context.settingsDataStore.data.map { preferences ->
         preferences[LANGUAGE_KEY] ?: "en"
+    }
+
+    val reminderTime: Flow<String> = context.settingsDataStore.data.map { preferences ->
+        preferences[REMINDER_TIME_KEY] ?: "21:00"
+    }
+
+    val isReminderEnabled: Flow<Boolean> = context.settingsDataStore.data.map { preferences ->
+        preferences[IS_REMINDER_ENABLED_KEY] ?: false
     }
 
     val passcode: Flow<String?> = context.settingsDataStore.data.map { preferences ->
@@ -37,6 +47,18 @@ class SettingsPreferencesManager @Inject constructor(
 
     val isBiometricEnabled: Flow<Boolean> = context.settingsDataStore.data.map { preferences ->
         preferences[IS_BIOMETRIC_ENABLED_KEY] ?: false
+    }
+
+    suspend fun setReminderTime(time: String) {
+        context.settingsDataStore.edit { preferences ->
+            preferences[REMINDER_TIME_KEY] = time
+        }
+    }
+
+    suspend fun setReminderEnabled(enabled: Boolean) {
+        context.settingsDataStore.edit { preferences ->
+            preferences[IS_REMINDER_ENABLED_KEY] = enabled
+        }
     }
 
     suspend fun setLanguage(language: String) {

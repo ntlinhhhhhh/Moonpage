@@ -5,10 +5,10 @@ import retrofit2.Response
 import retrofit2.http.*
 
 interface NotificationApi {
-    @GET("api/notifications")
+    @GET("api/notifications/me")
     suspend fun getNotifications(): Response<NotificationListResponse>
 
-    @POST("api/notifications")
+    @POST("api/notifications/in-app")
     suspend fun createNotification(
         @Body request: CreateNotificationRequest
     ): Response<SingleNotificationResponse>
@@ -26,7 +26,7 @@ interface NotificationApi {
     @DELETE("api/notifications/all")
     suspend fun deleteAllNotifications(): Response<com.diary.moonpage.data.remote.dto.ErrorResponse>
 
-    @POST("api/notifications/send")
+    @POST("api/notifications/push")
     suspend fun sendPushNotification(
         @Body request: SendPushRequest
     ): Response<Unit>

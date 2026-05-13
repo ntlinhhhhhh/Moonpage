@@ -196,4 +196,29 @@
     <string name="not_specified">Not specified</string>
     <string name="current_passcode">Current Passcode</string>
     <string name="wrong_passcode_try_again">Wrong Passcode. Try again.</string>
+
+    <!-- Notifications -->
+    <string name="noti_reminder_title">How was your day? 🌱</string>
+    <string name="noti_reminder_body">Take a minute to tell me. Happy or sad, there\'s always a place for you here.</string>
+    
+    <string name="noti_empathy_title">Sending you a big hug 🫂</string>
+    <string name="noti_empathy_body">It seems like you\'ve had a lot on your mind lately. Rest a bit, everything will be okay!</string>
+    
+    <string name="noti_weather_sunny_title">The sun is shining bright 🌻</string>
+    <string name="noti_weather_sunny_body">A fresh new day is waiting for you. Remember your sunscreen and bring a big smile!</string>
+    <string name="noti_weather_rainy_title">It\'s raining, remember your umbrella ☔</string>
+    <string name="noti_weather_rainy_body">Even if it\'s wet outside, I hope your heart stays warm and peaceful today.</string>
+    
+    <string name="noti_milestone_3d_title">Great start! ✨</string>
+    <string name="noti_milestone_3d_body">You\'ve recorded your mood for 3 consecutive days. Small habits, big joy. Keep it up!</string>
+    <string name="noti_milestone_7d_title">Ta-da! 1 week together 🎉</string>
+    <string name="noti_milestone_7d_body">You\'ve spent a full 7 days loving yourself. A new badge has been unlocked, check it out!</string>
+    <string name="noti_milestone_broken_title">Small rest stop ⛺</string>
+    <string name="noti_milestone_broken_body">Were you too busy yesterday? It\'s okay, the streak can start again, the important thing is you\'re back!</string>
+    
+    <string name="noti_report_monthly_title">Last month\'s mailbox is here! 💌</string>
+    <string name="noti_report_monthly_body">Your emotional movie from last month has been rolled up. Let\'s see which colors dominated!</string>
+    
+    <string name="noti_memory_title">Time machine starting 🕰️</string>
+    <string name="noti_memory_body">Exactly 1 year ago, you saved a moment here. Want to go back in time a bit?</string>
 </resources>

@@ -34,12 +34,14 @@ import com.diary.moonpage.presentation.screens.store.ThemeDetailScreen
 import com.diary.moonpage.presentation.screens.security.CreatePasscodeScreen
 import com.diary.moonpage.presentation.screens.security.LockScreen
 import com.diary.moonpage.MainViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun AppNavigation(
     mainViewModel: MainViewModel = hiltViewModel()
 ) {
     val navController = rememberNavController()
+    val scope = rememberCoroutineScope()
     val navBackStackEntry = navController.currentBackStackEntryAsState().value
     val currentRoute = navBackStackEntry?.destination?.route
     val isAppLocked by mainViewModel.isAppLocked.collectAsState()
@@ -120,13 +122,17 @@ fun AppNavigation(
                                     mainViewModel.setLocked(true)
                                 }
                                 
-                                val nextDestination = when {
-                                    !isLoggedIn      -> Screen.Landing.route
-                                    needsOnboarding  -> Screen.OnboardingBirthday.route
-                                    else             -> Screen.Calendar.route
-                                }
-                                navController.navigate(nextDestination) {
-                                    popUpTo(Screen.Loading.route) { inclusive = true }
+                                scope.launch {
+                                    val isReminderSet = onboardingViewModel.isReminderSet()
+                                    val nextDestination = when {
+                                        !isLoggedIn      -> Screen.Landing.route
+                                        needsOnboarding  -> Screen.OnboardingBirthday.route
+                                        !isReminderSet   -> Screen.OnboardingReminder.route
+                                        else             -> Screen.Calendar.route
+                                    }
+                                    navController.navigate(nextDestination) {
+                                        popUpTo(Screen.Loading.route) { inclusive = true }
+                                    }
                                 }
                             }
                         )
@@ -180,7 +186,28 @@ fun AppNavigation(
                             viewModel = onboardingViewModel,
                             onNavigateBack = { navController.popBackStack() },
                             onFinish = {
-                                navController.navigate(Screen.ActivityCategorySelection.route)
+                                navController.navigate(Screen.OnboardingReminder.route)
+                            }
+                        )
+                    }
+                }
+
+                composable(Screen.OnboardingReminder.route) {
+                    ScreenWrapper(Screen.OnboardingReminder.route, mainAppRoutes, totalBottomPadding, paddingValues) {
+                        OnboardingReminderScreen(
+                            viewModel = onboardingViewModel,
+                            onNavigateBack = { navController.popBackStack() },
+                            onFinish = {
+                                scope.launch {
+                                    val onboardingDone = authViewModel.checkOnboardingForCurrentUser()
+                                    if (onboardingDone) {
+                                        navController.navigate(Screen.Calendar.route) {
+                                            popUpTo(0) { inclusive = true }
+                                        }
+                                    } else {
+                                        navController.navigate(Screen.ActivityCategorySelection.route)
+                                    }
+                                }
                             }
                         )
                     }

@@ -44,6 +44,8 @@ fun SettingsScreen(
             else viewModel.togglePasscode(false)
         },
         onBiometricToggle = { viewModel.toggleBiometric(it) },
+        onReminderToggle = { viewModel.toggleReminder(it) },
+        onReminderTimeClick = { hour, minute -> viewModel.updateReminderTime(hour, minute) },
         onDeleteAccountClick = { viewModel.showDeleteAccountDialog() }
     )
 
@@ -89,9 +91,18 @@ fun SettingsScreenContent(
     onThemeToggle: (Boolean?) -> Unit,
     onPasscodeToggle: (Boolean) -> Unit,
     onBiometricToggle: (Boolean) -> Unit,
+    onReminderToggle: (Boolean) -> Unit,
+    onReminderTimeClick: (Int, Int) -> Unit,
     onDeleteAccountClick: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
+    var showTimePicker by remember { mutableStateOf(false) }
+    
+    val initialTime = uiState.reminderTime.split(":")
+    val timePickerState = rememberTimePickerState(
+        initialHour = initialTime.getOrNull(0)?.toInt() ?: 21,
+        initialMinute = initialTime.getOrNull(1)?.toInt() ?: 0
+    )
 
     Scaffold(
         containerColor = colorScheme.background,
@@ -130,6 +141,24 @@ fun SettingsScreenContent(
                 onSelectionChange = onThemeToggle
             )
 
+            SectionTitle("Notifications")
+
+            SwitchSettingItem(
+                title = "Daily Reminder",
+                icon = Icons.Rounded.Notifications,
+                checked = uiState.isReminderEnabled,
+                onCheckedChange = onReminderToggle
+            )
+
+            if (uiState.isReminderEnabled) {
+                SettingsMenuItem(
+                    title = "Reminder Time",
+                    value = uiState.reminderTime,
+                    icon = Icons.Rounded.Schedule,
+                    onClick = { showTimePicker = true }
+                )
+            }
+
             SectionTitle(stringResource(R.string.security))
 
             SwitchSettingItem(
@@ -164,5 +193,27 @@ fun SettingsScreenContent(
 
             Spacer(modifier = Modifier.height(40.dp))
         }
+    }
+
+    if (showTimePicker) {
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    onReminderTimeClick(timePickerState.hour, timePickerState.minute)
+                    showTimePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) {
+                    Text("Cancel")
+                }
+            },
+            text = {
+                TimePicker(state = timePickerState)
+            }
+        )
     }
 }

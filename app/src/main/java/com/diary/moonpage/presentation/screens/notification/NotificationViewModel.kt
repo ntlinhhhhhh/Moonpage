@@ -118,26 +118,34 @@ class NotificationViewModel @Inject constructor(
     fun sendTestPush() {
         viewModelScope.launch {
             try {
-                android.util.Log.d("NotificationVM", "Getting FCM token...")
+                android.util.Log.d("NotificationVM", "Requesting FCM token for test push...")
                 val token = com.google.firebase.messaging.FirebaseMessaging.getInstance().token.await()
                 android.util.Log.d("NotificationVM", "FCM Token: $token")
                 
                 val request = com.diary.moonpage.data.remote.dto.notification.SendPushRequest(
                     token = token,
-                    title = "Test Notification",
-                    body = "This is a test push from MoonPage! 🚀"
+                    title = "MoonPage Test 🌙",
+                    body = "This is a comprehensive test of your notification system! 🚀",
+                    imageUrl = null
                 )
+                
                 val response = repository.sendPushNotification(request)
                 if (response.isSuccessful) {
-                    android.util.Log.d("NotificationVM", "Test push sent successfully")
+                    android.util.Log.d("NotificationVM", "Test push sent successfully to backend")
+                    showSnackbar("Test push sent!")
                 } else {
-                    val errorBody = response.errorBody()?.string()
-                    android.util.Log.e("NotificationVM", "Test push failed: ${response.code()} - $errorBody")
+                    val errorMsg = "Test push failed: ${response.code()}"
+                    android.util.Log.e("NotificationVM", errorMsg)
+                    _uiState.update { it.copy(error = errorMsg) }
                 }
             } catch (e: Exception) {
-                android.util.Log.e("NotificationVM", "Test push error", e)
+                android.util.Log.e("NotificationVM", "Test push execution error", e)
                 _uiState.update { it.copy(error = "Test push failed: ${e.message}") }
             }
         }
+    }
+
+    private fun showSnackbar(message: String) {
+        // This could be linked to a global snackbar host if available
     }
 }

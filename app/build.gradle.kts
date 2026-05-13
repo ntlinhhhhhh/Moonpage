@@ -70,6 +70,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.geometry)
     implementation(libs.ui)
     implementation(libs.firebase.crashlytics.buildtools)
+    implementation(libs.androidx.compose.remote.creation.core)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 

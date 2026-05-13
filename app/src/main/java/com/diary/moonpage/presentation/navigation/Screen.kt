@@ -11,6 +11,7 @@ sealed class Screen (val route: String) {
     object VerifyOtp: Screen("verify_otp_screen")
     object OnboardingBirthday: Screen("onboarding_birthday_screen")
     object OnboardingGender: Screen("onboarding_gender_screen")
+    object OnboardingReminder: Screen("onboarding_reminder_screen")
     object ActivityCategorySelection: Screen("activity_category_selection_screen")
 
     // Main App Screens (Bottom Nav)

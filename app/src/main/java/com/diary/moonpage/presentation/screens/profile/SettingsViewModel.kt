@@ -19,6 +19,7 @@ class SettingsViewModel @Inject constructor(
     private val settingsPreferencesManager: SettingsPreferencesManager,
     private val themePreferencesManager: ThemePreferencesManager,
     private val authRepository: AuthRepository,
+    private val reminderManager: com.diary.moonpage.core.util.ReminderManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -29,9 +30,19 @@ class SettingsViewModel @Inject constructor(
             themePreferencesManager.themeType,
             themePreferencesManager.isDarkMode,
             settingsPreferencesManager.isPasscodeEnabled,
-            settingsPreferencesManager.isBiometricEnabled
-        ) { language, themeType, isDarkMode, isPasscodeEnabled, isBiometricEnabled ->
-            FiveParams(language, themeType, isDarkMode, isPasscodeEnabled, isBiometricEnabled)
+            settingsPreferencesManager.isBiometricEnabled,
+            settingsPreferencesManager.isReminderEnabled,
+            settingsPreferencesManager.reminderTime
+        ) { params ->
+            SixParams(
+                params[0] as String,
+                params[1] as MoonThemeType,
+                params[2] as Boolean?,
+                params[3] as Boolean,
+                params[4] as Boolean,
+                params[5] as Boolean,
+                params[6] as String
+            )
         },
         _uiState
     ) { params, currentState ->
@@ -40,16 +51,20 @@ class SettingsViewModel @Inject constructor(
             themeType = params.themeType,
             isDarkMode = params.isDarkMode,
             isPasscodeEnabled = params.isPasscodeEnabled,
-            isBiometricEnabled = params.isBiometricEnabled
+            isBiometricEnabled = params.isBiometricEnabled,
+            isReminderEnabled = params.isReminderEnabled,
+            reminderTime = params.reminderTime
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 
-    private data class FiveParams(
+    private data class SixParams(
         val language: String,
         val themeType: MoonThemeType,
         val isDarkMode: Boolean?,
         val isPasscodeEnabled: Boolean,
-        val isBiometricEnabled: Boolean
+        val isBiometricEnabled: Boolean,
+        val isReminderEnabled: Boolean,
+        val reminderTime: String
     )
 
     fun setLanguage(lang: String, onLanguageChanged: () -> Unit) {
@@ -93,6 +108,28 @@ class SettingsViewModel @Inject constructor(
                 }
             } else {
                 settingsPreferencesManager.setBiometricEnabled(false)
+            }
+        }
+    }
+
+    fun toggleReminder(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsPreferencesManager.setReminderEnabled(enabled)
+            if (enabled) {
+                val time = uiState.value.reminderTime.split(":")
+                reminderManager.scheduleDailyReminder(time[0].toInt(), time[1].toInt())
+            } else {
+                reminderManager.cancelReminder()
+            }
+        }
+    }
+
+    fun updateReminderTime(hour: Int, minute: Int) {
+        viewModelScope.launch {
+            val time = String.format("%02d:%02d", hour, minute)
+            settingsPreferencesManager.setReminderTime(time)
+            if (uiState.value.isReminderEnabled) {
+                reminderManager.scheduleDailyReminder(hour, minute)
             }
         }
     }
