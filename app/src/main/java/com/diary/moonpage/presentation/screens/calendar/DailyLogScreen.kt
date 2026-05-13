@@ -235,33 +235,6 @@ fun DailyLogScreenContent(
             DailyLogBottomBar(
                 isLoading = uiState.isLoading,
                 onSaveClick = { onEvent(DailyLogUiEvent.OnSaveClick) },
-                onShareClick = { onNavigateToShare(uiState.date.toString()) },
-                onDownloadClick = {
-                    scope.launch {
-                        val width = 1080
-                        com.diary.moonpage.core.util.ComposeCaptureUtils.captureComposable(
-                            view = view,
-                            parentContext = compositionContext,
-                            content = {
-                                Box(
-                                    modifier = Modifier
-                                        .width(with(androidx.compose.ui.platform.LocalDensity.current) { 1080.toDp() })
-                                        .background(Color(0xFFF1F1ED))
-                                        .padding(40.dp),
-                                    contentAlignment = Alignment.TopStart
-                                ) {
-                                    com.diary.moonpage.presentation.screens.calendar.ShareLogCard(uiState = uiState)
-                                }
-                            },
-                            width = width,
-                            onBitmapCaptured = { bitmap ->
-                                scope.launch {
-                                    com.diary.moonpage.core.util.ImageUtils.saveBitmapToGallery(context, bitmap)
-                                }
-                            }
-                        )
-                    }
-                },
                 enabled = isChanged,
                 themeColor = MaterialTheme.colorScheme.primary
             )
@@ -400,8 +373,6 @@ private fun DailyLogTopBar(
 private fun DailyLogBottomBar(
     isLoading: Boolean,
     onSaveClick: () -> Unit,
-    onShareClick: () -> Unit,
-    onDownloadClick: () -> Unit,
     enabled: Boolean,
     themeColor: Color
 ) {
@@ -414,44 +385,13 @@ private fun DailyLogBottomBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Share Button
-            OutlinedButton(
-                onClick = onShareClick,
-                modifier = Modifier
-                    .weight(0.4f)
-                    .height(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.5.dp, themeColor),
-                contentPadding = PaddingValues(0.dp)
-            ) {
-                Icon(Icons.Rounded.Share, null, tint = themeColor, modifier = Modifier.size(20.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Share", color = themeColor, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-            }
-
-            // Download Button
-            OutlinedButton(
-                onClick = onDownloadClick,
-                modifier = Modifier
-                    .weight(0.4f)
-                    .height(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.5.dp, themeColor),
-                contentPadding = PaddingValues(0.dp)
-            ) {
-                Icon(Icons.Rounded.Download, null, tint = themeColor, modifier = Modifier.size(20.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Save", color = themeColor, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-            }
-
             // Done Button
             Button(
                 onClick = onSaveClick,
                 modifier = Modifier
-                    .weight(1f)
+                    .fillMaxWidth()
                     .height(52.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = themeColor,
