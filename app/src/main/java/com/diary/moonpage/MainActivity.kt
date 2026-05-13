@@ -2,10 +2,12 @@ package com.diary.moonpage
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -36,6 +38,16 @@ import kotlinx.coroutines.launch
 class MainActivity : FragmentActivity() {
     private val mainViewModel: MainViewModel by viewModels()
 
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            android.util.Log.d("Notifications", "Permission granted")
+        } else {
+            android.util.Log.d("Notifications", "Permission denied")
+        }
+    }
+
     @Inject
     lateinit var settingsPreferencesManager: SettingsPreferencesManager
 
@@ -50,6 +62,8 @@ class MainActivity : FragmentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         
+        requestNotificationPermission()
+
         splashScreen.setKeepOnScreenCondition {
             !mainViewModel.isReady.value
         }
@@ -115,6 +129,16 @@ class MainActivity : FragmentActivity() {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val permission = android.Manifest.permission.POST_NOTIFICATIONS
+            if (androidx.core.content.ContextCompat.checkSelfPermission(this, permission) != 
+                android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                requestPermissionLauncher.launch(permission)
             }
         }
     }

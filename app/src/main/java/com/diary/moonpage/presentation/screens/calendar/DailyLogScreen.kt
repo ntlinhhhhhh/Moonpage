@@ -235,76 +235,9 @@ fun DailyLogScreenContent(
         },
         bottomBar = {
             val moodVisual = com.diary.moonpage.core.util.MoonIcons.Moods.getMoodVisual(uiState.selectedMood ?: 3, uiState.themeType, uiState.customMoods)
-            val density = androidx.compose.ui.platform.LocalDensity.current
             DailyLogBottomBar(
                 isLoading = uiState.isLoading,
                 onSaveClick = { onEvent(DailyLogUiEvent.OnSaveClick) },
-                onShareClick = {
-                    scope.launch {
-                        try {
-                            val width = 1080
-                            com.diary.moonpage.core.util.ComposeCaptureUtils.captureComposable(
-                                view = view,
-                                parentContext = compositionContext,
-                                content = {
-                                    Box(
-                                        modifier = Modifier
-                                            .width(with(androidx.compose.ui.platform.LocalDensity.current) { 1080.toDp() })
-                                            .background(Color(0xFFF1F1ED))
-                                            .padding(40.dp),
-                                        contentAlignment = Alignment.TopStart
-                                    ) {
-                                        com.diary.moonpage.presentation.screens.calendar.ShareLogCard(uiState = uiState)
-                                    }
-                                },
-                                width = width,
-                                onBitmapCaptured = { bitmap ->
-                                    scope.launch {
-                                        com.diary.moonpage.core.util.ImageUtils.shareImage(context, bitmap, "My Mood Page")
-                                    }
-                                },
-                                onFailure = { error ->
-                                    android.util.Log.e("DailyLogScreen", "Share failed: $error")
-                                }
-                            )
-                        } catch (e: Exception) {
-                            android.util.Log.e("DailyLogScreen", "Share failed: ${e.message}")
-                        }
-                    }
-                },
-                onDownloadClick = {
-                    scope.launch {
-                        try {
-                            val width = 1080
-                            com.diary.moonpage.core.util.ComposeCaptureUtils.captureComposable(
-                                view = view,
-                                parentContext = compositionContext,
-                                content = {
-                                    Box(
-                                        modifier = Modifier
-                                            .width(with(density) { 1080.toDp() })
-                                            .background(Color(0xFFF1F1ED))
-                                            .padding(40.dp),
-                                        contentAlignment = Alignment.TopStart
-                                    ) {
-                                        com.diary.moonpage.presentation.screens.calendar.ShareLogCard(uiState = uiState)
-                                    }
-                                },
-                                width = width,
-                                onBitmapCaptured = { bitmap ->
-                                    scope.launch {
-                                        com.diary.moonpage.core.util.ImageUtils.saveBitmapToGallery(context, bitmap)
-                                    }
-                                },
-                                onFailure = { error ->
-                                    android.util.Log.e("DailyLogScreen", "Download failed: $error")
-                                }
-                            )
-                        } catch (e: Exception) {
-                            android.util.Log.e("DailyLogScreen", "Download failed: ${e.message}")
-                        }
-                    }
-                },
                 enabled = isChanged,
                 themeColor = moodVisual.color
             )
@@ -443,8 +376,6 @@ private fun DailyLogTopBar(
 private fun DailyLogBottomBar(
     isLoading: Boolean,
     onSaveClick: () -> Unit,
-    onShareClick: () -> Unit,
-    onDownloadClick: () -> Unit,
     enabled: Boolean,
     themeColor: Color
 ) {
@@ -453,58 +384,17 @@ private fun DailyLogBottomBar(
         tonalElevation = 4.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically
+            contentAlignment = Alignment.Center
         ) {
-            // Share Button
-            Button(
-                onClick = onShareClick,
-                modifier = Modifier
-                    .weight(0.45f)
-                    .height(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = themeColor.copy(alpha = 0.15f),
-                    contentColor = themeColor
-                ),
-                contentPadding = PaddingValues(0.dp),
-                enabled = !isLoading,
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
-            ) {
-                Icon(Icons.Rounded.Share, null, tint = themeColor, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Share", color = themeColor, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-            }
-
-            // Download Button
-            Button(
-                onClick = onDownloadClick,
-                modifier = Modifier
-                    .weight(0.45f)
-                    .height(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = themeColor.copy(alpha = 0.15f),
-                    contentColor = themeColor
-                ),
-                contentPadding = PaddingValues(0.dp),
-                enabled = !isLoading,
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
-            ) {
-                Icon(Icons.Rounded.Download, null, tint = themeColor, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(6.dp))
-                Text("Save", color = themeColor, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-            }
-
-            // Done Button
+            // Done Button (Full Width)
             Button(
                 onClick = onSaveClick,
                 modifier = Modifier
-                    .weight(1f)
+                    .fillMaxWidth()
                     .height(52.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = themeColor,

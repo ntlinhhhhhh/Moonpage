@@ -75,9 +75,6 @@ class CalendarViewModel @Inject constructor(
             CalendarUiEvent.OnFilterDismiss -> {
                 _uiState.update { it.copy(showFilterSheet = false) }
             }
-            CalendarUiEvent.OnShareClick -> {
-                _uiState.update { it.copy(showShareSheet = true) }
-            }
             CalendarUiEvent.OnShareDismiss -> {
                 _uiState.update { it.copy(showShareSheet = false) }
             }

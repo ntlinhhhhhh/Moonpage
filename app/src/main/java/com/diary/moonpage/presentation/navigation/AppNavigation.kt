@@ -25,6 +25,7 @@ import com.diary.moonpage.presentation.screens.calendar.ShareLogScreen
 import com.diary.moonpage.presentation.screens.calendar.calendarScreen
 import com.diary.moonpage.presentation.screens.moment.MomentCameraScreen
 import com.diary.moonpage.presentation.screens.moment.MomentDetailScreen
+import com.diary.moonpage.presentation.screens.notification.NotificationCenterScreen
 import com.diary.moonpage.presentation.screens.profile.*
 import com.diary.moonpage.presentation.screens.stats.StatisticsScreen
 import com.diary.moonpage.presentation.screens.store.StoreScreen
@@ -220,7 +221,9 @@ fun AppNavigation(
                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                     onNavigateToDailyLog = { dateStr -> navController.navigate("daily_log_screen/$dateStr") },
                     onNavigateToShareLog = { dateStr -> navController.navigate("share_log_screen/$dateStr") },
-                    onNavigateToThemeCalendar = { navController.navigate(Screen.ThemeCalendar.route) }
+                    onNavigateToShareCalendar = { yearMonth -> navController.navigate("share_calendar_screen/$yearMonth") },
+                    onNavigateToThemeCalendar = { navController.navigate(Screen.ThemeCalendar.route) },
+                    onNavigateBack = { navController.popBackStack() }
                 )
 
                 composable(Screen.Filter.route) {
@@ -408,7 +411,7 @@ fun AppNavigation(
 
                 composable(Screen.Notifications.route) {
                     ScreenWrapper(Screen.Notifications.route, mainAppRoutes, totalBottomPadding, paddingValues) {
-                        NotificationsScreen(
+                        NotificationCenterScreen(
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }

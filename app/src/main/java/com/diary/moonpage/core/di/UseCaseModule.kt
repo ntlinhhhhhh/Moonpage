@@ -42,4 +42,16 @@ object UseCaseModule {
     @Provides
     @Singleton
     fun provideDeleteMomentUseCase(repository: MomentRepository): DeleteMomentUseCase = DeleteMomentUseCase(repository)
+
+    @Provides
+    @Singleton
+    fun provideCheckAndTriggerNotificationsUseCase(
+        notificationRepository: com.diary.moonpage.domain.repository.NotificationRepository,
+        statsRepository: com.diary.moonpage.domain.repository.StatisticsRepository,
+        dailyLogRepository: com.diary.moonpage.domain.repository.DailyLogRepository,
+        userManager: com.diary.moonpage.core.util.UserManager
+    ): com.diary.moonpage.domain.usecase.notification.CheckAndTriggerNotificationsUseCase = 
+        com.diary.moonpage.domain.usecase.notification.CheckAndTriggerNotificationsUseCase(
+            notificationRepository, statsRepository, dailyLogRepository, userManager
+        )
 }

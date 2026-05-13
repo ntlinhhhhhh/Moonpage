@@ -27,6 +27,8 @@ class DailyLogViewModel @Inject constructor(
     private val weatherRepository: com.diary.moonpage.domain.repository.WeatherRepository,
     private val spotifyApi: com.diary.moonpage.data.remote.api.SpotifyApi,
     private val momentRepository: com.diary.moonpage.domain.repository.MomentRepository,
+    private val checkAndTriggerNotificationsUseCase: com.diary.moonpage.domain.usecase.notification.CheckAndTriggerNotificationsUseCase,
+    @com.diary.moonpage.core.di.ApplicationScope private val applicationScope: kotlinx.coroutines.CoroutineScope,
     val healthConnectManager: com.diary.moonpage.core.util.HealthConnectManager,
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
@@ -510,6 +512,16 @@ class DailyLogViewModel @Inject constructor(
             ).onSuccess {
                 val msg = if (state.existingLog != null) "Record updated successfully!" else "Record created successfully!"
                 statisticsRepository.triggerRefresh()
+                
+                // Trigger notification evaluation using ApplicationScope to survive VM clearing
+                applicationScope.launch {
+                    try {
+                        checkAndTriggerNotificationsUseCase()
+                    } catch (e: Exception) {
+                        android.util.Log.e("DailyLogVM", "Notification check failed", e)
+                    }
+                }
+
                 _uiEffect.emit(DailyLogUiEffect.SaveSuccess(msg))
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false) }

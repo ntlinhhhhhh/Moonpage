@@ -37,6 +37,7 @@ sealed class Screen (val route: String) {
     object MenstrualCycle: Screen("menstrual_cycle_screen")
     object DailyPhoto: Screen("daily_photo_screen")
     object ShareLog: Screen("share_log_screen/{date}")
+    object ShareCalendar: Screen("share_calendar_screen/{yearMonth}")
 
     // Moment Sub-screens
     object MomentDetail: Screen("moment_detail_screen/{momentId}")

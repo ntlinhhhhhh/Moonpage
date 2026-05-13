@@ -13,11 +13,17 @@ fun NavController.navigateToCalendar(navOptions: NavOptions? = null) {
     this.navigate(Screen.Calendar.route, navOptions)
 }
 
+fun NavController.navigateToShareCalendar(yearMonth: String) {
+    this.navigate("share_calendar_screen/$yearMonth")
+}
+
 fun NavGraphBuilder.calendarScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToDailyLog: (String) -> Unit,
     onNavigateToShareLog: (String) -> Unit,
-    onNavigateToThemeCalendar: () -> Unit
+    onNavigateToShareCalendar: (String) -> Unit,
+    onNavigateToThemeCalendar: () -> Unit,
+    onNavigateBack: () -> Unit
 ) {
     composable(route = Screen.Calendar.route) { backStackEntry ->
         val savedStateHandle = backStackEntry.savedStateHandle
@@ -34,7 +40,16 @@ fun NavGraphBuilder.calendarScreen(
             onNavigateToSettings = onNavigateToSettings,
             onNavigateToDailyLog = onNavigateToDailyLog,
             onNavigateToShareLog = onNavigateToShareLog,
+            onNavigateToShareCalendar = onNavigateToShareCalendar,
             onNavigateToThemeCalendar = onNavigateToThemeCalendar
+        )
+    }
+
+    composable(route = Screen.ShareCalendar.route) { backStackEntry ->
+        val yearMonth = backStackEntry.arguments?.getString("yearMonth") ?: ""
+        ShareCalendarScreen(
+            yearMonthString = yearMonth,
+            onNavigateBack = onNavigateBack
         )
     }
 }

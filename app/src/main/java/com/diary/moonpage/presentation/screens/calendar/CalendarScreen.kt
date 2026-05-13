@@ -55,6 +55,7 @@ fun CalendarScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToDailyLog: (String) -> Unit,
     onNavigateToShareLog: (String) -> Unit,
+    onNavigateToShareCalendar: (String) -> Unit,
     onNavigateToThemeCalendar: () -> Unit = {},
     viewModel: CalendarViewModel = hiltViewModel()
 ) {
@@ -81,6 +82,7 @@ fun CalendarScreen(
         onNavigateToSettings = onNavigateToSettings,
         onNavigateToDailyLog = onNavigateToDailyLog,
         onNavigateToShareLog = onNavigateToShareLog,
+        onNavigateToShareCalendar = onNavigateToShareCalendar,
         onNavigateToThemeCalendar = onNavigateToThemeCalendar,
         showSnackbar = viewModel::showSnackbar
     )
@@ -96,6 +98,7 @@ fun CalendarScreenContent(
     onNavigateToSettings: () -> Unit,
     onNavigateToDailyLog: (String) -> Unit,
     onNavigateToShareLog: (String) -> Unit,
+    onNavigateToShareCalendar: (String) -> Unit,
     onNavigateToThemeCalendar: () -> Unit,
     showSnackbar: (String) -> Unit
 ) {
@@ -177,7 +180,7 @@ fun CalendarScreenContent(
                         currentMonthName = currentMonthName,
                         themeType = uiState.themeType,
                         onMonthClick = { onEvent(CalendarUiEvent.OnMonthPickerClick) },
-                        onShareClick = { onEvent(CalendarUiEvent.OnShareClick) }
+                        onShareClick = { onNavigateToShareCalendar(uiState.currentYearMonth.toString()) }
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -240,40 +243,6 @@ fun CalendarScreenContent(
         )
     }
 
-    if (uiState.showShareSheet) {
-        ShareModeBottomSheet(
-            onDismiss = { onEvent(CalendarUiEvent.OnShareDismiss) },
-            onModeSelected = { isSquare ->
-                coroutineScope.launch {
-                    val width = 1080
-                    val height = if (isSquare) 1080 else 1920
-
-                    ComposeCaptureUtils.captureComposable(
-                        view = view,
-                        parentContext = compositionContext,
-                        content = {
-                            // Wrap in theme to ensure correct colors
-                            Surface(color = MaterialTheme.colorScheme.background) {
-                                ShareCalendarCard(
-                                    yearMonth = uiState.currentYearMonth,
-                                    dailyLogs = uiState.dailyLogs,
-                                    isSquare = isSquare
-                                )
-                            }
-                        },
-                        width = width,
-                        height = height,
-                        onBitmapCaptured = { bitmap ->
-                            coroutineScope.launch {
-                                ImageUtils.shareImage(view.context, bitmap, "My Mood Calendar")
-                            }
-                        }
-                    )
-                    onEvent(CalendarUiEvent.OnShareDismiss)
-                }
-            }
-        )
-    }
 
     if (uiState.showFilterSheet) {
         val isActuallyDark = MaterialTheme.colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }

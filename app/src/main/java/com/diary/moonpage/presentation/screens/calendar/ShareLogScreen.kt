@@ -19,6 +19,10 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -57,6 +61,7 @@ fun ShareLogScreen(
     val compositionContext = rememberCompositionContext()
     val snackbarHostState = remember { SnackbarHostState() }
     val density = androidx.compose.ui.platform.LocalDensity.current
+    val graphicsLayer = rememberGraphicsLayer()
 
     LaunchedEffect(dateString) {
         viewModel.setInitialDate(LocalDate.parse(dateString))
@@ -87,37 +92,11 @@ fun ShareLogScreen(
                         onClick = {
                             scope.launch {
                                 try {
-                                    val width = 1080
-                                    ComposeCaptureUtils.captureComposable(
-                                        view = view,
-                                        parentContext = compositionContext,
-                                        content = {
-                                            MoonPageTheme(themeType = uiState.themeType, darkTheme = false) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .width(with(density) { 1080.toDp() })
-                                                        .wrapContentHeight()
-                                                        .background(Color(0xFFF1F1ED))
-                                                        .padding(40.dp),
-                                                    contentAlignment = Alignment.TopStart
-                                                ) {
-                                                    ShareLogCard(uiState = uiState)
-                                                }
-                                            }
-                                        },
-                                        width = width,
-                                        onBitmapCaptured = { bitmap ->
-                                            scope.launch {
-                                                ImageUtils.saveBitmapToGallery(context, bitmap)
-                                                snackbarHostState.showSnackbar("Saved to gallery!")
-                                            }
-                                        },
-                                        onFailure = { error ->
-                                            scope.launch { snackbarHostState.showSnackbar("Save failed: $error") }
-                                        }
-                                    )
+                                    val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
+                                    ImageUtils.saveBitmapToGallery(context, bitmap)
+                                    snackbarHostState.showSnackbar("Saved to gallery!")
                                 } catch (e: Exception) {
-                                    snackbarHostState.showSnackbar("Failed to capture: ${e.message}")
+                                    snackbarHostState.showSnackbar("Save failed: ${e.message}")
                                 }
                             }
                         }
@@ -144,36 +123,10 @@ fun ShareLogScreen(
                     onClick = {
                         scope.launch {
                             try {
-                                val width = 1080
-                                ComposeCaptureUtils.captureComposable(
-                                    view = view,
-                                    parentContext = compositionContext,
-                                    content = {
-                                        MoonPageTheme(themeType = uiState.themeType, darkTheme = false) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .width(with(density) { 1080.toDp() })
-                                                    .wrapContentHeight()
-                                                    .background(Color(0xFFF1F1ED))
-                                                    .padding(40.dp),
-                                                contentAlignment = Alignment.TopStart
-                                            ) {
-                                                ShareLogCard(uiState = uiState)
-                                            }
-                                        }
-                                    },
-                                    width = width,
-                                    onBitmapCaptured = { bitmap ->
-                                        scope.launch {
-                                            ImageUtils.shareImage(context, bitmap, "My Mood Page")
-                                        }
-                                    },
-                                    onFailure = { error ->
-                                        scope.launch { snackbarHostState.showSnackbar("Share failed: $error") }
-                                    }
-                                )
+                                val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
+                                ImageUtils.shareImage(context, bitmap, "My Mood Page")
                             } catch (e: Exception) {
-                                snackbarHostState.showSnackbar("Failed to share: ${e.message}")
+                                snackbarHostState.showSnackbar("Share failed: ${e.message}")
                             }
                         }
                     },
@@ -220,6 +173,12 @@ fun ShareLogScreen(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(24.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        .drawWithContent {
+                            graphicsLayer.record {
+                                this@drawWithContent.drawContent()
+                            }
+                            drawLayer(graphicsLayer)
+                        }
                 ) {
                     ShareLogCard(uiState = uiState)
                 }
