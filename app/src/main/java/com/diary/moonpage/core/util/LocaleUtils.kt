@@ -7,14 +7,19 @@ import java.util.Locale
 
 object LocaleUtils {
     fun applyLocale(context: Context, languageCode: String): Context {
-        val locale = Locale(languageCode)
-        Locale.setDefault(locale)
-        
-        val configuration = Configuration(context.resources.configuration)
-        configuration.setLocale(locale)
-        configuration.setLayoutDirection(locale)
-        
-        return context.createConfigurationContext(configuration)
+        return try {
+            val locale = Locale(languageCode)
+            Locale.setDefault(locale)
+            
+            val resources = context.resources ?: return context
+            val configuration = Configuration(resources.configuration)
+            configuration.setLocale(locale)
+            configuration.setLayoutDirection(locale)
+            
+            context.createConfigurationContext(configuration)
+        } catch (e: Exception) {
+            context
+        }
     }
 
     fun getSavedLanguage(context: Context): String {

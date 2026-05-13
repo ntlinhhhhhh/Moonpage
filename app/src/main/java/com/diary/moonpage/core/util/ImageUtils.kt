@@ -58,6 +58,8 @@ object ImageUtils {
                         chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     }
                     withContext(Dispatchers.Main) {
+                        // Further increased delay to 300ms to fully stabilize TransitionChain on high-end MIUI devices
+                        delay(300)
                         context.startActivity(chooser)
                     }
                 } else {

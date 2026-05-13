@@ -31,6 +31,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.diary.moonpage.R
+import com.diary.moonpage.core.theme.MoonPageTheme
 import com.diary.moonpage.core.theme.MoonTheme
 import com.diary.moonpage.core.util.ComposeCaptureUtils
 import com.diary.moonpage.core.util.ImageUtils
@@ -80,98 +81,113 @@ fun ShareLogScreen(
                         Icon(Icons.Rounded.ArrowBackIosNew, "Back", modifier = Modifier.size(20.dp), tint = Color(0xFF757575))
                     }
                 },
+                actions = {
+                    IconButton(
+                        enabled = !uiState.isLoading,
+                        onClick = {
+                            scope.launch {
+                                try {
+                                    val width = 1080
+                                    ComposeCaptureUtils.captureComposable(
+                                        view = view,
+                                        parentContext = compositionContext,
+                                        content = {
+                                            MoonPageTheme(themeType = uiState.themeType, darkTheme = false) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .width(with(density) { 1080.toDp() })
+                                                        .wrapContentHeight()
+                                                        .background(Color(0xFFF1F1ED))
+                                                        .padding(40.dp),
+                                                    contentAlignment = Alignment.TopStart
+                                                ) {
+                                                    ShareLogCard(uiState = uiState)
+                                                }
+                                            }
+                                        },
+                                        width = width,
+                                        onBitmapCaptured = { bitmap ->
+                                            scope.launch {
+                                                ImageUtils.saveBitmapToGallery(context, bitmap)
+                                                snackbarHostState.showSnackbar("Saved to gallery!")
+                                            }
+                                        },
+                                        onFailure = { error ->
+                                            scope.launch { snackbarHostState.showSnackbar("Save failed: $error") }
+                                        }
+                                    )
+                                } catch (e: Exception) {
+                                    snackbarHostState.showSnackbar("Failed to capture: ${e.message}")
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Rounded.Download, "Download", tint = Color(0xFF757575))
+                    }
+                },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = Color.Transparent
                 )
             )
         },
         bottomBar = {
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .background(Color.Transparent)
                     .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                contentAlignment = Alignment.Center
             ) {
-                // Download Button
+                // Large Share Button (No icon)
                 Button(
                     enabled = !uiState.isLoading,
                     onClick = {
                         scope.launch {
-                            val width = 1080
-                            ComposeCaptureUtils.captureComposable(
-                                view = view,
-                                parentContext = compositionContext,
-                                content = {
-                                    Box(
-                                        modifier = Modifier
-                                            .width(with(density) { 1080.toDp() })
-                                            .background(Color(0xFFF1F1ED))
-                                            .padding(40.dp),
-                                        contentAlignment = Alignment.TopStart
-                                    ) {
-                                        ShareLogCard(uiState = uiState)
+                            try {
+                                val width = 1080
+                                ComposeCaptureUtils.captureComposable(
+                                    view = view,
+                                    parentContext = compositionContext,
+                                    content = {
+                                        MoonPageTheme(themeType = uiState.themeType, darkTheme = false) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .width(with(density) { 1080.toDp() })
+                                                    .wrapContentHeight()
+                                                    .background(Color(0xFFF1F1ED))
+                                                    .padding(40.dp),
+                                                contentAlignment = Alignment.TopStart
+                                            ) {
+                                                ShareLogCard(uiState = uiState)
+                                            }
+                                        }
+                                    },
+                                    width = width,
+                                    onBitmapCaptured = { bitmap ->
+                                        scope.launch {
+                                            ImageUtils.shareImage(context, bitmap, "My Mood Page")
+                                        }
+                                    },
+                                    onFailure = { error ->
+                                        scope.launch { snackbarHostState.showSnackbar("Share failed: $error") }
                                     }
-                                },
-                                width = width,
-                                onBitmapCaptured = { bitmap ->
-                                    scope.launch {
-                                        ImageUtils.saveBitmapToGallery(context, bitmap)
-                                    }
-                                }
-                            )
+                                )
+                            } catch (e: Exception) {
+                                snackbarHostState.showSnackbar("Failed to share: ${e.message}")
+                            }
                         }
                     },
-                    modifier = Modifier.weight(1f).height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(64.dp), // Larger height
+                    shape = RoundedCornerShape(18.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = themeColor.copy(alpha = 0.1f),
-                        contentColor = themeColor
-                    )
-                ) {
-                    Icon(Icons.Rounded.Download, null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Download", fontWeight = FontWeight.Bold)
-                }
-
-                // Share Button
-                Button(
-                    enabled = !uiState.isLoading,
-                    onClick = {
-                        scope.launch {
-                            val width = 1080
-                            ComposeCaptureUtils.captureComposable(
-                                view = view,
-                                parentContext = compositionContext,
-                                content = {
-                                    Box(
-                                        modifier = Modifier
-                                            .width(with(density) { 1080.toDp() })
-                                            .background(Color(0xFFF1F1ED))
-                                            .padding(40.dp),
-                                        contentAlignment = Alignment.TopStart
-                                    ) {
-                                        ShareLogCard(uiState = uiState)
-                                    }
-                                },
-                                width = width,
-                                onBitmapCaptured = { bitmap ->
-                                    scope.launch {
-                                        ImageUtils.shareImage(context, bitmap, "Share My Daily Log")
-                                    }
-                                }
-                            )
-                        }
-                    },
-                    modifier = Modifier.weight(1f).height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = themeColor,
+                        containerColor = moodVisual.color,
                         contentColor = Color.White
-                    )
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(4.dp)
                 ) {
-                    Icon(Icons.Rounded.Share, null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Share", fontWeight = FontWeight.Bold)
+                    Text("Share", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 }
             }
         },
@@ -263,29 +279,31 @@ fun ShareLogCard(uiState: DailyLogUiState) {
         
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Mood Icon (Smaller and Left Aligned)
+        // Mood Icon (Centered)
         Box(
             modifier = Modifier
-                .size(56.dp)
+                .size(72.dp)
                 .clip(CircleShape)
-                .background(moodVisual.color.copy(alpha = 0.8f)),
+                .background(moodVisual.color.copy(alpha = 0.8f))
+                .align(Alignment.CenterHorizontally),
             contentAlignment = Alignment.Center
         ) {
             if (moodVisual.drawableRes != null) {
                 Image(
                     painter = painterResource(id = moodVisual.drawableRes),
                     contentDescription = null,
-                    modifier = Modifier.size(36.dp)
+                    modifier = Modifier.size(48.dp)
                 )
             }
         }
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // Date Pill (Left Aligned)
+        // Date Pill (Centered)
         Surface(
             color = Color.White.copy(alpha = 0.6f),
-            shape = RoundedCornerShape(10.dp)
+            shape = RoundedCornerShape(10.dp),
+            modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
             Text(
                 text = dateText,
@@ -359,32 +377,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
-            // Photos Grid (Max 3 per row, Left Aligned)
-            if (uiState.dailyPhotos.isNotEmpty()) {
-                val photos = uiState.dailyPhotos
-                photos.chunked(3).forEachIndexed { rowIndex, chunk ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Start
-                    ) {
-                        chunk.forEachIndexed { colIndex, photoUrl ->
-                            AsyncImage(
-                                model = photoUrl,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(96.dp)
-                                    .clip(RoundedCornerShape(12.dp)),
-                                contentScale = ContentScale.Crop
-                            )
-                            if (colIndex < chunk.size - 1) Spacer(modifier = Modifier.width(8.dp))
-                        }
-                    }
-                    if (rowIndex < (photos.size - 1) / 3) Spacer(modifier = Modifier.height(8.dp))
-                }
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-
-            // Music Card (Left Aligned)
+            // Music Card (Left Aligned, below Note)
             if (!uiState.musicTitle.isNullOrBlank()) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
@@ -429,6 +422,31 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                             )
                         }
                     }
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            // Photos Grid (Max 3 per row, Left Aligned, below Music)
+            if (uiState.dailyPhotos.isNotEmpty()) {
+                val photos = uiState.dailyPhotos
+                photos.chunked(3).forEachIndexed { rowIndex, chunk ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        chunk.forEachIndexed { colIndex, photoUrl ->
+                            AsyncImage(
+                                model = photoUrl,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(96.dp)
+                                    .clip(RoundedCornerShape(12.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                            if (colIndex < chunk.size - 1) Spacer(modifier = Modifier.width(8.dp))
+                        }
+                    }
+                    if (rowIndex < (photos.size - 1) / 3) Spacer(modifier = Modifier.height(8.dp))
                 }
                 Spacer(modifier = Modifier.height(24.dp))
             }

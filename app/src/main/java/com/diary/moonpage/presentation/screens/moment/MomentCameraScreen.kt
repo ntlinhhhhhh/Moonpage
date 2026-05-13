@@ -61,9 +61,36 @@ fun MomentCameraScreen(
     initialMomentId: String? = null,
     onNavigateToGallery: () -> Unit,
     onNavigateToHistory: () -> Unit,
+    onNavigateToAccount: () -> Unit
+) {
+    if (androidx.compose.ui.platform.LocalInspectionMode.current) {
+        // Preview placeholder to avoid Hilt crash
+        Box(modifier = Modifier.fillMaxSize())
+        return
+    }
+
+    val viewModel: MomentViewModel = hiltViewModel()
+    val profileViewModel: com.diary.moonpage.presentation.screens.profile.ProfileViewModel = hiltViewModel()
+
+    MomentCameraScreenStateful(
+        initialMomentId = initialMomentId,
+        onNavigateToGallery = onNavigateToGallery,
+        onNavigateToHistory = onNavigateToHistory,
+        onNavigateToAccount = onNavigateToAccount,
+        viewModel = viewModel,
+        profileViewModel = profileViewModel
+    )
+}
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun MomentCameraScreenStateful(
+    initialMomentId: String? = null,
+    onNavigateToGallery: () -> Unit,
+    onNavigateToHistory: () -> Unit,
     onNavigateToAccount: () -> Unit,
-    viewModel: MomentViewModel = hiltViewModel(),
-    profileViewModel: com.diary.moonpage.presentation.screens.profile.ProfileViewModel = hiltViewModel()
+    viewModel: MomentViewModel,
+    profileViewModel: com.diary.moonpage.presentation.screens.profile.ProfileViewModel
 ) {
     val profileState by profileViewModel.uiState.collectAsState()
     val cameraPermissionState = rememberMultiplePermissionsState(

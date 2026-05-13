@@ -101,36 +101,13 @@ fun MomentFeedItem(
                 .aspectRatio(1f)
                 .clip(RoundedCornerShape(32.dp))
                 .background(if (isLoaded) Color.Transparent else onBgColor.copy(alpha = shimmerAlpha))
-                .pointerInput(Unit) {
-                    detectTransformGestures { _, pan, zoom, _ ->
-                        scale = (scale * zoom).coerceIn(1f, 3f)
-                        if (scale > 1f) {
-                            offset += pan
-                        } else {
-                            offset = androidx.compose.ui.geometry.Offset.Zero
-                        }
-                    }
-                }
-                .clickable { 
-                    if (scale == 1f) onImageClick() 
-                    else {
-                        scale = 1f
-                        offset = androidx.compose.ui.geometry.Offset.Zero
-                    }
-                },
+                .clickable { onImageClick() },
             contentAlignment = Alignment.BottomCenter
         ) {
             AsyncImage(
                 model = imageRequest,
                 contentDescription = null,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer(
-                        scaleX = scale,
-                        scaleY = scale,
-                        translationX = offset.x,
-                        translationY = offset.y
-                    ),
+                modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
                 onSuccess = { isLoaded = true }
             )

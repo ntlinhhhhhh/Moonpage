@@ -41,6 +41,7 @@ import com.diary.moonpage.presentation.components.moment.MomentZoomOverlay
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.core.graphics.drawable.toBitmap
 
 /**
  * Stateful Component
@@ -73,9 +74,10 @@ fun MomentHistoryScreen(
                             .build()
                         val result = context.imageLoader.execute(request)
                         if (result is coil.request.SuccessResult) {
-                            val bitmap = (result.drawable as android.graphics.drawable.BitmapDrawable).bitmap
+                            val bitmap = result.drawable.toBitmap()
                             com.diary.moonpage.core.util.ImageUtils.shareImage(context, bitmap, "Share Moment")
                         } else {
+                            android.util.Log.e("MomentHistory", "Failed to load image: ${(result as? coil.request.ErrorResult)?.throwable?.message}")
                             snackbarHostState.showSnackbar("Failed to load image for sharing")
                         }
                     }
@@ -207,22 +209,18 @@ fun MomentHistoryScreenContent(
 
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
-            override fun onPostScroll(
-                consumed: Offset,
-                available: Offset,
-                source: NestedScrollSource
-            ): Offset {
-                // If we're at the top and still scrolling down, allow parent to handle
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                // If we're at the top and scrolling down (finger moves down, available.y > 0)
+                // we want the parent to handle it to scroll back to camera
                 return if (feedPagerState.currentPage == 0 && available.y > 0) {
-                    Offset.Zero
+                    Offset.Zero // Parent will handle it
                 } else {
                     Offset.Zero
                 }
             }
 
             override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
-                // If the user flings down at the top of the history, go back to camera
-                if (available.y > 1000f && feedPagerState.currentPage == 0) {
+                if (available.y > 500f && feedPagerState.currentPage == 0) {
                     onBackToCamera()
                     return available
                 }

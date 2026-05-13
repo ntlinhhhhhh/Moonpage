@@ -31,11 +31,12 @@ object ComposeCaptureUtils {
         width: Int,
         height: Int = -1,
         parentContext: CompositionContext? = null,
-        onBitmapCaptured: (Bitmap) -> Unit
+        onBitmapCaptured: (Bitmap) -> Unit,
+        onFailure: (String) -> Unit = {}
     ) {
         if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) {
             view.post {
-                captureComposable(view, content, width, height, parentContext, onBitmapCaptured)
+                captureComposable(view, content, width, height, parentContext, onBitmapCaptured, onFailure)
             }
             return
         }
@@ -50,6 +51,7 @@ object ComposeCaptureUtils {
             
             if (compositionContext == null) {
                 android.util.Log.e("ComposeCaptureUtils", "Cannot capture composable: CompositionContext not found")
+                onFailure("CompositionContext not found")
             }
 
             val composeView = ComposeView(context).apply {
@@ -61,6 +63,9 @@ object ComposeCaptureUtils {
                     setParentCompositionContext(compositionContext)
                     this.compositionContext = compositionContext
                 }
+                
+                // Force software rendering for off-screen capture to avoid black screens
+                setLayerType(android.view.View.LAYER_TYPE_SOFTWARE, null)
                 
                 setContent(content)
             }
@@ -74,52 +79,66 @@ object ComposeCaptureUtils {
                     this.compositionContext = compositionContext
                 }
                 
+                // Set opaque background to prevent black pixels in JPEG format
+                setBackgroundColor(android.graphics.Color.WHITE)
+                
                 addView(composeView, ViewGroup.LayoutParams(width, if (height > 0) height else ViewGroup.LayoutParams.WRAP_CONTENT))
             }
 
-            // Measure & Layout
-            val heightSpec = if (height > 0) {
-                View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY)
-            } else {
-                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-            }
-            
-            frameLayout.measure(
-                View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
-                heightSpec
-            )
-            
-            val finalHeight = if (height > 0) height else frameLayout.measuredHeight
-            
-            if (width <= 0 || finalHeight <= 0) {
-                composeView.disposeComposition()
-                return
-            }
-            
-            frameLayout.layout(0, 0, width, finalHeight)
-
             // Compose needs at least one frame to render.
-            // Since this view is not attached to a window, we wait a bit for the recomposer.
+            // Since this view is not attached to a window, we wait a bit for the recomposer to finish composition
+            // before we measure and layout.
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 try {
+                    // Measure & Layout after some time for composition
+                    val heightSpec = if (height > 0) {
+                        View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY)
+                    } else {
+                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+                    }
+                    
+                    frameLayout.measure(
+                        View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                        heightSpec
+                    )
+                    
+                    var finalHeight = if (height > 0) height else frameLayout.measuredHeight
+                    
+                    // If measured height is 0, it might be due to asynchronous content loading.
+                    // Fallback to a reasonable default height for logs (or the width as a square) to avoid failure.
+                    if (finalHeight <= 0) {
+                        finalHeight = if (width > 0) width else 1000
+                        android.util.Log.w("ComposeCaptureUtils", "Measured height was 0, falling back to $finalHeight")
+                    }
+
+                    if (width <= 0) {
+                        onFailure("Invalid width: $width")
+                        return@postDelayed
+                    }
+                    
+                    frameLayout.layout(0, 0, width, finalHeight)
+
                     // Draw to bitmap
                     val bitmap = Bitmap.createBitmap(width, finalHeight, Bitmap.Config.ARGB_8888)
                     val canvas = Canvas(bitmap)
+                    canvas.drawColor(android.graphics.Color.WHITE) // Ensure a solid white background
                     frameLayout.draw(canvas)
                     
                     onBitmapCaptured(bitmap)
                 } catch (e: Exception) {
                     e.printStackTrace()
                     android.util.Log.e("ComposeCaptureUtils", "Capture failed during drawing: ${e.message}")
+                    onFailure("Capture failed during drawing: ${e.message}")
                 } finally {
                     // Cleanup
                     composeView.disposeComposition()
                 }
-            }, 300) // Increased delay slightly to ensure rendering is complete
+            }, 600) // 600ms to be safe for composition and basic image loading from cache
             
         } catch (e: Exception) {
             e.printStackTrace()
             android.util.Log.e("ComposeCaptureUtils", "Failed to start capture: ${e.message}")
+            onFailure("Failed to start capture: ${e.message}")
         }
     }
 }

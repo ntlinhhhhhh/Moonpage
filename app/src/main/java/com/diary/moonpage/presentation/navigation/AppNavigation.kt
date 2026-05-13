@@ -199,6 +199,23 @@ fun AppNavigation(
                     }
                 }
 
+                // Settings moved here for better graph stability
+                composable(Screen.Settings.route) {
+                    ScreenWrapper(Screen.Settings.route, mainAppRoutes, totalBottomPadding, paddingValues) {
+                        SettingsScreen(
+                            onNavigateBack = { navController.popBackStack() },
+                            onNavigateToLogin = {
+                                navController.navigate(Screen.Landing.route) {
+                                    popUpTo(0) { inclusive = true }
+                                }
+                            },
+                            onNavigateToCreatePasscode = {
+                                navController.navigate(Screen.CreatePasscode.route)
+                            }
+                        )
+                    }
+                }
+
                 calendarScreen(
                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                     onNavigateToDailyLog = { dateStr -> navController.navigate("daily_log_screen/$dateStr") },
@@ -380,21 +397,6 @@ fun AppNavigation(
                     }
                 }
 
-                composable(Screen.Settings.route) {
-                    ScreenWrapper(Screen.Settings.route, mainAppRoutes, totalBottomPadding, paddingValues) {
-                        SettingsScreen(
-                            onNavigateBack = { navController.popBackStack() },
-                            onNavigateToLogin = {
-                                navController.navigate(Screen.Landing.route) {
-                                    popUpTo(0) { inclusive = true }
-                                }
-                            },
-                            onNavigateToCreatePasscode = {
-                                navController.navigate(Screen.CreatePasscode.route)
-                            }
-                        )
-                    }
-                }
 
                 composable(Screen.CreatePasscode.route) {
                     ScreenWrapper(Screen.CreatePasscode.route, mainAppRoutes, totalBottomPadding, paddingValues) {
