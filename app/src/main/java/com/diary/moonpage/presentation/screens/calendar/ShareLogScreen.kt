@@ -135,7 +135,7 @@ fun ShareLogScreen(
                                         modifier = Modifier
                                             .width(with(density) { 1080.toDp() })
                                             .background(Color(0xFFF7F7F5))
-                                            .padding(16.dp),
+                                            .padding(24.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         ShareLogCard(uiState = uiState)
@@ -154,7 +154,7 @@ fun ShareLogScreen(
                         .height(60.dp),
                     shape = RoundedCornerShape(20.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = themeColor
+                        containerColor = MaterialTheme.colorScheme.primary
                     ),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
                 ) {
@@ -218,28 +218,31 @@ fun ShareLogCard(uiState: DailyLogUiState) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFF1F1ED)) // Slightly darker beige for the card background
+            .clip(RoundedCornerShape(24.dp))
+            .background(Color(0xFFF1F1ED))
             .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.Start
     ) {
-        // Header with Logo
+        // Header with Logo (Left) and Year (Right)
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.logo),
-                contentDescription = null,
-                modifier = Modifier.size(28.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                "MoonPage",
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = themeColor
-            )
-            Spacer(modifier = Modifier.weight(1f))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(
+                    painter = painterResource(id = R.drawable.logo),
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    "MoonPage",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = themeColor
+                )
+            }
             Text(
                 text = date.format(DateTimeFormatter.ofPattern("yyyy")),
                 fontSize = 14.sp,
@@ -250,37 +253,41 @@ fun ShareLogCard(uiState: DailyLogUiState) {
         
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Mood Icon (Smaller as requested)
-        Box(
-            modifier = Modifier
-                .size(64.dp)
-                .clip(CircleShape)
-                .background(themeColor.copy(alpha = 0.8f)),
-            contentAlignment = Alignment.Center
-        ) {
-            if (moodVisual.drawableRes != null) {
-                Image(
-                    painter = painterResource(id = moodVisual.drawableRes),
-                    contentDescription = null,
-                    modifier = Modifier.size(42.dp)
-                )
+        // Mood Icon (Center)
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(CircleShape)
+                    .background(themeColor.copy(alpha = 0.8f)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (moodVisual.drawableRes != null) {
+                    Image(
+                        painter = painterResource(id = moodVisual.drawableRes),
+                        contentDescription = null,
+                        modifier = Modifier.size(42.dp)
+                    )
+                }
             }
         }
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // Date Pill
-        Surface(
-            color = Color.White.copy(alpha = 0.6f),
-            shape = RoundedCornerShape(10.dp)
-        ) {
-            Text(
-                text = dateText,
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-                fontSize = 14.sp,
-                color = Color(0xFF616161),
-                fontWeight = FontWeight.SemiBold
-            )
+        // Date Pill (Center)
+        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Surface(
+                color = Color.White.copy(alpha = 0.6f),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text(
+                    text = dateText,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                    fontSize = 14.sp,
+                    color = Color(0xFF616161),
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
         
         Spacer(modifier = Modifier.height(24.dp))
@@ -293,10 +300,10 @@ fun ShareLogCard(uiState: DailyLogUiState) {
         
         Spacer(modifier = Modifier.height(24.dp))
         
-        // Content Section (Activities, Note, Photos, Music)
+        // Content Section (Activities, Note, Photos, Music) - LEFT ALIGNED
         Column(
             modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.Start
         ) {
             // Activities (Max 6)
             val activities = uiState.selectedActivities.mapNotNull { id ->
@@ -306,7 +313,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
             if (activities.isNotEmpty()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
+                    horizontalArrangement = Arrangement.Start,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     activities.forEachIndexed { index, activity ->
@@ -334,12 +341,10 @@ fun ShareLogCard(uiState: DailyLogUiState) {
             if (!uiState.noteText.isNullOrBlank()) {
                 Text(
                     text = uiState.noteText,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     fontSize = 15.sp,
                     color = Color(0xFF424242),
-                    textAlign = TextAlign.Center,
+                    textAlign = TextAlign.Start,
                     lineHeight = 22.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -352,7 +357,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                 photos.chunked(3).forEachIndexed { rowIndex, chunk ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
+                        horizontalArrangement = Arrangement.Start
                     ) {
                         chunk.forEachIndexed { colIndex, photoUrl ->
                             AsyncImage(
@@ -433,7 +438,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Bottom
         ) {
             Column {
                 Text(
@@ -443,7 +448,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                     color = themeColor
                 )
                 Text(
-                    text = "REF: ${System.currentTimeMillis() / 1000}",
+                    text = "REF: ${uiState.date.toEpochDay()}${System.currentTimeMillis() % 10000}",
                     fontSize = 10.sp,
                     color = Color(0xFF9E9E9E)
                 )
@@ -452,7 +457,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
             Image(
                 painter = painterResource(id = R.drawable.logo),
                 contentDescription = null,
-                modifier = Modifier.size(36.dp).alpha(0.4f)
+                modifier = Modifier.size(40.dp).alpha(0.6f)
             )
         }
     }
