@@ -30,6 +30,7 @@ healthConnect = "1.1.0-alpha11"
 uiGeometry = "1.11.1"
 splashscreen = "1.0.1"
 uiVersion = "1.11.1"
+firebaseCrashlyticsBuildtools = "3.0.7"
 
 [libraries]
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splashscreen" }
@@ -87,6 +88,7 @@ androidx-compose-foundation-layout = { group = "androidx.compose.foundation", na
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
 androidx-compose-ui-geometry = { group = "androidx.compose.ui", name = "ui-geometry", version.ref = "uiGeometry" }
 ui = { group = "androidx.compose.ui", name = "ui", version.ref = "uiVersion" }
+firebase-crashlytics-buildtools = { group = "com.google.firebase", name = "firebase-crashlytics-buildtools", version.ref = "firebaseCrashlyticsBuildtools" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

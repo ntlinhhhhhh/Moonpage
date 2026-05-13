@@ -30,7 +30,7 @@ class MoonPageApplication : Application(), ImageLoaderFactory {
             .diskCache {
                 DiskCache.Builder()
                     .directory(cacheDir.resolve("image_cache"))
-                    .maxSizeBytes(150L * 1024 * 1024) // 150 MB disk cache cố định
+                    .maxSizeBytes(150L * 1024 * 1024)
                     .build()
             }
             .okHttpClient {
@@ -39,12 +39,11 @@ class MoonPageApplication : Application(), ImageLoaderFactory {
                     .readTimeout(15, TimeUnit.SECONDS)
                     .build()
             }
-            // Theo docs: explicit policy giúp Coil bỏ qua check header = ít overhead hơn
             .memoryCachePolicy(CachePolicy.ENABLED)
             .diskCachePolicy(CachePolicy.ENABLED)
-            .respectCacheHeaders(false)  // Bỏ qua server cache header, luôn dùng disk cache
-            .crossfade(true)             // Crossfade mặc định toàn app
-            .allowHardware(true)         // Hardware bitmap – render trực tiếp trên GPU
+            .respectCacheHeaders(false)
+            .crossfade(true)
+            .allowHardware(true)
             .build()
     }
 }

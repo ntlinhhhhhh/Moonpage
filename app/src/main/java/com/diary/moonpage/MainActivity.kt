@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -29,6 +30,7 @@ import com.diary.moonpage.core.util.SettingsPreferencesManager
 import com.diary.moonpage.core.util.TokenManager
 import com.diary.moonpage.data.remote.api.SpotifyApi
 import com.diary.moonpage.presentation.navigation.AppNavigation
+import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.flow.first
@@ -42,9 +44,9 @@ class MainActivity : FragmentActivity() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            android.util.Log.d("Notifications", "Permission granted")
+            Log.d("Notifications", "Permission granted")
         } else {
-            android.util.Log.d("Notifications", "Permission denied")
+            Log.d("Notifications", "Permission denied")
         }
     }
 
@@ -61,7 +63,19 @@ class MainActivity : FragmentActivity() {
         val splashScreen = installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        
+
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.w("FCM_TOKEN", "Lấy token thất bại", task.exception)
+                return@addOnCompleteListener
+            }
+
+            val token = task.result
+            Log.d("FCM_TOKEN", "=================================")
+            Log.d("FCM_TOKEN", "MÃ TOKEN CỦA MÁY NÀY LÀ:")
+            Log.d("FCM_TOKEN", token)
+            Log.d("FCM_TOKEN", "=================================")
+        }
         requestNotificationPermission()
 
         splashScreen.setKeepOnScreenCondition {
@@ -156,25 +170,25 @@ class MainActivity : FragmentActivity() {
 
     private fun handleIntent(intent: Intent?) {
         val uri = intent?.data
-        android.util.Log.d("SpotifyAuth", "handleIntent called with URI: $uri and action: ${intent?.action}")
+        Log.d("SpotifyAuth", "handleIntent called with URI: $uri and action: ${intent?.action}")
         if (uri != null && uri.scheme == "moonpage") {
-            android.util.Log.d("SpotifyAuth", "Received URI: $uri")
+            Log.d("SpotifyAuth", "Received URI: $uri")
             if (uri.host == "spotify-callback") {
                 val code = uri.getQueryParameter("code")
                 val error = uri.getQueryParameter("error")
                 
                 if (error != null) {
-                    android.util.Log.e("SpotifyAuth", "Spotify returned error: $error")
+                    Log.e("SpotifyAuth", "Spotify returned error: $error")
                     android.widget.Toast.makeText(this, "Spotify Error: $error", android.widget.Toast.LENGTH_LONG).show()
                     mainViewModel.showSnackbar("Spotify Error: $error")
                     return
                 }
 
                 if (code != null) {
-                    android.util.Log.d("SpotifyAuth", "Code received: $code")
+                    Log.d("SpotifyAuth", "Code received: $code")
                     lifecycleScope.launch {
                         val verifier = tokenManager.getSpotifyVerifier()
-                        android.util.Log.d("SpotifyAuth", "Verifier from storage: $verifier")
+                        Log.d("SpotifyAuth", "Verifier from storage: $verifier")
                         
                         if (verifier != null) {
                             try {
@@ -191,32 +205,32 @@ class MainActivity : FragmentActivity() {
                                         refreshToken = body.refreshToken,
                                         expiresIn = body.expiresIn
                                     )
-                                    android.util.Log.d("SpotifyAuth", "Token exchange successful!")
+                                    Log.d("SpotifyAuth", "Token exchange successful!")
                                     android.widget.Toast.makeText(this@MainActivity, "Spotify Linked!", android.widget.Toast.LENGTH_SHORT).show()
                                     mainViewModel.showSnackbar("Spotify linked successfully!")
                                 } else {
                                     val errorBody = response.errorBody()?.string() ?: "Unknown error"
-                                    android.util.Log.e("SpotifyAuth", "Token exchange failed: $errorBody")
+                                    Log.e("SpotifyAuth", "Token exchange failed: $errorBody")
                                     android.widget.Toast.makeText(this@MainActivity, "Exchange Failed: $errorBody", android.widget.Toast.LENGTH_LONG).show()
                                     mainViewModel.showSnackbar("Token exchange failed: $errorBody")
                                 }
                             } catch (e: Exception) {
-                                android.util.Log.e("SpotifyAuth", "API Error", e)
+                                Log.e("SpotifyAuth", "API Error", e)
                                 android.widget.Toast.makeText(this@MainActivity, "API Error: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
                                 mainViewModel.showSnackbar("API Error: ${e.message}")
                             }
                         } else {
-                            android.util.Log.e("SpotifyAuth", "Missing verifier in storage!")
+                            Log.e("SpotifyAuth", "Missing verifier in storage!")
                             android.widget.Toast.makeText(this@MainActivity, "Error: Missing Verifier", android.widget.Toast.LENGTH_LONG).show()
                             mainViewModel.showSnackbar("Error: Missing local verifier")
                         }
                     }
                 } else {
-                    android.util.Log.e("SpotifyAuth", "No code found in URI")
+                    Log.e("SpotifyAuth", "No code found in URI")
                     mainViewModel.showSnackbar("Error: No code received from Spotify")
                 }
             } else {
-                android.util.Log.e("SpotifyAuth", "Unknown host: ${uri.host}")
+                Log.e("SpotifyAuth", "Unknown host: ${uri.host}")
                 mainViewModel.showSnackbar("Error: Unknown host ${uri.host}")
             }
         }
