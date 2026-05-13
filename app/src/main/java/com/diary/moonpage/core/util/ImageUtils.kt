@@ -34,7 +34,7 @@ object ImageUtils {
                 
                 val file = File(cachePath, "share_${System.currentTimeMillis()}.jpg")
                 val stream = FileOutputStream(file)
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream)
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
                 stream.close()
 
                 val contentUri = FileProvider.getUriForFile(
@@ -44,15 +44,14 @@ object ImageUtils {
                 )
 
                 if (contentUri != null) {
-                    val shareIntent = Intent().apply {
-                        action = Intent.ACTION_SEND
+                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        setDataAndType(contentUri, context.contentResolver.getType(contentUri))
                         putExtra(Intent.EXTRA_STREAM, contentUri)
                         type = "image/jpeg"
                     }
-                    val chooser = Intent.createChooser(shareIntent, title).apply {
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    val chooser = Intent.createChooser(shareIntent, title)
+                    if (context !is android.app.Activity) {
+                        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     }
                     withContext(Dispatchers.Main) {
                         context.startActivity(chooser)

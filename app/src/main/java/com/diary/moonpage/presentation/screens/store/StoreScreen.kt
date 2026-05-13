@@ -251,7 +251,11 @@ fun HomeTabContent(
             }
         }
 
-        items(filteredThemes) { theme ->
+        items(
+            items = filteredThemes,
+            key = { it.id },
+            contentType = { "theme" }
+        ) { theme ->
             ThemeCard(theme = theme, onClick = { onThemeClick(theme) })
         }
 
@@ -323,7 +327,11 @@ fun MyThemeTabContent(
             }
         }
 
-        items(otherThemes) { theme ->
+        items(
+            items = otherThemes,
+            key = { it.id },
+            contentType = { "theme" }
+        ) { theme ->
             ThemeCard(
                 theme = theme, 
                 isSelected = theme.id == temporarySelectedId,
@@ -357,7 +365,11 @@ fun CollectionsTabContent(
             )
         }
 
-        items(themes) { theme ->
+        items(
+            items = themes,
+            key = { it.id },
+            contentType = { "theme" }
+        ) { theme ->
             ThemeCard(theme = theme, onClick = { onThemeClick(theme) })
         }
     }

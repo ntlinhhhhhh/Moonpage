@@ -8,11 +8,15 @@ import android.widget.FrameLayout
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionContext
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.compositionContext
 import androidx.compose.ui.platform.findViewTreeCompositionContext
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.findViewTreeViewModelStoreOwner
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.lifecycle.setViewTreeViewModelStoreOwner
+import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.findViewTreeSavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 
@@ -29,7 +33,6 @@ object ComposeCaptureUtils {
         parentContext: CompositionContext? = null,
         onBitmapCaptured: (Bitmap) -> Unit
     ) {
-        // Enforce Main Thread
         if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) {
             view.post {
                 captureComposable(view, content, width, height, parentContext, onBitmapCaptured)
@@ -39,21 +42,38 @@ object ComposeCaptureUtils {
 
         try {
             val context = view.context
+            val lifecycleOwner = view.findViewTreeLifecycleOwner() ?: (context as? LifecycleOwner)
+            val viewModelStoreOwner = view.findViewTreeViewModelStoreOwner() ?: (context as? ViewModelStoreOwner)
+            val savedStateRegistryOwner = view.findViewTreeSavedStateRegistryOwner() ?: (context as? SavedStateRegistryOwner)
+            
+            val compositionContext = parentContext ?: view.findViewTreeCompositionContext()
+            
+            if (compositionContext == null) {
+                android.util.Log.e("ComposeCaptureUtils", "Cannot capture composable: CompositionContext not found")
+            }
+
             val composeView = ComposeView(context).apply {
-                // Set the necessary ViewTree owners so Compose can function.
-                setViewTreeLifecycleOwner(view.findViewTreeLifecycleOwner())
-                setViewTreeViewModelStoreOwner(view.findViewTreeViewModelStoreOwner())
-                setViewTreeSavedStateRegistryOwner(view.findViewTreeSavedStateRegistryOwner())
+                if (lifecycleOwner != null) setViewTreeLifecycleOwner(lifecycleOwner)
+                if (viewModelStoreOwner != null) setViewTreeViewModelStoreOwner(viewModelStoreOwner)
+                if (savedStateRegistryOwner != null) setViewTreeSavedStateRegistryOwner(savedStateRegistryOwner)
                 
-                val compositionContext = parentContext ?: view.findViewTreeCompositionContext()
                 if (compositionContext != null) {
                     setParentCompositionContext(compositionContext)
+                    this.compositionContext = compositionContext
                 }
                 
                 setContent(content)
             }
 
             val frameLayout = FrameLayout(context).apply {
+                // Also set owners on the container to be safe
+                if (lifecycleOwner != null) setViewTreeLifecycleOwner(lifecycleOwner)
+                if (viewModelStoreOwner != null) setViewTreeViewModelStoreOwner(viewModelStoreOwner)
+                if (savedStateRegistryOwner != null) setViewTreeSavedStateRegistryOwner(savedStateRegistryOwner)
+                if (compositionContext != null) {
+                    this.compositionContext = compositionContext
+                }
+                
                 addView(composeView, ViewGroup.LayoutParams(width, if (height > 0) height else ViewGroup.LayoutParams.WRAP_CONTENT))
             }
 
@@ -90,16 +110,16 @@ object ComposeCaptureUtils {
                     onBitmapCaptured(bitmap)
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    android.widget.Toast.makeText(context, "Capture failed: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                    android.util.Log.e("ComposeCaptureUtils", "Capture failed during drawing: ${e.message}")
                 } finally {
                     // Cleanup
                     composeView.disposeComposition()
                 }
-            }, 150) // 150ms delay is usually enough for simple composables
+            }, 300) // Increased delay slightly to ensure rendering is complete
             
         } catch (e: Exception) {
             e.printStackTrace()
-            android.widget.Toast.makeText(view.context, "Failed to start capture", android.widget.Toast.LENGTH_SHORT).show()
+            android.util.Log.e("ComposeCaptureUtils", "Failed to start capture: ${e.message}")
         }
     }
 }

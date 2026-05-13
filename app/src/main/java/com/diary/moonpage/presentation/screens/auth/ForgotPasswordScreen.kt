@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -137,7 +138,7 @@ fun ForgotPasswordScreenContent(
             ) {
                 IconButton(
                     onClick = onNavigateBack,
-                    modifier = Modifier.offset(x = (-12).dp)
+                    modifier = Modifier.graphicsLayer { translationX = -12.dp.toPx() }
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.ArrowBackIosNew,

@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -78,18 +79,35 @@ class DailyLogRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getDailyLogByDate(date: String): Result<DailyLog> {
-        return try {
+    override suspend fun getDailyLogByDate(date: String): Result<DailyLog> = kotlinx.coroutines.withContext(Dispatchers.IO) {
+        return@withContext try {
             val cached = dao.getLogByDate(date)
             
-            val response = api.getDailyLogByDate(date)
-            if (response.isSuccessful && response.body() != null) {
-                val logDto = response.body()!!
-                dao.insertLog(DailyLogEntity.fromResponse(logDto))
-                Result.success(logDto.toDomain())
+            // Fetch network in background for single source of truth
+            kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val response = api.getDailyLogByDate(date)
+                    if (response.isSuccessful && response.body() != null) {
+                        val logDto = response.body()!!
+                        dao.insertLog(DailyLogEntity.fromResponse(logDto))
+                    }
+                } catch (e: Exception) {
+                    // Ignore background error
+                }
+            }
+
+            if (cached != null) {
+                Result.success(cached.toDomain())
             } else {
-                cached?.let { Result.success(it.toDomain()) } 
-                    ?: Result.failure(Exception("Failed to get DailyLog for date $date: ${response.code()}"))
+                // If not cached, we have to wait for the API response
+                val response = api.getDailyLogByDate(date)
+                if (response.isSuccessful && response.body() != null) {
+                    val logDto = response.body()!!
+                    dao.insertLog(DailyLogEntity.fromResponse(logDto))
+                    Result.success(logDto.toDomain())
+                } else {
+                    Result.failure(Exception("Failed to get DailyLog for date $date: ${response.code()}"))
+                }
             }
         } catch (e: Exception) {
             val cached = dao.getLogByDate(date)
