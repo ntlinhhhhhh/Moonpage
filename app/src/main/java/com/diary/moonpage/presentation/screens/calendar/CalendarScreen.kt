@@ -1,15 +1,15 @@
 package com.diary.moonpage.presentation.screens.calendar
 
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import java.util.Locale
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -21,27 +21,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.domain.model.DailyLog
-import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import com.diary.moonpage.core.util.ComposeCaptureUtils
-import com.diary.moonpage.core.util.ImageUtils
+import com.diary.moonpage.core.util.MoonIcon
 import com.diary.moonpage.presentation.components.calendar.*
 import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import com.diary.moonpage.presentation.components.core.feedback.MoonDeleteConfirmDialog
-import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
-import java.time.format.DateTimeFormatter
 
 /**
  * Stateful Component
@@ -102,9 +93,6 @@ fun CalendarScreenContent(
     onNavigateToThemeCalendar: () -> Unit,
     showSnackbar: (String) -> Unit
 ) {
-    val coroutineScope = rememberCoroutineScope()
-    val view = androidx.compose.ui.platform.LocalView.current
-    val compositionContext = rememberCompositionContext()
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var dateToDelete by remember { mutableStateOf<LocalDate?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -147,85 +135,113 @@ fun CalendarScreenContent(
                 .padding(bottom = paddingValues.calculateBottomPadding())
         ) {
             CalendarTopBar(
+                viewMode = uiState.viewMode,
                 onFilterClick = { onEvent(CalendarUiEvent.OnFilterClick) },
-                onSettingsClick = onNavigateToSettings,
+                onToggleViewMode = { onEvent(CalendarUiEvent.ToggleViewMode) },
                 onThemeClick = onNavigateToThemeCalendar,
                 isFilterActive = uiState.selectedFilter != null,
                 modifier = Modifier.statusBarsPadding()
             )
 
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.Top,
-                beyondViewportPageCount = 1
-            ) { page ->
-                val offset = page - initialPage
-                val pageYearMonth = baseYearMonth.plusMonths(offset.toLong())
-                val currentLanguage = com.diary.moonpage.core.theme.LocalLocale.current
-                val currentMonthName = if (currentLanguage == "vi") {
-                    "Tháng ${pageYearMonth.monthValue} ${pageYearMonth.year}"
-                } else {
-                    pageYearMonth.format(java.time.format.DateTimeFormatter.ofPattern("MMM yyyy"))
-                }
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    CalendarMonthHeader(
-                        currentMonthName = currentMonthName,
-                        themeType = uiState.themeType,
-                        onMonthClick = { onEvent(CalendarUiEvent.OnMonthPickerClick) },
-                        onShareClick = { onNavigateToShareCalendar(uiState.currentYearMonth.toString()) }
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    CalendarHeader(themeType = uiState.themeType)
-
-                    CalendarGrid(
-                        pageYearMonth = pageYearMonth,
-                        selectedDate = uiState.selectedDate,
-                        dailyLogs = uiState.dailyLogs,
-                        selectedFilter = uiState.selectedFilter,
-                        dynamicActivities = uiState.dynamicActivities,
-                        themeType = uiState.themeType,
-                        onDateSelected = { date ->
-                            if (date.isAfter(LocalDate.now())) {
-                                showSnackbar("You cannot record for a future date!")
+            AnimatedContent(
+                targetState = uiState.viewMode,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(300)) togetherWith 
+                    fadeOut(animationSpec = tween(300))
+                },
+                label = "ViewModeTransition"
+            ) { targetMode ->
+                when (targetMode) {
+                    CalendarViewMode.CALENDAR -> {
+                        HorizontalPager(
+                            state = pagerState,
+                            modifier = Modifier.fillMaxSize(),
+                            verticalAlignment = Alignment.Top,
+                            beyondViewportPageCount = 1
+                        ) { page ->
+                            val offset = page - initialPage
+                            val pageYearMonth = baseYearMonth.plusMonths(offset.toLong())
+                            val currentLanguage = com.diary.moonpage.core.theme.LocalLocale.current
+                            val currentMonthName = if (currentLanguage == "vi") {
+                                "Tháng ${pageYearMonth.monthValue} ${pageYearMonth.year}"
                             } else {
-                                onEvent(CalendarUiEvent.OnDateSelected(date))
-                                if (uiState.dailyLogs[date] == null) {
-                                    onNavigateToDailyLog(date.toString())
-                                }
+                                pageYearMonth.format(java.time.format.DateTimeFormatter.ofPattern("MMM yyyy"))
+                            }
+
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(rememberScrollState())
+                            ) {
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                CalendarMonthHeader(
+                                    currentMonthName = currentMonthName,
+                                    themeType = uiState.themeType,
+                                    onMonthClick = { onEvent(CalendarUiEvent.OnMonthPickerClick) },
+                                    onShareClick = { onNavigateToShareCalendar(uiState.currentYearMonth.toString()) }
+                                )
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                CalendarHeader(themeType = uiState.themeType)
+
+                                CalendarGrid(
+                                    pageYearMonth = pageYearMonth,
+                                    selectedDate = uiState.selectedDate,
+                                    dailyLogs = uiState.dailyLogs,
+                                    selectedFilter = uiState.selectedFilter,
+                                    dynamicActivities = uiState.dynamicActivities,
+                                    themeType = uiState.themeType,
+                                    onDateSelected = { date ->
+                                        if (date.isAfter(LocalDate.now())) {
+                                            showSnackbar("You cannot record for a future date!")
+                                        } else {
+                                            onEvent(CalendarUiEvent.OnDateSelected(date))
+                                            if (uiState.dailyLogs[date] == null) {
+                                                onNavigateToDailyLog(date.toString())
+                                            }
+                                        }
+                                    }
+                                )
+
+                                Spacer(modifier = Modifier.height(24.dp))
+
+                                CalendarSelectedLogDetail(
+                                    selectedDate = uiState.selectedDate,
+                                    dailyLogs = uiState.dailyLogs,
+                                    dynamicActivities = uiState.dynamicActivities,
+                                    themeType = uiState.themeType,
+                                    onEditLog = { date -> onNavigateToDailyLog(date.toString()) },
+                                    onDeleteLog = { date -> 
+                                        dateToDelete = date
+                                        showDeleteConfirmDialog = true
+                                    },
+                                    onShareClick = { 
+                                        uiState.selectedDate?.let { date ->
+                                            onNavigateToShareLog(date.toString())
+                                        }
+                                    }
+                                )
+
+                                Spacer(modifier = Modifier.height(100.dp))
                             }
                         }
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    CalendarSelectedLogDetail(
-                        selectedDate = uiState.selectedDate,
-                        dailyLogs = uiState.dailyLogs,
-                        dynamicActivities = uiState.dynamicActivities,
-                        themeType = uiState.themeType,
-                        onEditLog = { date -> onNavigateToDailyLog(date.toString()) },
-                        onDeleteLog = { date -> 
-                            dateToDelete = date
-                            showDeleteConfirmDialog = true
-                        },
-                        onShareClick = { 
-                            uiState.selectedDate?.let { date ->
-                                onNavigateToShareLog(date.toString())
-                            }
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.height(100.dp))
+                    }
+                    CalendarViewMode.TIMELINE -> {
+                        TimelineView(
+                            dailyLogs = uiState.dailyLogs,
+                            dynamicActivities = uiState.dynamicActivities,
+                            themeType = uiState.themeType,
+                            onEditLog = { date -> onNavigateToDailyLog(date.toString()) },
+                            onDeleteLog = { date -> 
+                                dateToDelete = date
+                                showDeleteConfirmDialog = true
+                            },
+                            onShareLog = { date -> onNavigateToShareLog(date.toString()) },
+                            onAddLog = { date -> onNavigateToDailyLog(date.toString()) }
+                        )
+                    }
                 }
             }
         }
@@ -287,8 +303,6 @@ fun CalendarScreenContent(
         )
     }
 }
-// Removed local DeleteConfirmDialog in favor of MoonDeleteConfirmDialog
-
 
 @Composable
 fun CalendarMonthHeader(
@@ -344,9 +358,9 @@ fun CalendarMonthHeader(
 
 @Composable
 fun CalendarGrid(
-    pageYearMonth: java.time.YearMonth,
+    pageYearMonth: YearMonth,
     selectedDate: LocalDate?,
-    dailyLogs: Map<LocalDate, com.diary.moonpage.domain.model.DailyLog>,
+    dailyLogs: Map<LocalDate, DailyLog>,
     selectedFilter: FilterItem?,
     dynamicActivities: List<com.diary.moonpage.domain.model.Activity>,
     themeType: com.diary.moonpage.core.theme.MoonThemeType,
@@ -390,7 +404,7 @@ fun CalendarGrid(
                                     when (filter.id) {
                                         "music" -> logForDay?.activityIds?.any { it.contains("music", ignoreCase = true) } == true
                                         "sleep" -> (logForDay?.sleepHours ?: 0.0) > 0.0
-                                        "sleep_long" -> (logForDay?.sleepHours ?: 0.0) >= 6.0 && (logForDay?.sleepHours ?: 0.0) <= 8.0
+                                        "sleep_long" -> (logForDay?.sleepHours ?: 0.0) in 6.0..8.0
                                         "menstruation" -> logForDay?.isMenstruation == true
                                         else -> false
                                     }
@@ -459,7 +473,7 @@ fun CalendarSelectedLogDetail(
 ) {
     val date = selectedDate ?: return
     val selectedLog = dailyLogs[date] ?: return
-    val mv = com.diary.moonpage.core.util.MoonIcons.Moods.getMoodVisual(selectedLog.baseMoodId, themeType)
+    val mv = MoonIcons.Moods.getMoodVisual(selectedLog.baseMoodId, themeType)
     val activityNames = selectedLog.activityIds?.mapNotNull { id ->
         dynamicActivities.find { it.id == id }?.name
     } ?: emptyList()
@@ -508,6 +522,146 @@ fun CalendarSelectedLogDetail(
                 dailyPhotos = selectedLog.dailyPhotos ?: emptyList(),
                 sleepHours = selectedLog.sleepHours,
                 isMenstruation = selectedLog.isMenstruation
+            )
+        }
+    }
+}
+
+@Composable
+fun TimelineView(
+    dailyLogs: Map<LocalDate, DailyLog>,
+    dynamicActivities: List<com.diary.moonpage.domain.model.Activity>,
+    themeType: com.diary.moonpage.core.theme.MoonThemeType,
+    onEditLog: (LocalDate) -> Unit,
+    onDeleteLog: (LocalDate) -> Unit,
+    onShareLog: (LocalDate) -> Unit,
+    onAddLog: (LocalDate) -> Unit
+) {
+    val sortedLogs = remember(dailyLogs) {
+        dailyLogs.values.sortedByDescending { it.date }
+    }
+
+    if (sortedLogs.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = Icons.Rounded.EditNote,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "No entries yet",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(
+                    onClick = { onAddLog(LocalDate.now()) },
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Write first entry")
+                }
+            }
+        }
+    } else {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = 100.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(
+                items = sortedLogs,
+                key = { it.id }
+            ) { log ->
+                val date = LocalDate.parse(log.date)
+                val mv = MoonIcons.Moods.getMoodVisual(log.baseMoodId, themeType)
+                val activityNames = log.activityIds?.mapNotNull { id ->
+                    dynamicActivities.find { it.id == id }?.name
+                } ?: emptyList<String>()
+
+                TimelineItem(
+                    log = log,
+                    date = date,
+                    mv = mv,
+                    activityNames = activityNames,
+                    themeType = themeType,
+                    onEdit = { onEditLog(date) },
+                    onDelete = { onDeleteLog(date) },
+                    onShare = { onShareLog(date) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun TimelineItem(
+    log: DailyLog,
+    date: LocalDate,
+    mv: MoonIcon,
+    activityNames: List<String>,
+    themeType: com.diary.moonpage.core.theme.MoonThemeType,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+    onShare: () -> Unit
+) {
+    val cs = MaterialTheme.colorScheme
+    
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val dayOfWeek = date.format(java.time.format.DateTimeFormatter.ofPattern("EEE", Locale.ENGLISH))
+            val dateStr = date.format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.ENGLISH))
+            
+            Text(
+                text = "$dayOfWeek, $dateStr",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = cs.onSurface.copy(alpha = 0.5f),
+                modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)
+            )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                IconButton(onClick = onShare, modifier = Modifier.size(32.dp)) {
+                    Icon(Icons.Rounded.IosShare, contentDescription = "Share", tint = cs.onSurface.copy(alpha = 0.3f), modifier = Modifier.size(18.dp))
+                }
+                IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
+                    Icon(Icons.Rounded.Edit, contentDescription = "Edit", tint = cs.onSurface.copy(alpha = 0.3f), modifier = Modifier.size(18.dp))
+                }
+                IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                    Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = cs.onSurface.copy(alpha = 0.3f), modifier = Modifier.size(18.dp))
+                }
+            }
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.logCardBg
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        ) {
+            DayDetailArea(
+                date = date,
+                moodIcon = mv.vector,
+                moodDrawable = mv.drawableRes,
+                moodColor = mv.color,
+                moodLabel = mv.name,
+                noteSnippet = log.note,
+                activityNames = activityNames,
+                dailyPhotos = log.dailyPhotos ?: emptyList(),
+                sleepHours = log.sleepHours,
+                isMenstruation = log.isMenstruation
             )
         }
     }

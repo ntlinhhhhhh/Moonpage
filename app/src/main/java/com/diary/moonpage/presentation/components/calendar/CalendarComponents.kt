@@ -1,5 +1,7 @@
 package com.diary.moonpage.presentation.components.calendar
 
+import com.diary.moonpage.presentation.screens.calendar.CalendarViewMode
+
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -46,8 +48,9 @@ import com.diary.moonpage.core.theme.MoonThemeType
 
 @Composable
 fun CalendarTopBar(
+    viewMode: CalendarViewMode,
     onFilterClick: () -> Unit,
-    onSettingsClick: () -> Unit,
+    onToggleViewMode: () -> Unit,
     onThemeClick: () -> Unit = {},
     isFilterActive: Boolean = false,
     modifier: Modifier = Modifier
@@ -135,12 +138,12 @@ fun CalendarTopBar(
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
-                    ) { onSettingsClick() }
+                    ) { onToggleViewMode() }
                     .padding(4.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Menu,
-                    contentDescription = stringResource(R.string.settings),
+                    imageVector = if (viewMode == CalendarViewMode.CALENDAR) Icons.Rounded.ViewHeadline else Icons.Rounded.CalendarMonth,
+                    contentDescription = "Switch View",
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(28.dp)
                 )

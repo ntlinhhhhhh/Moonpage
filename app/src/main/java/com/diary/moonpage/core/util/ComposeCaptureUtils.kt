@@ -104,8 +104,6 @@ object ComposeCaptureUtils {
                     
                     var finalHeight = if (height > 0) height else frameLayout.measuredHeight
                     
-                    // If measured height is 0, it might be due to asynchronous content loading.
-                    // Fallback to a reasonable default height for logs (or the width as a square) to avoid failure.
                     if (finalHeight <= 0) {
                         finalHeight = if (width > 0) width else 1000
                         android.util.Log.w("ComposeCaptureUtils", "Measured height was 0, falling back to $finalHeight")

@@ -21,6 +21,7 @@ sealed class CalendarUiEvent {
     object DismissMessage : CalendarUiEvent()
     object OnSettingsClick : CalendarUiEvent()
     object OnThemeClick : CalendarUiEvent()
+    object ToggleViewMode : CalendarUiEvent()
 }
 
 /**

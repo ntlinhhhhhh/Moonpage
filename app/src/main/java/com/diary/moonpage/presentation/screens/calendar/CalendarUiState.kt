@@ -12,6 +12,10 @@ sealed class FilterItem {
     data class Special(val id: String, val name: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) : FilterItem()
 }
 
+enum class CalendarViewMode {
+    CALENDAR, TIMELINE
+}
+
 data class CalendarUiState(
     val isLoading: Boolean = false,
     val currentYearMonth: YearMonth = YearMonth.now(),
@@ -23,5 +27,6 @@ data class CalendarUiState(
     val showFilterSheet: Boolean = false,
     val showShareSheet: Boolean = false,
     val selectedFilter: FilterItem? = null,
-    val themeType: MoonThemeType = MoonThemeType.DEFAULT
+    val themeType: MoonThemeType = MoonThemeType.DEFAULT,
+    val viewMode: CalendarViewMode = CalendarViewMode.CALENDAR
 )
