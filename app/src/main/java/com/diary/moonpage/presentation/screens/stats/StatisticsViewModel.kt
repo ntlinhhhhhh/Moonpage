@@ -41,10 +41,11 @@ class StatisticsViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
+                val isMonthly = _uiState.value.isMonthly
                 val response = repository.getStatisticsSummary(
                     _uiState.value.selectedYear,
-                    _uiState.value.selectedMonth,
-                    _uiState.value.isMonthly
+                    if (isMonthly) _uiState.value.selectedMonth else null,
+                    isMonthly
                 )
                 if (response.isSuccessful && response.body() != null) {
                     val stats = response.body()!!

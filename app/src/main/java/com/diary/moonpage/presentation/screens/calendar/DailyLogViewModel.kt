@@ -228,6 +228,15 @@ class DailyLogViewModel @Inject constructor(
             is DailyLogUiEvent.OnMoodSelected -> {
                 _uiState.update { it.copy(selectedMood = event.moodId) }
             }
+            is DailyLogUiEvent.OnCategoryToggle -> {
+                val current = _uiState.value.expandedCategories.toMutableSet()
+                if (current.contains(event.category)) {
+                    current.remove(event.category)
+                } else {
+                    current.add(event.category)
+                }
+                _uiState.update { it.copy(expandedCategories = current) }
+            }
             is DailyLogUiEvent.OnActivityToggled -> {
                 val current = _uiState.value.selectedActivities.toMutableList()
                 if (current.contains(event.activityId)) {
@@ -279,24 +288,35 @@ class DailyLogViewModel @Inject constructor(
                 _uiState.update { it.copy(isImportingHealth = true) }
                 viewModelScope.launch {
                     try {
-                        if (!healthConnectManager.isSdkAvailable()) {
-                            _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Health Connect is not available."))
+                        val status = healthConnectManager.getSdkStatus()
+                        if (status != androidx.health.connect.client.HealthConnectClient.SDK_AVAILABLE) {
+                            val msg = when (status) {
+                                androidx.health.connect.client.HealthConnectClient.SDK_UNAVAILABLE -> "Health Connect is not installed on this device."
+                                androidx.health.connect.client.HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> "Health Connect needs an update from the Play Store."
+                                else -> "Health Connect is not available (Status: $status)."
+                            }
+                            _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(msg))
                             _uiState.update { it.copy(isImportingHealth = false) }
                         } else if (healthConnectManager.hasAllPermissions()) {
                             val data = healthConnectManager.readHealthData(_uiState.value.date)
+                            if (data.steps == 0 && data.calories == 0 && data.distance == 0.0) {
+                                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("No health data found for this day in Health Connect. Make sure Google Fit is syncing."))
+                            } else {
+                                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Health data updated: ${data.steps} steps!"))
+                            }
                             _uiState.update { it.copy(
                                 steps = data.steps,
                                 calories = data.calories,
                                 distance = data.distance,
                                 isImportingHealth = false
                             ) }
-                            _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Health data updated!"))
                         } else {
                             // Leave isImportingHealth = true, it will be reset by OnHealthPermissionResult
                             _uiEffect.emit(DailyLogUiEffect.LaunchHealthPermissions(healthConnectManager.permissions))
                         }
                     } catch (e: Exception) {
-                        _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Import failed: ${e.message}"))
+                        android.util.Log.e("DailyLogVM", "Import failed", e)
+                        _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Import failed: ${e.localizedMessage ?: "Unknown error"}"))
                         _uiState.update { it.copy(isImportingHealth = false) }
                     }
                 }
@@ -313,17 +333,20 @@ class DailyLogViewModel @Inject constructor(
                 viewModelScope.launch {
                     _uiState.update { it.copy(isImportingHealth = true) }
                     try {
-                        if (healthConnectManager.hasAllPermissions()) {
-                            val data = healthConnectManager.readHealthData(_uiState.value.date)
-                            _uiState.update { it.copy(
-                                steps = data.steps,
-                                calories = data.calories,
-                                distance = data.distance,
-                            ) }
-                            _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Health data imported: ${data.steps} steps!"))
+                        val status = healthConnectManager.getSdkStatus()
+                        if (status == androidx.health.connect.client.HealthConnectClient.SDK_AVAILABLE) {
+                            if (healthConnectManager.hasAllPermissions()) {
+                                val data = healthConnectManager.readHealthData(_uiState.value.date)
+                                _uiState.update { it.copy(
+                                    steps = data.steps,
+                                    calories = data.calories,
+                                    distance = data.distance,
+                                ) }
+                            }
                         }
                     } catch (e: Exception) {
-                        _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Failed to read health data: ${e.message}"))
+                        android.util.Log.e("DailyLogVM", "Auto-import failed", e)
+                        // Don't show snackbar for auto-import to avoid annoyance
                     } finally {
                         _uiState.update { it.copy(isImportingHealth = false) }
                     }

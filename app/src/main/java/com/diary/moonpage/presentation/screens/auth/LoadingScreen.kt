@@ -64,7 +64,7 @@ fun LoadingScreen(
         }
     }
 
-    val isDarkTheme = isSystemInDarkTheme()
+    val isDarkTheme = com.diary.moonpage.core.theme.MoonTheme.customColors.isDark
 
     Box(
         modifier = Modifier

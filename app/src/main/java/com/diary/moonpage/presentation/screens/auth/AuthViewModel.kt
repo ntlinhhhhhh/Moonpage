@@ -126,9 +126,17 @@ class AuthViewModel @Inject constructor (
                                 val activeTheme = themes.find { it.isActive }
                                 if (activeTheme != null) {
                                     try {
-                                        val cleanId = activeTheme.id.replace("theme_", "").uppercase()
-                                        val themeType = com.diary.moonpage.core.theme.MoonThemeType.valueOf(cleanId)
-                                        themePreferencesManager.setThemeType(themeType)
+                                         val cleanId = activeTheme.id.replace("theme_", "").uppercase()
+                                         val themeType = try {
+                                             com.diary.moonpage.core.theme.MoonThemeType.valueOf(cleanId)
+                                         } catch (e: Exception) {
+                                             try {
+                                                 com.diary.moonpage.core.theme.MoonThemeType.valueOf(activeTheme.decoration.uppercase())
+                                             } catch (ex: Exception) {
+                                                 com.diary.moonpage.core.theme.MoonThemeType.DEFAULT
+                                             }
+                                         }
+                                         themePreferencesManager.setThemeType(themeType)
                                         
                                         // Also set dark mode if theme category suggests it
                                         if (activeTheme.category == "DARK") {

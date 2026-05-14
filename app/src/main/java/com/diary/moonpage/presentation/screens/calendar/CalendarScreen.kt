@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.diary.moonpage.core.theme.MoonTheme
 import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.domain.model.DailyLog
 import com.diary.moonpage.core.util.MoonIcon
@@ -261,7 +262,7 @@ fun CalendarScreenContent(
 
 
     if (uiState.showFilterSheet) {
-        val isActuallyDark = MaterialTheme.colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
+        val isActuallyDark = com.diary.moonpage.core.theme.MoonTheme.customColors.isDark
         val sheetBgColor = if (isActuallyDark) com.diary.moonpage.core.theme.MoonBgDark else Color.White
 
         @OptIn(ExperimentalMaterial3Api::class)
@@ -311,7 +312,7 @@ fun CalendarMonthHeader(
     onMonthClick: () -> Unit,
     onShareClick: () -> Unit
 ) {
-    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+    val isDark = MoonTheme.customColors.isDark
     val shades = com.diary.moonpage.core.theme.getThemeShades(themeType)
     val highlightColor = if (shades.size > 3) shades[3] else MaterialTheme.colorScheme.primary
     val headerColor = if (isDark) {
@@ -372,7 +373,7 @@ fun CalendarGrid(
     val totalCells = firstDayOffset + daysInMonth
     val rows = (totalCells + 6) / 7
     val today = LocalDate.now()
-    val isActuallyDark = MaterialTheme.colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
+    val isActuallyDark = com.diary.moonpage.core.theme.MoonTheme.customColors.isDark
 
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),

@@ -29,6 +29,7 @@ data class DailyLogUiState(
     val distance: Double = 0.0,
     val isSpotifyLinked: Boolean = false,
     val enabledCategories: List<String> = emptyList(),
+    val expandedCategories: Set<String> = emptySet(),
     val dynamicActivities: List<Activity> = emptyList(),
     val showExitDialog: Boolean = false,
     val showDatePicker: Boolean = false,

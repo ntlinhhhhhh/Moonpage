@@ -234,12 +234,11 @@ fun DailyLogScreenContent(
             )
         },
         bottomBar = {
-            val moodVisual = com.diary.moonpage.core.util.MoonIcons.Moods.getMoodVisual(uiState.selectedMood ?: 3, uiState.themeType, uiState.customMoods)
             DailyLogBottomBar(
                 isLoading = uiState.isLoading,
                 onSaveClick = { onEvent(DailyLogUiEvent.OnSaveClick) },
                 enabled = isChanged,
-                themeColor = moodVisual.color
+                themeColor = MaterialTheme.colorScheme.primary
             )
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -398,14 +397,14 @@ private fun DailyLogBottomBar(
                     .height(52.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = themeColor,
-                    contentColor = Color.White
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 ),
                 shape = RoundedCornerShape(12.dp),
                 enabled = enabled && !isLoading,
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
             ) {
                 if (isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White, strokeWidth = 3.dp)
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 3.dp)
                 } else {
                     Text("Done", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
@@ -445,6 +444,7 @@ private fun DailyLogMainContent(
         modifier = modifier.fillMaxSize().padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
+        // 1. Mood Section
         item {
             DailyMoodSection(
                 selectedMood = uiState.selectedMood,
@@ -459,6 +459,53 @@ private fun DailyLogMainContent(
             )
         }
 
+        // 2. Horizontal Category Bar
+        item {
+            DailyCategoryBar(
+                categories = uiState.enabledCategories,
+                expandedCategories = uiState.expandedCategories,
+                onCategoryClick = { onEvent(DailyLogUiEvent.OnCategoryToggle(it)) }
+            )
+        }
+
+        // 3. Dynamic Expanded Activities Area
+        uiState.enabledCategories.forEach { category ->
+            if (uiState.expandedCategories.contains(category)) {
+                val categoryActivities = activitiesByCategory[category] ?: emptyList()
+                if (categoryActivities.isNotEmpty()) {
+                    item(key = category) {
+                        val sectionTitle = if (category == "SelfCare") "Self-Care" else category
+                        DailyActivitySection(
+                            title = sectionTitle,
+                            items = categoryActivities,
+                            selectedIds = uiState.selectedActivities,
+                            onItemClick = { onEvent(DailyLogUiEvent.OnActivityToggled(it)) },
+                            isInitiallyCollapsed = false
+                        )
+                    }
+                }
+            }
+        }
+
+        // 4. Note Section (Text Input)
+        item {
+            DailyNoteSection(
+                noteText = uiState.noteText,
+                onNoteChanged = { onEvent(DailyLogUiEvent.OnNoteChanged(it)) }
+            )
+        }
+
+        // 5. Photo Section
+        item {
+            DailyPhotoSection(
+                photos = uiState.dailyPhotos, 
+                onPhotoClick = onNavigateToDailyPhoto,
+                onPhotoRemove = onPhotoDeleteRequest,
+                onPhotoZoom = onPhotoZoomRequest
+            )
+        }
+
+        // 6. Music Section
         item {
             DailyMusicSection(
                 musicTitle = uiState.musicTitle, 
@@ -478,31 +525,7 @@ private fun DailyLogMainContent(
             )
         }
 
-        uiState.enabledCategories.forEach { category ->
-            val categoryActivities = activitiesByCategory[category] ?: emptyList()
-            if (categoryActivities.isNotEmpty()) {
-                item(key = category) {
-                    val sectionTitle = if (category == "SelfCare") "Self-Care" else category
-                    DailyActivitySection(
-                        title = sectionTitle,
-                        items = categoryActivities,
-                        selectedIds = uiState.selectedActivities,
-                        onItemClick = { onEvent(DailyLogUiEvent.OnActivityToggled(it)) }
-                    )
-                }
-            }
-        }
-
-        item {
-            DailyHealthSection(
-                steps = uiState.steps,
-                calories = uiState.calories,
-                distance = uiState.distance,
-                isImporting = uiState.isImportingHealth,
-                onImportClick = onImportSteps
-            )
-        }
-
+        // 7. Sleep Section
         item {
             DailySleepSection(
                 sleepHours = uiState.sleepHours,
@@ -510,6 +533,17 @@ private fun DailyLogMainContent(
                 wakeTime = uiState.sleepWakeTime,
                 isImporting = uiState.isImportingHealth,
                 onSleepClick = { onEvent(DailyLogUiEvent.OnSleepRecordClick) },
+                onImportClick = onImportSteps
+            )
+        }
+
+        // 8. Health/Steps Section
+        item {
+            DailyHealthSection(
+                steps = uiState.steps,
+                calories = uiState.calories,
+                distance = uiState.distance,
+                isImporting = uiState.isImportingHealth,
                 onImportClick = onImportSteps
             )
         }
@@ -525,23 +559,38 @@ private fun DailyLogMainContent(
             }
         }
 
-        item {
-            DailyNoteSection(
-                noteText = uiState.noteText,
-                onNoteChanged = { onEvent(DailyLogUiEvent.OnNoteChanged(it)) }
-            )
-        }
-
-        item {
-            DailyPhotoSection(
-                photos = uiState.dailyPhotos, 
-                onPhotoClick = onNavigateToDailyPhoto,
-                onPhotoRemove = onPhotoDeleteRequest,
-                onPhotoZoom = onPhotoZoomRequest
-            )
-        }
-
         item { Spacer(modifier = Modifier.height(32.dp)) }
+    }
+}
+
+@Composable
+private fun DailyCategoryBar(
+    categories: List<String>,
+    expandedCategories: Set<String>,
+    onCategoryClick: (String) -> Unit
+) {
+    androidx.compose.foundation.lazy.LazyRow(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(categories) { category ->
+            val isSelected = expandedCategories.contains(category)
+            val label = if (category == "SelfCare") "Self-Care" else category
+            
+            FilterChip(
+                selected = isSelected,
+                onClick = { onCategoryClick(category) },
+                label = { Text(label, fontSize = 12.sp) },
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primary,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                    containerColor = MoonTheme.customColors.logItemBg,
+                    labelColor = MoonTheme.customColors.logCardOnBg
+                ),
+                border = null,
+                shape = RoundedCornerShape(20.dp)
+            )
+        }
     }
 }
 
@@ -719,9 +768,10 @@ fun DailyActivitySection(
     title: String,
     items: List<DailyActivity>,
     selectedIds: List<String>,
-    onItemClick: (String) -> Unit
+    onItemClick: (String) -> Unit,
+    isInitiallyCollapsed: Boolean = true
 ) {
-    var isCollapsed by remember { mutableStateOf(false) }
+    var isCollapsed by remember { mutableStateOf(isInitiallyCollapsed) }
     val rotation by animateFloatAsState(targetValue = if (isCollapsed) -90f else 0f, label = "")
 
     Card(

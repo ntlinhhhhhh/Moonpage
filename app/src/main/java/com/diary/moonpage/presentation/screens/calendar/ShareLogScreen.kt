@@ -135,8 +135,8 @@ fun ShareLogScreen(
                         .height(64.dp), // Larger height
                     shape = RoundedCornerShape(18.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = moodVisual.color,
-                        contentColor = Color.White
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     ),
                     elevation = ButtonDefaults.buttonElevation(4.dp)
                 ) {
@@ -154,7 +154,7 @@ fun ShareLogScreen(
                     .padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = themeColor)
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         } else {
             Column(
@@ -203,12 +203,21 @@ fun ShareLogCard(uiState: DailyLogUiState) {
     val moodVisual = MoonIcons.Moods.getMoodVisual(uiState.selectedMood ?: 3, themeType, uiState.customMoods)
     val themeColor = MaterialTheme.colorScheme.primary
     
+    val isDark = MoonTheme.customColors.isDark
+    val cardBg = if (isDark) Color(0xFF2C2C2C) else Color(0xFFF1F1ED)
+    val textColor = if (isDark) Color(0xFFEEEEEE) else Color(0xFF424242)
+    val secondaryTextColor = if (isDark) Color(0xFFAAAAAA) else Color(0xFF9E9E9E)
+    val pillBg = if (isDark) Color.White.copy(alpha = 0.15f) else Color.White.copy(alpha = 0.6f)
+    val pillText = if (isDark) Color(0xFFDDDDDD) else Color(0xFF616161)
+    val dividerColor = if (isDark) Color(0xFF444444) else Color(0xFFD1D1CB)
+    val musicCardBg = if (isDark) Color.White.copy(alpha = 0.1f) else Color.White.copy(alpha = 0.8f)
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFF1F1ED)) // Slightly darker beige for the card background
+            .background(cardBg)
             .padding(24.dp),
-        horizontalAlignment = Alignment.Start // Left aligned as requested
+        horizontalAlignment = Alignment.Start 
     ) {
         // Header with Logo
         Row(
@@ -231,7 +240,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
             Text(
                 text = date.format(DateTimeFormatter.ofPattern("yyyy")),
                 fontSize = 14.sp,
-                color = Color(0xFF9E9E9E),
+                color = secondaryTextColor,
                 fontWeight = FontWeight.Medium
             )
         }
@@ -260,7 +269,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
         
         // Date Pill (Centered)
         Surface(
-            color = Color.White.copy(alpha = 0.6f),
+            color = pillBg,
             shape = RoundedCornerShape(10.dp),
             modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
@@ -268,7 +277,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                 text = dateText,
                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
                 fontSize = 14.sp,
-                color = Color(0xFF616161),
+                color = pillText,
                 fontWeight = FontWeight.SemiBold
             )
         }
@@ -277,7 +286,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
         
         // Dashed Line Divider
         com.diary.moonpage.presentation.components.moment.DashedDivider(
-            color = Color(0xFFD1D1CB),
+            color = dividerColor,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
         )
         
@@ -328,7 +337,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                         .fillMaxWidth()
                         .padding(horizontal = 4.dp),
                     fontSize = 15.sp,
-                    color = Color(0xFF424242),
+                    color = textColor,
                     textAlign = TextAlign.Start,
                     lineHeight = 22.sp,
                     fontWeight = FontWeight.Medium
@@ -341,7 +350,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    color = Color.White.copy(alpha = 0.8f)
+                    color = musicCardBg
                 ) {
                     Row(
                         modifier = Modifier.padding(12.dp),
@@ -370,13 +379,13 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                                 text = uiState.musicTitle,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp,
-                                color = Color(0xFF424242),
+                                color = textColor,
                                 maxLines = 1
                             )
                             Text(
                                 text = uiState.artistName ?: "Unknown Artist",
                                 fontSize = 12.sp,
-                                color = Color(0xFF9E9E9E),
+                                color = secondaryTextColor,
                                 maxLines = 1
                             )
                         }
@@ -413,7 +422,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
         
         // Another Dashed Divider
         com.diary.moonpage.presentation.components.moment.DashedDivider(
-            color = Color(0xFFD1D1CB),
+            color = dividerColor,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
         )
         
@@ -435,7 +444,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                 Text(
                     text = "REF: ${System.currentTimeMillis() / 1000}",
                     fontSize = 10.sp,
-                    color = Color(0xFF9E9E9E)
+                    color = secondaryTextColor
                 )
             }
             

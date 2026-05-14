@@ -25,11 +25,12 @@ class StatisticsRepositoryImpl @Inject constructor(
             _refreshTrigger.emit(Unit)
         }
     }
-    override suspend fun getStatisticsSummary(year: Int, month: Int, isMonthly: Boolean): Response<StatisticsResponse> {
+    override suspend fun getStatisticsSummary(year: Int, month: Int?, isMonthly: Boolean): Response<StatisticsResponse> {
         val userId = tokenManager.getUserId() ?: "unknown"
+        val m = month ?: 0
         
         // Try to get from cache first for speed
-        val cached = statisticsDao.getStatistics(userId, year, month, isMonthly)
+        val cached = statisticsDao.getStatistics(userId, year, m, isMonthly)
         if (cached != null) {
             return Response.success(cached.response)
         }
@@ -38,7 +39,7 @@ class StatisticsRepositoryImpl @Inject constructor(
             val response = statisticsApi.getStatisticsSummary(year, month, isMonthly)
             if (response.isSuccessful && response.body() != null) {
                 statisticsDao.insertStatistics(
-                    StatisticsEntity(userId, year, month, isMonthly, response.body()!!)
+                    StatisticsEntity(userId, year, m, isMonthly, response.body()!!)
                 )
             }
             response

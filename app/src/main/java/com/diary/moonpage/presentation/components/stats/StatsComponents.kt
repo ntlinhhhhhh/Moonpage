@@ -22,7 +22,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -38,9 +37,9 @@ import com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto
 import com.diary.moonpage.data.remote.dto.stats.MoodFlowDto
 import com.diary.moonpage.core.theme.*
 import java.time.YearMonth
-import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import java.util.Locale
+import kotlin.math.roundToInt
 
 @Composable
 fun TabItem(text: String, isSelected: Boolean, onClick: () -> Unit) {
@@ -189,7 +188,7 @@ fun MoodFlowChart(
                 val mStr = String.format(Locale.ENGLISH, "%s-%02d", yearStr, m)
                 val monthLogs = yearLogs.filter { it.date.startsWith(mStr) }
                 if (monthLogs.isNotEmpty()) {
-                    val avgMood = monthLogs.map { it.moodId }.average().toInt()
+                    val avgMood = monthLogs.map { it.moodId }.average()
                     MoodFlowDto(date = "$mStr-01", moodId = avgMood)
                 } else null
             }
@@ -271,7 +270,7 @@ fun MoodFlowChart(
                         }
                         
                         val x = (dayOfMonth * dx).coerceIn(0f, width)
-                        val y = height * (5 - item.moodId).coerceIn(0, 4) / 4f
+                        val y = height * (5.0 - item.moodId).coerceIn(0.0, 4.0).toFloat() / 4f
                         
                         if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
                         drawCircle(color = primaryColor, radius = 4.dp.toPx(), center = Offset(x, y))
@@ -326,14 +325,16 @@ fun MoodDistributionView(
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.Bottom) {
             moods.forEachIndexed { index, mood ->
+                val moodLevel = 5 - index
                 val aliases = moodAliases[index]
                 val matchingDists = distribution.filter { dist ->
-                    dist.label.equals(mood.name, ignoreCase = true) ||
-                    aliases.any { alias -> dist.label.equals(alias, ignoreCase = true) }
+                    (dist.baseMoodId != null && dist.baseMoodId == moodLevel) ||
+                    (dist.label != null && (dist.label.equals(mood.name, ignoreCase = true) ||
+                    aliases.any { alias -> dist.label.equals(alias, ignoreCase = true) }))
                 }
                 
                 val rawPercent = matchingDists.sumOf { it.percentage }
-                val currentMoodPercent: Int = Math.round(rawPercent).toInt()
+                val currentMoodPercent: Int = rawPercent.roundToInt()
                 
                 val iconSize = 32.dp
                 val containerSize = 48.dp
@@ -359,7 +360,7 @@ fun MoodDistributionView(
                     ) {
                         if (mood.drawableRes != null) {
                             Image(
-                                painter = painterResource(id = mood.drawableRes!!),
+                                painter = painterResource(id = mood.drawableRes),
                                 contentDescription = null,
                                 modifier = Modifier.size(iconSize),
                                 colorFilter = ColorFilter.tint(if (rawPercent > 0) iconTint else tintColor)
@@ -389,11 +390,13 @@ fun MoodDistributionView(
         // Multi-colored Segmented Bar
         Row(modifier = Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(24.dp)).background(MoonTheme.customColors.logItemBg)) {
             moods.forEachIndexed { index, mood ->
+                val moodLevel = 5 - index
                 val aliases = moodAliases[index]
                 val weight = distribution
                     .filter { dist -> 
-                        dist.label.equals(mood.name, ignoreCase = true) ||
-                        aliases.any { alias -> dist.label.equals(alias, ignoreCase = true) }
+                        (dist.baseMoodId != null && dist.baseMoodId == moodLevel) ||
+                        (dist.label != null && (dist.label.equals(mood.name, ignoreCase = true) ||
+                        aliases.any { alias -> dist.label.equals(alias, ignoreCase = true) }))
                     }
                     .sumOf { it.percentage }
                     .toFloat()
@@ -406,11 +409,13 @@ fun MoodDistributionView(
             // Safety check for unmapped data
             val totalApiWeight = distribution.sumOf { it.percentage }.toFloat()
             val matchedWeight = moods.indices.sumOf { index ->
+                val moodLevel = 5 - index
                 val aliases = moodAliases[index]
                 distribution
                     .filter { dist -> 
-                        dist.label.equals(moods[index].name, ignoreCase = true) ||
-                        aliases.any { alias -> dist.label.equals(alias, ignoreCase = true) }
+                        (dist.baseMoodId != null && dist.baseMoodId == moodLevel) ||
+                        (dist.label != null && (dist.label.equals(moods[index].name, ignoreCase = true) ||
+                        aliases.any { alias -> dist.label.equals(alias, ignoreCase = true) }))
                     }
                     .sumOf { it.percentage }
             }.toFloat()
@@ -475,7 +480,7 @@ fun YearlyGridChart(
                             val isPeriod = periodSet.contains(dateStr)
                             
                             val color = if (mood != null) {
-                                MoonIcons.Moods.getMoodColor(mood.moodId, themeType)
+                                MoonIcons.Moods.getMoodColor(mood.moodId.toInt(), themeType)
                             } else {
                                 gridColor
                             }
@@ -648,10 +653,10 @@ fun SleepAnalysisChart(
             color = MoonTheme.customColors.logItemBg
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                SleepLegendItem(color = Color(0xFFEF5350), label = "Less than 6h", value = "${sleepData.count { it.duration < 6.0 }}/31 days", totalDays = 31)
-                SleepLegendItem(color = primaryColor, label = "6-8h", value = "${sleepData.count { it.duration in 6.0..8.0 }}/31 days", totalDays = 31)
-                SleepLegendItem(color = shades[1], label = "Over 8h", value = "${sleepData.count { it.duration > 8.0 }}/31 days", totalDays = 31)
-                SleepLegendItem(color = Color(0xFFE0E0E0), label = "No record", value = "${31 - sleepData.size}/31 days", totalDays = 31)
+                SleepLegendItem(color = Color(0xFFEF5350), label = "Less than 6h", value = "${sleepData.count { it.duration < 6.0 }}/31 days")
+                SleepLegendItem(color = primaryColor, label = "6-8h", value = "${sleepData.count { it.duration in 6.0..8.0 }}/31 days")
+                SleepLegendItem(color = shades[1], label = "Over 8h", value = "${sleepData.count { it.duration > 8.0 }}/31 days")
+                SleepLegendItem(color = Color(0xFFE0E0E0), label = "No record", value = "${31 - sleepData.size}/31 days")
             }
         }
 
@@ -691,7 +696,7 @@ private fun SleepStatBox(label: String, value: String, modifier: Modifier) {
 }
 
 @Composable
-private fun SleepLegendItem(color: Color, label: String, value: String, totalDays: Int) {
+private fun SleepLegendItem(color: Color, label: String, value: String) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
         Box(modifier = Modifier.size(14.dp).clip(RoundedCornerShape(4.dp)).background(color))
         Spacer(modifier = Modifier.width(12.dp))
@@ -706,7 +711,7 @@ private fun parseTimeToFloat(timeStr: String?): Float {
         val sdf = java.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH)
         val date = sdf.parse(timeStr) ?: return 0f
         val cal = Calendar.getInstance().apply { time = date }
-        var hours = cal.get(Calendar.HOUR_OF_DAY).toFloat()
+        val hours = cal.get(Calendar.HOUR_OF_DAY).toFloat()
         val minutes = cal.get(Calendar.MINUTE).toFloat()
         val totalHoursFromMidnight = hours + minutes / 60f
         
@@ -780,7 +785,7 @@ fun MonthlyMoodAverageChart(yearlyMoodGrid: List<MoodFlowDto>, year: Int, themeT
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     
     val averages = (1..12).map { m ->
-        val currentMonthStr = String.format("%04d-%02d", year, m)
+        val currentMonthStr = String.format(Locale.ENGLISH, "%04d-%02d", year, m)
         val monthLogs = yearlyMoodGrid.filter { it.date.startsWith(currentMonthStr) }
         if (monthLogs.isEmpty()) 0f else monthLogs.map { it.moodId }.average().toFloat()
     }
@@ -848,6 +853,7 @@ fun MusicSummaryView(musicSummary: List<com.diary.moonpage.data.remote.dto.stats
         }
     }
 }
+
 @Composable
 fun IconDeepDiveView(
     activityId: String?,
@@ -909,7 +915,7 @@ fun IconDeepDiveView(
         
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = String.format("%.1f", selectedActivity.averageMoodScore),
+                text = String.format(Locale.ENGLISH, "%.1f", selectedActivity.averageMoodScore),
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Black,
                 color = primaryColor
@@ -930,7 +936,6 @@ fun IconDeepDiveView(
         Text("Mood Distribution", style = MaterialTheme.typography.labelLarge, color = onSurfaceVariant)
         Spacer(modifier = Modifier.height(12.dp))
         
-        // Premium segmented distribution bar
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -938,7 +943,6 @@ fun IconDeepDiveView(
                 .clip(RoundedCornerShape(14.dp))
                 .background(MoonTheme.customColors.logItemBg)
         ) {
-            // Mocking distribution: 50% Happy, 30% Good, 10% Neutral, 10% Sad, 0% Angry
             val distribution = listOf(0.5f, 0.3f, 0.1f, 0.1f, 0.0f)
             distribution.forEachIndexed { i, weight ->
                 if (weight > 0) {
@@ -1142,7 +1146,6 @@ fun BestAndWorstView(best: List<BestActivityDto>, worst: List<BestActivityDto>) 
                             modifier = Modifier.weight(1f)
                         )
                     }
-                    // Fill remaining space if less than 3
                     repeat(3 - best.size.coerceAtMost(3)) {
                         Spacer(modifier = Modifier.weight(1f))
                     }
@@ -1191,7 +1194,6 @@ fun BestAndWorstView(best: List<BestActivityDto>, worst: List<BestActivityDto>) 
 @Composable
 fun ActivityScoreCard(rank: Int, name: String, score: Double, color: Color, modifier: Modifier = Modifier) {
     val icon = MoonIcons.getIconForActivity(name)
-    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
     
     Surface(
         modifier = modifier.height(150.dp),
@@ -1249,81 +1251,12 @@ fun ActivityScoreCard(rank: Int, name: String, score: Double, color: Color, modi
                 }
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = String.format("%.1f", score), 
+                    text = String.format(Locale.ENGLISH, "%.1f", score), 
                     color = color, 
                     fontSize = 11.sp, 
                     fontWeight = FontWeight.ExtraBold
                 )
             }
         }
-    }
-}
-
-@Composable
-fun PremiumAnalysisSection(themeType: MoonThemeType = MoonThemeType.DEFAULT) {
-    val shades = getThemeShades(themeType)
-    val primaryColor = MaterialTheme.colorScheme.primary
-    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
-    
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(Icons.Rounded.EmojiEvents, contentDescription = null, tint = primaryColor, modifier = Modifier.size(48.dp))
-        Spacer(modifier = Modifier.height(12.dp))
-        Text("Premium Analysis", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, fontSize = 20.sp)
-    }
-    
-    StatsCard(title = "Icon Deep Dive") {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = buildAnnotatedString {
-                    append("Your mood for ")
-                    withStyle(style = SpanStyle(color = primaryColor, fontWeight = FontWeight.Bold)) {
-                        append("coffee")
-                    }
-                },
-                color = onSurfaceVariant,
-                fontSize = 18.sp
-            )
-            // Removed Sample Badge
-        }
-        
-        Spacer(modifier = Modifier.height(32.dp))
-        
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(CircleShape)
-                    .background(MoonTheme.customColors.logItemBg),
-                contentAlignment = Alignment.Center
-            ) {
-                val icon = MoonIcons.getIconForActivity("Coffee")
-                MoonActivityIcon(icon = icon, size = 52.dp)
-            }
-            
-            Spacer(modifier = Modifier.width(20.dp))
-            
-            // Segmented Bar máº«u trong Premium
-            Row(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(36.dp)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(MoonTheme.customColors.logItemBg)
-            ) {
-                shades.forEach { color ->
-                    Box(modifier = Modifier.weight(1f).fillMaxHeight().background(color))
-                }
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        Text(text = "Recorded together with snack", color = onSurfaceVariant, fontSize = 16.sp)
     }
 }

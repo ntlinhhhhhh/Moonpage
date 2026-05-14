@@ -42,6 +42,8 @@ import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.*
 import com.diary.moonpage.core.theme.LocalLocale
+import com.diary.moonpage.core.theme.MoonPageTheme
+import com.diary.moonpage.core.theme.MoonTheme
 import kotlinx.coroutines.launch
 import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.core.theme.MoonThemeType
@@ -154,7 +156,7 @@ fun CalendarTopBar(
 
 @Composable
 fun CalendarHeader(
-    themeType: com.diary.moonpage.core.theme.MoonThemeType = com.diary.moonpage.core.theme.MoonThemeType.DEFAULT
+    themeType: MoonThemeType = MoonThemeType.DEFAULT
 ) {
     val daysOfWeek = listOf(
         stringResource(R.string.sun),
@@ -174,7 +176,7 @@ fun CalendarHeader(
             .fillMaxWidth()
             .padding(horizontal = 4.dp, vertical = 4.dp)
     ) {
-        val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+        val isDark = MoonTheme.customColors.isDark
         daysOfWeek.forEachIndexed { index, day ->
             val isCurrentDay = index == currentDayIndex
             Text(
@@ -207,8 +209,8 @@ fun DayItem(
     isToday: Boolean = false,
     isDimmed: Boolean = false,
     isFiltered: Boolean = false,
-    themeType: com.diary.moonpage.core.theme.MoonThemeType = com.diary.moonpage.core.theme.MoonThemeType.DEFAULT,
-    isActuallyDark: Boolean = androidx.compose.foundation.isSystemInDarkTheme(),
+    themeType: MoonThemeType = MoonThemeType.DEFAULT,
+    isActuallyDark: Boolean = false,
     onClick: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -311,7 +313,7 @@ fun DayDetailArea(
     modifier: Modifier = Modifier
 ) {
     val cs = MaterialTheme.colorScheme
-    val isActuallyDark = cs.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
+    val isActuallyDark = MoonTheme.customColors.isDark
 
     Row(
         modifier = modifier
@@ -349,7 +351,7 @@ fun DayDetailArea(
             Spacer(modifier = Modifier.height(12.dp))
 
             Surface(
-                color = if (isActuallyDark) com.diary.moonpage.core.theme.MoonTheme.customColors.logItemBg else Color(0xFFE0E0E0),
+                color = if (isActuallyDark) MoonTheme.customColors.logItemBg else Color(0xFFE0E0E0),
                 shape = RoundedCornerShape(8.dp)
             ) {
                 val dayOfWeek = when(date.dayOfWeek.value) {
@@ -398,7 +400,7 @@ fun DayDetailArea(
                             modifier = Modifier
                                 .size(42.dp)
                                 .background(
-                                    com.diary.moonpage.core.theme.MoonTheme.customColors.logItemBg, 
+                                    MoonTheme.customColors.logItemBg, 
                                     CircleShape
                                 ),
                             contentAlignment = Alignment.Center
@@ -439,7 +441,7 @@ fun DayDetailArea(
             Card(
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.logItemBg
+                    containerColor = MoonTheme.customColors.logItemBg
                 ),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -487,7 +489,7 @@ fun DayDetailArea(
             Card(
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.logItemBg
+                    containerColor = MoonTheme.customColors.logItemBg
                 ),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -725,7 +727,7 @@ fun MonthYearPickerDialog(
 ) {
     val currentYear = java.time.LocalDate.now().year
     val years = remember { (2000..currentYear + 10).map { it.toString() } }
-    val currentLanguage = com.diary.moonpage.core.theme.LocalLocale.current
+    val currentLanguage = LocalLocale.current
     val months = remember(currentLanguage) { (1..12).map {
         com.diary.moonpage.core.util.LocaleUtils.getFormattedMonthName(it, currentLanguage)
     } }
@@ -744,7 +746,7 @@ fun MonthYearPickerDialog(
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp),
             shape = RoundedCornerShape(28.dp),
-            color = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor,
+            color = MoonTheme.customColors.popupBgColor,
             tonalElevation = 0.dp
         ) {
             Column(
@@ -836,8 +838,8 @@ fun MonthYearPickerDialog(
                         modifier = Modifier.weight(1f).height(48.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnBgColor,
-                            contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor
+                            containerColor = MoonTheme.customColors.cancelBtnBgColor,
+                            contentColor = MoonTheme.customColors.cancelBtnTextColor
                         ),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
                     ) {

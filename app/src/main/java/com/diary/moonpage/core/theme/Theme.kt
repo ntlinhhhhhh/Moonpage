@@ -37,7 +37,10 @@ data class MoonCustomColors(
     val errorColor: Color,
     val popupBgColor: Color,
     val cancelBtnBgColor: Color,
-    val cancelBtnTextColor: Color
+    val cancelBtnTextColor: Color,
+    val bottomNavBg: Color,
+    val bottomNavUnselected: Color,
+    val isDark: Boolean
 )
 
 val LocalMoonCustomColors = staticCompositionLocalOf {
@@ -56,7 +59,10 @@ val LocalMoonCustomColors = staticCompositionLocalOf {
         errorColor = Color.Unspecified,
         popupBgColor = Color.Unspecified,
         cancelBtnBgColor = Color.Unspecified,
-        cancelBtnTextColor = Color.Unspecified
+        cancelBtnTextColor = Color.Unspecified,
+        bottomNavBg = Color.Unspecified,
+        bottomNavUnselected = Color.Unspecified,
+        isDark = false
     )
 }
 
@@ -377,7 +383,10 @@ fun MoonPageTheme(
             errorColor = Color(0xFFE57373),
             popupBgColor = Color(0xFF262626),
             cancelBtnBgColor = Color(0xFF383838),
-            cancelBtnTextColor = Color(0xFFBDBDBD)
+            cancelBtnTextColor = Color(0xFFBDBDBD),
+            bottomNavBg = MoonBottomNavBgDark,
+            bottomNavUnselected = MoonUnselectedDark,
+            isDark = true
         )
     } else {
         MoonCustomColors(
@@ -395,7 +404,10 @@ fun MoonPageTheme(
             errorColor = Color(0xFFDC3545),
             popupBgColor = Color.White,
             cancelBtnBgColor = Color(0xFFF1F3F5),
-            cancelBtnTextColor = Color(0xFF495057)
+            cancelBtnTextColor = Color(0xFF495057),
+            bottomNavBg = Color.White,
+            bottomNavUnselected = MoonUnselectedLight,
+            isDark = false
         )
     }
 

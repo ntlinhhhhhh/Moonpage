@@ -34,14 +34,15 @@ data class MusicSummaryDto(
 )
 
 data class MoodDistributionDto(
-    @SerializedName("label") val label: String,
+    @SerializedName("label") val label: String? = null,
+    @SerializedName("baseMoodId") val baseMoodId: Int? = null,
     @SerializedName("count") val count: Int,
     @SerializedName("percentage") val percentage: Double
 )
 
 data class MoodFlowDto(
     @SerializedName("date") val date: String,
-    @SerializedName("moodId") val moodId: Int
+    @SerializedName("moodId") val moodId: Double
 )
 
 data class BestActivityDto(

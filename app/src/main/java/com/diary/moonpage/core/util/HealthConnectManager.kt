@@ -21,7 +21,7 @@ class HealthConnectManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     private val healthConnectClient by lazy {
-        if (HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE) {
+        if (getSdkStatus() == HealthConnectClient.SDK_AVAILABLE) {
             HealthConnectClient.getOrCreate(context)
         } else null
     }
@@ -32,13 +32,22 @@ class HealthConnectManager @Inject constructor(
         HealthPermission.getReadPermission(DistanceRecord::class)
     )
 
+    fun getSdkStatus(): Int {
+        return HealthConnectClient.getSdkStatus(context)
+    }
+
     fun isSdkAvailable(): Boolean {
-        return HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE
+        return getSdkStatus() == HealthConnectClient.SDK_AVAILABLE
     }
 
     suspend fun hasAllPermissions(): Boolean {
-        return healthConnectClient?.permissionController?.getGrantedPermissions()
-            ?.containsAll(permissions) ?: false
+        val client = healthConnectClient ?: return false
+        return try {
+            client.permissionController.getGrantedPermissions()
+                .containsAll(permissions)
+        } catch (e: Exception) {
+            false
+        }
     }
 
     fun requestPermissionsContract() = PermissionController.createRequestPermissionResultContract()

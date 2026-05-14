@@ -42,6 +42,7 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.text.style.TextAlign
+import com.diary.moonpage.core.theme.MoonTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,8 +72,7 @@ fun ShareCalendarScreen(
         viewModel.onEvent(CalendarUiEvent.OnMonthChanged(yearMonth))
     }
 
-    val shades = getThemeShades(uiState.themeType)
-    val themeColor = if (shades.size > 3) shades[3] else MaterialTheme.colorScheme.primary
+    val themeColor = MaterialTheme.colorScheme.primary
 
     Scaffold(
         topBar = {
@@ -138,8 +138,8 @@ fun ShareCalendarScreen(
                         .height(64.dp),
                     shape = RoundedCornerShape(18.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = themeColor,
-                        contentColor = Color.White
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     ),
                     elevation = ButtonDefaults.buttonElevation(4.dp)
                 ) {
@@ -191,7 +191,7 @@ fun ShareCalendarScreen(
                     .fillMaxWidth()
                     .aspectRatio(if (selectedRatio == "1:1") 1f else 9f/16f)
                     .clip(RoundedCornerShape(32.dp))
-                    .background(if (isSystemInDarkTheme()) Color(0xFF1E1E1E) else Color(0xFFF1F1ED)) // Premium beige or dark gray
+                    .background(if (MoonTheme.customColors.isDark) Color(0xFF2C2C2C) else Color(0xFFF1F1ED)) // Lighter dark gray for card in Dark Mode
                     .drawWithContent {
                         graphicsLayer.record {
                             this@drawWithContent.drawContent()
@@ -233,7 +233,7 @@ fun RatioToggleItem(
                 .padding(4.dp)
         ) {
             if (isSelected) {
-                Box(modifier = Modifier.fillMaxSize().background(if (isSystemInDarkTheme()) Color.Black else Color.White, CircleShape))
+                Box(modifier = Modifier.fillMaxSize().background(if (MoonTheme.customColors.isDark) Color.Black else Color.White, CircleShape))
             }
         }
         Text(
@@ -253,14 +253,13 @@ fun ShareCalendarContent(
     isSquare: Boolean
 ) {
     val monthName = yearMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH))
-    val shades = getThemeShades(themeType)
-    val themeColor = if (shades.size > 3) shades[3] else MaterialTheme.colorScheme.primary
-    val isDark = isSystemInDarkTheme()
+    val themeColor = MaterialTheme.colorScheme.primary
+    val isDark = MoonTheme.customColors.isDark
     
     val textColor = if (isDark) Color(0xFFEEEEEE) else Color(0xFF424242)
     val secondaryTextColor = if (isDark) Color(0xFFAAAAAA) else Color(0xFF9E9E9E)
     val headerColor = if (isDark) Color(0xFF888888) else Color(0xFFBDBDBD)
-    val emptyCellColor = if (isDark) Color(0xFF333333).copy(alpha = 0.6f) else Color(0xFFEDEDE9).copy(alpha = 0.6f)
+    val emptyCellColor = if (isDark) Color(0xFF505457) else Color(0xFFEDEDE9).copy(alpha = 0.6f)
 
     Column(
         modifier = Modifier
