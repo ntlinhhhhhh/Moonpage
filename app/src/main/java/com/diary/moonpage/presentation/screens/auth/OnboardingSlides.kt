@@ -41,20 +41,36 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun MoodLoggingSlide(isVisible: Boolean) {
-    var showActivities by remember { mutableStateOf(false) }
-    val activityOffset = animateFloatAsState(
-        targetValue = if (showActivities) 0f else 400f,
-        animationSpec = spring(dampingRatio = 0.8f, stiffness = Spring.StiffnessMediumLow),
-        label = "activity_slide"
-    )
+    var step by remember { mutableStateOf(0) }
+    var selectedMoodIdx by remember { mutableStateOf(-1) }
+    var selectedActivityIdxs by remember { mutableStateOf(setOf<Int>()) }
+
+    // Positions: -300 (Off top), 0 (Top slot), 300 (Bottom slot), 600 (Off bottom)
+    val moodY = animateFloatAsState(targetValue = when(step) { 0 -> 100f; 1 -> 0f; else -> -400f }, animationSpec = spring(0.8f, Spring.StiffnessLow))
+    val weatherY = animateFloatAsState(targetValue = when(step) { 0 -> 600f; 1 -> 220f; 2 -> 0f; else -> -400f }, animationSpec = spring(0.8f, Spring.StiffnessLow))
+    val socialY = animateFloatAsState(targetValue = when(step) { 0, 1 -> 600f; 2 -> 220f; 3 -> 0f; else -> -400f }, animationSpec = spring(0.8f, Spring.StiffnessLow))
+    val feelingsY = animateFloatAsState(targetValue = when(step) { 0, 1, 2 -> 600f; 3 -> 220f; else -> 220f }, animationSpec = spring(0.8f, Spring.StiffnessLow))
 
     LaunchedEffect(isVisible) {
         if (isVisible) {
-            showActivities = false
-            delay(1500)
-            showActivities = true
+            step = 0; selectedMoodIdx = -1; selectedActivityIdxs = emptySet()
+            
+            delay(1000)
+            selectedMoodIdx = 3 // Click Happy
+            delay(800)
+            step = 1 // Show Mood + Weather
+            delay(1200)
+            selectedActivityIdxs = selectedActivityIdxs + 0 // Click Sunny
+            delay(800)
+            step = 2 // Show Weather + Social
+            delay(1200)
+            selectedActivityIdxs = selectedActivityIdxs + 5 // Click Group
+            delay(800)
+            step = 3 // Show Social + Feelings
+            delay(1200)
+            selectedActivityIdxs = selectedActivityIdxs + 10 // Click Excited
         } else {
-            showActivities = false
+            step = 0
         }
     }
 
@@ -62,77 +78,57 @@ fun MoodLoggingSlide(isVisible: Boolean) {
         modifier = Modifier.fillMaxSize().padding(top = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        SlideHeader(
-            title = "The simplest diary",
-            description = "Record your day with just a few taps",
-            isVisible = isVisible
-        )
+        SlideHeader(title = "The simplest diary", description = "Record your day with just a few taps", isVisible = isVisible)
 
         Spacer(modifier = Modifier.height(32.dp))
 
         Box(modifier = Modifier.fillMaxWidth().weight(1f).clipToBounds()) {
-            Column(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Initial Mood Card
+            // Mood Card
+            Box(modifier = Modifier.padding(horizontal = 24.dp).offset(y = moodY.value.dp)) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                     shape = RoundedCornerShape(24.dp)
                 ) {
                     Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("How was your day?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("How was your day?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                        Spacer(modifier = Modifier.height(20.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                            val moodPalette = listOf(
-                                Color(0xFF5D4037), // Very Sad
-                                Color(0xFFFB8C00), // Sad
-                                Color(0xFFFFB74D), // Neutral
-                                Color(0xFFFFE082), // Happy
-                                Color(0xFFFFF9E1)  // Very Happy
-                            )
-                            listOf(1, 2, 3, 4, 5).forEach { level ->
-                                val isSelected = level == 4 // Happy selected for demo
+                            val moodPalette = listOf(Color(0xFF5D4037), Color(0xFFFB8C00), Color(0xFFFFB74D), Color(0xFFFFE082), Color(0xFFFFF9E1))
+                            listOf(1, 2, 3, 4, 5).forEachIndexed { index, level ->
+                                val isSelected = selectedMoodIdx == index
                                 val moodIcon = MoonIcons.Moods.getMoodVisual(level, MoonThemeType.DEFAULT)
-                                val color = moodPalette[level - 1]
-                                
                                 Box(
-                                    modifier = Modifier
-                                        .size(52.dp)
-                                        .clip(CircleShape)
-                                        .background(if (isSelected) color else Color.LightGray.copy(alpha = 0.1f)),
+                                    modifier = Modifier.size(52.dp).clip(CircleShape).background(if (isSelected) moodPalette[index] else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Icon(
-                                        painter = painterResource(id = moodIcon.drawableRes!!),
-                                        contentDescription = null,
-                                        tint = if (isSelected) Color(0xFF3E2723) else Color.Gray.copy(alpha = 0.3f),
-                                        modifier = Modifier.size(36.dp)
-                                    )
+                                    Icon(painter = painterResource(id = moodIcon.drawableRes!!), contentDescription = null, tint = if (isSelected) Color(0xFF3E2723) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), modifier = Modifier.size(36.dp))
                                 }
                             }
                         }
                     }
                 }
+            }
 
-                Spacer(modifier = Modifier.height(16.dp))
+            // Weather Card
+            Box(modifier = Modifier.padding(horizontal = 24.dp).offset(y = weatherY.value.dp)) {
+                ActivityCard {
+                    ActivityGroup("Weather", listOf(Icons.Rounded.WbSunny, Icons.Rounded.Cloud, Icons.Rounded.Umbrella, Icons.Rounded.Air), selectedActivityIdxs, 0)
+                }
+            }
 
-                // Sliding Activity Board
-                Box(modifier = Modifier.offset(y = activityOffset.value.dp)) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                        shape = RoundedCornerShape(24.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                            ActivityGroup("Weather", listOf(Icons.Rounded.WbSunny, Icons.Rounded.Cloud, Icons.Rounded.Umbrella, Icons.Rounded.Air))
-                            ActivityGroup("Social", listOf(Icons.Rounded.Star, Icons.Rounded.Group, Icons.Rounded.Favorite))
-                            ActivityGroup("Feelings", listOf(Icons.Rounded.SentimentVerySatisfied, Icons.Rounded.Celebration, Icons.Rounded.Bedtime))
-                        }
-                    }
+            // Social Card
+            Box(modifier = Modifier.padding(horizontal = 24.dp).offset(y = socialY.value.dp)) {
+                ActivityCard {
+                    ActivityGroup("Social", listOf(Icons.Rounded.Star, Icons.Rounded.Group, Icons.Rounded.Favorite, Icons.Rounded.Groups), selectedActivityIdxs, 4)
+                }
+            }
+
+            // Feelings Card
+            Box(modifier = Modifier.padding(horizontal = 24.dp).offset(y = feelingsY.value.dp)) {
+                ActivityCard {
+                    ActivityGroup("Feelings", listOf(Icons.Rounded.SentimentVerySatisfied, Icons.Rounded.Celebration, Icons.Rounded.Bedtime, Icons.Rounded.FlashOn), selectedActivityIdxs, 8)
                 }
             }
         }
@@ -140,17 +136,30 @@ fun MoodLoggingSlide(isVisible: Boolean) {
 }
 
 @Composable
-fun ActivityGroup(title: String, icons: List<ImageVector>) {
+fun ActivityCard(content: @Composable () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        shape = RoundedCornerShape(24.dp)
+    ) {
+        Box(modifier = Modifier.padding(20.dp)) { content() }
+    }
+}
+
+@Composable
+fun ActivityGroup(title: String, icons: List<ImageVector>, selectedIdxs: Set<Int>, baseIdx: Int) {
     Column {
-        Text(title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-        Spacer(modifier = Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            icons.forEach { icon ->
-                Box(
-                    modifier = Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(icon, null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(12.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            icons.forEachIndexed { i, icon ->
+                val currentIdx = baseIdx + i
+                val isSelected = selectedIdxs.contains(currentIdx)
+                val bgColor = animateColorAsState(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f), tween(500))
+                val iconColor = animateColorAsState(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f), tween(500))
+                Box(modifier = Modifier.size(56.dp).clip(CircleShape).background(bgColor.value), contentAlignment = Alignment.Center) {
+                    Icon(icon, null, modifier = Modifier.size(28.dp), tint = iconColor.value)
                 }
             }
         }
@@ -318,7 +327,9 @@ private fun lerp(start: Color, stop: Color, fraction: Float): Color {
 // --- SLIDE 2: BEAUTIFUL LOGGING (Theme Showcase) ---
 @Composable
 fun PhotoLogSlide(isVisible: Boolean) {
-    var activeFrame by remember { mutableStateOf(0) }
+    var activeFrameIdx by remember { mutableStateOf(0) }
+    var simulatedSelectedItems by remember { mutableStateOf(setOf<String>()) }
+    
     val frames = listOf(
         LoggingFrameData(
             title = "Default Theme",
@@ -326,7 +337,7 @@ fun PhotoLogSlide(isVisible: Boolean) {
                 "Weather" to listOf("sunny", "cloudy", "rainy", "windy"),
                 "Social" to listOf("friends", "family", "partner", "none")
             ),
-            selectedItems = setOf("sunny"),
+            targetSelected = setOf("sunny"),
             theme = MoonThemeType.DEFAULT,
             accentColor = Color(0xFFAED581)
         ),
@@ -336,7 +347,7 @@ fun PhotoLogSlide(isVisible: Boolean) {
                 "Social" to listOf("friends", "family", "partner", "none"),
                 "Feelings" to listOf("happy", "excited", "tired", "stressed")
             ),
-            selectedItems = setOf("family", "tired"),
+            targetSelected = setOf("family", "tired"),
             theme = MoonThemeType.MATCHA,
             accentColor = Color(0xFF81C784)
         ),
@@ -346,21 +357,25 @@ fun PhotoLogSlide(isVisible: Boolean) {
                 "Food" to listOf("coffee", "healthy", "pizza", "dessert"),
                 "Hobby" to listOf("reading", "gaming", "music", "art")
             ),
-            selectedItems = setOf("coffee", "reading"),
+            targetSelected = setOf("coffee", "reading"),
             theme = MoonThemeType.BLUSHING,
             accentColor = Color(0xFFF06292)
         )
     )
 
+    LaunchedEffect(isVisible, activeFrameIdx) {
+        if (isVisible) {
+            simulatedSelectedItems = emptySet()
+            delay(1000)
+            simulatedSelectedItems = frames[activeFrameIdx].targetSelected
+        }
+    }
+
     LaunchedEffect(isVisible) {
         if (isVisible) {
             while (true) {
-                activeFrame = 0
-                delay(3000)
-                activeFrame = 1
-                delay(3000)
-                activeFrame = 2
-                delay(3000)
+                delay(4000)
+                activeFrameIdx = (activeFrameIdx + 1) % frames.size
             }
         }
     }
@@ -376,7 +391,7 @@ fun PhotoLogSlide(isVisible: Boolean) {
 
         Box(modifier = Modifier.fillMaxWidth().weight(1f).clipToBounds()) {
             AnimatedContent(
-                targetState = activeFrame,
+                targetState = activeFrameIdx,
                 transitionSpec = {
                     (slideInHorizontally { it } + fadeIn()).togetherWith(slideOutHorizontally { -it } + fadeOut())
                 },
@@ -395,23 +410,35 @@ fun PhotoLogSlide(isVisible: Boolean) {
                             shape = RoundedCornerShape(24.dp)
                         ) {
                             Column(modifier = Modifier.padding(20.dp)) {
-                                Text(catName, style = MaterialTheme.typography.labelLarge, color = frame.accentColor)
+                                Text(catName, style = MaterialTheme.typography.labelLarge, color = frame.accentColor, fontWeight = FontWeight.Bold)
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                                     items.forEach { item ->
-                                        val isSelected = frame.selectedItems.contains(item)
+                                        val isSelected = simulatedSelectedItems.contains(item)
+                                        
+                                        val bgColor = animateColorAsState(
+                                            targetValue = if (isSelected) frame.accentColor.copy(alpha = 0.2f) else Color.LightGray.copy(alpha = 0.1f),
+                                            animationSpec = tween(600),
+                                            label = "bg"
+                                        )
+                                        val iconColor = animateColorAsState(
+                                            targetValue = if (isSelected) frame.accentColor else Color.Gray.copy(alpha = 0.4f),
+                                            animationSpec = tween(600),
+                                            label = "tint"
+                                        )
+
                                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                             Box(
                                                 modifier = Modifier
                                                     .size(48.dp)
                                                     .clip(CircleShape)
-                                                    .background(if (isSelected) frame.accentColor.copy(alpha = 0.2f) else Color.LightGray.copy(alpha = 0.1f)),
+                                                    .background(bgColor.value),
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 Icon(
                                                     imageVector = getIconForItem(item),
                                                     contentDescription = null,
-                                                    tint = if (isSelected) frame.accentColor else Color.Gray.copy(alpha = 0.4f),
+                                                    tint = iconColor.value,
                                                     modifier = Modifier.size(24.dp)
                                                 )
                                             }
@@ -433,7 +460,8 @@ fun PhotoLogSlide(isVisible: Boolean) {
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.labelMedium,
-                        color = frame.accentColor
+                        color = frame.accentColor,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
@@ -444,7 +472,7 @@ fun PhotoLogSlide(isVisible: Boolean) {
 data class LoggingFrameData(
     val title: String,
     val categories: List<Pair<String, List<String>>>,
-    val selectedItems: Set<String>,
+    val targetSelected: Set<String>,
     val theme: MoonThemeType,
     val accentColor: Color
 )
