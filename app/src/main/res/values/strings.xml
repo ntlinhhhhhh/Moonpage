@@ -197,6 +197,19 @@
     <string name="current_passcode">Current Passcode</string>
     <string name="wrong_passcode_try_again">Wrong Passcode. Try again.</string>
 
+    <!-- Notifications & Reminders -->
+    <string name="notifications">Notifications</string>
+    <string name="reminders">Reminders</string>
+    <string name="daily_reminder">Daily Diary Reminder</string>
+    <string name="daily_reminder_desc">Remind you to write your diary every day</string>
+    <string name="reminder_time">Reminder Time</string>
+    <string name="app_updates">App Updates</string>
+    <string name="news_and_updates">News &amp; Updates</string>
+    <string name="news_and_updates_desc">Get notified about new features and themes</string>
+    <string name="moments">Moments</string>
+    <string name="moment_alerts">Moment Alerts</string>
+    <string name="moment_alerts_desc">Receive notifications about your shared moments</string>
+
     <!-- Notifications -->
     <string name="noti_reminder_title">How was your day? 🌱</string>
     <string name="noti_reminder_body">Take a minute to tell me. Happy or sad, there\'s always a place for you here.</string>

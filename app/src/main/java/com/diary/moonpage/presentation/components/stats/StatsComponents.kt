@@ -200,23 +200,24 @@ fun MoodFlowChart(
             .fillMaxWidth()
             .height(200.dp)
     ) {
-        // Mood indicators on the left
-        Column(
-            modifier = Modifier
-                .fillMaxHeight()
-                .width(20.dp)
-                .padding(vertical = 10.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            moodColors.forEach { color ->
-                Box(modifier = Modifier.size(10.dp).background(color, CircleShape))
+        Row(modifier = Modifier.fillMaxSize()) {
+            // Mood indicators on the left
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(20.dp)
+                    .padding(bottom = 48.dp),
+                verticalArrangement = Arrangement.SpaceBetween,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                moodColors.forEach { color ->
+                    Box(modifier = Modifier.size(10.dp).background(color, CircleShape))
+                }
             }
-        }
 
-        Column(modifier = Modifier.fillMaxSize().padding(start = 35.dp, end = 10.dp, bottom = 16.dp)) {
-            val gridColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-            Canvas(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            Column(modifier = Modifier.weight(1f).padding(start = 15.dp, end = 10.dp, bottom = 16.dp)) {
+                val gridColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                Canvas(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 val width = size.width
                 val height = size.height
                 
@@ -298,6 +299,7 @@ fun MoodFlowChart(
             }
         }
     }
+}
 }
 
 @Composable

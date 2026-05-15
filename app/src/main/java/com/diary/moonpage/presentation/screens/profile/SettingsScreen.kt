@@ -98,12 +98,6 @@ fun SettingsScreenContent(
     val colorScheme = MaterialTheme.colorScheme
     var showTimePicker by remember { mutableStateOf(false) }
     
-    val initialTime = uiState.reminderTime.split(":")
-    val timePickerState = rememberTimePickerState(
-        initialHour = initialTime.getOrNull(0)?.toInt() ?: 21,
-        initialMinute = initialTime.getOrNull(1)?.toInt() ?: 0
-    )
-
     Scaffold(
         containerColor = colorScheme.background,
         topBar = {
@@ -141,10 +135,10 @@ fun SettingsScreenContent(
                 onSelectionChange = onThemeToggle
             )
 
-            SectionTitle("Notifications")
+            SectionTitle(stringResource(R.string.notifications))
 
             SwitchSettingItem(
-                title = "Daily Reminder",
+                title = stringResource(R.string.daily_reminder),
                 icon = Icons.Rounded.Notifications,
                 checked = uiState.isReminderEnabled,
                 onCheckedChange = onReminderToggle
@@ -152,7 +146,7 @@ fun SettingsScreenContent(
 
             if (uiState.isReminderEnabled) {
                 SettingsMenuItem(
-                    title = "Reminder Time",
+                    title = stringResource(R.string.reminder_time),
                     value = uiState.reminderTime,
                     icon = Icons.Rounded.Schedule,
                     onClick = { showTimePicker = true }
@@ -196,6 +190,11 @@ fun SettingsScreenContent(
     }
 
     if (showTimePicker) {
+        val initialTime = uiState.reminderTime.split(":")
+        val timePickerState = rememberTimePickerState(
+            initialHour = initialTime.getOrNull(0)?.toInt() ?: 21,
+            initialMinute = initialTime.getOrNull(1)?.toInt() ?: 0
+        )
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
             confirmButton = {
@@ -203,12 +202,12 @@ fun SettingsScreenContent(
                     onReminderTimeClick(timePickerState.hour, timePickerState.minute)
                     showTimePicker = false
                 }) {
-                    Text("OK")
+                    Text(stringResource(R.string.ok))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showTimePicker = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             },
             text = {

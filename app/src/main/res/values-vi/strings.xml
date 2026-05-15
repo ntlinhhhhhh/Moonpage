@@ -197,6 +197,19 @@
     <string name="current_passcode">Mã PIN hiện tại</string>
     <string name="wrong_passcode_try_again">Sai mã PIN. Vui lòng thử lại.</string>
 
+    <!-- Notifications & Reminders -->
+    <string name="notifications">Thông báo</string>
+    <string name="reminders">Nhắc nhở</string>
+    <string name="daily_reminder">Nhắc nhở ghi nhật ký</string>
+    <string name="daily_reminder_desc">Nhắc bạn viết nhật ký mỗi ngày</string>
+    <string name="reminder_time">Giờ nhắc nhở</string>
+    <string name="app_updates">Cập nhật ứng dụng</string>
+    <string name="news_and_updates">Tin tức &amp; Cập nhật</string>
+    <string name="news_and_updates_desc">Nhận thông báo về tính năng và giao diện mới</string>
+    <string name="moments">Khoảnh khắc</string>
+    <string name="moment_alerts">Thông báo khoảnh khắc</string>
+    <string name="moment_alerts_desc">Nhận thông báo về các khoảnh khắc đã chia sẻ</string>
+
     <!-- Notifications -->
     <string name="noti_reminder_title">Ngày hôm nay của bạn thế nào? 🌱</string>
     <string name="noti_reminder_body">Dành 1 phút kể cho mình nghe nhé. Dù vui hay buồn, ở đây luôn có chỗ để bạn tựa vào.</string>

@@ -11,4 +11,5 @@ sealed class DailyLogUiEffect {
     data class SaveSuccess(val message: String) : DailyLogUiEffect()
     object NavigateBack : DailyLogUiEffect()
     data class LaunchHealthPermissions(val permissions: Set<String>) : DailyLogUiEffect()
+    data class NavigateToPlayStore(val packageName: String) : DailyLogUiEffect()
 }

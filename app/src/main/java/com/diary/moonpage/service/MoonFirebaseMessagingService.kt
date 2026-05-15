@@ -9,42 +9,49 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.diary.moonpage.MainActivity
 import com.diary.moonpage.R
+import com.diary.moonpage.core.util.NotificationBus
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 import kotlin.random.Random
 
+@AndroidEntryPoint
 class MoonFirebaseMessagingService : FirebaseMessagingService() {
+
+    @Inject
+    lateinit var notificationBus: NotificationBus
+
+    private val job = SupervisorJob()
+    private val scope = CoroutineScope(Dispatchers.Main + job)
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        println("FCM Token: $token")
+        android.util.Log.d("FCMService", "New token: $token")
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
         android.util.Log.d("FCMService", "Message received from: ${message.from}")
 
-        // Handle Data payload for custom routing
         val type = message.data["type"]
         val targetId = message.data["targetId"]
-        
-        android.util.Log.d("FCMService", "Data payload: type=$type, targetId=$targetId")
+        val title = message.notification?.title ?: message.data["title"] ?: "Moonpage"
+        val body = message.notification?.body ?: message.data["body"] ?: "Bạn có một thông điệp mới!"
 
-        message.notification?.let {
-            android.util.Log.d("FCMService", "Notification payload: title=${it.title}, body=${it.body}")
-            showNotification(
-                it.title ?: "Moonpage", 
-                it.body ?: "Bạn có một thông điệp mới!",
-                type,
-                targetId
-            )
-        } ?: run {
-            // If only data payload is present
-            val title = message.data["title"] ?: "Moonpage"
-            val body = message.data["body"] ?: "Check your updates!"
-            android.util.Log.d("FCMService", "Handling data-only message: title=$title, body=$body")
-            showNotification(title, body, type, targetId)
+        android.util.Log.d("FCMService", "Payload: title=$title, body=$body, type=$type, targetId=$targetId")
+
+        // Post to bus for in-app notification
+        scope.launch {
+            notificationBus.postEvent(title, body, type, targetId)
         }
+
+        // Always show system notification as well
+        showNotification(title, body, type, targetId)
     }
 
     private fun showNotification(title: String, body: String, type: String? = null, targetId: String? = null) {
@@ -64,7 +71,6 @@ class MoonFirebaseMessagingService : FirebaseMessagingService() {
 
         val intent = Intent(this, MainActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            // Add extras for deep linking
             putExtra("notification_type", type)
             putExtra("target_id", targetId)
         }
@@ -85,5 +91,10 @@ class MoonFirebaseMessagingService : FirebaseMessagingService() {
             .build()
 
         manager.notify(Random.nextInt(), notification)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
     }
 }

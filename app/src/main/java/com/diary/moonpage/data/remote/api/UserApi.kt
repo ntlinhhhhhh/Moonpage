@@ -41,4 +41,13 @@ interface UserApi {
 
     @POST("api/users/me/store/buy-freeze")
     suspend fun buyStreakFreeze(): Response<Unit>
+
+    @PUT("api/users/me/language")
+    suspend fun updateLanguage(
+        @Body request: LanguageRequest
+    ): Response<Unit>
 }
+
+data class LanguageRequest(
+    val language: String
+)

@@ -146,21 +146,32 @@ class DailyLogViewModel @Inject constructor(
         viewModelScope.launch {
             getValidSpotifyToken()?.let { token ->
                 try {
-                    val response = spotifyApi.getRecentlyPlayedTracks(token)
-                    if (response.isSuccessful) {
-                        val tracks = response.body()?.items?.map { it.track } ?: emptyList()
-                        _uiState.update { it.copy(recentTracks = tracks) }
-                        
-                        if (_uiState.value.musicTitle.isNullOrBlank() && tracks.isNotEmpty()) {
-                            val lastTrack = tracks.first()
-                            _uiState.update { it.copy(
-                                musicTitle = lastTrack.name,
-                                artistName = lastTrack.artists.firstOrNull()?.name,
-                                albumArtUrl = lastTrack.album.images.firstOrNull()?.url
-                            ) }
-                        }
+                    val userResponse = spotifyApi.getCurrentUser(token)
+                    val tracks = if (userResponse.isSuccessful && userResponse.body()?.product == "premium") {
+                        val recentResponse = spotifyApi.getRecentlyPlayedTracks(token)
+                        if (recentResponse.isSuccessful) {
+                            recentResponse.body()?.items?.map { it.track } ?: emptyList()
+                        } else emptyList()
+                    } else {
+                        val topResponse = spotifyApi.getTopTracks(token)
+                        if (topResponse.isSuccessful) {
+                            topResponse.body()?.items ?: emptyList()
+                        } else emptyList()
                     }
-                } catch (e: Exception) {}
+
+                    _uiState.update { it.copy(recentTracks = tracks) }
+
+                    if (_uiState.value.musicTitle.isNullOrBlank() && tracks.isNotEmpty()) {
+                        val lastTrack = tracks.first()
+                        _uiState.update { it.copy(
+                            musicTitle = lastTrack.name,
+                            artistName = lastTrack.artists.firstOrNull()?.name,
+                            albumArtUrl = lastTrack.album.images.firstOrNull()?.url
+                        ) }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("SpotifyFetch", "Failed to fetch tracks", e)
+                }
             }
         }
     }
@@ -290,12 +301,14 @@ class DailyLogViewModel @Inject constructor(
                     try {
                         val status = healthConnectManager.getSdkStatus()
                         if (status != androidx.health.connect.client.HealthConnectClient.SDK_AVAILABLE) {
-                            val msg = when (status) {
-                                androidx.health.connect.client.HealthConnectClient.SDK_UNAVAILABLE -> "Health Connect is not installed on this device."
-                                androidx.health.connect.client.HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> "Health Connect needs an update from the Play Store."
-                                else -> "Health Connect is not available (Status: $status)."
+                            if (status == androidx.health.connect.client.HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED || 
+                                status == androidx.health.connect.client.HealthConnectClient.SDK_UNAVAILABLE) {
+                                val providerPackageName = "com.google.android.apps.healthdata"
+                                _uiEffect.emit(DailyLogUiEffect.NavigateToPlayStore(providerPackageName))
+                            } else {
+                                val msg = "Health Connect is not available (Status: $status)."
+                                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(msg))
                             }
-                            _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(msg))
                             _uiState.update { it.copy(isImportingHealth = false) }
                         } else if (healthConnectManager.hasAllPermissions()) {
                             val data = healthConnectManager.readHealthData(_uiState.value.date)
@@ -308,6 +321,7 @@ class DailyLogViewModel @Inject constructor(
                                 steps = data.steps,
                                 calories = data.calories,
                                 distance = data.distance,
+                                sleepHours = if (data.sleepHours > 0) data.sleepHours.toFloat() else it.sleepHours,
                                 isImportingHealth = false
                             ) }
                         } else {

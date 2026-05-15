@@ -32,6 +32,7 @@ splashscreen = "1.0.1"
 uiVersion = "1.11.1"
 firebaseCrashlyticsBuildtools = "3.0.7"
 remoteCreationCore = "1.0.0-alpha010"
+appcompat = "1.7.1"
 
 [libraries]
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splashscreen" }
@@ -91,6 +92,7 @@ androidx-compose-ui-geometry = { group = "androidx.compose.ui", name = "ui-geome
 ui = { group = "androidx.compose.ui", name = "ui", version.ref = "uiVersion" }
 firebase-crashlytics-buildtools = { group = "com.google.firebase", name = "firebase-crashlytics-buildtools", version.ref = "firebaseCrashlyticsBuildtools" }
 androidx-compose-remote-creation-core = { group = "androidx.compose.remote", name = "remote-creation-core", version.ref = "remoteCreationCore" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

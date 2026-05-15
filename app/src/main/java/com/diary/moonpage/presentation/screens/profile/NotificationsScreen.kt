@@ -11,8 +11,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.diary.moonpage.R
 import com.diary.moonpage.presentation.components.core.layout.SectionTitle
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,14 +33,14 @@ fun NotificationsScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        "Notifications",
+                        stringResource(R.string.notifications),
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleLarge
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back")
+                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = stringResource(R.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -54,10 +56,10 @@ fun NotificationsScreen(
                 .padding(horizontal = 20.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            SectionTitle("Reminders")
+            SectionTitle(stringResource(R.string.reminders))
             NotificationToggleItem(
-                title = "Daily Diary Reminder",
-                description = "Remind you to write your diary every day",
+                title = stringResource(R.string.daily_reminder),
+                description = stringResource(R.string.daily_reminder_desc),
                 isEnabled = dailyReminder,
                 onToggle = { dailyReminder = it }
             )
@@ -78,7 +80,7 @@ fun NotificationsScreen(
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text("Reminder Time", style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(R.string.reminder_time), style = MaterialTheme.typography.bodyLarge)
                     }
                     TextButton(onClick = { /* Show time picker */ }) {
                         Text("9:00 PM", fontWeight = FontWeight.Bold)
@@ -86,18 +88,18 @@ fun NotificationsScreen(
                 }
             }
 
-            SectionTitle("App Updates")
+            SectionTitle(stringResource(R.string.app_updates))
             NotificationToggleItem(
-                title = "News & Updates",
-                description = "Get notified about new features and themes",
+                title = stringResource(R.string.news_and_updates),
+                description = stringResource(R.string.news_and_updates_desc),
                 isEnabled = newsAndUpdates,
                 onToggle = { newsAndUpdates = it }
             )
 
-            SectionTitle("Moments")
+            SectionTitle(stringResource(R.string.moments))
             NotificationToggleItem(
-                title = "Moment Alerts",
-                description = "Receive notifications about your shared moments",
+                title = stringResource(R.string.moment_alerts),
+                description = stringResource(R.string.moment_alerts_desc),
                 isEnabled = momentAlerts,
                 onToggle = { momentAlerts = it }
             )

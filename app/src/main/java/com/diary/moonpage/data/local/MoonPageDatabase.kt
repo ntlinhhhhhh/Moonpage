@@ -13,7 +13,7 @@ import com.diary.moonpage.data.local.entity.ThemeMoodEntity
 
 @Database(
     entities = [DailyLogEntity::class, ThemeEntity::class, StatisticsEntity::class, ThemeMoodEntity::class],
-    version = 10,
+    version = 11,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

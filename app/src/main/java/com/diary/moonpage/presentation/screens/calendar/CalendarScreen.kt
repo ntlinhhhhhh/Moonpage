@@ -522,7 +522,9 @@ fun CalendarSelectedLogDetail(
                 activityNames = activityNames,
                 dailyPhotos = selectedLog.dailyPhotos ?: emptyList(),
                 sleepHours = selectedLog.sleepHours,
-                isMenstruation = selectedLog.isMenstruation
+                isMenstruation = selectedLog.isMenstruation,
+                steps = selectedLog.steps,
+                musicRecord = selectedLog.musicRecord
             )
         }
     }
@@ -662,7 +664,9 @@ fun TimelineItem(
                 activityNames = activityNames,
                 dailyPhotos = log.dailyPhotos ?: emptyList(),
                 sleepHours = log.sleepHours,
-                isMenstruation = log.isMenstruation
+                isMenstruation = log.isMenstruation,
+                steps = log.steps,
+                musicRecord = log.musicRecord
             )
         }
     }

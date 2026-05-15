@@ -78,6 +78,7 @@ fun DailyLogScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
+    val context = androidx.compose.ui.platform.LocalContext.current
     var photoToDelete by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(dateString) {
@@ -108,12 +109,26 @@ fun DailyLogScreen(
                     }
                 }
                 is DailyLogUiEffect.ShowSnackBar -> {
-                    scope.launch {
-                        snackbarHostState.showSnackbar(effect.message)
-                    }
+                   scope.launch {
+                       snackbarHostState.showSnackbar(effect.message)
+                   }
                 }
-                else -> {}
-            }
+                is DailyLogUiEffect.NavigateToPlayStore -> {
+                   val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                       data = android.net.Uri.parse("market://details?id=${effect.packageName}")
+                       addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                   }
+                   try {
+                       context.startActivity(intent)
+                   } catch (e: Exception) {
+                       // Fallback to browser
+                       val webIntent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                           data = android.net.Uri.parse("https://play.google.com/store/apps/details?id=${effect.packageName}")
+                       }
+                       context.startActivity(webIntent)
+                   }
+                }
+                else -> {}            }
         }
     }
 

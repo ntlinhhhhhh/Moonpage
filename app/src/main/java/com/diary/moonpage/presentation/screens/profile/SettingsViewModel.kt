@@ -19,6 +19,7 @@ class SettingsViewModel @Inject constructor(
     private val settingsPreferencesManager: SettingsPreferencesManager,
     private val themePreferencesManager: ThemePreferencesManager,
     private val authRepository: AuthRepository,
+    private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
     private val reminderManager: com.diary.moonpage.core.util.ReminderManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
@@ -68,9 +69,28 @@ class SettingsViewModel @Inject constructor(
     )
 
     fun setLanguage(lang: String, onLanguageChanged: () -> Unit) {
-        viewModelScope.launch {
-            settingsPreferencesManager.setLanguage(lang)
-            onLanguageChanged()
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            _uiState.update { it.copy(isLoading = true) }
+            val result = userRepository.updateLanguage(lang)
+            if (result.isSuccess) {
+                settingsPreferencesManager.setLanguage(lang)
+                
+                // Update app-wide locale using AppCompatDelegate
+                val appLocale: androidx.core.os.LocaleListCompat = androidx.core.os.LocaleListCompat.forLanguageTags(lang)
+                androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(appLocale)
+                
+                _uiState.update { it.copy(isLoading = false) }
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    onLanguageChanged()
+                }
+            } else {
+                _uiState.update { 
+                    it.copy(
+                        isLoading = false,
+                        error = result.exceptionOrNull()?.message ?: "Failed to sync language"
+                    )
+                }
+            }
         }
     }
 
