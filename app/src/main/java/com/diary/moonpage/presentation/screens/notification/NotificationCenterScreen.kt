@@ -1,5 +1,6 @@
 package com.diary.moonpage.presentation.screens.notification
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -22,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.diary.moonpage.core.theme.MoonTheme
 import com.diary.moonpage.data.remote.dto.notification.NotificationDto
 import com.diary.moonpage.data.remote.dto.notification.NotificationType
 import java.time.ZonedDateTime
