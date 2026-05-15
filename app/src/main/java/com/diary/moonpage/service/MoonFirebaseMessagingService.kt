@@ -74,22 +74,34 @@ class MoonFirebaseMessagingService : FirebaseMessagingService() {
             notificationBus.postEvent(title, body, type, targetId)
             
             // Record this notification in the backend database for Notification Center
-            val userId = userRepository.currentUser.value?.userId
-            if (userId != null) {
+            // Switching to IO context and ensuring we have a userId
+            kotlinx.coroutines.withContext(Dispatchers.IO) {
                 try {
-                    notificationRepository.createNotification(
-                        com.diary.moonpage.data.remote.dto.notification.CreateNotificationRequest(
-                            userId = userId,
-                            title = title,
-                            message = body,
-                            type = type ?: "SYSTEM"
+                    // Try to get userId from currentUser state, fallback to tokenManager
+                    val userId = userRepository.currentUser.value?.userId 
+                        ?: com.diary.moonpage.core.util.TokenManager(applicationContext).getUserId()
+
+                    if (userId != null) {
+                        val response = notificationRepository.createNotification(
+                            com.diary.moonpage.data.remote.dto.notification.CreateNotificationRequest(
+                                userId = userId,
+                                title = title,
+                                message = body,
+                                type = type ?: "SYSTEM"
+                            )
                         )
-                    )
+                        if (response.isSuccessful) {
+                            android.util.Log.d("FCMService", "Successfully recorded in-app notification in DB")
+                        } else {
+                            val err = response.errorBody()?.string()
+                            android.util.Log.e("FCMService", "Failed to record in-app notification. Code: ${response.code()} Error: $err")
+                        }
+                    } else {
+                        android.util.Log.w("FCMService", "Could not determine userId, skipping DB record")
+                    }
                 } catch (e: Exception) {
-                    android.util.Log.e("FCMService", "Failed to record in-app notification", e)
+                    android.util.Log.e("FCMService", "Exception while recording in-app notification", e)
                 }
-            } else {
-                android.util.Log.w("FCMService", "No user logged in, skipping database record")
             }
         }
 

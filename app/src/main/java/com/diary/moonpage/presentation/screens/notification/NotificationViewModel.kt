@@ -20,7 +20,8 @@ data class NotificationUiState(
 
 @HiltViewModel
 class NotificationViewModel @Inject constructor(
-    private val repository: NotificationRepository
+    private val repository: NotificationRepository,
+    private val notificationBus: com.diary.moonpage.core.util.NotificationBus
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(NotificationUiState())
@@ -28,6 +29,15 @@ class NotificationViewModel @Inject constructor(
 
     init {
         loadNotifications()
+        
+        // Listen for new incoming notifications to refresh list automatically
+        viewModelScope.launch {
+            notificationBus.events.collect {
+                // Short delay to give the backend time to process the createNotification call from FCM Service
+                kotlinx.coroutines.delay(1000)
+                loadNotifications()
+            }
+        }
     }
 
     fun loadNotifications() {

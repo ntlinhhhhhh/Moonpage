@@ -478,26 +478,56 @@ fun getIconForItem(item: String): ImageVector = when (item) {
 fun AnnualLookBackSlide(isVisible: Boolean) {
     var activeThemeIdx by remember { mutableStateOf(0) }
     val themes = listOf(
-        ThemeData("Default Theme", Color(0xFFFFFBF4), Color(0xFF8C7E6A), MoonThemeType.DEFAULT),
-        ThemeData("Coffee Theme", Color(0xFFEFEBE9), Color(0xFF8D6E63), MoonThemeType.COFFEE),
-        ThemeData("Blushing Theme", Color(0xFFFFF0F3), Color(0xFFD2847A), MoonThemeType.BLUSHING),
-        ThemeData("Galaxy Theme", Color(0xFFE8EAF6), Color(0xFF3F51B5), MoonThemeType.GALAXY),
-        ThemeData("Matcha Theme", Color(0xFFE8F5E9), Color(0xFF4CAF50), MoonThemeType.MATCHA)
+        ThemeData(
+            "Default Theme", 
+            Color(0xFFFFFBF4), 
+            Color(0xFF8C7E6A), 
+            MoonThemeType.DEFAULT,
+            listOf(Color(0xFFFFF9E1), Color(0xFFFFE082), Color(0xFFFFB74D), Color(0xFFFB8C00), Color(0xFF5D4037))
+        ),
+        ThemeData(
+            "Coffee Theme", 
+            Color(0xFFF7F5F4), 
+            Color(0xFF8D6E63), 
+            MoonThemeType.COFFEE,
+            listOf(Color(0xFFEFEBE9), Color(0xFFD7CCC8), Color(0xFFBCAAA4), Color(0xFF8D6E63), Color(0xFF5D4037))
+        ),
+        ThemeData(
+            "Blushing Theme", 
+            Color(0xFFFFF0F3), 
+            Color(0xFFD2847A), 
+            MoonThemeType.BLUSHING,
+            listOf(Color(0xFFFFEBEE), Color(0xFFFFCDD2), Color(0xFFEF9A9A), Color(0xFFE57373), Color(0xFFD32F2F))
+        ),
+        ThemeData(
+            "Galaxy Theme", 
+            Color(0xFFF0F2F9), 
+            Color(0xFF3F51B5), 
+            MoonThemeType.GALAXY,
+            listOf(Color(0xFFE8EAF6), Color(0xFFC5CAE9), Color(0xFF9FA8DA), Color(0xFF7986CB), Color(0xFF3F51B5))
+        ),
+        ThemeData(
+            "Matcha Theme", 
+            Color(0xFFF1F8E9), 
+            Color(0xFF4CAF50), 
+            MoonThemeType.MATCHA,
+            listOf(Color(0xFFDCEDC8), Color(0xFFC5E1A5), Color(0xFFAED581), Color(0xFF81C784), Color(0xFF4CAF50))
+        )
     )
 
     LaunchedEffect(isVisible) {
         if (isVisible) {
             while (true) {
                 activeThemeIdx = 0
-                delay(3000)
+                delay(1200)
                 activeThemeIdx = 1
-                delay(3000)
+                delay(1200)
                 activeThemeIdx = 2
-                delay(3000)
+                delay(1200)
                 activeThemeIdx = 3
-                delay(3000)
+                delay(1200)
                 activeThemeIdx = 4
-                delay(3000)
+                delay(1200)
             }
         }
     }
@@ -509,7 +539,7 @@ fun AnnualLookBackSlide(isVisible: Boolean) {
             isVisible = isVisible
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         Box(modifier = Modifier.fillMaxWidth().weight(1f).clipToBounds()) {
             AnimatedContent(
@@ -517,99 +547,100 @@ fun AnnualLookBackSlide(isVisible: Boolean) {
                 transitionSpec = {
                     (slideInHorizontally { it } + fadeIn()).togetherWith(slideOutHorizontally { -it } + fadeOut())
                 },
-                label = "theme_slide"
+                label = "theme_slide",
+                modifier = Modifier.fillMaxSize()
             ) { idx ->
                 val theme = themes[idx]
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                    shape = RoundedCornerShape(24.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(theme.bgColor)
-                            .padding(16.dp)
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                        shape = RoundedCornerShape(24.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(theme.bgColor)
+                                .padding(vertical = 12.dp, horizontal = 8.dp)
                         ) {
-                            Text(
-                                text = "2026.03", 
-                                style = MaterialTheme.typography.titleSmall, 
-                                fontWeight = FontWeight.Bold,
-                                color = theme.accentColor
-                            )
-                            Icon(Icons.Rounded.ArrowDropDown, null, tint = theme.accentColor, modifier = Modifier.size(16.dp))
-                        }
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        // Days of week
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                            listOf("S", "M", "T", "W", "T", "F", "S").forEach { day ->
-                                Text(day, style = MaterialTheme.typography.labelSmall, color = theme.accentColor.copy(alpha = 0.4f), modifier = Modifier.width(32.dp), textAlign = TextAlign.Center)
+                            // Days of week header
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                                listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat").forEach { day ->
+                                    val isSat = day == "Sat"
+                                    val isSun = day == "Sun"
+                                    Text(
+                                        text = day, 
+                                        style = MaterialTheme.typography.labelSmall, 
+                                        color = if (isSat || isSun) theme.accentColor else Color.Gray.copy(alpha = 0.6f), 
+                                        modifier = Modifier.width(36.dp), 
+                                        textAlign = TextAlign.Center,
+                                        fontSize = 10.sp
+                                    )
+                                }
                             }
-                        }
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
 
-                        // 30-day Grid (7 columns)
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            repeat(5) { r ->
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceEvenly
-                                ) {
-                                    repeat(7) { c ->
-                                        val day = r * 7 + c - 1 // Start from Monday-ish
-                                        if (day in 1..30) {
-                                            val showIcon = (day % 3 == 0) || (day % 7 == 0)
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(34.dp)
-                                                    .clip(RoundedCornerShape(8.dp))
-                                                    .background(theme.accentColor.copy(alpha = 0.05f)),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                if (showIcon) {
-                                                    val level = (day % 5) + 1
-                                                    val moodIcon = MoonIcons.Moods.getMoodVisual(level, theme.type)
-                                                    Icon(
-                                                        painter = painterResource(id = moodIcon.drawableRes!!),
-                                                        contentDescription = null,
-                                                        tint = theme.accentColor,
-                                                        modifier = Modifier.size(22.dp)
-                                                    )
-                                                } else {
+                            // 30-day Grid
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                val startOffset = (idx + 2) % 7 // Varied starting day for each theme
+                                repeat(5) { r ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceEvenly
+                                    ) {
+                                        repeat(7) { c ->
+                                            val dayIdx = r * 7 + c
+                                            val day = dayIdx - startOffset + 1
+                                            
+                                            if (day in 1..30) {
+                                                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(36.dp)) {
+                                                    val shadeIdx = (day % 5)
+                                                    val circleColor = theme.palette[shadeIdx]
+                                                    val moodLevel = (day % 5) + 1
+                                                    val moodIcon = MoonIcons.Moods.getMoodVisual(moodLevel, theme.type)
+                                                    
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(32.dp)
+                                                            .clip(CircleShape)
+                                                            .background(circleColor),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Icon(
+                                                            painter = painterResource(id = moodIcon.drawableRes!!),
+                                                            contentDescription = null,
+                                                            tint = Color(0xFF212121),
+                                                            modifier = Modifier.size(20.dp)
+                                                        )
+                                                    }
+                                                    Spacer(modifier = Modifier.height(2.dp))
                                                     Text(
                                                         text = day.toString(),
                                                         style = MaterialTheme.typography.labelSmall,
-                                                        color = theme.accentColor.copy(alpha = 0.3f),
-                                                        fontSize = 10.sp
+                                                        color = Color.Gray.copy(alpha = 0.8f),
+                                                        fontSize = 9.sp
                                                     )
                                                 }
+                                            } else {
+                                                Spacer(modifier = Modifier.size(36.dp))
                                             }
-                                        } else {
-                                            Spacer(modifier = Modifier.size(34.dp))
                                         }
                                     }
                                 }
                             }
+                            
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = theme.name,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center,
+                                style = MaterialTheme.typography.labelLarge,
+                                color = theme.accentColor,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = theme.name,
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = theme.accentColor,
-                            fontWeight = FontWeight.Bold
-                        )
                     }
                 }
             }
@@ -617,7 +648,13 @@ fun AnnualLookBackSlide(isVisible: Boolean) {
     }
 }
 
-data class ThemeData(val name: String, val bgColor: Color, val accentColor: Color, val type: MoonThemeType)
+data class ThemeData(
+    val name: String, 
+    val bgColor: Color, 
+    val accentColor: Color, 
+    val type: MoonThemeType,
+    val palette: List<Color> = emptyList()
+)
 
 // --- SLIDE 4: LEARN ABOUT YOU ---
 @Composable
