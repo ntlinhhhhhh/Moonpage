@@ -72,6 +72,7 @@ dependencies {
     implementation(libs.firebase.crashlytics.buildtools)
     implementation(libs.androidx.compose.remote.creation.core)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.ui.graphics)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
@@ -95,6 +96,9 @@ dependencies {
     implementation(libs.androidx.exifinterface)
     implementation(libs.androidx.health.connect.client)
     implementation(libs.play.services.location)
+    
+    // Coroutines Play Services for Task.await()
+    implementation(libs.kotlinx.coroutines.play.services)
 
     // Room
     implementation(libs.androidx.room.runtime)

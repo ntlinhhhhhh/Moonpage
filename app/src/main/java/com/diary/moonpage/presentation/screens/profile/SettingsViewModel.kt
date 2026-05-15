@@ -21,6 +21,11 @@ class SettingsViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
     private val reminderManager: com.diary.moonpage.core.util.ReminderManager,
+    private val tokenManager: com.diary.moonpage.core.util.TokenManager,
+    private val userManager: com.diary.moonpage.core.util.UserManager,
+    private val onboardingPrefsManager: com.diary.moonpage.core.util.OnboardingPrefsManager,
+    private val activityPreferencesManager: com.diary.moonpage.core.util.ActivityPreferencesManager,
+    private val database: com.diary.moonpage.data.local.MoonPageDatabase,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -163,12 +168,42 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun deleteUserAccount(onSuccess: () -> Unit) {
-        viewModelScope.launch {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             _uiState.update { it.copy(isLoading = true, error = null) }
+            
+            // 1. Call API to delete account on server
             val result = authRepository.deleteAccount()
+            
             if (result.isSuccess) {
-                _uiState.update { it.copy(isLoading = false, isDeleteAccountDialogShown = false) }
-                onSuccess()
+                // 2. Clear all local data securely
+                try {
+                    // Clear Database
+                    database.clearAllTables()
+                    
+                    // Clear all DataStores
+                    tokenManager.clearAll()
+                    userManager.clearUser()
+                    settingsPreferencesManager.clearAll()
+                    onboardingPrefsManager.resetOnboarding("") // We don't have a specific userId here anymore, but can clear general onboarding if needed
+                    activityPreferencesManager.clearAll()
+                    
+                    // Clear App Cache
+                    context.cacheDir.deleteRecursively()
+                    context.filesDir.deleteRecursively()
+                    
+                    _uiState.update { it.copy(isLoading = false, isDeleteAccountDialogShown = false) }
+                    
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                        onSuccess()
+                    }
+                } catch (e: Exception) {
+                    _uiState.update { 
+                        it.copy(
+                            isLoading = false, 
+                            error = "Account deleted on server, but local cleanup failed: ${e.message}"
+                        ) 
+                    }
+                }
             } else {
                 _uiState.update { 
                     it.copy(

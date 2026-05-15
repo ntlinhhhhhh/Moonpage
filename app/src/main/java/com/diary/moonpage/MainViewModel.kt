@@ -82,14 +82,27 @@ class MainViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            // Log FCM Token for debugging
+            // Fetch and sync FCM Token using available push endpoint
             com.google.firebase.messaging.FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val token = task.result
-                    Log.d("FCM_TOKEN", "=================================")
-                    Log.d("FCM_TOKEN", "MÃ TOKEN CỦA MÁY NÀY LÀ:")
-                    Log.d("FCM_TOKEN", token)
-                    Log.d("FCM_TOKEN", "=================================")
+                    Log.d("FCM_TOKEN", "MÃ TOKEN CỦA MÁY NÀY LÀ: $token")
+                    
+                    // Sync with server using the push endpoint which takes a token
+                    viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                        try {
+                            notificationRepository.sendPushNotification(
+                                com.diary.moonpage.data.remote.dto.notification.SendPushRequest(
+                                    token = token,
+                                    title = "Device Online",
+                                    body = "System check complete.",
+                                    imageUrl = null
+                                )
+                            )
+                        } catch (e: Exception) {
+                            Log.e("MainViewModel", "Failed to sync device token on start", e)
+                        }
+                    }
                 }
             }
 

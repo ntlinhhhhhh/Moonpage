@@ -26,12 +26,36 @@ class MoonFirebaseMessagingService : FirebaseMessagingService() {
     @Inject
     lateinit var notificationBus: NotificationBus
 
+    @Inject
+    lateinit var notificationRepository: com.diary.moonpage.domain.repository.NotificationRepository
+
+    @Inject
+    lateinit var userRepository: com.diary.moonpage.domain.repository.UserRepository
+
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.Main + job)
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         android.util.Log.d("FCMService", "New token: $token")
+        
+        // Sync token with server using existing push endpoint
+        scope.launch(Dispatchers.IO) {
+            try {
+                // We use the push endpoint which accepts a token as a registration/check-in mechanism
+                notificationRepository.sendPushNotification(
+                    com.diary.moonpage.data.remote.dto.notification.SendPushRequest(
+                        token = token,
+                        title = "Token Refreshed",
+                        body = "Your notification token has been updated.",
+                        imageUrl = null
+                    )
+                )
+                android.util.Log.d("FCMService", "Token check-in successful")
+            } catch (e: Exception) {
+                android.util.Log.e("FCMService", "Token check-in failed: ${e.message}")
+            }
+        }
     }
 
     override fun onMessageReceived(message: RemoteMessage) {

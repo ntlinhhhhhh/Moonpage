@@ -12,13 +12,38 @@ import com.diary.moonpage.MainActivity
 import com.diary.moonpage.R
 import com.diary.moonpage.core.util.LocaleUtils
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class ReminderReceiver : BroadcastReceiver() {
+
+    @Inject
+    lateinit var reminderManager: com.diary.moonpage.core.util.ReminderManager
+
+    @Inject
+    lateinit var settingsPreferencesManager: com.diary.moonpage.core.util.SettingsPreferencesManager
+
     override fun onReceive(context: Context, intent: Intent) {
         val language = LocaleUtils.getSavedLanguage(context)
         val localizedContext = LocaleUtils.applyLocale(context, language)
+        
+        // Show the notification
         showNotification(localizedContext)
+
+        // Reschedule for the next day
+        CoroutineScope(Dispatchers.IO).launch {
+            if (settingsPreferencesManager.isReminderEnabled.first()) {
+                val timeStr = settingsPreferencesManager.reminderTime.first()
+                val time = timeStr.split(":")
+                if (time.size == 2) {
+                    reminderManager.scheduleDailyReminder(time[0].toInt(), time[1].toInt())
+                }
+            }
+        }
     }
 
     private fun showNotification(context: Context) {

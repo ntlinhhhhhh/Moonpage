@@ -71,17 +71,6 @@ fun LoadingScreen(
             .fillMaxSize()
             .background(
                 color = MaterialTheme.colorScheme.background
-            )
-            .then(
-                if (isDarkTheme) {
-                    Modifier.background(
-                        brush = Brush.radialGradient(
-                            0.0f to Color.White.copy(alpha = 0.4f),
-                            0.8f to Color.White.copy(alpha = 0f),
-                            radius = 1300f
-                        )
-                    )
-                } else Modifier
             ),
         contentAlignment = Alignment.Center
     ) {

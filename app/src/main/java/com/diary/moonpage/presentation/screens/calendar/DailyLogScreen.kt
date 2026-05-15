@@ -444,7 +444,9 @@ private fun DailyLogMainContent(
     val themeType = uiState.themeType
 
     val activitiesByCategory = remember(uiState.dynamicActivities) {
-        uiState.dynamicActivities.groupBy { it.category }.mapValues { entry ->
+        uiState.dynamicActivities.groupBy { 
+            if (it.category == "Self-Care") "SelfCare" else it.category 
+        }.mapValues { entry ->
             entry.value.map { activity ->
                 DailyActivity(
                     id = activity.id,

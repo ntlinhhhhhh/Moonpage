@@ -23,10 +23,15 @@ class SettingsPreferencesManager @Inject constructor(
         private val IS_BIOMETRIC_ENABLED_KEY = booleanPreferencesKey("is_biometric_enabled")
         private val REMINDER_TIME_KEY = stringPreferencesKey("reminder_time")
         private val IS_REMINDER_ENABLED_KEY = booleanPreferencesKey("is_reminder_enabled")
+        private val IS_TUTORIAL_COMPLETED_KEY = booleanPreferencesKey("is_tutorial_completed")
     }
 
     val language: Flow<String> = context.settingsDataStore.data.map { preferences ->
         preferences[LANGUAGE_KEY] ?: "en"
+    }
+
+    val isTutorialCompleted: Flow<Boolean> = context.settingsDataStore.data.map { preferences ->
+        preferences[IS_TUTORIAL_COMPLETED_KEY] ?: false
     }
 
     val reminderTime: Flow<String> = context.settingsDataStore.data.map { preferences ->
@@ -93,6 +98,18 @@ class SettingsPreferencesManager @Inject constructor(
     suspend fun setBiometricEnabled(enabled: Boolean) {
         context.settingsDataStore.edit { preferences ->
             preferences[IS_BIOMETRIC_ENABLED_KEY] = enabled
+        }
+    }
+
+    suspend fun setTutorialCompleted(completed: Boolean) {
+        context.settingsDataStore.edit { preferences ->
+            preferences[IS_TUTORIAL_COMPLETED_KEY] = completed
+        }
+    }
+
+    suspend fun clearAll() {
+        context.settingsDataStore.edit { preferences ->
+            preferences.clear()
         }
     }
 }

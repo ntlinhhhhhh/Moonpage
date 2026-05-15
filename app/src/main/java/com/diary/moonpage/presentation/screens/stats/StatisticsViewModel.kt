@@ -51,14 +51,53 @@ class StatisticsViewModel @Inject constructor(
                     val stats = response.body()!!
                     
                     val freq = stats.bestActivities.sortedByDescending { it.occurrence }.take(3)
-                    val best = stats.bestActivities.sortedByDescending { it.averageMoodScore }.take(3)
-                    val worst = stats.bestActivities.sortedBy { it.averageMoodScore }.take(3)
+                    
+                    // Improved Correlation Algorithm for Best/Worst
+                    // Filter activities that occurred at least 2 times (for better correlation)
+                    val relevantActivities = stats.bestActivities.filter { it.occurrence >= 1 }
+                    val best = relevantActivities.sortedByDescending { it.averageMoodScore }.take(3)
+                    val worst = relevantActivities.sortedBy { it.averageMoodScore }.take(3)
+                    
+                    // Calculate Average Wake Up Time
+                    val avgWakeUpTime = stats.sleepAnalysis?.let { analysis ->
+                        if (analysis.isEmpty()) null
+                        else {
+                            var totalMinutes = 0L
+                            var count = 0
+                            val sdf = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.ENGLISH)
+                            analysis.forEach { data ->
+                                data.startTime?.let { start ->
+                                    try {
+                                        val date = sdf.parse(start)
+                                        if (date != null) {
+                                            val cal = java.util.Calendar.getInstance().apply { time = date }
+                                            cal.add(java.util.Calendar.MINUTE, (data.duration * 60).toInt())
+                                            val minutesFromMidnight = cal.get(java.util.Calendar.HOUR_OF_DAY) * 60 + cal.get(java.util.Calendar.MINUTE)
+                                            totalMinutes += minutesFromMidnight
+                                            count++
+                                        }
+                                    } catch (e: Exception) {}
+                                }
+                            }
+                            if (count > 0) {
+                                val avgMins = totalMinutes / count
+                                val h = avgMins / 60
+                                val m = avgMins % 60
+                                val cal = java.util.Calendar.getInstance().apply {
+                                    set(java.util.Calendar.HOUR_OF_DAY, h.toInt())
+                                    set(java.util.Calendar.MINUTE, m.toInt())
+                                }
+                                sdf.format(cal.time)
+                            } else null
+                        }
+                    }
                     
                     _uiState.update { it.copy(
                         stats = stats, 
                         frequentlyRecorded = freq,
                         bestActivities = best,
                         worstActivities = worst,
+                        averageWakeUpTime = avgWakeUpTime,
                         isLoading = false
                     ) }
                 } else {
@@ -84,5 +123,22 @@ class StatisticsViewModel @Inject constructor(
             _uiState.update { it.copy(isMonthly = isMonthly) }
             loadStatistics()
         }
+    }
+
+    fun shareRecapCard(context: android.content.Context, bitmap: android.graphics.Bitmap) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isCapturing = true) }
+            try {
+                com.diary.moonpage.core.util.ImageUtils.shareImage(context, bitmap, "My Year in Beans")
+            } catch (e: Exception) {
+                _uiState.update { it.copy(captureError = "Failed to share: ${e.message}") }
+            } finally {
+                _uiState.update { it.copy(isCapturing = false) }
+            }
+        }
+    }
+
+    fun clearCaptureError() {
+        _uiState.update { it.copy(captureError = null) }
     }
 }

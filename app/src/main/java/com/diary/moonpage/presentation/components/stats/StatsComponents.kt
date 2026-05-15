@@ -511,6 +511,7 @@ fun YearlyGridChart(
 fun SleepSummaryView(
     averageSleepHours: Double,
     averageSleepStartTime: String?,
+    averageWakeUpTime: String?,
     totalSteps: Int
 ) {
     Row(
@@ -528,6 +529,12 @@ fun SleepSummaryView(
             value = averageSleepStartTime ?: "--:--", 
             modifier = Modifier.weight(1f),
             icon = Icons.Rounded.Alarm
+        )
+        SummaryItem(
+            label = "Wake up", 
+            value = averageWakeUpTime ?: "--:--", 
+            modifier = Modifier.weight(1f),
+            icon = Icons.Rounded.WbSunny
         )
         SummaryItem(
             label = "Steps", 
@@ -1116,27 +1123,48 @@ fun ActivityRankCard(rank: Int, name: String, count: Int, modifier: Modifier = M
 @Composable
 fun BestAndWorstView(best: List<BestActivityDto>, worst: List<BestActivityDto>) {
     val primaryColor = MaterialTheme.colorScheme.primary
-    val errorColor = MaterialTheme.colorScheme.error
+    val errorColor = MoonTheme.customColors.errorColor
+    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
     
     Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
+        // Insight Header
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = MoonTheme.customColors.logItemBg.copy(alpha = 0.3f),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Rounded.AutoAwesome, null, tint = primaryColor, modifier = Modifier.size(24.dp))
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = "Correlation analysis shows which habits spark joy or weigh you down.",
+                    fontSize = 14.sp,
+                    color = onSurfaceVariant,
+                    lineHeight = 20.sp
+                )
+            }
+        }
+
         // Best Section
         Column {
             Text(
-                text = buildAnnotatedString {
-                    append("When you were feeling ")
-                    withStyle(style = SpanStyle(color = primaryColor, fontWeight = FontWeight.Bold)) {
-                        append("good")
-                    }
-                    append("...")
-                },
+                text = "Activities for Positive Vibes",
                 fontSize = 18.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(bottom = 16.dp),
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 8.dp),
                 color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = "These habits often coincide with your best moods.",
+                fontSize = 13.sp,
+                color = onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 16.dp)
             )
             
             if (best.isEmpty()) {
-                Text("No data yet", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), fontSize = 14.sp)
+                Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                    Text("More data needed to calculate...", color = onSurfaceVariant.copy(alpha = 0.5f), fontSize = 14.sp)
+                }
             } else {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     best.take(3).forEachIndexed { index, activity ->
@@ -1158,21 +1186,23 @@ fun BestAndWorstView(best: List<BestActivityDto>, worst: List<BestActivityDto>) 
         // Worst Section
         Column {
             Text(
-                text = buildAnnotatedString {
-                    append("When you were feeling ")
-                    withStyle(style = SpanStyle(color = errorColor, fontWeight = FontWeight.Bold)) {
-                        append("not so good")
-                    }
-                    append("...")
-                },
+                text = "Emotional Challenges",
                 fontSize = 18.sp,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(bottom = 16.dp),
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 8.dp),
                 color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = "You recorded lower mood levels alongside these activities.",
+                fontSize = 13.sp,
+                color = onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 16.dp)
             )
             
             if (worst.isEmpty()) {
-                Text("No data yet", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), fontSize = 14.sp)
+                Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                    Text("Everything looks balanced so far!", color = onSurfaceVariant.copy(alpha = 0.5f), fontSize = 14.sp)
+                }
             } else {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     worst.take(3).forEachIndexed { index, activity ->
@@ -1258,6 +1288,152 @@ fun ActivityScoreCard(rank: Int, name: String, score: Double, color: Color, modi
                     fontSize = 11.sp, 
                     fontWeight = FontWeight.ExtraBold
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun YearlyRecapCard(
+    year: Int,
+    totalLogs: Int,
+    yearlyMoodGrid: List<MoodFlowDto>,
+    themeType: MoonThemeType
+) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+    val shades = getThemeShades(themeType)
+
+    // Calculate Dominant Mood
+    val dominantMood = if (yearlyMoodGrid.isNotEmpty()) {
+        val moodCounts = yearlyMoodGrid.groupBy { it.moodId.toInt() }.mapValues { it.value.size }
+        val dominantId = moodCounts.maxByOrNull { it.value }?.key ?: 3
+        dominantId
+    } else 3
+    
+    val dominantMoodName = when(dominantMood) {
+        5 -> "Rad"
+        4 -> "Good"
+        3 -> "Meh"
+        2 -> "Bad"
+        else -> "Awful"
+    }
+
+    // Calculate Happiest Month
+    val happiestMonth = if (yearlyMoodGrid.isNotEmpty()) {
+        val monthlyAverages = (1..12).map { m ->
+            val monthStr = String.format(Locale.ENGLISH, "%04d-%02d", year, m)
+            val monthLogs = yearlyMoodGrid.filter { it.date.startsWith(monthStr) }
+            val avg = if (monthLogs.isNotEmpty()) monthLogs.map { it.moodId }.average() else 0.0
+            m to avg
+        }.filter { it.second > 0 }
+        
+        val bestMonth = monthlyAverages.maxByOrNull { it.second }?.first ?: 1
+        java.time.Month.of(bestMonth).name.lowercase().replaceFirstChar { it.titlecase() }
+    } else "N/A"
+
+    Surface(
+        modifier = Modifier.fillMaxWidth().aspectRatio(0.8f),
+        shape = RoundedCornerShape(32.dp),
+        color = MoonTheme.customColors.logCardBg
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Header
+            Text(
+                text = "$year Recap",
+                fontWeight = FontWeight.Black,
+                fontSize = 28.sp,
+                color = primaryColor
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Stats Row
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                RecapStatItem("Days Logged", "$totalLogs", Modifier.weight(1f))
+                RecapStatItem("Happiest Month", happiestMonth, Modifier.weight(1f))
+                RecapStatItem("Dominant Mood", dominantMoodName, Modifier.weight(1f), color = MoonIcons.Moods.getMoodColor(dominantMood, themeType))
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Year in Pixels Grid
+            Text(
+                "Your Year in Pixels",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = onSurfaceVariant,
+                modifier = Modifier.align(Alignment.Start)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MoonTheme.customColors.logItemBg.copy(alpha = 0.5f))
+                    .padding(8.dp)
+            ) {
+                YearInPixelsGrid(yearlyMoodGrid, year, themeType)
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Footer branding
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Rounded.NightsStay, contentDescription = null, tint = primaryColor, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("MoonPage", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = onSurfaceVariant)
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecapStatItem(label: String, value: String, modifier: Modifier = Modifier, color: Color = MaterialTheme.colorScheme.primary) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier) {
+        Text(value, fontSize = 18.sp, fontWeight = FontWeight.Black, color = color, textAlign = TextAlign.Center)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+    }
+}
+
+@Composable
+fun YearInPixelsGrid(yearlyMoodGrid: List<MoodFlowDto>, year: Int, themeType: MoonThemeType) {
+    val moodMap = remember(yearlyMoodGrid) { yearlyMoodGrid.associateBy { it.date } }
+    val emptyColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f)
+    
+    // We use a LazyVerticalGrid-like approach but since this might be rendered off-screen for capture,
+    // a standard Column/Row structure is safer and more reliable for Canvas drawing.
+    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly) {
+        for (month in 1..12) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                val daysInMonth = java.time.YearMonth.of(year, month).lengthOfMonth()
+                for (day in 1..31) {
+                    if (day <= daysInMonth) {
+                        val dateStr = String.format(Locale.ENGLISH, "%04d-%02d-%02d", year, month, day)
+                        val mood = moodMap[dateStr]
+                        val cellColor = if (mood != null) {
+                            MoonIcons.Moods.getMoodColor(mood.moodId.toInt(), themeType)
+                        } else {
+                            emptyColor
+                        }
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .aspectRatio(1f)
+                                .padding(0.5.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(cellColor)
+                        )
+                    } else {
+                        Spacer(modifier = Modifier.weight(1f).aspectRatio(1f).padding(0.5.dp))
+                    }
+                }
             }
         }
     }
