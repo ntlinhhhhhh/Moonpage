@@ -34,6 +34,9 @@ import com.diary.moonpage.presentation.screens.store.ThemeDetailScreen
 import com.diary.moonpage.presentation.screens.security.CreatePasscodeScreen
 import com.diary.moonpage.presentation.screens.security.LockScreen
 import com.diary.moonpage.MainViewModel
+import com.diary.moonpage.presentation.tutorial.TutorialOverlay
+import com.diary.moonpage.presentation.tutorial.TutorialViewModel
+import com.diary.moonpage.presentation.tutorial.TutorialStep
 import kotlinx.coroutines.launch
 
 @Composable
@@ -50,6 +53,8 @@ fun AppNavigation(
     val onboardingViewModel: OnboardingViewModel = hiltViewModel()
     val activityCategoryViewModel: ActivityCategoryViewModel = hiltViewModel()
     val securityViewModel: com.diary.moonpage.presentation.screens.security.SecurityViewModel = hiltViewModel()
+    val tutorialViewModel: TutorialViewModel = hiltViewModel()
+    val tutorialState by tutorialViewModel.state.collectAsState()
 
     val mainAppRoutes = listOf(
         Screen.Calendar.route,
@@ -68,6 +73,11 @@ fun AppNavigation(
         val totalBottomPadding = barHeight + systemBottomPadding
 
         Box(modifier = Modifier.fillMaxSize()) {
+            LaunchedEffect(currentRoute) {
+                if (currentRoute == Screen.Calendar.route || currentRoute == Screen.DailyLog.route) {
+                    tutorialViewModel.refresh()
+                }
+            }
             NavHost(
                 navController = navController,
                 startDestination = Screen.Loading.route,
@@ -530,6 +540,23 @@ fun AppNavigation(
             if (isAppLocked) {
                 LockScreen(
                     onUnlockSuccess = { mainViewModel.setLocked(false) }
+                )
+            }
+
+            if (
+                tutorialState.isVisible &&
+                (currentRoute == Screen.Calendar.route || currentRoute?.startsWith("daily_log_screen") == true)
+            ) {
+                TutorialOverlay(
+                    step = tutorialState.step,
+                    onSkipStep = {
+                        if (tutorialState.step == TutorialStep.HighlightCurrentDay ||
+                            tutorialState.step == TutorialStep.HighlightDoneButton
+                        ) return@TutorialOverlay
+                        tutorialViewModel.next()
+                    },
+                    onSkipTutorial = { tutorialViewModel.complete() },
+                    modifier = Modifier.fillMaxSize()
                 )
             }
         }

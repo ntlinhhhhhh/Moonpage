@@ -13,20 +13,18 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 enum class TutorialStep {
-    PickToday,
-    DailyActivities,
-    DailySleep,
-    DailyNote,
-    DailyPhoto,
-    Stats,
-    Camera,
-    Store,
-    Profile
+    HighlightCurrentDay,
+    HighlightHowWasYourDay,
+    HighlightHobbiesButton,
+    HighlightFirstHobby,
+    HighlightTodayNotes,
+    HighlightTodayPhotos,
+    HighlightDoneButton
 }
 
 data class TutorialState(
     val isVisible: Boolean = false,
-    val step: TutorialStep = TutorialStep.PickToday
+    val step: TutorialStep = TutorialStep.HighlightCurrentDay
 )
 
 @HiltViewModel
@@ -41,21 +39,22 @@ class TutorialViewModel @Inject constructor(
         viewModelScope.launch {
             val userId = tokenManager.getUserId() ?: return@launch
             val completed = onboardingPrefsManager.checkTutorialCompleted(userId)
-            _state.value = TutorialState(isVisible = !completed)
+            _state.value = TutorialState(
+                isVisible = !completed,
+                step = TutorialStep.HighlightCurrentDay
+            )
         }
     }
 
     fun next() {
         val nextStep = when (_state.value.step) {
-            TutorialStep.PickToday -> TutorialStep.DailyActivities
-            TutorialStep.DailyActivities -> TutorialStep.DailySleep
-            TutorialStep.DailySleep -> TutorialStep.DailyNote
-            TutorialStep.DailyNote -> TutorialStep.DailyPhoto
-            TutorialStep.DailyPhoto -> TutorialStep.Stats
-            TutorialStep.Stats -> TutorialStep.Camera
-            TutorialStep.Camera -> TutorialStep.Store
-            TutorialStep.Store -> TutorialStep.Profile
-            TutorialStep.Profile -> null
+            TutorialStep.HighlightCurrentDay -> TutorialStep.HighlightHowWasYourDay
+            TutorialStep.HighlightHowWasYourDay -> TutorialStep.HighlightHobbiesButton
+            TutorialStep.HighlightHobbiesButton -> TutorialStep.HighlightFirstHobby
+            TutorialStep.HighlightFirstHobby -> TutorialStep.HighlightTodayNotes
+            TutorialStep.HighlightTodayNotes -> TutorialStep.HighlightTodayPhotos
+            TutorialStep.HighlightTodayPhotos -> TutorialStep.HighlightDoneButton
+            TutorialStep.HighlightDoneButton -> null
         }
 
         if (nextStep == null) {

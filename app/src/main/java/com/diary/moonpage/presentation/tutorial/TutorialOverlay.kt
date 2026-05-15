@@ -42,82 +42,82 @@ fun TutorialOverlay(
     onSkipTutorial: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isBottomNavStep = step in setOf(TutorialStep.Stats, TutorialStep.Camera, TutorialStep.Store, TutorialStep.Profile)
+    val canSkipStep = step in setOf(
+        TutorialStep.HighlightHowWasYourDay,
+        TutorialStep.HighlightHobbiesButton,
+        TutorialStep.HighlightFirstHobby,
+        TutorialStep.HighlightTodayNotes,
+        TutorialStep.HighlightTodayPhotos
+    )
     val message = when (step) {
-        TutorialStep.PickToday -> "Start with today. Tap the current day to make your first record."
-        TutorialStep.DailyActivities -> "You can record hobbies or activities from your day."
-        TutorialStep.DailySleep -> "You can enter sleep time when you want to track rest."
-        TutorialStep.DailyNote -> "You can write a note about anything you want to remember."
-        TutorialStep.DailyPhoto -> "You can add a picture to keep the day more vivid."
-        TutorialStep.Stats -> "After you have recorded some days, you can see your statistics here."
-        TutorialStep.Camera -> "You can take a picture any time here."
-        TutorialStep.Store -> "Get new themes here."
-        TutorialStep.Profile -> "Customize yourself here."
+        TutorialStep.HighlightCurrentDay -> "Tap today to start recording your day."
+        TutorialStep.HighlightHowWasYourDay -> "How was your day? Choose your mood first."
+        TutorialStep.HighlightHobbiesButton -> "Open hobbies to choose what you did today."
+        TutorialStep.HighlightFirstHobby -> "Choose a hobby you did today."
+        TutorialStep.HighlightTodayNotes -> "Write a short note for today."
+        TutorialStep.HighlightTodayPhotos -> "Add one or more photos for today."
+        TutorialStep.HighlightDoneButton -> "Tap Done to save today's record."
     }
 
     Box(modifier = modifier.fillMaxSize()) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawRect(Color.Black.copy(alpha = 0.48f))
 
-            if (isBottomNavStep) {
-                val itemWidth = size.width / 5f
-                val index = when (step) {
-                    TutorialStep.Stats -> 1
-                    TutorialStep.Camera -> 2
-                    TutorialStep.Store -> 3
-                    TutorialStep.Profile -> 4
-                    else -> 0
-                }
-                val center = Offset(itemWidth * index + itemWidth / 2f, size.height - 38.dp.toPx())
-                drawCircle(
-                    color = Color.White,
-                    radius = 38.dp.toPx(),
-                    center = center,
-                    style = Stroke(width = 3.dp.toPx())
-                )
-            } else {
-                val rect = when (step) {
-                    TutorialStep.PickToday -> Rect(
+            val rect = when (step) {
+                    TutorialStep.HighlightCurrentDay -> Rect(
                         left = size.width * 0.40f,
                         top = size.height * 0.28f,
                         right = size.width * 0.58f,
                         bottom = size.height * 0.37f
                     )
-                    TutorialStep.DailyActivities -> Rect(24.dp.toPx(), size.height * 0.34f, size.width - 24.dp.toPx(), size.height * 0.52f)
-                    TutorialStep.DailySleep -> Rect(24.dp.toPx(), size.height * 0.42f, size.width - 24.dp.toPx(), size.height * 0.60f)
-                    TutorialStep.DailyNote -> Rect(24.dp.toPx(), size.height * 0.48f, size.width - 24.dp.toPx(), size.height * 0.66f)
-                    TutorialStep.DailyPhoto -> Rect(24.dp.toPx(), size.height * 0.52f, size.width - 24.dp.toPx(), size.height * 0.78f)
-                    else -> Rect.Zero
-                }
-                drawRoundRect(
-                    color = Color.White,
-                    topLeft = Offset(rect.left, rect.top),
-                    size = Size(rect.width, rect.height),
-                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(14.dp.toPx()),
-                    style = Stroke(
-                        width = 3.dp.toPx(),
-                        pathEffect = PathEffect.cornerPathEffect(14.dp.toPx())
-                    )
-                )
+                    TutorialStep.HighlightHowWasYourDay -> Rect(24.dp.toPx(), size.height * 0.20f, size.width - 24.dp.toPx(), size.height * 0.38f)
+                    TutorialStep.HighlightHobbiesButton -> Rect(24.dp.toPx(), size.height * 0.32f, size.width - 24.dp.toPx(), size.height * 0.42f)
+                    TutorialStep.HighlightFirstHobby -> Rect(24.dp.toPx(), size.height * 0.38f, size.width * 0.45f, size.height * 0.48f)
+                    TutorialStep.HighlightTodayNotes -> Rect(24.dp.toPx(), size.height * 0.48f, size.width - 24.dp.toPx(), size.height * 0.66f)
+                    TutorialStep.HighlightTodayPhotos -> Rect(24.dp.toPx(), size.height * 0.58f, size.width - 24.dp.toPx(), size.height * 0.80f)
+                    TutorialStep.HighlightDoneButton -> Rect(16.dp.toPx(), size.height - 110.dp.toPx(), size.width - 16.dp.toPx(), size.height - 20.dp.toPx())
             }
+            drawRoundRect(
+                color = Color.White,
+                topLeft = Offset(rect.left, rect.top),
+                size = Size(rect.width, rect.height),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(14.dp.toPx()),
+                style = Stroke(
+                    width = 3.dp.toPx(),
+                    pathEffect = PathEffect.cornerPathEffect(14.dp.toPx())
+                )
+            )
         }
 
         Text(
-            text = "Skip the tutorial",
+            text = "Skip all steps",
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(top = 48.dp, start = 16.dp)
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(18.dp))
+                .clickable { onSkipTutorial() }
+                .padding(horizontal = 14.dp, vertical = 9.dp),
+            color = MaterialTheme.colorScheme.onSurface,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+
+        Text(
+            text = "Skip all steps",
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(top = 48.dp, end = 16.dp)
-                .background(Color.White.copy(alpha = 0.95f), RoundedCornerShape(18.dp))
+                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(18.dp))
                 .clickable { onSkipTutorial() }
                 .padding(horizontal = 14.dp, vertical = 9.dp),
-            color = Color(0xFF2B2B2B),
+            color = MaterialTheme.colorScheme.onSurface,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold
         )
 
         Surface(
             modifier = Modifier
-                .align(if (isBottomNavStep) Alignment.BottomCenter else Alignment.BottomStart)
+                .align(Alignment.BottomStart)
                 .padding(16.dp)
                 .navigationBarsPadding(),
             shape = RoundedCornerShape(18.dp),
@@ -137,15 +137,15 @@ fun TutorialOverlay(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    OutlinedButton(onClick = onSkipStep) {
-                        Text("Skip this step")
+                    if (canSkipStep) {
+                        OutlinedButton(onClick = onSkipStep) { Text("Skip this step") }
+                        Spacer(modifier = Modifier.size(8.dp))
                     }
-                    Spacer(modifier = Modifier.size(8.dp))
                     Button(
                         onClick = onSkipStep,
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
-                        Text("Next")
+                        Text(if (step == TutorialStep.HighlightDoneButton) "Finish" else "Next")
                     }
                 }
             }
