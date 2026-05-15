@@ -27,15 +27,46 @@ class ReminderReceiver : BroadcastReceiver() {
     @Inject
     lateinit var settingsPreferencesManager: com.diary.moonpage.core.util.SettingsPreferencesManager
 
+    @Inject
+    lateinit var notificationBus: com.diary.moonpage.core.util.NotificationBus
+
+    @Inject
+    lateinit var notificationRepository: com.diary.moonpage.domain.repository.NotificationRepository
+
     override fun onReceive(context: Context, intent: Intent) {
         val language = LocaleUtils.getSavedLanguage(context)
         val localizedContext = LocaleUtils.applyLocale(context, language)
         
-        // Show the notification
-        showNotification(localizedContext)
+        val title = localizedContext.getString(R.string.noti_reminder_title)
+        val body = localizedContext.getString(R.string.noti_reminder_body)
+        val type = "REMINDER"
 
-        // Reschedule for the next day
+        // Show the system tray notification
+        showNotification(localizedContext, title, body)
+
+        // Process in-app logic
         CoroutineScope(Dispatchers.IO).launch {
+            // 1. Post to bus for in-app Snackbar (Real-time feedback)
+            notificationBus.postEvent(title, body, type)
+
+            // 2. Record in database for Notification Center
+            try {
+                val userId = com.diary.moonpage.core.util.TokenManager(context).getUserId()
+                if (userId != null) {
+                    notificationRepository.createNotification(
+                        com.diary.moonpage.data.remote.dto.notification.CreateNotificationRequest(
+                            userId = userId,
+                            title = title,
+                            message = body,
+                            type = type
+                        )
+                    )
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("ReminderReceiver", "Failed to record reminder in DB", e)
+            }
+
+            // 3. Reschedule for the next day
             if (settingsPreferencesManager.isReminderEnabled.first()) {
                 val timeStr = settingsPreferencesManager.reminderTime.first()
                 val time = timeStr.split(":")
@@ -46,7 +77,7 @@ class ReminderReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun showNotification(context: Context) {
+    private fun showNotification(context: Context, title: String, body: String) {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val channelId = "daily_reminder_channel"
 
@@ -73,8 +104,8 @@ class ReminderReceiver : BroadcastReceiver() {
 
         val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.logo)
-            .setContentTitle(context.getString(R.string.noti_reminder_title))
-            .setContentText(context.getString(R.string.noti_reminder_body))
+            .setContentTitle(title)
+            .setContentText(body)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
