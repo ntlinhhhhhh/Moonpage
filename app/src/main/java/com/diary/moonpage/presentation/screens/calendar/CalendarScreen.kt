@@ -32,6 +32,8 @@ import com.diary.moonpage.core.util.MoonIcon
 import com.diary.moonpage.presentation.components.calendar.*
 import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import com.diary.moonpage.presentation.components.core.feedback.MoonDeleteConfirmDialog
+import com.diary.moonpage.presentation.tutorial.TutorialStep
+import com.diary.moonpage.presentation.tutorial.tutorialTarget
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -450,7 +452,13 @@ fun CalendarGrid(
                                 isFiltered = isFiltered,
                                 themeType = themeType,
                                 isActuallyDark = isActuallyDark,
-                                onClick = { onDateSelected(date) }
+                                modifier = Modifier.tutorialTarget(
+                                    TutorialStep.HighlightCurrentDay,
+                                    enabled = isToday
+                                ),
+                                onClick = {
+                                    onDateSelected(date)
+                                }
                             )
                         } else {
                             DayItem(day = null, isSelected = false, moodColor = null, isActuallyDark = isActuallyDark, onClick = {})

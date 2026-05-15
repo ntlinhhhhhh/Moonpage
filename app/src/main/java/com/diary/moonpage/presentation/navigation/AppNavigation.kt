@@ -7,6 +7,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -34,6 +35,8 @@ import com.diary.moonpage.presentation.screens.store.ThemeDetailScreen
 import com.diary.moonpage.presentation.screens.security.CreatePasscodeScreen
 import com.diary.moonpage.presentation.screens.security.LockScreen
 import com.diary.moonpage.MainViewModel
+import com.diary.moonpage.presentation.tutorial.LocalTutorialController
+import com.diary.moonpage.presentation.tutorial.TutorialController
 import com.diary.moonpage.presentation.tutorial.TutorialOverlay
 import com.diary.moonpage.presentation.tutorial.TutorialViewModel
 import com.diary.moonpage.presentation.tutorial.TutorialStep
@@ -55,6 +58,7 @@ fun AppNavigation(
     val securityViewModel: com.diary.moonpage.presentation.screens.security.SecurityViewModel = hiltViewModel()
     val tutorialViewModel: TutorialViewModel = hiltViewModel()
     val tutorialState by tutorialViewModel.state.collectAsState()
+    var tutorialTargetBounds by remember { mutableStateOf<Map<TutorialStep, Rect>>(emptyMap()) }
 
     val mainAppRoutes = listOf(
         Screen.Calendar.route,
@@ -78,6 +82,22 @@ fun AppNavigation(
                     tutorialViewModel.refresh()
                 }
             }
+            LaunchedEffect(currentRoute, tutorialState.step) {
+                tutorialTargetBounds = emptyMap()
+            }
+            val tutorialController = TutorialController(
+                activeStep = tutorialState.step.takeIf { tutorialState.isVisible },
+                onTargetBoundsChanged = { step, bounds ->
+                    tutorialTargetBounds = tutorialTargetBounds.toMutableMap().apply {
+                        if (this[step] != bounds) {
+                            this[step] = bounds
+                        }
+                    }
+                },
+                onStepCompleted = { step -> tutorialViewModel.completeStep(step) }
+            )
+
+            CompositionLocalProvider(LocalTutorialController provides tutorialController) {
             NavHost(
                 navController = navController,
                 startDestination = Screen.Loading.route,
@@ -516,6 +536,8 @@ fun AppNavigation(
                 }
             }
 
+            }
+
             // Fixed Bottom Bar - No more AnimatedVisibility for Tab Switches
             if (showBottomBar) {
                 MoonBottomNavBar(
@@ -549,11 +571,12 @@ fun AppNavigation(
             ) {
                 TutorialOverlay(
                     step = tutorialState.step,
+                    targetBounds = tutorialTargetBounds[tutorialState.step],
                     onSkipStep = {
                         if (tutorialState.step == TutorialStep.HighlightCurrentDay ||
                             tutorialState.step == TutorialStep.HighlightDoneButton
                         ) return@TutorialOverlay
-                        tutorialViewModel.next()
+                        tutorialViewModel.skipStep()
                     },
                     onSkipTutorial = { tutorialViewModel.complete() },
                     modifier = Modifier.fillMaxSize()

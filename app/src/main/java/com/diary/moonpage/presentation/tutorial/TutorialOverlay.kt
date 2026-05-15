@@ -13,10 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -38,12 +35,12 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun TutorialOverlay(
     step: TutorialStep,
+    targetBounds: Rect?,
     onSkipStep: () -> Unit,
     onSkipTutorial: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val canSkipStep = step in setOf(
-        TutorialStep.HighlightHowWasYourDay,
         TutorialStep.HighlightHobbiesButton,
         TutorialStep.HighlightFirstHobby,
         TutorialStep.HighlightTodayNotes,
@@ -58,25 +55,28 @@ fun TutorialOverlay(
         TutorialStep.HighlightTodayPhotos -> "Add one or more photos for today."
         TutorialStep.HighlightDoneButton -> "Tap Done to save today's record."
     }
+    val showMessageAtTop = step == TutorialStep.HighlightTodayPhotos ||
+        step == TutorialStep.HighlightDoneButton
 
     Box(modifier = modifier.fillMaxSize()) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawRect(Color.Black.copy(alpha = 0.48f))
 
-            val rect = when (step) {
-                    TutorialStep.HighlightCurrentDay -> Rect(
-                        left = size.width * 0.40f,
-                        top = size.height * 0.28f,
-                        right = size.width * 0.58f,
-                        bottom = size.height * 0.37f
-                    )
-                    TutorialStep.HighlightHowWasYourDay -> Rect(24.dp.toPx(), size.height * 0.20f, size.width - 24.dp.toPx(), size.height * 0.38f)
-                    TutorialStep.HighlightHobbiesButton -> Rect(24.dp.toPx(), size.height * 0.32f, size.width - 24.dp.toPx(), size.height * 0.42f)
-                    TutorialStep.HighlightFirstHobby -> Rect(24.dp.toPx(), size.height * 0.38f, size.width * 0.45f, size.height * 0.48f)
-                    TutorialStep.HighlightTodayNotes -> Rect(24.dp.toPx(), size.height * 0.48f, size.width - 24.dp.toPx(), size.height * 0.66f)
-                    TutorialStep.HighlightTodayPhotos -> Rect(24.dp.toPx(), size.height * 0.58f, size.width - 24.dp.toPx(), size.height * 0.80f)
-                    TutorialStep.HighlightDoneButton -> Rect(16.dp.toPx(), size.height - 110.dp.toPx(), size.width - 16.dp.toPx(), size.height - 20.dp.toPx())
+            val fallbackRect = when (step) {
+                TutorialStep.HighlightCurrentDay -> Rect(
+                    left = size.width * 0.40f,
+                    top = size.height * 0.28f,
+                    right = size.width * 0.58f,
+                    bottom = size.height * 0.37f
+                )
+                TutorialStep.HighlightHowWasYourDay -> Rect(24.dp.toPx(), size.height * 0.20f, size.width - 24.dp.toPx(), size.height * 0.38f)
+                TutorialStep.HighlightHobbiesButton -> Rect(24.dp.toPx(), size.height * 0.32f, size.width - 24.dp.toPx(), size.height * 0.42f)
+                TutorialStep.HighlightFirstHobby -> Rect(24.dp.toPx(), size.height * 0.38f, size.width * 0.45f, size.height * 0.48f)
+                TutorialStep.HighlightTodayNotes -> Rect(24.dp.toPx(), size.height * 0.48f, size.width - 24.dp.toPx(), size.height * 0.66f)
+                TutorialStep.HighlightTodayPhotos -> Rect(24.dp.toPx(), size.height * 0.58f, size.width - 24.dp.toPx(), size.height * 0.80f)
+                TutorialStep.HighlightDoneButton -> Rect(16.dp.toPx(), size.height - 110.dp.toPx(), size.width - 16.dp.toPx(), size.height - 20.dp.toPx())
             }
+            val rect = (targetBounds ?: fallbackRect).inflate(6.dp.toPx())
             drawRoundRect(
                 color = Color.White,
                 topLeft = Offset(rect.left, rect.top),
@@ -88,19 +88,6 @@ fun TutorialOverlay(
                 )
             )
         }
-
-        Text(
-            text = "Skip all steps",
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(top = 48.dp, start = 16.dp)
-                .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(18.dp))
-                .clickable { onSkipTutorial() }
-                .padding(horizontal = 14.dp, vertical = 9.dp),
-            color = MaterialTheme.colorScheme.onSurface,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold
-        )
 
         Text(
             text = "Skip all steps",
@@ -117,8 +104,15 @@ fun TutorialOverlay(
 
         Surface(
             modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(16.dp)
+                .align(
+                    if (showMessageAtTop) Alignment.TopStart else Alignment.BottomStart
+                )
+                .padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = if (showMessageAtTop) 96.dp else 16.dp,
+                    bottom = 16.dp
+                )
                 .navigationBarsPadding(),
             shape = RoundedCornerShape(18.dp),
             color = MaterialTheme.colorScheme.surface
@@ -139,13 +133,6 @@ fun TutorialOverlay(
                 ) {
                     if (canSkipStep) {
                         OutlinedButton(onClick = onSkipStep) { Text("Skip this step") }
-                        Spacer(modifier = Modifier.size(8.dp))
-                    }
-                    Button(
-                        onClick = onSkipStep,
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                    ) {
-                        Text(if (step == TutorialStep.HighlightDoneButton) "Finish" else "Next")
                     }
                 }
             }

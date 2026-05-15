@@ -39,11 +39,31 @@ class TutorialViewModel @Inject constructor(
         viewModelScope.launch {
             val userId = tokenManager.getUserId() ?: return@launch
             val completed = onboardingPrefsManager.checkTutorialCompleted(userId)
-            _state.value = TutorialState(
-                isVisible = !completed,
-                step = TutorialStep.HighlightCurrentDay
-            )
+            _state.update { current ->
+                when {
+                    completed -> TutorialState(isVisible = false)
+                    current.isVisible -> current
+                    else -> TutorialState(isVisible = true, step = TutorialStep.HighlightCurrentDay)
+                }
+            }
         }
+    }
+
+    fun completeStep(step: TutorialStep) {
+        if (_state.value.isVisible && _state.value.step == step) {
+            next()
+        }
+    }
+
+    fun skipStep() {
+        val nextStep = when (_state.value.step) {
+            TutorialStep.HighlightHobbiesButton,
+            TutorialStep.HighlightFirstHobby -> TutorialStep.HighlightTodayNotes
+            TutorialStep.HighlightTodayNotes -> TutorialStep.HighlightTodayPhotos
+            TutorialStep.HighlightTodayPhotos -> TutorialStep.HighlightDoneButton
+            else -> return
+        }
+        _state.update { it.copy(step = nextStep) }
     }
 
     fun next() {
