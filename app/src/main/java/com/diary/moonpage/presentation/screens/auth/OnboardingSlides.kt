@@ -45,11 +45,11 @@ fun MoodLoggingSlide(isVisible: Boolean) {
     var selectedMoodIdx by remember { mutableStateOf(-1) }
     var selectedActivityIdxs by remember { mutableStateOf(setOf<Int>()) }
 
-    // Positions: -300 (Off top), 0 (Top slot), 300 (Bottom slot), 600 (Off bottom)
-    val moodY = animateFloatAsState(targetValue = when(step) { 0 -> 100f; 1 -> 0f; else -> -400f }, animationSpec = spring(0.8f, Spring.StiffnessLow))
-    val weatherY = animateFloatAsState(targetValue = when(step) { 0 -> 600f; 1 -> 220f; 2 -> 0f; else -> -400f }, animationSpec = spring(0.8f, Spring.StiffnessLow))
-    val socialY = animateFloatAsState(targetValue = when(step) { 0, 1 -> 600f; 2 -> 220f; 3 -> 0f; else -> -400f }, animationSpec = spring(0.8f, Spring.StiffnessLow))
-    val feelingsY = animateFloatAsState(targetValue = when(step) { 0, 1, 2 -> 600f; 3 -> 220f; else -> 220f }, animationSpec = spring(0.8f, Spring.StiffnessLow))
+    // Positions: -300 (Off top), 0 (Top slot), 165 (Bottom slot), 500 (Off bottom)
+    val moodY = animateFloatAsState(targetValue = when(step) { 0 -> 60f; 1 -> 0f; else -> -300f }, animationSpec = spring(0.8f, Spring.StiffnessMedium))
+    val weatherY = animateFloatAsState(targetValue = when(step) { 0 -> 500f; 1 -> 165f; 2 -> 0f; else -> -300f }, animationSpec = spring(0.8f, Spring.StiffnessMedium))
+    val socialY = animateFloatAsState(targetValue = when(step) { 0, 1 -> 500f; 2 -> 165f; 3 -> 0f; else -> -300f }, animationSpec = spring(0.8f, Spring.StiffnessMedium))
+    val feelingsY = animateFloatAsState(targetValue = when(step) { 0, 1, 2 -> 500f; 3 -> 165f; else -> 165f }, animationSpec = spring(0.8f, Spring.StiffnessMedium))
 
     LaunchedEffect(isVisible) {
         if (isVisible) {
