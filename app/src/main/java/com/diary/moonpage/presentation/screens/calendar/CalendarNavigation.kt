@@ -8,19 +8,22 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import com.diary.moonpage.presentation.navigation.Screen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.diary.moonpage.presentation.tutorial.TutorialStep
 
 fun NavController.navigateToCalendar(navOptions: NavOptions? = null) {
     this.navigate(Screen.Calendar.route, navOptions)
 }
 
+fun NavController.navigateToShareCalendar(yearMonth: String) {
+    this.navigate("share_calendar_screen/$yearMonth")
+}
+
 fun NavGraphBuilder.calendarScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToDailyLog: (String) -> Unit,
+    onNavigateToShareLog: (String) -> Unit,
+    onNavigateToShareCalendar: (String) -> Unit,
     onNavigateToThemeCalendar: () -> Unit,
-    tutorialStep: TutorialStep? = null,
-    onTutorialNext: () -> Unit = {},
-    onSkipTutorial: () -> Unit = {}
+    onNavigateBack: () -> Unit
 ) {
     composable(route = Screen.Calendar.route) { backStackEntry ->
         val savedStateHandle = backStackEntry.savedStateHandle
@@ -36,10 +39,17 @@ fun NavGraphBuilder.calendarScreen(
             onMessageShown = { savedStateHandle.set("logSavedMessage", null) },
             onNavigateToSettings = onNavigateToSettings,
             onNavigateToDailyLog = onNavigateToDailyLog,
-            onNavigateToThemeCalendar = onNavigateToThemeCalendar,
-            tutorialStep = tutorialStep,
-            onTutorialNext = onTutorialNext,
-            onSkipTutorial = onSkipTutorial
+            onNavigateToShareLog = onNavigateToShareLog,
+            onNavigateToShareCalendar = onNavigateToShareCalendar,
+            onNavigateToThemeCalendar = onNavigateToThemeCalendar
+        )
+    }
+
+    composable(route = Screen.ShareCalendar.route) { backStackEntry ->
+        val yearMonth = backStackEntry.arguments?.getString("yearMonth") ?: ""
+        ShareCalendarScreen(
+            yearMonthString = yearMonth,
+            onNavigateBack = onNavigateBack
         )
     }
 }

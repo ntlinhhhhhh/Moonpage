@@ -130,16 +130,21 @@ class StoreViewModel @Inject constructor(
                 _uiState.update { it.copy(showConfirmActivationDialog = true, temporarySelectedThemeId = event.themeId) }
             }
             StoreUiEvent.ConfirmActivation -> {
-                _uiState.value.temporarySelectedThemeId?.let { performActivateTheme(it) }
+                val themeId = _uiState.value.temporarySelectedThemeId
                 _uiState.update { it.copy(showConfirmActivationDialog = false, temporarySelectedThemeId = null) }
+                themeId?.let { performActivateTheme(it) }
             }
             StoreUiEvent.CancelActivation -> {
                 _uiState.update { it.copy(showConfirmActivationDialog = false, temporarySelectedThemeId = null) }
             }
             StoreUiEvent.DismissDialog -> {
-                _uiState.update { it.copy(showPurchaseSuccessDialog = false, showConfirmActivationDialog = false) }
+                _uiState.update { it.copy(showPurchaseSuccessDialog = false, showConfirmActivationDialog = false, activationSuccess = false) }
             }
         }
+    }
+
+    fun dismissSuccessMessage() {
+        _uiState.update { it.copy(activationSuccess = false) }
     }
 
     private fun loadData() {
@@ -226,17 +231,22 @@ class StoreViewModel @Inject constructor(
                     state.copy(
                         ownedThemes = updatedOwned, 
                         isLoading = false,
-                        selectedThemeDetail = updatedDetail
+                        selectedThemeDetail = updatedDetail,
+                        activationSuccess = true
                     )
                 }
                 
+                // Emit effect immediately to trigger UI
+                _uiEffect.emit(StoreUiEffect.ThemeActivated)
+                
+                // Small delay to allow UI to show snackbar before theme change (which causes recomposition)
+                delay(200)
+
                 // Map theme and save locally
                 val theme = _uiState.value.ownedThemes.find { it.id == themeId }
                 theme?.let {
                     themePreferencesManager.setThemeType(it.toMoonThemeType())
                 }
-                
-                _uiEffect.emit(StoreUiEffect.ThemeActivated)
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false) }
                 _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Activation failed"))

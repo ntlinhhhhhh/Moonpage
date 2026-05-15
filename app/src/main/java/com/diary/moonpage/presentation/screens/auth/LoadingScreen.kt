@@ -9,27 +9,28 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.R
@@ -37,7 +38,6 @@ import com.diary.moonpage.core.theme.MoonPageTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 
 @Composable
 fun LoadingScreen(
@@ -64,7 +64,7 @@ fun LoadingScreen(
         }
     }
 
-    val isDarkTheme = isSystemInDarkTheme()
+    val isDarkTheme = com.diary.moonpage.core.theme.MoonTheme.customColors.isDark
 
     Box(
         modifier = Modifier
@@ -93,8 +93,11 @@ fun LoadingScreen(
             )
 
             Text(
-                text = "Moonpage",
-                style = MaterialTheme.typography.displayLarge,
+                text = "MoonPage",
+                style = MaterialTheme.typography.displayLarge.copy(
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 2.sp
+                ),
                 color = MaterialTheme.colorScheme.primary
             )
 
@@ -113,15 +116,15 @@ fun LoadingScreen(
                     .clip(RoundedCornerShape(4.dp)),
                 color = MaterialTheme.colorScheme.primary, 
                 trackColor = MaterialTheme.colorScheme.surfaceVariant, 
-                strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
+                strokeCap = StrokeCap.Round
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Loading your feelings...",
+                text = if (uiState.loadingProgress < 1f) "Loading your feelings..." else "Ready to reflect",
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
             )
         }
     }

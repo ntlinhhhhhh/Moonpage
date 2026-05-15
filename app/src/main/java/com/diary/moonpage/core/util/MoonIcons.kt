@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -82,7 +83,7 @@ object MoonIcons {
         val Movie = MoonIcon(Icons.Rounded.Movie, Color(0xFF3D5AFE), "Movie")
         val Gaming = MoonIcon(Icons.Rounded.SportsEsports, Color(0xFF0091EA), "Gaming")
         val Reading = MoonIcon(Icons.Rounded.AutoStories, Color(0xFF6D4C41), "Reading")
-        val Walk = MoonIcon(Icons.Rounded.DirectionsWalk, Color(0xFF2E7D32), "Walk")
+        val Walk = MoonIcon(Icons.AutoMirrored.Rounded.DirectionsWalk, Color(0xFF2E7D32), "Walk")
         val Music = MoonIcon(Icons.Rounded.MusicNote, Color(0xFFF50057), "Music")
         val Drawing = MoonIcon(Icons.Rounded.Brush, Color(0xFFFF8F00), "Drawing")
     }
@@ -194,7 +195,7 @@ object MoonIcons {
         val Class = MoonIcon(Icons.Rounded.CastForEducation, Color(0xFF3949AB), "Class")
         val Study = MoonIcon(Icons.Rounded.AutoStories, Color(0xFF3F51B5), "Study")
         val Homework = MoonIcon(Icons.Rounded.EditNote, Color(0xFF5C6BC0), "Homework")
-        val Exam = MoonIcon(Icons.Rounded.FactCheck, Color(0xFFD32F2F), "Exam")
+        val Exam = MoonIcon(Icons.AutoMirrored.Rounded.FactCheck, Color(0xFFD32F2F), "Exam")
     }
 
     object Relationship {

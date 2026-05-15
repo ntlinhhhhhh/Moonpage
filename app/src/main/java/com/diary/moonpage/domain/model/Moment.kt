@@ -1,5 +1,8 @@
 package com.diary.moonpage.domain.model
 
+import androidx.compose.runtime.Immutable
+
+@Immutable
 data class Moment(
     val id: String,
     val imageUrl: String,

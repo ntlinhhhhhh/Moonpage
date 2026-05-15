@@ -16,5 +16,6 @@ data class StoreUiState(
     val selectedThemeDetail: Theme? = null,
     val selectedCategory: String = "ALL",
     val temporarySelectedThemeId: String? = null,
-    val showConfirmActivationDialog: Boolean = false
+    val showConfirmActivationDialog: Boolean = false,
+    val activationSuccess: Boolean = false
 )

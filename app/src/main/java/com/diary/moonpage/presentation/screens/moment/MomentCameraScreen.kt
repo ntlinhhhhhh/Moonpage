@@ -61,8 +61,36 @@ fun MomentCameraScreen(
     initialMomentId: String? = null,
     onNavigateToGallery: () -> Unit,
     onNavigateToHistory: () -> Unit,
-    viewModel: MomentViewModel = hiltViewModel(),
-    profileViewModel: com.diary.moonpage.presentation.screens.profile.ProfileViewModel = hiltViewModel()
+    onNavigateToAccount: () -> Unit
+) {
+    if (androidx.compose.ui.platform.LocalInspectionMode.current) {
+        // Preview placeholder to avoid Hilt crash
+        Box(modifier = Modifier.fillMaxSize())
+        return
+    }
+
+    val viewModel: MomentViewModel = hiltViewModel()
+    val profileViewModel: com.diary.moonpage.presentation.screens.profile.ProfileViewModel = hiltViewModel()
+
+    MomentCameraScreenStateful(
+        initialMomentId = initialMomentId,
+        onNavigateToGallery = onNavigateToGallery,
+        onNavigateToHistory = onNavigateToHistory,
+        onNavigateToAccount = onNavigateToAccount,
+        viewModel = viewModel,
+        profileViewModel = profileViewModel
+    )
+}
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun MomentCameraScreenStateful(
+    initialMomentId: String? = null,
+    onNavigateToGallery: () -> Unit,
+    onNavigateToHistory: () -> Unit,
+    onNavigateToAccount: () -> Unit,
+    viewModel: MomentViewModel,
+    profileViewModel: com.diary.moonpage.presentation.screens.profile.ProfileViewModel
 ) {
     val profileState by profileViewModel.uiState.collectAsState()
     val cameraPermissionState = rememberMultiplePermissionsState(
@@ -130,6 +158,7 @@ fun MomentCameraScreen(
             onEvent = viewModel::onEvent,
             onNavigateToGallery = onNavigateToGallery,
             onNavigateToHistory = onNavigateToHistory,
+            onNavigateToAccount = onNavigateToAccount,
             initialMomentId = initialMomentId,
             snackbarHostState = snackbarHostState,
             avatarUrl = profileState.user?.avatarUrl,
@@ -157,6 +186,7 @@ fun MomentCameraScreenContent(
     onEvent: (MomentUiEvent) -> Unit,
     onNavigateToGallery: () -> Unit,
     onNavigateToHistory: () -> Unit,
+    onNavigateToAccount: () -> Unit,
     initialMomentId: String? = null,
     snackbarHostState: SnackbarHostState,
     avatarUrl: String? = null,
@@ -269,7 +299,8 @@ fun MomentCameraScreenContent(
                                 capturedImageUri = uri
                                 capturedLensFacing = lensFacing
                             },
-                            avatarUrl = avatarUrl
+                            avatarUrl = avatarUrl,
+                            onAvatarClick = onNavigateToAccount
                         )
                     } else {
                         MomentHistoryScreenContent(
@@ -277,6 +308,7 @@ fun MomentCameraScreenContent(
                             localPaths = uiState.localPaths,
                             onNavigateToGallery = onNavigateToGallery,
                             onBackToCamera = { scope.launch { verticalPagerState.animateScrollToPage(0) } },
+                            onNavigateToAccount = onNavigateToAccount,
                             initialMomentId = initialMomentId,
                             onShare = { onEvent(MomentUiEvent.ShareMoment(it.imageUrl)) },
                             onDownload = { onEvent(MomentUiEvent.DownloadMoment(it.imageUrl)) },

@@ -27,6 +27,8 @@ class DailyLogViewModel @Inject constructor(
     private val weatherRepository: com.diary.moonpage.domain.repository.WeatherRepository,
     private val spotifyApi: com.diary.moonpage.data.remote.api.SpotifyApi,
     private val momentRepository: com.diary.moonpage.domain.repository.MomentRepository,
+    private val checkAndTriggerNotificationsUseCase: com.diary.moonpage.domain.usecase.notification.CheckAndTriggerNotificationsUseCase,
+    @com.diary.moonpage.core.di.ApplicationScope private val applicationScope: kotlinx.coroutines.CoroutineScope,
     val healthConnectManager: com.diary.moonpage.core.util.HealthConnectManager,
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
@@ -84,7 +86,6 @@ class DailyLogViewModel @Inject constructor(
                             viewModelScope.launch {
                                 weatherRepository.getCurrentWeather(location.latitude, location.longitude).onSuccess { data ->
                                     _uiState.update { it.copy(suggestedWeather = data) }
-                                    // Auto-select if no activities selected yet or if weather is prominent
                                     suggestWeatherActivity(data.condition)
                                 }
                             }
@@ -107,20 +108,49 @@ class DailyLogViewModel @Inject constructor(
         }
         
         if (weatherActivityId != null && !_uiState.value.selectedActivities.contains(weatherActivityId)) {
-            // We don't auto-toggle yet, but we could highlight it in the UI
+            // We don't auto-toggle yet
         }
+    }
+
+    private suspend fun getValidSpotifyToken(): String? {
+        val currentToken = tokenManager.getSpotifyToken().first() ?: return null
+        val expiresAt = tokenManager.getSpotifyExpiresAt()
+        
+        if (System.currentTimeMillis() > (expiresAt - 5 * 60 * 1000L)) {
+            val refreshToken = tokenManager.getSpotifyRefreshToken().first()
+            if (refreshToken != null) {
+                try {
+                    val response = spotifyApi.refreshToken(
+                        clientId = com.diary.moonpage.data.remote.api.SpotifyApi.CLIENT_ID,
+                        refreshToken = refreshToken
+                    )
+                    if (response.isSuccessful && response.body() != null) {
+                        val body = response.body()!!
+                        val newToken = "Bearer ${body.accessToken}"
+                        tokenManager.saveSpotifyToken(
+                            token = newToken,
+                            refreshToken = body.refreshToken ?: refreshToken,
+                            expiresIn = body.expiresIn
+                        )
+                        return newToken
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("SpotifyAuth", "Refresh failed", e)
+                }
+            }
+        }
+        return currentToken
     }
 
     private fun fetchRecentSpotifyTracks() {
         viewModelScope.launch {
-            tokenManager.getSpotifyToken().firstOrNull()?.let { token ->
+            getValidSpotifyToken()?.let { token ->
                 try {
                     val response = spotifyApi.getRecentlyPlayedTracks(token)
                     if (response.isSuccessful) {
                         val tracks = response.body()?.items?.map { it.track } ?: emptyList()
                         _uiState.update { it.copy(recentTracks = tracks) }
                         
-                        // Auto-fill if empty
                         if (_uiState.value.musicTitle.isNullOrBlank() && tracks.isNotEmpty()) {
                             val lastTrack = tracks.first()
                             _uiState.update { it.copy(
@@ -151,7 +181,6 @@ class DailyLogViewModel @Inject constructor(
                         else -> 3
                     }
                     
-                    // Fallback to local mood color if API hex is invalid or bad
                     val color = try {
                         if (!entity.iconUrl.isNullOrBlank() && (entity.iconUrl.startsWith("#") || entity.iconUrl.length == 6 || entity.iconUrl.length == 8)) {
                             val colorStr = if (entity.iconUrl.startsWith("#")) entity.iconUrl else "#${entity.iconUrl}"
@@ -199,6 +228,15 @@ class DailyLogViewModel @Inject constructor(
             is DailyLogUiEvent.OnMoodSelected -> {
                 _uiState.update { it.copy(selectedMood = event.moodId) }
             }
+            is DailyLogUiEvent.OnCategoryToggle -> {
+                val current = _uiState.value.expandedCategories.toMutableSet()
+                if (current.contains(event.category)) {
+                    current.remove(event.category)
+                } else {
+                    current.add(event.category)
+                }
+                _uiState.update { it.copy(expandedCategories = current) }
+            }
             is DailyLogUiEvent.OnActivityToggled -> {
                 val current = _uiState.value.selectedActivities.toMutableList()
                 if (current.contains(event.activityId)) {
@@ -219,7 +257,6 @@ class DailyLogViewModel @Inject constructor(
                 _uiState.update { it.copy(isMenstruation = event.isMenstruation) }
             }
             is DailyLogUiEvent.OnPhotosChanged -> {
-                // event.photos is List<String> (URIs)
                 val current = _uiState.value.dailyPhotos
                 val combined = (current + event.photos).distinct().take(10)
                 _uiState.update { it.copy(dailyPhotos = combined) }
@@ -228,6 +265,9 @@ class DailyLogViewModel @Inject constructor(
                 _uiState.update { it.copy(
                     dailyPhotos = it.dailyPhotos.filter { uri -> uri != event.photoUri }
                 ) }
+            }
+            is DailyLogUiEvent.OnPhotoZoom -> {
+                _uiState.update { it.copy(zoomImageUrl = event.imageUrl) }
             }
             is DailyLogUiEvent.OnMusicChanged -> {
                 _uiState.update { it.copy(musicTitle = event.musicTitle) }
@@ -242,20 +282,73 @@ class DailyLogViewModel @Inject constructor(
             is DailyLogUiEvent.OnSleepChanged -> {
                 _uiState.update { it.copy(sleepHours = event.hours) }
             }
-            DailyLogUiEvent.OnImportSteps -> {
+            DailyLogUiEvent.OnImportClick -> {
+                if (_uiState.value.isImportingHealth) return
+                
+                _uiState.update { it.copy(isImportingHealth = true) }
                 viewModelScope.launch {
-                    if (healthConnectManager.hasAllPermissions()) {
-                        try {
+                    try {
+                        val status = healthConnectManager.getSdkStatus()
+                        if (status != androidx.health.connect.client.HealthConnectClient.SDK_AVAILABLE) {
+                            val msg = when (status) {
+                                androidx.health.connect.client.HealthConnectClient.SDK_UNAVAILABLE -> "Health Connect is not installed on this device."
+                                androidx.health.connect.client.HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> "Health Connect needs an update from the Play Store."
+                                else -> "Health Connect is not available (Status: $status)."
+                            }
+                            _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(msg))
+                            _uiState.update { it.copy(isImportingHealth = false) }
+                        } else if (healthConnectManager.hasAllPermissions()) {
                             val data = healthConnectManager.readHealthData(_uiState.value.date)
+                            if (data.steps == 0 && data.calories == 0 && data.distance == 0.0) {
+                                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("No health data found for this day in Health Connect. Make sure Google Fit is syncing."))
+                            } else {
+                                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Health data updated: ${data.steps} steps!"))
+                            }
                             _uiState.update { it.copy(
                                 steps = data.steps,
                                 calories = data.calories,
                                 distance = data.distance,
-                                snackbarMessage = "Health data imported: ${data.steps} steps!"
+                                isImportingHealth = false
                             ) }
-                        } catch (e: Exception) {
-                            _uiState.update { it.copy(snackbarMessage = "Failed to read health data: ${e.message}") }
+                        } else {
+                            // Leave isImportingHealth = true, it will be reset by OnHealthPermissionResult
+                            _uiEffect.emit(DailyLogUiEffect.LaunchHealthPermissions(healthConnectManager.permissions))
                         }
+                    } catch (e: Exception) {
+                        android.util.Log.e("DailyLogVM", "Import failed", e)
+                        _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Import failed: ${e.localizedMessage ?: "Unknown error"}"))
+                        _uiState.update { it.copy(isImportingHealth = false) }
+                    }
+                }
+            }
+            is DailyLogUiEvent.OnHealthPermissionResult -> {
+                _uiState.update { it.copy(isImportingHealth = false) }
+                if (event.isGranted) {
+                    onEvent(DailyLogUiEvent.OnImportSteps)
+                }
+            }
+            DailyLogUiEvent.OnImportSteps -> {
+                if (_uiState.value.isImportingHealth) return
+                
+                viewModelScope.launch {
+                    _uiState.update { it.copy(isImportingHealth = true) }
+                    try {
+                        val status = healthConnectManager.getSdkStatus()
+                        if (status == androidx.health.connect.client.HealthConnectClient.SDK_AVAILABLE) {
+                            if (healthConnectManager.hasAllPermissions()) {
+                                val data = healthConnectManager.readHealthData(_uiState.value.date)
+                                _uiState.update { it.copy(
+                                    steps = data.steps,
+                                    calories = data.calories,
+                                    distance = data.distance,
+                                ) }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("DailyLogVM", "Auto-import failed", e)
+                        // Don't show snackbar for auto-import to avoid annoyance
+                    } finally {
+                        _uiState.update { it.copy(isImportingHealth = false) }
                     }
                 }
             }
@@ -311,9 +404,6 @@ class DailyLogViewModel @Inject constructor(
             DailyLogUiEvent.OnDismissOverwriteDialog -> {
                 _uiState.update { it.copy(showOverwriteDialog = false) }
             }
-            DailyLogUiEvent.DismissMessage -> {
-                _uiState.update { it.copy(snackbarMessage = null) }
-            }
         }
     }
 
@@ -343,7 +433,6 @@ class DailyLogViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             
-            // Fetch moments from the flow and filter by date
             val dateStr = date.toString()
             val momentPhotos = try {
                 momentRepository.moments.first()
@@ -408,15 +497,16 @@ class DailyLogViewModel @Inject constructor(
 
     private fun saveDailyLog() {
         val state = _uiState.value
-        if (state.selectedMood == null) {
-            _uiState.update { it.copy(snackbarMessage = "Please select a mood first!") }
+        if (state.selectedMood == null || state.selectedMood == 0) {
+            viewModelScope.launch {
+                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Please select a mood first!"))
+            }
             return
         }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             
-            // Only upload photos that are local (don't start with http)
             val photoFiles = state.dailyPhotos.filter { !it.startsWith("http") }.mapNotNull { uriString ->
                 try {
                     val uri = android.net.Uri.parse(uriString)
@@ -445,9 +535,20 @@ class DailyLogViewModel @Inject constructor(
             ).onSuccess {
                 val msg = if (state.existingLog != null) "Record updated successfully!" else "Record created successfully!"
                 statisticsRepository.triggerRefresh()
+                
+                // Trigger notification evaluation using ApplicationScope to survive VM clearing
+                applicationScope.launch {
+                    try {
+                        checkAndTriggerNotificationsUseCase()
+                    } catch (e: Exception) {
+                        android.util.Log.e("DailyLogVM", "Notification check failed", e)
+                    }
+                }
+
                 _uiEffect.emit(DailyLogUiEffect.SaveSuccess(msg))
             }.onFailure { error ->
-                _uiState.update { it.copy(isLoading = false, snackbarMessage = error.message ?: "Failed to save log") }
+                _uiState.update { it.copy(isLoading = false) }
+                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(error.message ?: "Failed to save log"))
             }
         }
     }

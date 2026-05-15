@@ -55,6 +55,7 @@ fun CameraMainUI(
     onNavigateToHistory: () -> Unit,
     onImageCaptured: (Uri, Int) -> Unit,
     avatarUrl: String? = null,
+    onAvatarClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -125,6 +126,7 @@ fun CameraMainUI(
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .align(Alignment.CenterStart)
+                    .clickable { onAvatarClick() }
             ) {
                 AsyncImage(
                     model = avatarUrl,

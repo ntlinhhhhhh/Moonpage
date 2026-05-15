@@ -10,7 +10,8 @@ data class ThemeResponseDTO(
     @SerializedName("price") val price: Int,
     @SerializedName("thumbnailUrl") val thumbnailUrl: String?,
     @SerializedName("backgroundUrl") val backgroundUrl: String?,
-    @SerializedName("category") val category: String? = "LIGHT"
+    @SerializedName("category") val category: String? = "LIGHT",
+    @SerializedName("isActive") val isActive: Boolean = false
 ) {
     fun toDomain(): Theme {
         val decorationName = id.replace("theme_", "").uppercase()
@@ -23,7 +24,7 @@ data class ThemeResponseDTO(
             thumbnailUrl = thumbnailUrl,
             backgroundUrl = backgroundUrl,
             isOwned = false,
-            isActive = false,
+            isActive = isActive,
             description = null,
             type = ThemeType.THEME,
             icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),

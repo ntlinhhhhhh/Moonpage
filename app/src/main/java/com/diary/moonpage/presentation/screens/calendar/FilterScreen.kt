@@ -57,7 +57,6 @@ fun FilterScreen(
             .background(bgColor)
             .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
-        // Header
         Box(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = "When did I record...",

@@ -32,4 +32,29 @@
     <string name="delete_account">Supprimer le compte</string>
     <string name="select_language">Choisir la langue</string>
     <string name="close">Fermer</string>
+
+    <!-- Notifications -->
+    <string name="noti_reminder_title">Comment s\'est passée votre journée ? 🌱</string>
+    <string name="noti_reminder_body">Prenez une minute pour me raconter. Joyeux ou triste, il y a toujours une place pour vous ici.</string>
+    
+    <string name="noti_empathy_title">Je t\'envoie un gros câlin 🫂</string>
+    <string name="noti_empathy_body">On dirait que tu as eu beaucoup de choses en tête ces derniers temps. Repose-toi un peu, tout ira bien !</string>
+    
+    <string name="noti_weather_sunny_title">Le soleil brille de mille feux 🌻</string>
+    <string name="noti_weather_sunny_body">Une nouvelle journée fraîche vous attend. N\'oubliez pas votre crème solaire et apportez un grand sourire !</string>
+    <string name="noti_weather_rainy_title">Il pleut, n\'oubliez pas votre parapluie ☔</string>
+    <string name="noti_weather_rainy_body">Même s\'il fait humide dehors, j\'espère que votre cœur restera chaud et paisible aujourd\'hui.</string>
+    
+    <string name="noti_milestone_3d_title">Excellent début ! ✨</string>
+    <string name="noti_milestone_3d_body">Vous avez enregistré votre humeur pendant 3 jours consécutifs. Petites habitudes, grande joie. Continuez comme ça !</string>
+    <string name="noti_milestone_7d_title">Ta-da ! 1 semaine ensemble 🎉</string>
+    <string name="noti_milestone_7d_body">Vous avez passé 7 jours complets à vous aimer. Un nouveau badge a été débloqué, allez voir !</string>
+    <string name="noti_milestone_broken_title">Petite pause ⛺</string>
+    <string name="noti_milestone_broken_body">Étiez-vous trop occupé hier ? Ce n\'est pas grave, la série peut recommencer, l\'important est que vous soyez de retour !</string>
+    
+    <string name="noti_report_monthly_title">La boîte aux lettres du mois dernier est là ! 💌</string>
+    <string name="noti_report_monthly_body">Votre film émotionnel du mois dernier a été enroulé. Voyons quelles couleurs ont dominé !</string>
+    
+    <string name="noti_memory_title">La machine à remonter le temps démarre 🕰️</string>
+    <string name="noti_memory_body">Il y a exactement 1 an, vous avez enregistré un moment ici. Vous voulez remonter un peu le temps ?</string>
 </resources>

@@ -1,5 +1,7 @@
 package com.diary.moonpage.presentation.components.calendar
 
+import com.diary.moonpage.presentation.screens.calendar.CalendarViewMode
+
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -33,19 +35,24 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import com.diary.moonpage.R
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.*
-import androidx.compose.ui.platform.LocalLocale
+import com.diary.moonpage.core.theme.LocalLocale
+import com.diary.moonpage.core.theme.MoonPageTheme
+import com.diary.moonpage.core.theme.MoonTheme
 import kotlinx.coroutines.launch
 import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.core.theme.MoonThemeType
 
 @Composable
 fun CalendarTopBar(
+    viewMode: CalendarViewMode,
     onFilterClick: () -> Unit,
-    onSettingsClick: () -> Unit,
+    onToggleViewMode: () -> Unit,
     onThemeClick: () -> Unit = {},
     isFilterActive: Boolean = false,
     modifier: Modifier = Modifier
@@ -70,7 +77,7 @@ fun CalendarTopBar(
             ) {
                 Icon(
                     imageVector = Icons.Rounded.FilterList,
-                    contentDescription = "Filter",
+                    contentDescription = stringResource(R.string.filter_title),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
@@ -123,7 +130,7 @@ fun CalendarTopBar(
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Palette,
-                    contentDescription = "Theme",
+                    contentDescription = stringResource(R.string.app_theme),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(28.dp)
                 )
@@ -133,12 +140,12 @@ fun CalendarTopBar(
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
-                    ) { onSettingsClick() }
+                    ) { onToggleViewMode() }
                     .padding(4.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Menu,
-                    contentDescription = "Menu",
+                    imageVector = if (viewMode == CalendarViewMode.CALENDAR) Icons.Rounded.ViewHeadline else Icons.Rounded.CalendarMonth,
+                    contentDescription = "Switch View",
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(28.dp)
                 )
@@ -149,9 +156,17 @@ fun CalendarTopBar(
 
 @Composable
 fun CalendarHeader(
-    themeType: com.diary.moonpage.core.theme.MoonThemeType = com.diary.moonpage.core.theme.MoonThemeType.DEFAULT
+    themeType: MoonThemeType = MoonThemeType.DEFAULT
 ) {
-    val daysOfWeek = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+    val daysOfWeek = listOf(
+        stringResource(R.string.sun),
+        stringResource(R.string.mon),
+        stringResource(R.string.tue),
+        stringResource(R.string.wed),
+        stringResource(R.string.thu),
+        stringResource(R.string.fri),
+        stringResource(R.string.sat)
+    )
     val currentDayIndex = LocalDate.now().dayOfWeek.value % 7 // Sun=0, Mon=1, ..., Sat=6
     val shades = com.diary.moonpage.core.theme.getThemeShades(themeType)
     val highlightColor = if (shades.size > 3) shades[3] else MaterialTheme.colorScheme.primary
@@ -161,7 +176,7 @@ fun CalendarHeader(
             .fillMaxWidth()
             .padding(horizontal = 4.dp, vertical = 4.dp)
     ) {
-        val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+        val isDark = MoonTheme.customColors.isDark
         daysOfWeek.forEachIndexed { index, day ->
             val isCurrentDay = index == currentDayIndex
             Text(
@@ -194,7 +209,8 @@ fun DayItem(
     isToday: Boolean = false,
     isDimmed: Boolean = false,
     isFiltered: Boolean = false,
-    themeType: com.diary.moonpage.core.theme.MoonThemeType = com.diary.moonpage.core.theme.MoonThemeType.DEFAULT,
+    themeType: MoonThemeType = MoonThemeType.DEFAULT,
+    isActuallyDark: Boolean = false,
     onClick: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -211,16 +227,13 @@ fun DayItem(
         return
     }
 
-    // Robust check for dark mode based on current theme's background
-    val isActuallyDark = colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
-    val shades = com.diary.moonpage.core.theme.getThemeShades(themeType)
-    val highlightColor = if (shades.size > 3) shades[3] else colorScheme.primary
+    val shades = remember(themeType) { com.diary.moonpage.core.theme.getThemeShades(themeType) }
     
-    // Logic: If it's a logged day that matches the filter (or no filter), show its mood color.
-    // Otherwise, show the default placeholder color (Fixed gray for Dark, Theme shade for Light).
-    val circleBg = when {
-        moodColor != null && (!isFiltered || !isDimmed) -> moodColor
-        else -> if (isActuallyDark) Color(0xFF505457) else shades[0].copy(alpha = 0.4f)
+    val circleBg = remember(moodColor, isFiltered, isDimmed, isActuallyDark, shades) {
+        when {
+            moodColor != null && (!isFiltered || !isDimmed) -> moodColor
+            else -> if (isActuallyDark) Color(0xFF505457) else shades[0].copy(alpha = 0.4f)
+        }
     }
 
     Column(
@@ -271,9 +284,9 @@ fun DayItem(
             fontWeight = if (isToday || isSelected) FontWeight.Bold else FontWeight.Normal,
             color = when {
                 isToday -> if (isActuallyDark) {
-                    if (shades.size > 1) shades[1] else highlightColor
+                    if (shades.size > 1) shades[1] else shades[0]
                 } else {
-                    if (shades.size > 4) shades[4] else highlightColor
+                    if (shades.size > 4) shades[4] else shades[0]
                 }
                 isFiltered && isDimmed -> colorScheme.onSurface.copy(alpha = 0.2f)
                 isSelected -> colorScheme.primary
@@ -300,7 +313,7 @@ fun DayDetailArea(
     modifier: Modifier = Modifier
 ) {
     val cs = MaterialTheme.colorScheme
-    val isActuallyDark = cs.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
+    val isActuallyDark = MoonTheme.customColors.isDark
 
     Row(
         modifier = modifier
@@ -338,11 +351,20 @@ fun DayDetailArea(
             Spacer(modifier = Modifier.height(12.dp))
 
             Surface(
-                color = if (isActuallyDark) com.diary.moonpage.core.theme.MoonTheme.customColors.logItemBg else Color(0xFFE0E0E0),
+                color = if (isActuallyDark) MoonTheme.customColors.logItemBg else Color(0xFFE0E0E0),
                 shape = RoundedCornerShape(8.dp)
             ) {
+                val dayOfWeek = when(date.dayOfWeek.value) {
+                    1 -> stringResource(R.string.mon)
+                    2 -> stringResource(R.string.tue)
+                    3 -> stringResource(R.string.wed)
+                    4 -> stringResource(R.string.thu)
+                    5 -> stringResource(R.string.fri)
+                    6 -> stringResource(R.string.sat)
+                    else -> stringResource(R.string.sun)
+                }
                 Text(
-                    text = "${date.dayOfMonth} ${date.dayOfWeek.name.take(3).lowercase().replaceFirstChar { it.uppercase() }}",
+                    text = "${date.dayOfMonth} $dayOfWeek",
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = cs.onSurface,
@@ -378,7 +400,7 @@ fun DayDetailArea(
                             modifier = Modifier
                                 .size(42.dp)
                                 .background(
-                                    com.diary.moonpage.core.theme.MoonTheme.customColors.logItemBg, 
+                                    MoonTheme.customColors.logItemBg, 
                                     CircleShape
                                 ),
                             contentAlignment = Alignment.Center
@@ -419,7 +441,7 @@ fun DayDetailArea(
             Card(
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.logItemBg
+                    containerColor = MoonTheme.customColors.logItemBg
                 ),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -442,14 +464,14 @@ fun DayDetailArea(
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 12.dp)) {
                         Icon(Icons.Rounded.LocalFireDepartment, contentDescription = null, tint = Color(0xFFFF7043), modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text("Strength Training 28m", color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
+                        Text(stringResource(R.string.strength_training, 28), color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
                     }
 
                     // Menstruation
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 12.dp)) {
                         Icon(Icons.Rounded.WaterDrop, contentDescription = null, tint = Color(0xFFF48FB1), modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(if (isMenstruation) "On day 3" else "Not started", color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
+                        Text(if (isMenstruation) stringResource(R.string.on_day_x, 3) else stringResource(R.string.not_started), color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
                     }
 
                     // Steps Placeholder
@@ -467,7 +489,7 @@ fun DayDetailArea(
             Card(
                 shape = RoundedCornerShape(12.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.logItemBg
+                    containerColor = MoonTheme.customColors.logItemBg
                 ),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -496,7 +518,7 @@ fun DayDetailArea(
             if (dailyPhotos.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(20.dp))
                 Text(
-                    "Daily Photos",
+                    stringResource(R.string.photos),
                     color = cs.onSurface,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
@@ -667,7 +689,7 @@ fun DayDetailBottomSheet(
                     ) {
                         Icon(Icons.Rounded.IosShare, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Share", fontSize = 13.sp)
+                        Text(stringResource(R.string.share), fontSize = 13.sp)
                     }
                     Button(
                         onClick = onEdit,
@@ -677,7 +699,7 @@ fun DayDetailBottomSheet(
                     ) {
                         Icon(Icons.Rounded.Edit, contentDescription = null, modifier = Modifier.size(16.dp), tint = cs.onPrimary)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Edit", color = cs.onPrimary, fontSize = 13.sp)
+                        Text(stringResource(R.string.edit), color = cs.onPrimary, fontSize = 13.sp)
                     }
                     OutlinedButton(
                         onClick = onDelete,
@@ -688,7 +710,7 @@ fun DayDetailBottomSheet(
                     ) {
                         Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Delete", fontSize = 13.sp)
+                        Text(stringResource(R.string.delete), fontSize = 13.sp)
                     }
                 }
             }
@@ -705,8 +727,9 @@ fun MonthYearPickerDialog(
 ) {
     val currentYear = java.time.LocalDate.now().year
     val years = remember { (2000..currentYear + 10).map { it.toString() } }
-    val months = remember { (1..12).map {
-        java.time.Month.of(it).getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.getDefault()).take(3)
+    val currentLanguage = LocalLocale.current
+    val months = remember(currentLanguage) { (1..12).map {
+        com.diary.moonpage.core.util.LocaleUtils.getFormattedMonthName(it, currentLanguage)
     } }
 
     var tempYear by remember { mutableIntStateOf(currentYearMonth.year) }
@@ -723,7 +746,7 @@ fun MonthYearPickerDialog(
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp),
             shape = RoundedCornerShape(28.dp),
-            color = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor,
+            color = MoonTheme.customColors.popupBgColor,
             tonalElevation = 0.dp
         ) {
             Column(
@@ -733,10 +756,12 @@ fun MonthYearPickerDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = if (showMonth) "Select date" else "Select year",
+                    text = if (showMonth) stringResource(R.string.select_date) else stringResource(R.string.select_year),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -775,7 +800,7 @@ fun MonthYearPickerDialog(
                             Box(modifier = Modifier.weight(1f)) {
                                 WheelPicker(
                                     items = months,
-                                    initialValue = java.time.Month.of(tempMonth).getDisplayName(java.time.format.TextStyle.FULL, LocalLocale.current.platformLocale).take(3),
+                                    initialValue = com.diary.moonpage.core.util.LocaleUtils.getFormattedMonthName(tempMonth, currentLanguage),
                                     onItemSelected = { monthName ->
                                         val monthIndex = months.indexOf(monthName)
                                         if (monthIndex != -1) tempMonth = monthIndex + 1
@@ -813,12 +838,12 @@ fun MonthYearPickerDialog(
                         modifier = Modifier.weight(1f).height(48.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnBgColor,
-                            contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor
+                            containerColor = MoonTheme.customColors.cancelBtnBgColor,
+                            contentColor = MoonTheme.customColors.cancelBtnTextColor
                         ),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
                     ) {
-                        Text("Cancel", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.cancel), fontWeight = FontWeight.Bold)
                     }
                     Button(
                         onClick = { onConfirm(tempYear, tempMonth) },
@@ -826,7 +851,7 @@ fun MonthYearPickerDialog(
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
-                        Text("OK", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
+                        Text(stringResource(R.string.ok), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
                     }
                 }
             }
@@ -954,7 +979,7 @@ fun ShareModeBottomSheet(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Share Mood Calendar",
+                text = stringResource(R.string.share_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -964,13 +989,13 @@ fun ShareModeBottomSheet(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 ShareModeItem(
-                    title = "Square (1:1)",
+                    title = stringResource(R.string.square),
                     icon = Icons.Rounded.CropSquare,
                     onClick = { onModeSelected(true) },
                     modifier = Modifier.weight(1f)
                 )
                 ShareModeItem(
-                    title = "Portrait (9:16)",
+                    title = stringResource(R.string.portrait),
                     icon = Icons.Rounded.StayCurrentPortrait,
                     onClick = { onModeSelected(false) },
                     modifier = Modifier.weight(1f)
@@ -1014,7 +1039,8 @@ fun ShareCalendarCard(
     themeType: MoonThemeType = MoonThemeType.DEFAULT
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    val monthName = yearMonth.format(java.time.format.DateTimeFormatter.ofPattern("MMMM yyyy"))
+    val currentLanguage = LocalLocale.current
+    val monthName = stringResource(R.string.month_format, yearMonth.monthValue, yearMonth.year)
 
     Box(
         modifier = Modifier
@@ -1047,7 +1073,15 @@ fun ShareCalendarCard(
             val firstDayOfMonth = yearMonth.atDay(1)
             val firstDayOffset = firstDayOfMonth.dayOfWeek.value % 7
 
-            val daysOfWeek = listOf("S", "M", "T", "W", "T", "F", "S")
+            val daysOfWeek = listOf(
+                stringResource(R.string.sun_short),
+                stringResource(R.string.mon_short),
+                stringResource(R.string.tue_short),
+                stringResource(R.string.wed_short),
+                stringResource(R.string.thu_short),
+                stringResource(R.string.fri_short),
+                stringResource(R.string.sat_short)
+            )
             Row(modifier = Modifier.fillMaxWidth()) {
                 daysOfWeek.forEach { day ->
                     Text(
@@ -1118,7 +1152,7 @@ fun ShareCalendarCard(
             if (!isSquare) {
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
-                    text = "Reflect on your journey with MoonPage",
+                    text = stringResource(R.string.reflect_journey),
                     style = MaterialTheme.typography.bodyLarge,
                     color = colorScheme.onSurface.copy(alpha = 0.5f),
                     textAlign = TextAlign.Center
@@ -1225,13 +1259,13 @@ fun FilterBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Filter Your Month",
+                    text = stringResource(R.string.filter_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 if (selectedMoodIds.isNotEmpty() || selectedActivityIds.isNotEmpty()) {
                     TextButton(onClick = onClearAll) {
-                        Text("Clear All", color = cs.primary)
+                        Text(stringResource(R.string.clear_all), color = cs.primary)
                     }
                 }
             }
@@ -1240,7 +1274,7 @@ fun FilterBottomSheet(
 
             // Moods Section
             Text(
-                "Filter by Mood",
+                stringResource(R.string.filter_by_mood),
                 style = MaterialTheme.typography.titleSmall,
                 color = cs.onSurface.copy(alpha = 0.5f)
             )
@@ -1284,7 +1318,7 @@ fun FilterBottomSheet(
 
             // Activities Section
             Text(
-                "Filter by Activities",
+                stringResource(R.string.filter_by_activities),
                 style = MaterialTheme.typography.titleSmall,
                 color = cs.onSurface.copy(alpha = 0.5f)
             )
@@ -1317,7 +1351,7 @@ fun FilterBottomSheet(
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(14.dp)
             ) {
-                Text("Show Results")
+                Text(stringResource(R.string.show_results))
             }
         }
     }

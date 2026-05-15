@@ -17,12 +17,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.diary.moonpage.R
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.domain.model.ThemeType
 import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
@@ -39,6 +41,7 @@ fun StoreScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
@@ -47,7 +50,7 @@ fun StoreScreen(
                     snackbarHostState.showSnackbar(effect.message)
                 }
                 is StoreUiEffect.ThemeActivated -> {
-                    snackbarHostState.showSnackbar("Theme updated successfully!")
+                    snackbarHostState.showSnackbar(context.getString(R.string.theme_updated_success))
                 }
                 is StoreUiEffect.NavigateBack -> {
                     onNavigateBack()
@@ -67,13 +70,7 @@ fun StoreScreen(
                     .padding(bottom = paddingValues.calculateBottomPadding())
             ) {
                 StoreTopBar(
-                    coins = uiState.userCoins,
-                    onDoneClick = if (uiState.temporarySelectedThemeId != null) {
-                        { viewModel.applyTheme() }
-                    } else {
-                        onNavigateBack
-                    },
-                    isActivate = uiState.temporarySelectedThemeId != null
+                    coins = uiState.userCoins
                 )
 
                 StoreTabs(
@@ -81,20 +78,9 @@ fun StoreScreen(
                     onTabSelected = { viewModel.onTabSelected(it) }
                 )
 
-                AnimatedContent(
+                Crossfade(
                     targetState = uiState.selectedTabIndex,
-                    transitionSpec = {
-                        val slideSpec = tween<IntOffset>(300)
-                        if (targetState > initialState) {
-                            (slideInHorizontally(animationSpec = slideSpec) { it } + fadeIn()).togetherWith(
-                                slideOutHorizontally(animationSpec = slideSpec) { -it } + fadeOut()
-                            )
-                        } else {
-                            (slideInHorizontally(animationSpec = slideSpec) { -it } + fadeIn()).togetherWith(
-                                slideOutHorizontally(animationSpec = slideSpec) { it } + fadeOut()
-                            )
-                        }.using(SizeTransform(clip = false))
-                    },
+                    animationSpec = tween(300),
                     label = "TabAnimation"
                 ) { targetIndex ->
                     when (targetIndex) {
@@ -159,6 +145,7 @@ fun StoreScreen(
         }
     }
 }
+
 @Composable
 fun StoreTabs(
     selectedIndex: Int,
@@ -170,11 +157,11 @@ fun StoreTabs(
             .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.Start
     ) {
-        TabItem("Home", selectedIndex == 0) { onTabSelected(0) }
+        TabItem(stringResource(R.string.home), selectedIndex == 0) { onTabSelected(0) }
         Spacer(modifier = Modifier.width(16.dp))
-        TabItem("My Theme", selectedIndex == 1) { onTabSelected(1) }
+        TabItem(stringResource(R.string.my_theme), selectedIndex == 1) { onTabSelected(1) }
         Spacer(modifier = Modifier.width(16.dp))
-        TabItem("Collections", selectedIndex == 2) { onTabSelected(2) }
+        TabItem(stringResource(R.string.collections), selectedIndex == 2) { onTabSelected(2) }
     }
 }
 
@@ -232,11 +219,11 @@ fun HomeTabContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                item { MoonFilterChip("All Themes", selectedCategory == "ALL") { onCategoryClick("ALL") } }
-                item { MoonFilterChip("Light Mode", selectedCategory == "LIGHT") { onCategoryClick("LIGHT") } }
-                item { MoonFilterChip("Dark Mode", selectedCategory == "DARK") { onCategoryClick("DARK") } }
-                item { MoonFilterChip("Exclusive", selectedCategory == "EXCLUSIVE") { onCategoryClick("EXCLUSIVE") } }
-                item { MoonFilterChip("Newest", selectedCategory == "NEWEST") { onCategoryClick("NEWEST") } }
+                item { MoonFilterChip(stringResource(R.string.all_themes), selectedCategory == "ALL") { onCategoryClick("ALL") } }
+                item { MoonFilterChip(stringResource(R.string.light_mode), selectedCategory == "LIGHT") { onCategoryClick("LIGHT") } }
+                item { MoonFilterChip(stringResource(R.string.dark_mode), selectedCategory == "DARK") { onCategoryClick("DARK") } }
+                item { MoonFilterChip(stringResource(R.string.exclusive), selectedCategory == "EXCLUSIVE") { onCategoryClick("EXCLUSIVE") } }
+                item { MoonFilterChip(stringResource(R.string.newest), selectedCategory == "NEWEST") { onCategoryClick("NEWEST") } }
             }
         }
 
@@ -248,12 +235,12 @@ fun HomeTabContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Featured Collections",
+                    text = stringResource(R.string.featured_collections),
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
-                    text = "View All",
+                    text = stringResource(R.string.view_all),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                     modifier = Modifier
@@ -264,7 +251,11 @@ fun HomeTabContent(
             }
         }
 
-        items(filteredThemes) { theme ->
+        items(
+            items = filteredThemes,
+            key = { it.id },
+            contentType = { "theme" }
+        ) { theme ->
             ThemeCard(theme = theme, onClick = { onThemeClick(theme) })
         }
 
@@ -276,12 +267,12 @@ fun HomeTabContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Icon Collections",
+                    text = stringResource(R.string.icon_collections),
                     color = MaterialTheme.colorScheme.onBackground,
                     style = MaterialTheme.typography.titleLarge
                 )
                 Text(
-                    text = "View All",
+                    text = stringResource(R.string.view_all),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                     modifier = Modifier
@@ -326,7 +317,7 @@ fun MyThemeTabContent(
         if (currentTheme != null) {
             item {
                 Text(
-                    text = "CURRENT THEME",
+                    text = stringResource(R.string.current_theme),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                     fontSize = 10.sp,
@@ -336,7 +327,11 @@ fun MyThemeTabContent(
             }
         }
 
-        items(otherThemes) { theme ->
+        items(
+            items = otherThemes,
+            key = { it.id },
+            contentType = { "theme" }
+        ) { theme ->
             ThemeCard(
                 theme = theme, 
                 isSelected = theme.id == temporarySelectedId,
@@ -363,14 +358,18 @@ fun CollectionsTabContent(
     ) {
         item {
             Text(
-                text = "All Collections",
+                text = stringResource(R.string.collections),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
         }
 
-        items(themes) { theme ->
+        items(
+            items = themes,
+            key = { it.id },
+            contentType = { "theme" }
+        ) { theme ->
             ThemeCard(theme = theme, onClick = { onThemeClick(theme) })
         }
     }

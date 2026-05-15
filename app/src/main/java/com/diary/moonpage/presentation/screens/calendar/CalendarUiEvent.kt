@@ -15,14 +15,13 @@ sealed class CalendarUiEvent {
     object OnMonthPickerDismiss : CalendarUiEvent()
     object OnFilterClick : CalendarUiEvent()
     object OnFilterDismiss : CalendarUiEvent()
+    object OnShareDismiss : CalendarUiEvent()
     data class ApplyFilter(val filterItem: FilterItem?) : CalendarUiEvent()
     object OnClearFilters : CalendarUiEvent()
     object DismissMessage : CalendarUiEvent()
     object OnSettingsClick : CalendarUiEvent()
     object OnThemeClick : CalendarUiEvent()
-    object OnShareClick : CalendarUiEvent()
-    data class OnShareModeSelected(val isSquare: Boolean) : CalendarUiEvent()
-    object OnShareDismiss : CalendarUiEvent()
+    object ToggleViewMode : CalendarUiEvent()
 }
 
 /**

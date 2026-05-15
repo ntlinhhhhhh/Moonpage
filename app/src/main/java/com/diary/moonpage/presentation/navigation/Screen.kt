@@ -11,6 +11,7 @@ sealed class Screen (val route: String) {
     object VerifyOtp: Screen("verify_otp_screen")
     object OnboardingBirthday: Screen("onboarding_birthday_screen")
     object OnboardingGender: Screen("onboarding_gender_screen")
+    object OnboardingReminder: Screen("onboarding_reminder_screen")
     object ActivityCategorySelection: Screen("activity_category_selection_screen")
 
     // Main App Screens (Bottom Nav)
@@ -36,9 +37,15 @@ sealed class Screen (val route: String) {
     object Music: Screen("music_screen")
     object MenstrualCycle: Screen("menstrual_cycle_screen")
     object DailyPhoto: Screen("daily_photo_screen")
+    object ShareLog: Screen("share_log_screen/{date}")
+    object ShareCalendar: Screen("share_calendar_screen/{yearMonth}")
 
     // Moment Sub-screens
     object MomentDetail: Screen("moment_detail_screen/{momentId}")
+
+    // Security Screens
+    object CreatePasscode: Screen("create_passcode_screen")
+    object Lock: Screen("lock_screen")
 
     // Store Sub-screens
     object ThemeDetail: Screen("theme_detail_screen")

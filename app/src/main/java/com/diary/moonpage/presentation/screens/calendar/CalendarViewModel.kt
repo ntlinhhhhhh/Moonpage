@@ -75,17 +75,17 @@ class CalendarViewModel @Inject constructor(
             CalendarUiEvent.OnFilterDismiss -> {
                 _uiState.update { it.copy(showFilterSheet = false) }
             }
-            CalendarUiEvent.OnShareClick -> {
-                _uiState.update { it.copy(showShareSheet = true) }
-            }
             CalendarUiEvent.OnShareDismiss -> {
                 _uiState.update { it.copy(showShareSheet = false) }
             }
             is CalendarUiEvent.ApplyFilter -> {
                 _uiState.update { it.copy(selectedFilter = event.filterItem, showFilterSheet = false) }
             }
-            CalendarUiEvent.DismissMessage -> {
-                _uiState.update { it.copy(snackbarMessage = null) }
+            CalendarUiEvent.ToggleViewMode -> {
+                _uiState.update { currentState ->
+                    val newMode = if (currentState.viewMode == CalendarViewMode.CALENDAR) CalendarViewMode.TIMELINE else CalendarViewMode.CALENDAR
+                    currentState.copy(viewMode = newMode)
+                }
             }
             else -> {}
         }
