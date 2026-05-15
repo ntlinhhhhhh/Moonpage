@@ -86,21 +86,30 @@ fun MoodLoggingSlide(isVisible: Boolean) {
                         Text("How was your day?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(16.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                            val moodPalette = listOf(
+                                Color(0xFF5D4037), // Very Sad
+                                Color(0xFFFB8C00), // Sad
+                                Color(0xFFFFB74D), // Neutral
+                                Color(0xFFFFE082), // Happy
+                                Color(0xFFFFF9E1)  // Very Happy
+                            )
                             listOf(1, 2, 3, 4, 5).forEach { level ->
-                                val isSelected = level == 2
+                                val isSelected = level == 4 // Happy selected for demo
                                 val moodIcon = MoonIcons.Moods.getMoodVisual(level, MoonThemeType.DEFAULT)
+                                val color = moodPalette[level - 1]
+                                
                                 Box(
                                     modifier = Modifier
-                                        .size(48.dp)
+                                        .size(52.dp)
                                         .clip(CircleShape)
-                                        .background(if (isSelected) Color(0xFFAED581) else Color.LightGray.copy(alpha = 0.2f)),
+                                        .background(if (isSelected) color else Color.LightGray.copy(alpha = 0.1f)),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         painter = painterResource(id = moodIcon.drawableRes!!),
                                         contentDescription = null,
-                                        tint = if (isSelected) Color.Black else Color.Gray.copy(alpha = 0.5f),
-                                        modifier = Modifier.size(32.dp)
+                                        tint = if (isSelected) Color(0xFF3E2723) else Color.Gray.copy(alpha = 0.3f),
+                                        modifier = Modifier.size(36.dp)
                                     )
                                 }
                             }
@@ -243,7 +252,7 @@ fun OnboardingInteractionCard(
                                         "cloudy" -> Icons.Rounded.Cloud
                                         "rainy" -> Icons.Rounded.Umbrella
                                         "windy" -> Icons.Rounded.Air
-                                        "friends" -> Icons.Rounded.Star
+                                        "friends" -> Icons.Rounded.Group
                                         "family" -> Icons.Rounded.Group
                                         "partner" -> Icons.Rounded.Favorite
                                         "none" -> Icons.Rounded.Cancel
@@ -469,7 +478,7 @@ fun getIconForItem(item: String): ImageVector = when (item) {
 fun AnnualLookBackSlide(isVisible: Boolean) {
     var activeThemeIdx by remember { mutableStateOf(0) }
     val themes = listOf(
-        ThemeData("Default Theme", Color(0xFFF5F5F5), Color(0xFF8C7E6A), MoonThemeType.DEFAULT),
+        ThemeData("Default Theme", Color(0xFFFFFBF4), Color(0xFF8C7E6A), MoonThemeType.DEFAULT),
         ThemeData("Coffee Theme", Color(0xFFEFEBE9), Color(0xFF8D6E63), MoonThemeType.COFFEE),
         ThemeData("Blushing Theme", Color(0xFFFFF0F3), Color(0xFFD2847A), MoonThemeType.BLUSHING),
         ThemeData("Galaxy Theme", Color(0xFFE8EAF6), Color(0xFF3F51B5), MoonThemeType.GALAXY),
@@ -556,7 +565,7 @@ fun AnnualLookBackSlide(isVisible: Boolean) {
                                     horizontalArrangement = Arrangement.SpaceEvenly
                                 ) {
                                     repeat(7) { c ->
-                                        val day = r * 7 + c - 1 // Start from Monday
+                                        val day = r * 7 + c - 1 // Start from Monday-ish
                                         if (day in 1..30) {
                                             val showIcon = (day % 3 == 0) || (day % 7 == 0)
                                             Box(
@@ -774,23 +783,28 @@ fun MoodDistributionFrame(isVisible: Boolean) {
         Spacer(modifier = Modifier.height(32.dp))
         
         val items = listOf(
-            Triple(1, "13%", Color(0xFFFFF9C4)),
-            Triple(2, "13%", Color(0xFFFFF176)),
-            Triple(3, "38%", Color(0xFFFFD54F)),
-            Triple(4, "13%", Color(0xFFFBC02D)),
-            Triple(5, "25%", Color(0xFFF57F17))
+            Triple(5, "13%", Color(0xFFFFF9E1)), // Very Happy
+            Triple(4, "13%", Color(0xFFFFE082)), // Happy
+            Triple(3, "38%", Color(0xFFFFB74D)), // Neutral
+            Triple(2, "13%", Color(0xFFFB8C00)), // Sad
+            Triple(1, "25%", Color(0xFF5D4037))  // Very Sad
         )
         
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
             items.forEach { (level, pct, color) ->
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     val moodIcon = MoonIcons.Moods.getMoodVisual(level, MoonThemeType.DEFAULT)
-                    Box(modifier = Modifier.size(48.dp).clip(CircleShape).background(color.copy(alpha = 0.3f)), contentAlignment = Alignment.Center) {
-                        Icon(painter = painterResource(id = moodIcon.drawableRes!!), null, tint = color, modifier = Modifier.size(32.dp))
+                    Box(modifier = Modifier.size(52.dp).clip(CircleShape).background(color), contentAlignment = Alignment.Center) {
+                        Icon(
+                            painter = painterResource(id = moodIcon.drawableRes!!), 
+                            null, 
+                            tint = Color(0xFF3E2723), // Dark brown face
+                            modifier = Modifier.size(36.dp)
+                        )
                     }
                     Spacer(modifier = Modifier.height(12.dp))
-                    Surface(color = color.copy(alpha = 0.1f), shape = RoundedCornerShape(8.dp)) {
-                        Text(pct, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    Surface(color = color.copy(alpha = 0.1f), shape = RoundedCornerShape(12.dp)) {
+                        Text(pct, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -799,7 +813,7 @@ fun MoodDistributionFrame(isVisible: Boolean) {
         Spacer(modifier = Modifier.height(40.dp))
         
         // Horizontal Stacked Bar
-        Canvas(modifier = Modifier.fillMaxWidth().height(40.dp).clip(RoundedCornerShape(20.dp))) {
+        Canvas(modifier = Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(22.dp))) {
             var currentX = 0f
             val totalWidth = size.width * barProgress.value
             items.forEach { (_, pct, color) ->

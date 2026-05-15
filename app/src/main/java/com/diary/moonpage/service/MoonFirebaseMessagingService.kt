@@ -69,9 +69,28 @@ class MoonFirebaseMessagingService : FirebaseMessagingService() {
 
         android.util.Log.d("FCMService", "Payload: title=$title, body=$body, type=$type, targetId=$targetId")
 
-        // Post to bus for in-app notification
+        // Post to bus for in-app snackbar
         scope.launch {
             notificationBus.postEvent(title, body, type, targetId)
+            
+            // Record this notification in the backend database for Notification Center
+            val userId = userRepository.currentUser.value?.userId
+            if (userId != null) {
+                try {
+                    notificationRepository.createNotification(
+                        com.diary.moonpage.data.remote.dto.notification.CreateNotificationRequest(
+                            userId = userId,
+                            title = title,
+                            message = body,
+                            type = type ?: "SYSTEM"
+                        )
+                    )
+                } catch (e: Exception) {
+                    android.util.Log.e("FCMService", "Failed to record in-app notification", e)
+                }
+            } else {
+                android.util.Log.w("FCMService", "No user logged in, skipping database record")
+            }
         }
 
         // Always show system notification as well
