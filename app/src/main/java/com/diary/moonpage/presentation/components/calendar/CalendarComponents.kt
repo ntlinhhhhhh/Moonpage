@@ -204,6 +204,7 @@ fun DayItem(
     day: Int?,
     isSelected: Boolean,
     moodColor: Color?,
+    modifier: Modifier = Modifier,
     moodIcon: ImageVector? = null,
     moodDrawable: Int? = null,
     isToday: Boolean = false,
@@ -238,7 +239,7 @@ fun DayItem(
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 2.dp, vertical = 4.dp)
     ) {
