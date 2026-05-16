@@ -19,7 +19,6 @@ class WeatherRepositoryImpl @Inject constructor(
             val today = LocalDate.now()
 
             val response = if (date.isBefore(today)) {
-                // Use Archive API for past dates
                 api.getArchive(
                     latitude = lat,
                     longitude = lon,
@@ -27,7 +26,6 @@ class WeatherRepositoryImpl @Inject constructor(
                     endDate = dateStr
                 )
             } else {
-                // Use Forecast API for today or future dates
                 api.getForecast(
                     latitude = lat,
                     longitude = lon,
@@ -40,24 +38,32 @@ class WeatherRepositoryImpl @Inject constructor(
             if (response.isSuccessful && response.body() != null) {
                 val body = response.body()!!
                 val conditions = mutableListOf<String>()
-                var temp = 0.0
+                var temp: Double
 
                 if (date == today && body.currentWeather != null) {
-                    // Use real-time current weather for today if available
                     val current = body.currentWeather!!
                     temp = current.temperature
                     conditions.add(mapWeatherCodeToName(current.weathercode))
                     if (current.temperature > 30) conditions.add("Hot")
                     if (current.temperature < 15) conditions.add("Cold")
                     if (current.windspeed > 20) conditions.add("Windy")
-                } else if (body.daily != null && body.daily!!.time.isNotEmpty()) {
-                    // Use daily summary
+                } else if (body.daily != null && !body.daily!!.time.isNullOrEmpty()) {
                     val daily = body.daily!!
-                    temp = (daily.temperatureMax[0] + daily.temperatureMin[0]) / 2.0
-                    conditions.add(mapWeatherCodeToName(daily.weathercode[0]))
-                    if (daily.temperatureMax[0] > 30) conditions.add("Hot")
-                    if (daily.temperatureMin[0] < 15) conditions.add("Cold")
-                    if (daily.windspeedMax[0] > 20) conditions.add("Windy")
+                    
+                    val maxTemp = daily.temperatureMax?.firstOrNull() ?: 0.0
+                    val minTemp = daily.temperatureMin?.firstOrNull() ?: maxTemp
+                    temp = (maxTemp + minTemp) / 2.0
+                    
+                    val code = daily.weathercode?.firstOrNull() ?: 0
+                    conditions.add(mapWeatherCodeToName(code))
+                    
+                    if (maxTemp > 30) conditions.add("Hot")
+                    if (minTemp < 15) conditions.add("Cold")
+                    
+                    val wind = daily.windspeedMax?.firstOrNull() ?: 0.0
+                    if (wind > 20) conditions.add("Windy")
+                } else {
+                    return Result.failure(Exception("No weather data available in response"))
                 }
 
                 Result.success(WeatherResult(conditions.distinct(), temp))
@@ -93,7 +99,7 @@ class WeatherRepositoryImpl @Inject constructor(
         return when (code) {
             0 -> "Sunny"
             1, 2, 3 -> "Cloudy"
-            45, 48 -> "Cloudy" // Fog
+            45, 48 -> "Cloudy"
             51, 53, 55, 61, 63, 65, 80, 81, 82 -> "Rainy"
             71, 73, 75, 77, 85, 86 -> "Snowy"
             95, 96, 99 -> "Stormy"
