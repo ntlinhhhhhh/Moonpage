@@ -7,14 +7,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.fragment.app.FragmentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ProcessLifecycleOwner
-import com.diary.moonpage.core.util.LocaleUtils
 import com.diary.moonpage.presentation.MoonPageApp
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class MainActivity : FragmentActivity() {
+class MainActivity : AppCompatActivity() {
     private val mainViewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,11 +29,6 @@ class MainActivity : FragmentActivity() {
         setContent {
             MoonPageApp(mainViewModel)
         }
-    }
-
-    override fun attachBaseContext(newBase: Context) {
-        val lang = LocaleUtils.getSavedLanguage(newBase)
-        super.attachBaseContext(LocaleUtils.applyLocale(newBase, lang))
     }
 
     override fun onNewIntent(intent: Intent) {

@@ -34,6 +34,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MoonPage"
         android:requestLegacyExternalStorage="true"
+        android:localeConfig="@xml/locales_config"
         android:enableOnBackInvokedCallback="true">
         <activity
             android:name=".MainActivity"

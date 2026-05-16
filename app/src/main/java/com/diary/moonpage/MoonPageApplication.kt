@@ -15,10 +15,6 @@ import java.util.concurrent.TimeUnit
 
 @HiltAndroidApp
 class MoonPageApplication : Application(), ImageLoaderFactory {
-    override fun attachBaseContext(base: Context) {
-        val lang = LocaleUtils.getSavedLanguage(base)
-        super.attachBaseContext(LocaleUtils.applyLocale(base, lang))
-    }
 
     override fun newImageLoader(): ImageLoader {
         return ImageLoader.Builder(this)

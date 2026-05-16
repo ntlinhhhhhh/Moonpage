@@ -1,6 +1,8 @@
 package com.diary.moonpage.presentation.screens.profile
 
 import android.app.Activity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -18,6 +20,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.R
+import com.diary.moonpage.core.util.LocaleUtils
 import com.diary.moonpage.presentation.components.profile.*
 import com.diary.moonpage.presentation.components.core.layout.SectionTitle
 import com.diary.moonpage.core.theme.*
@@ -55,8 +58,8 @@ fun SettingsScreen(
             onDismiss = { showLanguageDialog = false },
             onLanguageSelected = { lang ->
                 viewModel.setLanguage(lang) {
-                    // Restart activity to apply language change app-wide
-                    (context as? Activity)?.recreate()
+                    // AppCompatDelegate.setApplicationLocales handles the change,
+                    // but we can add additional logic here if needed.
                 }
                 showLanguageDialog = false
             }
