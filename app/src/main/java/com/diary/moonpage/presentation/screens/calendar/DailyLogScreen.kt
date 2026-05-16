@@ -1,5 +1,6 @@
 package com.diary.moonpage.presentation.screens.calendar
 
+import android.Manifest
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -47,6 +48,9 @@ import androidx.compose.ui.graphics.ColorFilter
 import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import com.diary.moonpage.core.theme.MoonTheme
 import com.diary.moonpage.core.theme.MoonThemeType
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.YearMonth
@@ -58,6 +62,7 @@ import androidx.compose.ui.platform.LocalLocale
 /**
  * Stateful Component
  */
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun DailyLogScreen(
     dateString: String,
@@ -71,8 +76,26 @@ fun DailyLogScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
 
+    val locationPermissionState = rememberMultiplePermissionsState(
+        permissions = listOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+    )
+
     LaunchedEffect(dateString) {
         viewModel.setInitialDate(LocalDate.parse(dateString))
+    }
+
+    // Auto-trigger weather fetch for any selected date if it's a new log
+    LaunchedEffect(uiState.isInitialized, uiState.date, uiState.existingLog) {
+        if (uiState.isInitialized && uiState.existingLog == null) {
+            if (locationPermissionState.allPermissionsGranted) {
+                viewModel.onEvent(DailyLogUiEvent.OnLocationPermissionGranted)
+            } else {
+                locationPermissionState.launchMultiplePermissionRequest()
+            }
+        }
     }
 
     LaunchedEffect(Unit) {

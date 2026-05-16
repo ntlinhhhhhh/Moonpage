@@ -7,6 +7,8 @@ import com.diary.moonpage.domain.model.DailyLog
 import com.diary.moonpage.domain.repository.DailyLogRepository
 import com.diary.moonpage.core.util.PkceUtil
 import com.diary.moonpage.core.util.MoonIcons
+import com.diary.moonpage.core.util.LocationTracker
+import com.diary.moonpage.domain.repository.WeatherRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -21,6 +23,8 @@ import javax.inject.Inject
 class DailyLogViewModel @Inject constructor(
     private val repository: DailyLogRepository,
     private val themeRepository: com.diary.moonpage.domain.repository.ThemeRepository,
+    private val weatherRepository: WeatherRepository,
+    private val locationTracker: LocationTracker,
     private val activityPreferencesManager: ActivityPreferencesManager,
     private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager,
     private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
@@ -82,7 +86,6 @@ class DailyLogViewModel @Inject constructor(
                         else -> 3
                     }
                     
-                    // Fallback to local mood color if API hex is invalid or bad
                     val color = try {
                         if (!entity.iconUrl.isNullOrBlank() && (entity.iconUrl.startsWith("#") || entity.iconUrl.length == 6 || entity.iconUrl.length == 8)) {
                             val colorStr = if (entity.iconUrl.startsWith("#")) entity.iconUrl else "#${entity.iconUrl}"
@@ -134,7 +137,7 @@ class DailyLogViewModel @Inject constructor(
                 } else {
                     current.add(event.activityId)
                 }
-                _uiState.update { it.copy(selectedActivities = current) }
+                _uiState.update { it.copy(selectedActivities = current.toList()) }
             }
             is DailyLogUiEvent.OnNoteChanged -> {
                 _uiState.update { it.copy(noteText = event.note) }
@@ -147,7 +150,6 @@ class DailyLogViewModel @Inject constructor(
                 _uiState.update { it.copy(isMenstruation = event.isMenstruation) }
             }
             is DailyLogUiEvent.OnPhotosChanged -> {
-                // event.photos is List<String> (URIs)
                 val current = _uiState.value.dailyPhotos
                 val combined = (current + event.photos).distinct().take(3)
                 _uiState.update { it.copy(dailyPhotos = combined) }
@@ -169,6 +171,49 @@ class DailyLogViewModel @Inject constructor(
             }
             is DailyLogUiEvent.OnSleepChanged -> {
                 _uiState.update { it.copy(sleepHours = event.hours) }
+            }
+            is DailyLogUiEvent.OnSleepTimeConfirmed -> {
+                val bedMin = event.bedTime.hour * 60 + event.bedTime.minute
+                val wakeMin = event.wakeTime.hour * 60 + event.wakeTime.minute
+                val diffMin = if (wakeMin >= bedMin) wakeMin - bedMin else (24 * 60 - bedMin) + wakeMin
+                val hours = diffMin / 60f
+                _uiState.update { it.copy(
+                    sleepHours = hours,
+                    sleepBedTime = event.bedTime,
+                    sleepWakeTime = event.wakeTime,
+                    showSleepDialog = false
+                ) }
+            }
+            DailyLogUiEvent.OnSleepRecordClick -> {
+                _uiState.update { it.copy(showSleepDialog = true) }
+            }
+            DailyLogUiEvent.OnSleepDialogDismiss -> {
+                _uiState.update { it.copy(showSleepDialog = false) }
+            }
+            DailyLogUiEvent.OnSaveClick -> {
+                saveDailyLog()
+            }
+            DailyLogUiEvent.OnExitClick -> {
+                _uiState.update { it.copy(showExitDialog = true) }
+            }
+            DailyLogUiEvent.OnDismissExitDialog -> {
+                _uiState.update { it.copy(showExitDialog = false) }
+            }
+            DailyLogUiEvent.OnDatePickerClick -> {
+                _uiState.update { it.copy(showDatePicker = true) }
+            }
+            DailyLogUiEvent.OnDatePickerDismiss -> {
+                _uiState.update { it.copy(showDatePicker = false) }
+            }
+            DailyLogUiEvent.OnConfirmOverwrite -> {
+                val pending = _uiState.value.pendingDate
+                if (pending != null) {
+                    _uiState.update { it.copy(date = pending, showOverwriteDialog = false) }
+                    fetchLogForDate(pending)
+                }
+            }
+            DailyLogUiEvent.OnDismissOverwriteDialog -> {
+                _uiState.update { it.copy(showOverwriteDialog = false) }
             }
             DailyLogUiEvent.OnImportSteps -> {
                 viewModelScope.launch {
@@ -196,51 +241,12 @@ class DailyLogViewModel @Inject constructor(
             DailyLogUiEvent.OnSpotifyAuthDismiss -> {
                 _uiState.update { it.copy(showSpotifyAuthDialog = false) }
             }
-            DailyLogUiEvent.OnSleepRecordClick -> {
-                _uiState.update { it.copy(showSleepDialog = true) }
-            }
-            DailyLogUiEvent.OnSleepDialogDismiss -> {
-                _uiState.update { it.copy(showSleepDialog = false) }
-            }
-            is DailyLogUiEvent.OnSleepTimeConfirmed -> {
-                val bedMin = event.bedTime.hour * 60 + event.bedTime.minute
-                val wakeMin = event.wakeTime.hour * 60 + event.wakeTime.minute
-                val diffMin = if (wakeMin >= bedMin) wakeMin - bedMin else (24 * 60 - bedMin) + wakeMin
-                val hours = diffMin / 60f
-                _uiState.update { it.copy(
-                    sleepHours = hours,
-                    sleepBedTime = event.bedTime,
-                    sleepWakeTime = event.wakeTime,
-                    showSleepDialog = false
-                ) }
-            }
-            DailyLogUiEvent.OnSaveClick -> {
-                saveDailyLog()
-            }
-            DailyLogUiEvent.OnExitClick -> {
-                _uiState.update { it.copy(showExitDialog = true) }
-            }
-            DailyLogUiEvent.OnDismissExitDialog -> {
-                _uiState.update { it.copy(showExitDialog = false) }
-            }
-            DailyLogUiEvent.OnDatePickerClick -> {
-                _uiState.update { it.copy(showDatePicker = true) }
-            }
-            DailyLogUiEvent.OnDatePickerDismiss -> {
-                _uiState.update { it.copy(showDatePicker = false) }
-            }
-            DailyLogUiEvent.OnConfirmOverwrite -> {
-                val pending = _uiState.value.pendingDate
-                if (pending != null) {
-                    _uiState.update { it.copy(date = pending, showOverwriteDialog = false) }
-                    fetchLogForDate(pending)
-                }
-            }
-            DailyLogUiEvent.OnDismissOverwriteDialog -> {
-                _uiState.update { it.copy(showOverwriteDialog = false) }
-            }
             DailyLogUiEvent.DismissMessage -> {
                 _uiState.update { it.copy(snackbarMessage = null) }
+            }
+            DailyLogUiEvent.OnLocationPermissionGranted -> {
+                // Manually triggered fetch
+                autoFetchWeather(_uiState.value.date)
             }
         }
     }
@@ -270,6 +276,10 @@ class DailyLogViewModel @Inject constructor(
     private fun fetchLogForDate(date: LocalDate) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
+            
+            // Start weather fetch in parallel with existing log check for speed
+            autoFetchWeather(date)
+
             repository.getDailyLogByDate(date.toString()).onSuccess { log ->
                 val formatter = DateTimeFormatter.ofPattern("HH:mm")
                 val bedTime = log.sleepBedTime?.let { try { LocalTime.parse(it, formatter) } catch(e: Exception) { LocalTime.of(0, 0) } } ?: LocalTime.of(0, 0)
@@ -329,6 +339,35 @@ class DailyLogViewModel @Inject constructor(
         }
     }
 
+    private fun autoFetchWeather(date: LocalDate) {
+        viewModelScope.launch {
+            // Only proceed if permissions are likely there (tracked by screen)
+            val location = locationTracker.getCurrentLocation()
+            if (location != null) {
+                val weatherResult = weatherRepository.getWeatherConditions(location.latitude, location.longitude, date)
+                weatherResult.onSuccess { weatherNames ->
+                    // Wait for dynamicActivities to be loaded if they aren't yet
+                    if (_uiState.value.dynamicActivities.isEmpty()) {
+                        activityPreferencesManager.activities.first { it.isNotEmpty() }
+                    }
+
+                    val current = _uiState.value.selectedActivities.toMutableList()
+                    weatherNames.forEach { weatherName ->
+                        val weatherActivity = _uiState.value.dynamicActivities.find { 
+                            it.name.equals(weatherName, ignoreCase = true) 
+                        }
+                        weatherActivity?.let { activity ->
+                            if (!current.contains(activity.id)) {
+                                current.add(activity.id)
+                            }
+                        }
+                    }
+                    _uiState.update { it.copy(selectedActivities = current.toList()) }
+                }
+            }
+        }
+    }
+
     private fun saveDailyLog() {
         val state = _uiState.value
         if (state.selectedMood == null) {
@@ -339,7 +378,6 @@ class DailyLogViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             
-            // Only upload photos that are local (don't start with http)
             val photoFiles = state.dailyPhotos.filter { !it.startsWith("http") }.mapNotNull { uriString ->
                 try {
                     val uri = android.net.Uri.parse(uriString)

@@ -32,6 +32,7 @@ sealed class DailyLogUiEvent {
     object OnSpotifyAuthConfirm : DailyLogUiEvent()
     object OnSpotifyAuthDismiss : DailyLogUiEvent()
     object DismissMessage : DailyLogUiEvent()
+    object OnLocationPermissionGranted : DailyLogUiEvent()
 }
 
 /**

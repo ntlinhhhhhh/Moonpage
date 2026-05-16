@@ -116,4 +116,10 @@ object NetworkModule {
     fun provideSpotifyApi(retrofit: Retrofit): SpotifyApi {
         return retrofit.create(SpotifyApi::class.java)
     }
+
+    @Provides
+    @Singleton
+    fun provideWeatherApi(retrofit: Retrofit): WeatherApi {
+        return retrofit.create(WeatherApi::class.java)
+    }
 }
