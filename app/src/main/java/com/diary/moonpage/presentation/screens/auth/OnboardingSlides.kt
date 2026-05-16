@@ -828,25 +828,35 @@ fun MoodFlowFrame(isVisible: Boolean) {
                 pathMeasure.setPath(path, false)
                 val totalPathLength = pathMeasure.length
                 
-                // Animate progress based on X position to sync dots and line
-                val currentMaxX = startX + width * pathProgress.value
-                
-                // Draw the line up to currentMaxX
-                // We find the segment of path that corresponds to currentMaxX
+                // Calculate cumulative distances for each point to sync dots perfectly
+                val pointDistances = mutableListOf<Float>()
+                var tempPath = Path()
+                displayPoints.forEachIndexed { index, p ->
+                    if (index == 0) {
+                        pointDistances.add(0f)
+                        tempPath.moveTo(p.x, p.y)
+                    } else {
+                        tempPath.lineTo(p.x, p.y)
+                        val tempMeasure = PathMeasure()
+                        tempMeasure.setPath(tempPath, false)
+                        pointDistances.add(tempMeasure.length)
+                    }
+                }
+
+                // Current length drawn based on progress
+                val currentLength = totalPathLength * pathProgress.value
                 val partialPath = Path()
-                // A more accurate way to sync: find the distance along path where x = currentMaxX
-                // But pathMeasure.getSegment is distance-based. 
-                // For a jagged path, we can approximate the distance.
-                val lengthToDraw = totalPathLength * pathProgress.value
-                pathMeasure.getSegment(0f, lengthToDraw, partialPath, true)
+                pathMeasure.getSegment(0f, currentLength, partialPath, true)
                 
                 val selectionColor = MoonIcons.Moods.getMoodVisual(4, MoonThemeType.DEFAULT).color
                 drawPath(partialPath, selectionColor, style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
                 
                 // Draw dots at points (only before Day 31)
-                displayPoints.forEach { p ->
-                    // Corrected condition: only draw if the progress has horizontally passed the point
-                    if (p.x <= currentMaxX + 0.5f && p.x < startX + width) {
+                displayPoints.forEachIndexed { index, p ->
+                    val pointDist = pointDistances.getOrElse(index) { 0f }
+                    // Only draw circles if the line distance has reached that point 
+                    // AND it's strictly before the last grid line (Day 31)
+                    if (pointDist <= currentLength && p.x < startX + width) {
                         drawCircle(selectionColor, radius = 3.5.dp.toPx(), center = p)
                     }
                 }
