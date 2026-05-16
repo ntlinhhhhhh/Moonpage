@@ -131,16 +131,6 @@ fun StatisticsScreenContent(
                     if (uiState.isMonthly) {
                         // --- MONTHLY VIEW ---
                         
-                        // 0. Summary Stats
-                        stats?.let { s ->
-                            SummaryStatsView(
-                                totalLogs = s.totalLogs,
-                                totalPhotos = s.totalPhotos,
-                                currentStreak = s.currentStreak,
-                                longestStreak = s.longestStreak
-                            )
-                        }
-
                         // 0.1 Sleep & Steps Summary
                         stats?.let { s ->
                             SleepSummaryView(

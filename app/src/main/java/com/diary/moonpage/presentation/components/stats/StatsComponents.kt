@@ -524,52 +524,89 @@ fun SleepSummaryView(
     totalCalories: Int = 0,
     totalDistance: Double = 0.0
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Full width Avg Sleep Card
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            color = MoonTheme.customColors.logItemBg.copy(alpha = 0.5f),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    Icons.Rounded.Bedtime,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column {
+                    Text("Average Sleep", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        text = String.format(Locale.ENGLISH, "%.1f hours", averageSleepHours),
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        }
+
+        // Row with 3 cards: Bedtime, Wake up, Steps
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             SummaryItem(
-                label = "Avg Sleep", 
-                value = String.format(Locale.ENGLISH, "%.1fh", averageSleepHours), 
-                modifier = Modifier.weight(1f),
-                icon = Icons.Rounded.Bedtime
-            )
-            SummaryItem(
-                label = "Bedtime", 
-                value = averageSleepStartTime ?: "--:--", 
+                label = "Bedtime",
+                value = averageSleepStartTime ?: "--:--",
                 modifier = Modifier.weight(1f),
                 icon = Icons.Rounded.Alarm
             )
             SummaryItem(
-                label = "Wake up", 
-                value = averageWakeUpTime ?: "--:--", 
+                label = "Wake up",
+                value = averageWakeUpTime ?: "--:--",
                 modifier = Modifier.weight(1f),
                 icon = Icons.Rounded.WbSunny
             )
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
             SummaryItem(
-                label = "Steps", 
-                value = String.format(Locale.ENGLISH, "%,d", totalSteps), 
+                label = "Steps",
+                value = String.format(Locale.ENGLISH, "%,d", totalSteps),
                 modifier = Modifier.weight(1f),
                 icon = Icons.AutoMirrored.Rounded.DirectionsWalk
             )
-            SummaryItem(
-                label = "Calories", 
-                value = String.format(Locale.ENGLISH, "%,d kcal", totalCalories), 
-                modifier = Modifier.weight(1f),
-                icon = Icons.Rounded.LocalFireDepartment
-            )
-            SummaryItem(
-                label = "Distance", 
-                value = String.format(Locale.ENGLISH, "%.1f km", totalDistance), 
-                modifier = Modifier.weight(1f),
-                icon = Icons.Rounded.Route
-            )
+        }
+        
+        // Calories and Distance if available
+        if (totalCalories > 0 || totalDistance > 0.0) {
+             Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (totalCalories > 0) {
+                    SummaryItem(
+                        label = "Calories", 
+                        value = String.format(Locale.ENGLISH, "%,d", totalCalories), 
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Rounded.LocalFireDepartment
+                    )
+                }
+                if (totalDistance > 0.0) {
+                    SummaryItem(
+                        label = "Distance", 
+                        value = String.format(Locale.ENGLISH, "%.1f km", totalDistance), 
+                        modifier = Modifier.weight(1f),
+                        icon = Icons.Rounded.Route
+                    )
+                }
+            }
         }
     }
 }
