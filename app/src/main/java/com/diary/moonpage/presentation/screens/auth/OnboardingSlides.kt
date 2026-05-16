@@ -97,14 +97,13 @@ fun MoodLoggingSlide(isVisible: Boolean) {
                         Text("How was your day?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                         Spacer(modifier = Modifier.height(20.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                            val selectionColor = MoonIcons.Moods.getMoodVisual(4, MoonThemeType.DEFAULT).color
                             listOf(1, 2, 3, 4, 5).forEachIndexed { index, level ->
                                 val isSelected = selectedMoodIdx == index
                                 val moodIcon = MoonIcons.Moods.getMoodVisual(level, MoonThemeType.DEFAULT)
                                 val unselectedBg = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
                                 val unselectedIcon = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
-                                val selectedBg = selectionColor.copy(alpha = 0.2f)
-                                val selectedIcon = selectionColor
+                                val selectedBg = moodIcon.color
+                                val selectedIcon = Color(0xFF3E2723) // Dark brown for the face
                                 
                                 val bgColor = animateColorAsState(if (isSelected) selectedBg else unselectedBg)
                                 val tintColor = animateColorAsState(if (isSelected) selectedIcon else unselectedIcon)
@@ -340,7 +339,6 @@ private fun lerp(start: Color, stop: Color, fraction: Float): Color {
     )
 }
 
-// --- SLIDE 2: BEAUTIFUL LOGGING (Theme Showcase) ---
 // --- SLIDE 2: LOGS & MOMENTS (Refactored to match Slide 1) ---
 @Composable
 fun PhotoLogSlide(isVisible: Boolean) {
@@ -804,12 +802,16 @@ fun MoodFlowFrame(isVisible: Boolean) {
                     )
                 }
 
-                // Jagged Path Points (Snapped to mood levels: 0.0=Level 5, 0.25=Level 4, 0.5=Level 3, 0.75=Level 2, 1.0=Level 1)
+                // Jagged Path Points - Higher density for more detail
+                // Snapped to: 0.0=Level 5, 0.25=Level 4, 0.5=Level 3, 0.75=Level 2, 1.0=Level 1
                 val rawPoints = listOf(
-                    Offset(0.0f, 0.25f), Offset(0.08f, 0.0f), Offset(0.16f, 0.25f), 
-                    Offset(0.25f, 0.5f), Offset(0.33f, 0.25f), Offset(0.41f, 0.0f),
-                    Offset(0.5f, 0.25f), Offset(0.58f, 0.5f), Offset(0.66f, 0.75f),
-                    Offset(0.75f, 0.5f), Offset(0.83f, 0.25f), Offset(0.91f, 0.0f),
+                    Offset(0.0f, 0.25f), Offset(0.04f, 0.5f), Offset(0.08f, 0.0f), 
+                    Offset(0.12f, 0.25f), Offset(0.16f, 0.25f), Offset(0.20f, 0.0f),
+                    Offset(0.25f, 0.5f), Offset(0.30f, 0.75f), Offset(0.35f, 0.5f),
+                    Offset(0.40f, 0.25f), Offset(0.45f, 0.0f), Offset(0.50f, 0.25f),
+                    Offset(0.55f, 0.5f), Offset(0.60f, 0.5f), Offset(0.65f, 0.75f),
+                    Offset(0.70f, 1.0f), Offset(0.75f, 0.5f), Offset(0.80f, 0.25f),
+                    Offset(0.85f, 0.0f), Offset(0.90f, 0.25f), Offset(0.95f, 0.5f),
                     Offset(1.0f, 0.25f)
                 )
                 
@@ -824,17 +826,27 @@ fun MoodFlowFrame(isVisible: Boolean) {
                 
                 val pathMeasure = PathMeasure()
                 pathMeasure.setPath(path, false)
+                val totalPathLength = pathMeasure.length
+                
+                // Animate progress based on X position to sync dots and line
+                val currentMaxX = startX + width * pathProgress.value
+                
+                // Draw the line up to currentMaxX
+                // We find the segment of path that corresponds to currentMaxX
                 val partialPath = Path()
-                // Stop the line slightly before the end for a cleaner look
-                pathMeasure.getSegment(0f, pathMeasure.length * pathProgress.value, partialPath, true)
+                // A more accurate way to sync: find the distance along path where x = currentMaxX
+                // But pathMeasure.getSegment is distance-based. 
+                // For a jagged path, we can approximate the distance.
+                val lengthToDraw = totalPathLength * pathProgress.value
+                pathMeasure.getSegment(0f, lengthToDraw, partialPath, true)
                 
                 val selectionColor = MoonIcons.Moods.getMoodVisual(4, MoonThemeType.DEFAULT).color
                 drawPath(partialPath, selectionColor, style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
                 
                 // Draw dots at points (only before Day 31)
                 displayPoints.forEach { p ->
-                    // Only draw circles if the path has reached that point AND it's strictly before the last grid line (Day 31)
-                    if (p.x <= startX + width * pathProgress.value && p.x < startX + width) {
+                    // Corrected condition: only draw if the progress has horizontally passed the point
+                    if (p.x <= currentMaxX + 0.5f && p.x < startX + width) {
                         drawCircle(selectionColor, radius = 3.5.dp.toPx(), center = p)
                     }
                 }
