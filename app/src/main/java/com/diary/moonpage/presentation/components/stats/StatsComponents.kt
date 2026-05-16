@@ -635,14 +635,20 @@ fun SleepAnalysisChart(
     Column {
         // Summary Row
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            SleepStatBox(label = "Bedtime", value = latestSleep?.startTime ?: "12:00 AM", modifier = Modifier.weight(1f))
+            val bedtime = latestSleep?.startTime?.ifBlank { null } ?: "12:00 AM"
+            SleepStatBox(label = "Bedtime", value = bedtime, modifier = Modifier.weight(1f))
+            
             val wakeUpTime = if (latestSleep != null) {
                 try {
-                    val startTime = latestSleep.startTime ?: "12:00 AM"
+                    val startTime = latestSleep.startTime?.ifBlank { null } ?: "12:00 AM"
                     val date = try {
                         java.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH).parse(startTime)
                     } catch (e: Exception) {
-                        java.text.SimpleDateFormat("HH:mm", Locale.ENGLISH).parse(startTime)
+                        try {
+                            java.text.SimpleDateFormat("HH:mm", Locale.ENGLISH).parse(startTime)
+                        } catch(e: Exception) {
+                            java.text.SimpleDateFormat("HH:mm:ss", Locale.ENGLISH).parse(startTime)
+                        }
                     }
                     if (date != null) {
                         val cal = Calendar.getInstance().apply { time = date }
@@ -699,7 +705,7 @@ fun SleepAnalysisChart(
                             val x = (day - 1) * spacing + spacing / 2f
                             
                             // Parse Start Time to Float (Hours from 6PM)
-                            val startTimeFloat = parseTimeToFloat(data.startTime ?: "12:00 AM")
+                            val startTimeFloat = parseTimeToFloat(data.startTime?.ifBlank { null })
                             val duration = data.duration.toFloat()
                             
                             val startY = (startTimeFloat / 24f) * height
@@ -798,12 +804,20 @@ private fun SleepLegendItem(color: Color, label: String, value: String) {
 }
 
 private fun parseTimeToFloat(timeStr: String?): Float {
-    if (timeStr == null) return 6f // Default to Midnight (6 hours after 6PM)
+    if (timeStr == null || timeStr.isBlank()) return 6f // Default to Midnight (6 hours after 6PM)
     try {
         val date = try {
             java.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH).parse(timeStr)
         } catch (e: Exception) {
-            java.text.SimpleDateFormat("HH:mm", Locale.ENGLISH).parse(timeStr)
+            try {
+                java.text.SimpleDateFormat("HH:mm", Locale.ENGLISH).parse(timeStr)
+            } catch (e: Exception) {
+                try {
+                    java.text.SimpleDateFormat("HH:mm:ss", Locale.ENGLISH).parse(timeStr)
+                } catch (e: Exception) {
+                    null
+                }
+            }
         } ?: return 6f
         
         val cal = Calendar.getInstance().apply { time = date }
