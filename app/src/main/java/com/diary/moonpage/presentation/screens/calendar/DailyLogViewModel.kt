@@ -12,6 +12,7 @@ import com.diary.moonpage.domain.repository.WeatherRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import okio.buffer
 import okio.sink
 import java.time.LocalDate
@@ -525,39 +526,79 @@ class DailyLogViewModel @Inject constructor(
 
     private fun autoFetchWeather(date: LocalDate) {
         viewModelScope.launch {
-            // Only proceed if permissions are likely there (tracked by screen)
-            val location = locationTracker.getCurrentLocation()
+            android.util.Log.d("WeatherFetch", "Triggered for date: $date")
+            
+            // Check if we already have weather for THIS specific date to avoid double notification
+            val currentState = _uiState.value
+            if (currentState.suggestedWeather != null && 
+                currentState.suggestedWeather?.cityName == "Detected" &&
+                currentState.date == date) {
+                android.util.Log.d("WeatherFetch", "Skipping: already fetched for this date.")
+                return@launch
+            }
+
+            val location = try {
+                locationTracker.getCurrentLocation()
+            } catch (e: Exception) {
+                android.util.Log.e("WeatherFetch", "Location error", e)
+                null
+            }
+
             if (location != null) {
-                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Updating weather conditions for your location..."))
+                android.util.Log.d("WeatherFetch", "Location found: ${location.latitude}, ${location.longitude}")
+                
+                // Ensure UI is ready
+                delay(500)
+                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Updating weather conditions..."))
                 
                 val weatherResult = weatherRepository.getWeatherConditions(location.latitude, location.longitude, date)
                 weatherResult.onSuccess { weatherNames ->
-                    // Wait for dynamicActivities to be loaded if they aren't yet
+                    android.util.Log.d("WeatherFetch", "Success: $weatherNames")
+                    
+                    // Ensure activities are loaded
                     if (_uiState.value.dynamicActivities.isEmpty()) {
+                        android.util.Log.d("WeatherFetch", "Waiting for dynamicActivities...")
                         activityPreferencesManager.activities.first { it.isNotEmpty() }
                     }
 
-                    val current = _uiState.value.selectedActivities.toMutableList()
+                    val currentActivities = _uiState.value.selectedActivities.toMutableList()
                     var addedCount = 0
                     weatherNames.forEach { weatherName ->
                         val weatherActivity = _uiState.value.dynamicActivities.find {
                             it.name.equals(weatherName, ignoreCase = true)
                         }
                         weatherActivity?.let { activity ->
-                            if (!current.contains(activity.id)) {
-                                current.add(activity.id)
+                            if (!currentActivities.contains(activity.id)) {
+                                currentActivities.add(activity.id)
                                 addedCount++
+                                android.util.Log.d("WeatherFetch", "Auto-selected activity: ${activity.name}")
                             }
                         }
                     }
-                    _uiState.update { it.copy(selectedActivities = current.toList()) }
+                    
+                    _uiState.update { it.copy(
+                        selectedActivities = currentActivities.toList(),
+                        suggestedWeather = com.diary.moonpage.domain.repository.WeatherData(
+                            condition = weatherNames.firstOrNull() ?: "Unknown",
+                            description = "Weather auto-filled",
+                            temp = 0.0,
+                            cityName = "Detected",
+                            iconUrl = ""
+                        )
+                    ) }
                     
                     if (addedCount > 0) {
+                        delay(300)
                         _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Weather data fetched: ${weatherNames.joinToString(", ")}"))
+                    } else {
+                        android.util.Log.d("WeatherFetch", "No new activities added.")
                     }
-                }.onFailure {
+                }.onFailure { e ->
+                    android.util.Log.e("WeatherFetch", "API Error", e)
                     _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Could not update weather data automatically."))
                 }
+            } else {
+                android.util.Log.w("WeatherFetch", "Location is NULL - check permissions and GPS.")
             }
         }
     }
