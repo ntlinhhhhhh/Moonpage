@@ -13,10 +13,7 @@ import com.diary.moonpage.core.util.NotificationBus
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import javax.inject.Inject
 import kotlin.random.Random
 
@@ -74,12 +71,12 @@ class MoonFirebaseMessagingService : FirebaseMessagingService() {
             notificationBus.postEvent(title, body, type, targetId)
             
             // Record this notification in the backend database for Notification Center
-            // Switching to IO context and ensuring we have a userId
-            kotlinx.coroutines.withContext(Dispatchers.IO) {
+            // Using a separate scope or ensuring we don't leak the service
+            kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
                 try {
-                    // Try to get userId from currentUser state, fallback to tokenManager
-                    val userId = userRepository.currentUser.value?.userId 
-                        ?: com.diary.moonpage.core.util.TokenManager(applicationContext).getUserId()
+                    // Use a fresh TokenManager with application context
+                    val tokenManager = com.diary.moonpage.core.util.TokenManager(applicationContext)
+                    val userId = tokenManager.getUserId()
 
                     if (userId != null) {
                         val response = notificationRepository.createNotification(
@@ -92,12 +89,7 @@ class MoonFirebaseMessagingService : FirebaseMessagingService() {
                         )
                         if (response.isSuccessful) {
                             android.util.Log.d("FCMService", "Successfully recorded in-app notification in DB")
-                        } else {
-                            val err = response.errorBody()?.string()
-                            android.util.Log.e("FCMService", "Failed to record in-app notification. Code: ${response.code()} Error: $err")
                         }
-                    } else {
-                        android.util.Log.w("FCMService", "Could not determine userId, skipping DB record")
                     }
                 } catch (e: Exception) {
                     android.util.Log.e("FCMService", "Exception while recording in-app notification", e)
@@ -120,19 +112,24 @@ class MoonFirebaseMessagingService : FirebaseMessagingService() {
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "Daily reminders and system notifications"
+                enableLights(true)
+                lightColor = android.graphics.Color.BLUE
+                enableVibration(true)
+                setShowBadge(true)
+                lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
             }
             manager.createNotificationChannel(channel)
         }
 
         val intent = Intent(this, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
             putExtra("notification_type", type)
             putExtra("target_id", targetId)
         }
         
         val pendingIntent = PendingIntent.getActivity(
             this, Random.nextInt(), intent,
-            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val notification = NotificationCompat.Builder(this, channelId)
@@ -142,6 +139,8 @@ class MoonFirebaseMessagingService : FirebaseMessagingService() {
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setDefaults(NotificationCompat.DEFAULT_ALL)
             .build()
 
