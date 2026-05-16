@@ -515,7 +515,8 @@ private fun DailyLogMainContent(
         // 5. Photo Section
         item {
             DailyPhotoSection(
-                photos = uiState.dailyPhotos, 
+                logPhotos = uiState.dailyPhotos, 
+                momentPhotos = uiState.momentPhotos,
                 onPhotoClick = onNavigateToDailyPhoto,
                 onPhotoRemove = onPhotoDeleteRequest,
                 onPhotoZoom = onPhotoZoomRequest
@@ -1165,17 +1166,19 @@ private fun DailyNoteSection(noteText: String, onNoteChanged: (String) -> Unit) 
 
 @Composable
 private fun DailyPhotoSection(
-    photos: List<String>, 
+    logPhotos: List<String>, 
+    momentPhotos: List<String>,
     onPhotoClick: () -> Unit,
     onPhotoRemove: (String) -> Unit,
     onPhotoZoom: (String) -> Unit
 ) {
+    val allPhotos = (logPhotos + momentPhotos).distinct()
     Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {      
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Today's photo", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
             Spacer(modifier = Modifier.height(12.dp))
             
-            if (photos.isEmpty()) {
+            if (allPhotos.isEmpty()) {
                     Surface(
                         color = MoonTheme.customColors.logItemBg, 
                         shape = RoundedCornerShape(12.dp), 
@@ -1195,7 +1198,8 @@ private fun DailyPhotoSection(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(photos.take(10)) { photoUri ->
+                    items(allPhotos.take(10)) { photoUri ->
+                        val isMoment = momentPhotos.contains(photoUri)
                         Box(
                             modifier = Modifier
                                 .size(100.dp)
@@ -1217,28 +1221,47 @@ private fun DailyPhotoSection(
                                 )
                             }
                             
-                            Surface(
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .padding(4.dp)
-                                    .size(20.dp)
-                                    .clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null
-                                    ) { onPhotoRemove(photoUri) },
-                                shape = CircleShape,
-                                color = Color.Black.copy(alpha = 0.5f)
-                            ) {
-                                Icon(
-                                    Icons.Rounded.Close,
-                                    contentDescription = "Remove",
-                                    tint = Color.White,
-                                    modifier = Modifier.padding(4.dp)
-                                )
+                            if (!isMoment) {
+                                Surface(
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(4.dp)
+                                        .size(20.dp)
+                                        .clickable(
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = null
+                                        ) { onPhotoRemove(photoUri) },
+                                    shape = CircleShape,
+                                    color = Color.Black.copy(alpha = 0.5f)
+                                ) {
+                                    Icon(
+                                        Icons.Rounded.Close,
+                                        contentDescription = "Remove",
+                                        tint = Color.White,
+                                        modifier = Modifier.padding(4.dp)
+                                    )
+                                }
+                            } else {
+                                // Indicator for moment photos
+                                Surface(
+                                    modifier = Modifier
+                                        .align(Alignment.BottomEnd)
+                                        .padding(4.dp)
+                                        .size(18.dp),
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                                ) {
+                                    Icon(
+                                        Icons.Rounded.AutoAwesome,
+                                        contentDescription = "Moment",
+                                        tint = Color.White,
+                                        modifier = Modifier.padding(3.dp)
+                                    )
+                                }
                             }
                         }
                     }
-                    if (photos.size < 10) {
+                    if (allPhotos.size < 10) {
                         item {
                             Box(
                                 modifier = Modifier

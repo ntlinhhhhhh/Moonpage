@@ -466,7 +466,6 @@ class DailyLogViewModel @Inject constructor(
                 val calculatedHours = log.sleepHours?.toFloat() ?: 0f
 
                 val logPhotos = log.dailyPhotos?.map { if (it.startsWith("http")) it else BASE_URL + it.trimStart('/') } ?: emptyList()
-                val combinedPhotos = (logPhotos + momentPhotoUrls).distinct()
 
                 _uiState.update { it.copy(
                     existingLog = log,
@@ -478,7 +477,8 @@ class DailyLogViewModel @Inject constructor(
                     sleepWakeTime = wakeTime,
                     isMenstruation = log.isMenstruation,
                     menstruationPhase = log.menstruationPhase,
-                    dailyPhotos = combinedPhotos,
+                    dailyPhotos = logPhotos,
+                    momentPhotos = momentPhotoUrls,
                     musicTitle = log.musicRecord,
                     steps = log.steps ?: 0,
                     calories = log.calories ?: 0,
@@ -496,7 +496,8 @@ class DailyLogViewModel @Inject constructor(
                     sleepWakeTime = LocalTime.of(7, 0),
                     isMenstruation = false,
                     menstruationPhase = null,
-                    dailyPhotos = momentPhotoUrls,
+                    dailyPhotos = emptyList(),
+                    momentPhotos = momentPhotoUrls,
                     musicTitle = null,
                     artistName = null,
                     albumArtUrl = null,

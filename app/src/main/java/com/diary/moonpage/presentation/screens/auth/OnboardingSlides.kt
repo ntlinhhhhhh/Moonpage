@@ -26,6 +26,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathMeasure
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
@@ -59,15 +61,15 @@ fun MoodLoggingSlide(isVisible: Boolean) {
             selectedMoodIdx = 3 // Click Happy
             delay(800)
             step = 1 // Show Mood + Weather
-            delay(1200)
+            delay(800)
             selectedActivityIdxs = selectedActivityIdxs + 0 // Click Sunny
             delay(800)
             step = 2 // Show Weather + Social
-            delay(1200)
+            delay(800)
             selectedActivityIdxs = selectedActivityIdxs + 5 // Click Group
             delay(800)
             step = 3 // Show Social + Feelings
-            delay(1200)
+            delay(800)
             selectedActivityIdxs = selectedActivityIdxs + 10 // Click Excited
         } else {
             step = 0
@@ -95,15 +97,23 @@ fun MoodLoggingSlide(isVisible: Boolean) {
                         Text("How was your day?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                         Spacer(modifier = Modifier.height(20.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                            val moodPalette = listOf(Color(0xFF5D4037), Color(0xFFFB8C00), Color(0xFFFFB74D), Color(0xFFFFE082), Color(0xFFFFF9E1))
+                            val selectionColor = MoonIcons.Moods.getMoodVisual(4, MoonThemeType.DEFAULT).color
                             listOf(1, 2, 3, 4, 5).forEachIndexed { index, level ->
                                 val isSelected = selectedMoodIdx == index
                                 val moodIcon = MoonIcons.Moods.getMoodVisual(level, MoonThemeType.DEFAULT)
+                                val unselectedBg = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
+                                val unselectedIcon = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                                val selectedBg = selectionColor.copy(alpha = 0.2f)
+                                val selectedIcon = selectionColor
+                                
+                                val bgColor = animateColorAsState(if (isSelected) selectedBg else unselectedBg)
+                                val tintColor = animateColorAsState(if (isSelected) selectedIcon else unselectedIcon)
+
                                 Box(
-                                    modifier = Modifier.size(52.dp).clip(CircleShape).background(if (isSelected) moodPalette[index] else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)),
+                                    modifier = Modifier.size(52.dp).clip(CircleShape).background(bgColor.value),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Icon(painter = painterResource(id = moodIcon.drawableRes!!), contentDescription = null, tint = if (isSelected) Color(0xFF3E2723) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f), modifier = Modifier.size(36.dp))
+                                    Icon(painter = painterResource(id = moodIcon.drawableRes!!), contentDescription = null, tint = tintColor.value, modifier = Modifier.size(36.dp))
                                 }
                             }
                         }
@@ -149,6 +159,12 @@ fun ActivityCard(content: @Composable () -> Unit) {
 
 @Composable
 fun ActivityGroup(title: String, icons: List<ImageVector>, selectedIdxs: Set<Int>, baseIdx: Int) {
+    val selectionColor = MoonIcons.Moods.getMoodVisual(4, MoonThemeType.DEFAULT).color
+    val unselectedBg = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)
+    val unselectedIcon = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+    val selectedBg = selectionColor.copy(alpha = 0.15f)
+    val selectedIcon = selectionColor
+
     Column {
         Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(12.dp))
@@ -156,10 +172,10 @@ fun ActivityGroup(title: String, icons: List<ImageVector>, selectedIdxs: Set<Int
             icons.forEachIndexed { i, icon ->
                 val currentIdx = baseIdx + i
                 val isSelected = selectedIdxs.contains(currentIdx)
-                val bgColor = animateColorAsState(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f), tween(500))
-                val iconColor = animateColorAsState(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f), tween(500))
+                val bgColor = animateColorAsState(if (isSelected) selectedBg else unselectedBg, tween(500))
+                val tintColor = animateColorAsState(if (isSelected) selectedIcon else unselectedIcon, tween(500))
                 Box(modifier = Modifier.size(56.dp).clip(CircleShape).background(bgColor.value), contentAlignment = Alignment.Center) {
-                    Icon(icon, null, modifier = Modifier.size(28.dp), tint = iconColor.value)
+                    Icon(icon, null, modifier = Modifier.size(28.dp), tint = tintColor.value)
                 }
             }
         }
@@ -325,145 +341,150 @@ private fun lerp(start: Color, stop: Color, fraction: Float): Color {
 }
 
 // --- SLIDE 2: BEAUTIFUL LOGGING (Theme Showcase) ---
+// --- SLIDE 2: LOGS & MOMENTS (Refactored to match Slide 1) ---
 @Composable
 fun PhotoLogSlide(isVisible: Boolean) {
-    var activeFrameIdx by remember { mutableStateOf(0) }
-    var simulatedSelectedItems by remember { mutableStateOf(setOf<String>()) }
-    
-    val frames = listOf(
-        LoggingFrameData(
-            title = "Default Theme",
-            categories = listOf(
-                "Weather" to listOf("sunny", "cloudy", "rainy", "windy"),
-                "Social" to listOf("friends", "family", "partner", "none")
-            ),
-            targetSelected = setOf("sunny"),
-            theme = MoonThemeType.DEFAULT,
-            accentColor = Color(0xFFAED581)
-        ),
-        LoggingFrameData(
-            title = "Matcha Theme",
-            categories = listOf(
-                "Social" to listOf("friends", "family", "partner", "none"),
-                "Feelings" to listOf("happy", "excited", "tired", "stressed")
-            ),
-            targetSelected = setOf("family", "tired"),
-            theme = MoonThemeType.MATCHA,
-            accentColor = Color(0xFF81C784)
-        ),
-        LoggingFrameData(
-            title = "Blushing Theme",
-            categories = listOf(
-                "Food" to listOf("coffee", "healthy", "pizza", "dessert"),
-                "Hobby" to listOf("reading", "gaming", "music", "art")
-            ),
-            targetSelected = setOf("coffee", "reading"),
-            theme = MoonThemeType.BLUSHING,
-            accentColor = Color(0xFFF06292)
-        )
-    )
-
-    LaunchedEffect(isVisible, activeFrameIdx) {
-        if (isVisible) {
-            simulatedSelectedItems = emptySet()
-            delay(1000)
-            simulatedSelectedItems = frames[activeFrameIdx].targetSelected
-        }
-    }
-
-    LaunchedEffect(isVisible) {
-        if (isVisible) {
-            while (true) {
-                delay(4000)
-                activeFrameIdx = (activeFrameIdx + 1) % frames.size
-            }
-        }
-    }
-
     Column(modifier = Modifier.fillMaxSize().padding(top = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         SlideHeader(
             title = "Beautiful logging",
-            description = "Explore different themes and activities",
+            description = "Your day, perfectly preserved",
             isVisible = isVisible
         )
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        Box(modifier = Modifier.fillMaxWidth().weight(1f).clipToBounds()) {
-            AnimatedContent(
-                targetState = activeFrameIdx,
-                transitionSpec = {
-                    (slideInHorizontally { it } + fadeIn()).togetherWith(slideOutHorizontally { -it } + fadeOut())
-                },
-                label = "logging_slide"
-            ) { frameIdx ->
-                val frame = frames[frameIdx]
-                Column(
-                    modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    frame.categories.forEach { (catName, items) ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = Color.White),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                            shape = RoundedCornerShape(24.dp)
-                        ) {
-                            Column(modifier = Modifier.padding(20.dp)) {
-                                Text(catName, style = MaterialTheme.typography.labelLarge, color = frame.accentColor, fontWeight = FontWeight.Bold)
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                                    items.forEach { item ->
-                                        val isSelected = simulatedSelectedItems.contains(item)
-                                        
-                                        val bgColor = animateColorAsState(
-                                            targetValue = if (isSelected) frame.accentColor.copy(alpha = 0.2f) else Color.LightGray.copy(alpha = 0.1f),
-                                            animationSpec = tween(600),
-                                            label = "bg"
-                                        )
-                                        val iconColor = animateColorAsState(
-                                            targetValue = if (isSelected) frame.accentColor else Color.Gray.copy(alpha = 0.4f),
-                                            animationSpec = tween(600),
-                                            label = "tint"
-                                        )
+        Box(modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 24.dp)) {
+            OnboardingDailyLogCard()
+        }
+    }
+}
 
-                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(48.dp)
-                                                    .clip(CircleShape)
-                                                    .background(bgColor.value),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Icon(
-                                                    imageVector = getIconForItem(item),
-                                                    contentDescription = null,
-                                                    tint = iconColor.value,
-                                                    modifier = Modifier.size(24.dp)
-                                                )
-                                            }
-                                            Spacer(modifier = Modifier.height(4.dp))
-                                            Text(
-                                                item, 
-                                                style = MaterialTheme.typography.labelSmall, 
-                                                color = if (isSelected) frame.accentColor else Color.Gray,
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
+@Composable
+fun OnboardingDailyLogCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(28.dp)
+    ) {
+        Column(modifier = Modifier.padding(24.dp)) {
+            // Header
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val moodIcon = MoonIcons.Moods.getMoodVisual(4, MoonThemeType.DEFAULT)
+                Box(modifier = Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)), contentAlignment = Alignment.Center) {
+                    Icon(painterResource(id = moodIcon.drawableRes!!), null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Column {
+                    Text("Saturday, May 16", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("2026", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Activities
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                listOf(Icons.Rounded.Group, Icons.Rounded.BeachAccess, Icons.Rounded.Restaurant, Icons.Rounded.WbSunny).forEach { icon ->
+                    Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)), contentAlignment = Alignment.Center) {
+                        Icon(icon, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp))
                     }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Note
+            Text(
+                "Such a wonderful day! The beach was peaceful, and the sunset was breathtaking. These are the moments I want to keep forever. #family #peace",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                lineHeight = 22.sp
+            )
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Photos Placeholder
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                repeat(2) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(100.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Rounded.Image, null, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), modifier = Modifier.size(32.dp))
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Music Item
+            Surface(
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.03f),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(modifier = Modifier.size(40.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
+                        Icon(Icons.Rounded.MusicNote, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text("Summer Vibes", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                        Text("Acoustic Sessions", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun OnboardingMomentCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        shape = RoundedCornerShape(24.dp)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1.5f)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.secondaryContainer)
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Rounded.Image, null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.3f))
+                
+                Surface(
+                    color = Color.Black.copy(alpha = 0.6f),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.align(Alignment.BottomCenter).padding(12.dp)
+                ) {
                     Text(
-                        text = frame.title,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = frame.accentColor,
-                        fontWeight = FontWeight.Bold
+                        "Beautiful Sunset 🌅",
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        color = Color.White,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
                     )
                 }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Rounded.AccessTime, null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("6:30 PM", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
             }
         }
     }
@@ -749,7 +770,7 @@ fun MoodFlowFrame(isVisible: Boolean) {
         Text("Mood Flow", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(24.dp))
         
-        Box(modifier = Modifier.fillMaxWidth().height(220.dp)) {
+        Box(modifier = Modifier.fillMaxWidth().height(200.dp)) {
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val width = size.width - 40.dp.toPx()
                 val height = size.height - 30.dp.toPx()
@@ -763,15 +784,16 @@ fun MoodFlowFrame(isVisible: Boolean) {
                     Color(0xFF90A4AE)  // Gray
                 )
 
-                // Draw Y-axis Mood Dots
-                moodColors.forEachIndexed { i, color ->
-                    val y = (height / (moodColors.size - 1)) * i
+                // Draw Y-axis Mood Dots (5 at top, 1 at bottom)
+                val moodLevels = listOf(5, 4, 3, 2, 1)
+                moodLevels.forEachIndexed { i, level ->
+                    val color = MoonIcons.Moods.getMoodColor(level, MoonThemeType.DEFAULT)
+                    val y = (height / (moodLevels.size - 1)) * i
                     drawCircle(color, radius = 6.dp.toPx(), center = Offset(15.dp.toPx(), y))
                 }
                 
                 // Draw Vertical Grid Lines and Labels
                 val xSteps = 7
-                val dates = listOf("6/1", "6/6", "6/11", "6/16", "6/21", "6/26", "6/31")
                 repeat(xSteps) { i ->
                     val x = startX + (width / (xSteps - 1)) * i
                     drawLine(
@@ -782,17 +804,17 @@ fun MoodFlowFrame(isVisible: Boolean) {
                     )
                 }
 
-                // Jagged Path Points (Matching the image)
+                // Jagged Path Points (Mapped to mood levels: 0.0=Level 5, 1.0=Level 1)
                 val rawPoints = listOf(
-                    Offset(0f, 0.1f), Offset(0.05f, 0.3f), Offset(0.1f, 0.5f), 
-                    Offset(0.15f, 0.7f), Offset(0.2f, 0.3f), Offset(0.23f, 0.1f),
-                    Offset(0.26f, 0.1f), Offset(0.3f, 0.4f), Offset(0.33f, 0.7f),
-                    Offset(0.37f, 0.4f), Offset(0.42f, 0.1f), Offset(0.45f, 0.1f),
-                    Offset(0.48f, 0.1f), Offset(0.53f, 0.5f), Offset(0.58f, 0.8f),
-                    Offset(0.62f, 0.9f), Offset(0.66f, 0.7f), Offset(0.7f, 0.4f),
-                    Offset(0.73f, 0.9f), Offset(0.77f, 0.9f), Offset(0.82f, 0.7f),
-                    Offset(0.86f, 0.6f), Offset(0.9f, 0.4f), Offset(0.95f, 0.1f),
-                    Offset(1f, 0.1f), Offset(1.05f, 0.5f)
+                    Offset(0f, 0.1f), Offset(0.05f, 0.25f), Offset(0.1f, 0.4f), 
+                    Offset(0.15f, 0.6f), Offset(0.2f, 0.25f), Offset(0.23f, 0.1f),
+                    Offset(0.26f, 0.15f), Offset(0.3f, 0.35f), Offset(0.33f, 0.65f),
+                    Offset(0.37f, 0.4f), Offset(0.42f, 0.2f), Offset(0.45f, 0.1f),
+                    Offset(0.48f, 0.15f), Offset(0.53f, 0.45f), Offset(0.58f, 0.75f),
+                    Offset(0.62f, 0.85f), Offset(0.66f, 0.65f), Offset(0.7f, 0.45f),
+                    Offset(0.73f, 0.8f), Offset(0.77f, 0.85f), Offset(0.82f, 0.65f),
+                    Offset(0.86f, 0.55f), Offset(0.9f, 0.35f), Offset(0.95f, 0.15f),
+                    Offset(1f, 0.05f), Offset(1.05f, 0.4f)
                 )
                 
                 val points = rawPoints.map { Offset(startX + it.x * (width / 1f), it.y * height) }
@@ -808,13 +830,13 @@ fun MoodFlowFrame(isVisible: Boolean) {
                 val partialPath = Path()
                 pathMeasure.getSegment(0f, pathMeasure.length * pathProgress.value, partialPath, true)
                 
-                val chartGreen = Color(0xFF4CAF50)
-                drawPath(partialPath, chartGreen, style = Stroke(width = 2.dp.toPx()))
+                val selectionColor = MoonIcons.Moods.getMoodVisual(4, MoonThemeType.DEFAULT).color
+                drawPath(partialPath, selectionColor, style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
                 
                 // Draw dots at points
                 points.forEach { p ->
                     if (p.x <= startX + width * pathProgress.value && p.x <= startX + width) {
-                        drawCircle(chartGreen, radius = 2.5.dp.toPx(), center = p)
+                        drawCircle(selectionColor, radius = 3.dp.toPx(), center = p)
                     }
                 }
             }
@@ -844,15 +866,15 @@ fun MoodDistributionFrame(isVisible: Boolean) {
     }
 
     Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("Mood Distribution", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
+        Text("Mood Bar", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
         Spacer(modifier = Modifier.height(32.dp))
         
         val items = listOf(
-            Triple(5, "13%", Color(0xFFFFF9E1)), // Very Happy
-            Triple(4, "13%", Color(0xFFFFE082)), // Happy
-            Triple(3, "38%", Color(0xFFFFB74D)), // Neutral
-            Triple(2, "13%", Color(0xFFFB8C00)), // Sad
-            Triple(1, "25%", Color(0xFF5D4037))  // Very Sad
+            Triple(5, "13%", MoonIcons.Moods.getMoodColor(5, MoonThemeType.DEFAULT)), // Very Happy
+            Triple(4, "13%", MoonIcons.Moods.getMoodColor(4, MoonThemeType.DEFAULT)), // Happy
+            Triple(3, "38%", MoonIcons.Moods.getMoodColor(3, MoonThemeType.DEFAULT)), // Neutral
+            Triple(2, "13%", MoonIcons.Moods.getMoodColor(2, MoonThemeType.DEFAULT)), // Sad
+            Triple(1, "25%", MoonIcons.Moods.getMoodColor(1, MoonThemeType.DEFAULT))  // Very Sad
         )
         
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {

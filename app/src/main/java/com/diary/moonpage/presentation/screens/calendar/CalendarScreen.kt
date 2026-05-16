@@ -57,7 +57,7 @@ fun CalendarScreen(
         if (createdLogDate != null) {
             val date = LocalDate.parse(createdLogDate)
             viewModel.refreshLogs()
-            viewModel.onEvent(CalendarUiEvent.OnDateSelected(date))
+            viewModel.onEvent(CalendarUiEvent.ForceDateSelected(date))
             // Ensure the calendar jumps to the month of the created log
             viewModel.onEvent(CalendarUiEvent.OnMonthChanged(YearMonth.from(date)))
             onLogDateHandled()

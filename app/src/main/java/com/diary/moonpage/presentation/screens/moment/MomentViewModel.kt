@@ -158,30 +158,6 @@ class MomentViewModel @Inject constructor(
             ).onSuccess {
                 _uiState.update { it.copy(isUploading = false) }
                 
-                // Automatically attach to daily log if it exists
-                viewModelScope.launch {
-                    dailyLogRepository.getDailyLogByDate(dateOnlyStr).onSuccess { log ->
-                        // Add the photo to the log. 
-                        // Note: DailyLogRepository.createDailyLog takes a list of Files.
-                        // We have the current imageFile.
-                        dailyLogRepository.createDailyLog(
-                            baseMoodId = log.baseMoodId,
-                            date = log.date,
-                            note = log.note,
-                            sleepHours = log.sleepHours,
-                            sleepStartTime = log.sleepStartTime,
-                            isMenstruation = log.isMenstruation,
-                            menstruationPhase = log.menstruationPhase,
-                            activityIds = log.activityIds,
-                            dailyPhotos = listOf(imageFile), // The repository handles merging/uploading
-                            steps = log.steps,
-                            musicRecord = log.musicRecord,
-                            calories = log.calories,
-                            distance = log.distance
-                        )
-                    }
-                }
-                
                 _uiEffect.send(MomentUiEffect.UploadSuccess)
                 _uiEffect.send(MomentUiEffect.ShowSnackBar(UiText.StringResource(R.string.moment_upload_success)))
             }.onFailure { error ->

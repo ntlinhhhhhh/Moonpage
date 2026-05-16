@@ -21,6 +21,7 @@ data class DailyLogUiState(
     val isMenstruation: Boolean = false,
     val menstruationPhase: String? = null,
     val dailyPhotos: List<String> = emptyList(),
+    val momentPhotos: List<String> = emptyList(),
     val musicTitle: String? = null,
     val artistName: String? = null,
     val albumArtUrl: String? = null,
