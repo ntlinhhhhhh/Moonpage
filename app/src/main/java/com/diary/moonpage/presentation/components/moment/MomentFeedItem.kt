@@ -2,7 +2,11 @@ package com.diary.moonpage.presentation.components.moment
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -43,7 +47,8 @@ fun MomentFeedItem(
     moment: Moment, 
     localPath: String? = null,
     avatarUrl: String? = null,
-    localAvatarPath: String? = null
+    localAvatarPath: String? = null,
+    onImageClick: () -> Unit = {}
 ) {
     val onBgColor = MaterialTheme.colorScheme.onBackground
     val context = LocalContext.current
@@ -87,12 +92,16 @@ fun MomentFeedItem(
         Box(modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 24.dp, vertical = 16.dp).height(56.dp))
         Spacer(modifier = Modifier.height(60.dp))
 
+        var scale by remember { mutableFloatStateOf(1f) }
+        var offset by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+
         Box(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
                 .aspectRatio(1f)
                 .clip(RoundedCornerShape(32.dp))
-                .background(if (isLoaded) Color.Transparent else onBgColor.copy(alpha = shimmerAlpha)),
+                .background(if (isLoaded) Color.Transparent else onBgColor.copy(alpha = shimmerAlpha))
+                .clickable { onImageClick() },
             contentAlignment = Alignment.BottomCenter
         ) {
             AsyncImage(
@@ -113,7 +122,7 @@ fun MomentFeedItem(
                     moment.caption == "Party Time!" -> MomentTag("party", null, "Party Time!", containerColor = Color(0xFF80FFE8), contentColor = Color.Black)
                     moment.caption == "OOTD" -> MomentTag("ootd", null, "OOTD", containerColor = Color.White, contentColor = Color.Black)
                     moment.caption == "Miss you" -> MomentTag("missyou", null, "Miss you", containerColor = Color(0xFFFF4B4B), contentColor = Color.White)
-                    else -> MomentTag("text", null, "Message", Color.White, Color.Black.copy(0.6f))
+                    else -> MomentTag("text", null, "Message", Color.White, Color.Black.copy(0.75f))
                 }
             }
 
@@ -130,7 +139,8 @@ fun MomentFeedItem(
 
                         if (shouldShow) {
                             Surface(
-                                color = inferredTag.containerColor ?: Color.Black.copy(alpha = 0.5f),
+                                color = inferredTag.containerColor ?: Color.Black.copy(alpha = 0.75f),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
                                 shape = RoundedCornerShape(24.dp),
                                 modifier = Modifier.wrapContentSize()
                             ) {

@@ -23,7 +23,7 @@ sealed class MomentUiEvent {
     data class ShareMoment(val url: String) : MomentUiEvent()
     object DismissMessage : MomentUiEvent()
     data class ShowSnackBar(val message: UiText) : MomentUiEvent()
-    object OnLocationPermissionGranted : MomentUiEvent()
+    object RefreshWeather : MomentUiEvent()
 }
 
 /**

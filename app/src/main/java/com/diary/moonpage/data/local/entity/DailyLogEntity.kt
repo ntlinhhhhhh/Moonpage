@@ -11,18 +11,19 @@ data class DailyLogEntity(
     val date: String, // Format: yyyy-MM-dd
     val note: String?,
     val sleepHours: Double?,
+    val sleepStartTime: String? = null,
     val isMenstruation: Boolean,
     val menstruationPhase: String?,
     val dailyPhotosJson: String?, // Serialized List<String>
     val activityIdsJson: String?,   // Serialized List<String>
-    val songTitle: String? = null,
-    val artistName: String? = null,
-    val albumArtUrl: String? = null,
-    val sleepBedTime: String? = null,
-    val sleepWakeTime: String? = null,
     val steps: Int? = null,
+    val musicRecord: String? = null,
+    val createdAt: String? = null,
     val calories: Int? = null,
-    val distance: Double? = null
+    val distance: Double? = null,
+    val wakeupTime: String? = null,
+    val weather: String? = null,
+    val temperature: Double? = null
 ) {
     fun toResponse(): DailyLogResponseDto {
         return DailyLogResponseDto(
@@ -31,18 +32,19 @@ data class DailyLogEntity(
             date = date,
             note = note,
             sleepHours = sleepHours,
+            sleepStartTime = sleepStartTime,
             isMenstruation = isMenstruation,
             menstruationPhase = menstruationPhase,
             dailyPhotos = dailyPhotosJson?.split(",")?.filter { it.isNotBlank() },
             activityIds = activityIdsJson?.split(",")?.filter { it.isNotBlank() },
-            songTitle = songTitle,
-            artistName = artistName,
-            albumArtUrl = albumArtUrl,
-            sleepBedTime = sleepBedTime,
-            sleepWakeTime = sleepWakeTime,
             steps = steps,
+            musicRecord = musicRecord,
+            createdAt = createdAt,
             calories = calories,
-            distance = distance
+            distance = distance,
+            wakeupTime = wakeupTime,
+            weather = weather,
+            temperature = temperature
         )
     }
 
@@ -53,18 +55,19 @@ data class DailyLogEntity(
             date = date,
             note = note,
             sleepHours = sleepHours,
+            sleepStartTime = sleepStartTime,
             isMenstruation = isMenstruation,
             menstruationPhase = menstruationPhase,
             dailyPhotos = dailyPhotosJson?.split(",")?.filter { it.isNotBlank() },
             activityIds = activityIdsJson?.split(",")?.filter { it.isNotBlank() },
-            songTitle = songTitle,
-            artistName = artistName,
-            albumArtUrl = albumArtUrl,
-            sleepBedTime = sleepBedTime,
-            sleepWakeTime = sleepWakeTime,
             steps = steps,
+            musicRecord = musicRecord,
+            createdAt = createdAt,
             calories = calories,
-            distance = distance
+            distance = distance,
+            wakeupTime = wakeupTime,
+            weather = weather,
+            temperature = temperature
         )
     }
 
@@ -76,18 +79,19 @@ data class DailyLogEntity(
                 date = response.date,
                 note = response.note,
                 sleepHours = response.sleepHours,
+                sleepStartTime = response.sleepStartTime,
                 isMenstruation = response.isMenstruation,
                 menstruationPhase = response.menstruationPhase,
                 dailyPhotosJson = response.dailyPhotos?.joinToString(","),
                 activityIdsJson = response.activityIds?.joinToString(","),
-                songTitle = response.songTitle,
-                artistName = response.artistName,
-                albumArtUrl = response.albumArtUrl,
-                sleepBedTime = response.sleepBedTime,
-                sleepWakeTime = response.sleepWakeTime,
                 steps = response.steps,
+                musicRecord = response.musicRecord,
+                createdAt = response.createdAt,
                 calories = response.calories,
-                distance = response.distance
+                distance = response.distance,
+                wakeupTime = response.wakeupTime,
+                weather = response.weather,
+                temperature = response.temperature
             )
         }
     }

@@ -37,15 +37,10 @@ fun MoonBottomNavBar(
     onItemSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isDark = isSystemInDarkTheme()
-    val navBgColor = if (isDark) MoonBottomNavBgDark else MaterialTheme.colorScheme.surface
+    val navBgColor = MoonTheme.customColors.bottomNavBg
     val cameraBgColor = MaterialTheme.colorScheme.background
     val activeColor = MaterialTheme.colorScheme.primary
-    val inactiveColor = if (isDark) {
-        MoonUnselectedDark
-    } else {
-        MoonUnselectedLight
-    }
+    val inactiveColor = MoonTheme.customColors.bottomNavUnselected
 
     val calendar = Screen.Calendar.route
     val stats = Screen.Stats.route

@@ -1,5 +1,8 @@
 package com.diary.moonpage.domain.model
 
+import androidx.compose.runtime.Immutable
+
+@Immutable
 data class Theme(
     val id: String,
     val name: String,
@@ -15,5 +18,6 @@ data class Theme(
     val icons: List<String> = emptyList(), // "VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"
     val primaryColor: String? = null,
     val decoration: String = "NONE", // "NONE", "KITTY", "SPROUT", "BLUSHING"
-    val category: String = "LIGHT" // "LIGHT", "DARK", "EXCLUSIVE", "NEWEST"
+    val category: String = "LIGHT", // "LIGHT", "DARK", "EXCLUSIVE", "NEWEST"
+    val activatedAt: Long? = null
 )

@@ -8,6 +8,7 @@ import com.diary.moonpage.domain.repository.MomentRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -26,17 +27,30 @@ class MomentRepositoryImpl @Inject constructor(
     override val moments: Flow<List<Moment>> = momentManager.getMoments()
     override val localPaths: Flow<Map<String, String>> = momentManager.getLocalPaths()
 
-    override suspend fun getMyMoments(): Result<List<Moment>> {
-        return try {
-            val response = api.getMyMoments()
-            if (response.isSuccessful && response.body() != null) {
-                val momentsList = response.body()!!.map { it.toDomain() }
-                momentManager.saveMoments(momentsList)
-                Result.success(momentsList)
+    override suspend fun getMyMoments(): Result<List<Moment>> = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        return@withContext try {
+            val cached = moments.first()
+
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                try {
+                    val response = api.getMyMoments()
+                    if (response.isSuccessful && response.body() != null) {
+                        val momentsList = response.body()!!.map { it.toDomain() }
+                        momentManager.saveMoments(momentsList)
+                    }
+                } catch (e: Exception) {
+                    // Ignore background error
+                }
+            }
+
+            if (cached.isNotEmpty()) {
+                Result.success(cached)
             } else {
-                val cached = moments.first()
-                if (cached.isNotEmpty()) {
-                    Result.success(cached)
+                val response = api.getMyMoments()
+                if (response.isSuccessful && response.body() != null) {
+                    val momentsList = response.body()!!.map { it.toDomain() }
+                    momentManager.saveMoments(momentsList)
+                    Result.success(momentsList)
                 } else {
                     Result.failure(Exception("Failed to fetch moments"))
                 }
@@ -144,5 +158,9 @@ class MomentRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    override suspend fun clearCache() {
+        momentManager.clearCache()
     }
 }

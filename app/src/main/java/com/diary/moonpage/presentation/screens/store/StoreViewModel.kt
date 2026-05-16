@@ -12,6 +12,7 @@ import com.diary.moonpage.domain.usecase.theme.SetActiveThemeUseCase
 import com.diary.moonpage.core.theme.MoonThemeType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -30,8 +31,8 @@ class StoreViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(StoreUiState())
     val uiState: StateFlow<StoreUiState> = _uiState.asStateFlow()
 
-    private val _uiEffect = Channel<StoreUiEffect>()
-    val uiEffect = _uiEffect.receiveAsFlow()
+    private val _uiEffect = MutableSharedFlow<StoreUiEffect>(extraBufferCapacity = 10)
+    val uiEffect = _uiEffect.asSharedFlow()
 
     init {
         loadData()
@@ -71,8 +72,9 @@ class StoreViewModel @Inject constructor(
     }
 
     fun activateTheme(themeId: String) {
-        onEvent(StoreUiEvent.ActivateTheme(themeId))
+        _uiState.update { it.copy(showConfirmActivationDialog = true, temporarySelectedThemeId = themeId) }
     }
+
 
     fun selectThemeTemporarily(themeId: String) {
         _uiState.update { it.copy(temporarySelectedThemeId = themeId) }
@@ -81,7 +83,6 @@ class StoreViewModel @Inject constructor(
     fun applyTheme() {
         _uiState.value.temporarySelectedThemeId?.let { themeId ->
             activateTheme(themeId)
-            _uiState.update { it.copy(temporarySelectedThemeId = null) }
         }
     }
 
@@ -101,6 +102,14 @@ class StoreViewModel @Inject constructor(
         onEvent(StoreUiEvent.DismissDialog)
     }
 
+    fun confirmActivation() {
+        onEvent(StoreUiEvent.ConfirmActivation)
+    }
+
+    fun cancelActivation() {
+        onEvent(StoreUiEvent.CancelActivation)
+    }
+
     fun onEvent(event: StoreUiEvent) {
         when (event) {
             StoreUiEvent.LoadData -> loadData()
@@ -117,11 +126,25 @@ class StoreViewModel @Inject constructor(
                 _uiState.update { it.copy(showConfirmPurchaseDialog = false, themeToPurchase = null) }
             }
             is StoreUiEvent.BuyTheme -> performBuyTheme(event.theme)
-            is StoreUiEvent.ActivateTheme -> performActivateTheme(event.themeId)
+            is StoreUiEvent.ActivateTheme -> {
+                _uiState.update { it.copy(showConfirmActivationDialog = true, temporarySelectedThemeId = event.themeId) }
+            }
+            StoreUiEvent.ConfirmActivation -> {
+                val themeId = _uiState.value.temporarySelectedThemeId
+                _uiState.update { it.copy(showConfirmActivationDialog = false, temporarySelectedThemeId = null) }
+                themeId?.let { performActivateTheme(it) }
+            }
+            StoreUiEvent.CancelActivation -> {
+                _uiState.update { it.copy(showConfirmActivationDialog = false, temporarySelectedThemeId = null) }
+            }
             StoreUiEvent.DismissDialog -> {
-                _uiState.update { it.copy(showPurchaseSuccessDialog = false) }
+                _uiState.update { it.copy(showPurchaseSuccessDialog = false, showConfirmActivationDialog = false, activationSuccess = false) }
             }
         }
+    }
+
+    fun dismissSuccessMessage() {
+        _uiState.update { it.copy(activationSuccess = false) }
     }
 
     private fun loadData() {
@@ -137,14 +160,14 @@ class StoreViewModel @Inject constructor(
             // 2. Fetch All Themes for Store (Background refresh)
             getThemesUseCase().onFailure { error ->
                 if (_uiState.value.themes.isEmpty()) {
-                    _uiEffect.send(StoreUiEffect.ShowSnackBar(error.message ?: "Failed to load store themes"))
+                    _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Failed to load store themes"))
                 }
             }
 
             // 3. Fetch Owned Themes (Background refresh)
             getOwnedThemesUseCase().onFailure { error ->
                 if (_uiState.value.ownedThemes.isEmpty()) {
-                    _uiEffect.send(StoreUiEffect.ShowSnackBar(error.message ?: "Failed to load owned themes"))
+                    _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Failed to load owned themes"))
                 }
             }
 
@@ -183,10 +206,10 @@ class StoreViewModel @Inject constructor(
                 // Refresh user for coins
                 userRepository.getCurrentUser()
                 
-                _uiEffect.send(StoreUiEffect.PurchaseSuccess)
+                _uiEffect.emit(StoreUiEffect.PurchaseSuccess)
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false) }
-                _uiEffect.send(StoreUiEffect.ShowSnackBar(error.message ?: "Purchase failed"))
+                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Purchase failed"))
             }
         }
     }
@@ -196,9 +219,11 @@ class StoreViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true) }
             
             setActiveThemeUseCase(themeId).onSuccess {
+                val theme = _uiState.value.ownedThemes.find { it.id == themeId }
+                
                 _uiState.update { state ->
-                    val updatedOwned = state.ownedThemes.map { theme ->
-                        theme.copy(isActive = theme.id == themeId)
+                    val updatedOwned = state.ownedThemes.map { t ->
+                        t.copy(isActive = t.id == themeId)
                     }
                     
                     val updatedDetail = state.selectedThemeDetail?.copy(
@@ -208,21 +233,25 @@ class StoreViewModel @Inject constructor(
                     state.copy(
                         ownedThemes = updatedOwned, 
                         isLoading = false,
-                        selectedThemeDetail = updatedDetail
+                        selectedThemeDetail = updatedDetail,
+                        activationSuccess = true
                     )
                 }
                 
+                // Emit effect immediately to trigger UI with a custom message
+                val themeName = theme?.name ?: "theme"
+                _uiEffect.emit(StoreUiEffect.ThemeActivated(message = "Theme \"$themeName\" has been activated successfully!"))
+                
+                // Sufficient delay to allow UI to show snackbar before theme change (which causes global recomposition)
+                delay(600)
+
                 // Map theme and save locally
-                val theme = _uiState.value.ownedThemes.find { it.id == themeId }
                 theme?.let {
                     themePreferencesManager.setThemeType(it.toMoonThemeType())
                 }
-                
-                _uiEffect.send(StoreUiEffect.ThemeActivated)
-                _uiEffect.send(StoreUiEffect.ShowSnackBar("Theme activated!"))
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false) }
-                _uiEffect.send(StoreUiEffect.ShowSnackBar(error.message ?: "Activation failed"))
+                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Activation failed"))
             }
         }
     }
@@ -237,4 +266,3 @@ fun Theme.toMoonThemeType(): MoonThemeType {
         MoonThemeType.DEFAULT
     }
 }
-

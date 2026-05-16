@@ -27,9 +27,21 @@ import androidx.compose.ui.layout.ContentScale
 import kotlinx.coroutines.launch
 import com.diary.moonpage.core.theme.MoonPageTheme
 import com.diary.moonpage.domain.model.Moment
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.Velocity
 import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
+import com.diary.moonpage.presentation.components.core.feedback.MoonDeleteConfirmDialog
 import com.diary.moonpage.presentation.components.moment.MomentFeedItem
 import com.diary.moonpage.presentation.components.moment.CaptureButton
+import com.diary.moonpage.presentation.components.moment.MomentZoomOverlay
+
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.core.graphics.drawable.toBitmap
 
 /**
  * Stateful Component
@@ -39,6 +51,7 @@ fun MomentHistoryScreen(
     onBackToCamera: () -> Unit,
     onNavigateToGallery: () -> Unit,
     onNavigateToDetail: (String) -> Unit,
+    onNavigateToAccount: () -> Unit,
     viewModel: MomentViewModel = hiltViewModel(),
     profileViewModel: com.diary.moonpage.presentation.screens.profile.ProfileViewModel = hiltViewModel()
 ) {
@@ -61,9 +74,10 @@ fun MomentHistoryScreen(
                             .build()
                         val result = context.imageLoader.execute(request)
                         if (result is coil.request.SuccessResult) {
-                            val bitmap = (result.drawable as android.graphics.drawable.BitmapDrawable).bitmap
+                            val bitmap = result.drawable.toBitmap()
                             com.diary.moonpage.core.util.ImageUtils.shareImage(context, bitmap, "Share Moment")
                         } else {
+                            android.util.Log.e("MomentHistory", "Failed to load image: ${(result as? coil.request.ErrorResult)?.throwable?.message}")
                             snackbarHostState.showSnackbar("Failed to load image for sharing")
                         }
                     }
@@ -79,18 +93,33 @@ fun MomentHistoryScreen(
         }
     }
 
+    var zoomImage by remember { mutableStateOf<String?>(null) }
     MomentHistoryScreenContent(
         moments = uiState.moments,
         localPaths = uiState.localPaths,
         onNavigateToGallery = onNavigateToGallery,
         onBackToCamera = onBackToCamera,
+        onNavigateToAccount = onNavigateToAccount,
         onShare = { moment -> viewModel.onEvent(MomentUiEvent.ShareMoment(moment.imageUrl)) },
         onDownload = { moment -> viewModel.onEvent(MomentUiEvent.DownloadMoment(moment.imageUrl)) },
         onDelete = { moment -> viewModel.onEvent(MomentUiEvent.DeleteMoment(moment.id)) },
+        onImageZoom = { url -> zoomImage = url },
         snackbarHostState = snackbarHostState,
         avatarUrl = profileState.user?.avatarUrl,
-        localAvatarPath = profileState.localAvatarPath ?: profileState.tempAvatarPath
+        localAvatarPath = profileState.localAvatarPath ?: profileState.tempAvatarPath,
+        isVerticalVisible = true 
     )
+
+    if (zoomImage != null) {
+        MomentZoomOverlay(
+            imageUrl = zoomImage!!,
+            localPath = uiState.localPaths[zoomImage!!],
+            onDismiss = { zoomImage = null },
+            onShare = {
+                viewModel.onEvent(MomentUiEvent.ShareMoment(zoomImage!!))
+            }
+        )
+    }
 }
 
 /**
@@ -102,13 +131,16 @@ fun MomentHistoryScreenContent(
     localPaths: Map<String, String>,
     onNavigateToGallery: () -> Unit,
     onBackToCamera: () -> Unit,
+    onNavigateToAccount: () -> Unit,
     initialMomentId: String? = null,
     onShare: (Moment) -> Unit = {},
     onDownload: (Moment) -> Unit = {},
     onDelete: (Moment) -> Unit = {},
+    onImageZoom: (String) -> Unit = {},
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     avatarUrl: String? = null,
     localAvatarPath: String? = null,
+    isVerticalVisible: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val sortedMoments = remember(moments) { moments.sortedByDescending { it.capturedAt } }
@@ -144,14 +176,66 @@ fun MomentHistoryScreenContent(
         }
     }
 
-    Scaffold() { paddingValues ->
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(bgColor)
-        ) {
-            if (sortedMoments.isEmpty()) {
+    // Handle initial scrolling from Gallery
+    LaunchedEffect(initialMomentId, sortedMoments) {
+        if (initialMomentId != null && sortedMoments.isNotEmpty()) {
+            val targetIndex = sortedMoments.indexOfFirst { it.id == initialMomentId }
+            if (targetIndex != -1 && feedPagerState.currentPage != targetIndex) {
+                feedPagerState.scrollToPage(targetIndex)
+            }
+        }
+    }
+
+    // Reset to top when user scrolls back to camera
+    LaunchedEffect(isVerticalVisible) {
+        if (!isVerticalVisible && feedPagerState.currentPage != 0) {
+            feedPagerState.scrollToPage(0)
+        }
+    }
+
+    var momentToDelete by remember { mutableStateOf<Moment?>(null) }
+
+    if (momentToDelete != null) {
+        MoonDeleteConfirmDialog(
+            title = "Delete Moment",
+            message = "Are you sure you want to delete this moment? This action cannot be undone.",
+            onConfirm = {
+                onDelete(momentToDelete!!)
+                momentToDelete = null
+            },
+            onDismiss = { momentToDelete = null }
+        )
+    }
+
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                // If we're at the top and scrolling down (finger moves down, available.y > 0)
+                // we want the parent to handle it to scroll back to camera
+                return if (feedPagerState.currentPage == 0 && available.y > 0) {
+                    Offset.Zero // Parent will handle it
+                } else {
+                    Offset.Zero
+                }
+            }
+
+            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+                if (available.y > 500f && feedPagerState.currentPage == 0) {
+                    onBackToCamera()
+                    return available
+                }
+                return super.onPostFling(consumed, available)
+            }
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(bgColor)
+            .nestedScroll(nestedScrollConnection)
+    ) {
+        if (sortedMoments.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("No moments yet", color = onBgColor.copy(alpha = 0.6f))
                 }
@@ -166,7 +250,8 @@ fun MomentHistoryScreenContent(
                         moment = moment, 
                         localPath = localPaths[moment.imageUrl],
                         avatarUrl = avatarUrl,
-                        localAvatarPath = localAvatarPath
+                        localAvatarPath = localAvatarPath,
+                        onImageClick = { onImageZoom(moment.imageUrl) }
                     )
                 }
             }
@@ -184,7 +269,8 @@ fun MomentHistoryScreenContent(
                         .size(48.dp)
                         .clip(CircleShape)
                         .background(onBgColor.copy(alpha = 0.15f))
-                        .align(Alignment.CenterStart),
+                        .align(Alignment.CenterStart)
+                        .clickable { onNavigateToAccount() },
                     contentAlignment = Alignment.Center
                 ) {
                     AsyncImage(
@@ -200,8 +286,7 @@ fun MomentHistoryScreenContent(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .padding(horizontal = 40.dp, vertical = 40.dp)
+                    .padding(horizontal = 40.dp, vertical = 24.dp)
                     .align(Alignment.BottomCenter),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -283,7 +368,7 @@ fun MomentHistoryScreenContent(
                                 .clickable { 
                                     showMenu = false
                                     if (sortedMoments.isNotEmpty()) {
-                                        onDelete(sortedMoments[feedPagerState.currentPage])
+                                        momentToDelete = sortedMoments[feedPagerState.currentPage]
                                     }
                                 }
                                 .padding(horizontal = 24.dp, vertical = 16.dp),
@@ -310,5 +395,5 @@ fun MomentHistoryScreenContent(
             
             MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
-    }
 }
+

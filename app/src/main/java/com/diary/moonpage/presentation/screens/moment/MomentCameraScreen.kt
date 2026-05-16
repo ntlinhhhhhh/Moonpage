@@ -58,10 +58,39 @@ import java.util.Locale
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun MomentCameraScreen(
+    initialMomentId: String? = null,
     onNavigateToGallery: () -> Unit,
     onNavigateToHistory: () -> Unit,
-    viewModel: MomentViewModel = hiltViewModel(),
-    profileViewModel: com.diary.moonpage.presentation.screens.profile.ProfileViewModel = hiltViewModel()
+    onNavigateToAccount: () -> Unit
+) {
+    if (androidx.compose.ui.platform.LocalInspectionMode.current) {
+        // Preview placeholder to avoid Hilt crash
+        Box(modifier = Modifier.fillMaxSize())
+        return
+    }
+
+    val viewModel: MomentViewModel = hiltViewModel()
+    val profileViewModel: com.diary.moonpage.presentation.screens.profile.ProfileViewModel = hiltViewModel()
+
+    MomentCameraScreenStateful(
+        initialMomentId = initialMomentId,
+        onNavigateToGallery = onNavigateToGallery,
+        onNavigateToHistory = onNavigateToHistory,
+        onNavigateToAccount = onNavigateToAccount,
+        viewModel = viewModel,
+        profileViewModel = profileViewModel
+    )
+}
+
+@OptIn(ExperimentalPermissionsApi::class)
+@Composable
+fun MomentCameraScreenStateful(
+    initialMomentId: String? = null,
+    onNavigateToGallery: () -> Unit,
+    onNavigateToHistory: () -> Unit,
+    onNavigateToAccount: () -> Unit,
+    viewModel: MomentViewModel,
+    profileViewModel: com.diary.moonpage.presentation.screens.profile.ProfileViewModel
 ) {
     val profileState by profileViewModel.uiState.collectAsState()
     val cameraPermissionState = rememberMultiplePermissionsState(
@@ -129,6 +158,8 @@ fun MomentCameraScreen(
             onEvent = viewModel::onEvent,
             onNavigateToGallery = onNavigateToGallery,
             onNavigateToHistory = onNavigateToHistory,
+            onNavigateToAccount = onNavigateToAccount,
+            initialMomentId = initialMomentId,
             snackbarHostState = snackbarHostState,
             avatarUrl = profileState.user?.avatarUrl,
             localAvatarPath = profileState.localAvatarPath ?: profileState.tempAvatarPath,
@@ -155,6 +186,8 @@ fun MomentCameraScreenContent(
     onEvent: (MomentUiEvent) -> Unit,
     onNavigateToGallery: () -> Unit,
     onNavigateToHistory: () -> Unit,
+    onNavigateToAccount: () -> Unit,
+    initialMomentId: String? = null,
     snackbarHostState: SnackbarHostState,
     avatarUrl: String? = null,
     localAvatarPath: String? = null,
@@ -169,6 +202,13 @@ fun MomentCameraScreenContent(
     var capturedLensFacing by remember { mutableIntStateOf(CameraSelector.LENS_FACING_BACK) }
     
     val verticalPagerState = rememberPagerState(initialPage = 0, pageCount = { 2 })
+    
+    // Scroll to history if coming from gallery with a specific moment
+    LaunchedEffect(initialMomentId) {
+        if (initialMomentId != null) {
+            verticalPagerState.scrollToPage(1)
+        }
+    }
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -187,8 +227,6 @@ fun MomentCameraScreenContent(
     var pendingLocationRequest by remember { mutableStateOf(false) }
 
     val uploadPagerState = rememberPagerState(pageCount = { allTags.size })
-
-    val weatherIcons = listOf("Sunny ☀️", "Cloudy ☁️", "Rainy 🌧️", "Snowy ❄️", "Windy 💨")
 
     val reverseGeocode = { location: Location ->
         scope.launch(Dispatchers.IO) {
@@ -235,6 +273,21 @@ fun MomentCameraScreenContent(
         }
     }
 
+    LaunchedEffect(uiState.suggestedWeather) {
+        uiState.suggestedWeather?.let { weather ->
+            val icon = when {
+                weather.condition.contains("Sunny") -> "☀️"
+                weather.condition.contains("Cloudy") -> "☁️"
+                weather.condition.contains("Rainy") -> "🌧️"
+                weather.condition.contains("Snowy") -> "❄️"
+                weather.condition.contains("Windy") -> "💨"
+                weather.condition.contains("Stormy") -> "⛈️"
+                else -> "🌡️"
+            }
+            userWeather = "${weather.condition} $icon"
+        }
+    }
+
     Scaffold() { paddingValues ->
         Box(modifier = Modifier
             .fillMaxSize()
@@ -253,7 +306,8 @@ fun MomentCameraScreenContent(
                                 capturedImageUri = uri
                                 capturedLensFacing = lensFacing
                             },
-                            avatarUrl = avatarUrl
+                            avatarUrl = avatarUrl,
+                            onAvatarClick = onNavigateToAccount
                         )
                     } else {
                         MomentHistoryScreenContent(
@@ -261,11 +315,14 @@ fun MomentCameraScreenContent(
                             localPaths = uiState.localPaths,
                             onNavigateToGallery = onNavigateToGallery,
                             onBackToCamera = { scope.launch { verticalPagerState.animateScrollToPage(0) } },
+                            onNavigateToAccount = onNavigateToAccount,
+                            initialMomentId = initialMomentId,
                             onShare = { onEvent(MomentUiEvent.ShareMoment(it.imageUrl)) },
                             onDownload = { onEvent(MomentUiEvent.DownloadMoment(it.imageUrl)) },
                             onDelete = { onEvent(MomentUiEvent.DeleteMoment(it.id)) },
                             avatarUrl = avatarUrl,
-                            localAvatarPath = localAvatarPath
+                            localAvatarPath = localAvatarPath,
+                            isVerticalVisible = verticalPagerState.currentPage == 1
                         )
                     }
                 }
@@ -292,8 +349,7 @@ fun MomentCameraScreenContent(
                     },
                     userWeather = userWeather,
                     onWeatherClick = {
-                        val currentIndex = weatherIcons.indexOf(userWeather)
-                        userWeather = weatherIcons[(currentIndex + 1) % weatherIcons.size]
+                        onEvent(MomentUiEvent.RefreshWeather)
                     },
                     isLoading = uiState.isUploading,
                     isSuccess = isSuccess,

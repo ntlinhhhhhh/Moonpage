@@ -55,6 +55,7 @@ fun CameraMainUI(
     onNavigateToHistory: () -> Unit,
     onImageCaptured: (Uri, Int) -> Unit,
     avatarUrl: String? = null,
+    onAvatarClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -125,6 +126,7 @@ fun CameraMainUI(
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .align(Alignment.CenterStart)
+                    .clickable { onAvatarClick() }
             ) {
                 AsyncImage(
                     model = avatarUrl,
@@ -267,6 +269,7 @@ fun CameraMainUI(
             Text("HISTORY", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
         }
         Spacer(modifier = Modifier.height(16.dp))
+
     }
 }
 

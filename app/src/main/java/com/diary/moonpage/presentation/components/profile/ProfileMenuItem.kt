@@ -25,6 +25,7 @@ fun ProfileMenuItem(
     icon: ImageVector,
     modifier: Modifier = Modifier,
     tint: Color? = null,
+    trailingContent: @Composable (() -> Unit)? = null,
     onClick: () -> Unit
 ) {
     val cardBg = MaterialTheme.colorScheme.surface
@@ -74,12 +75,16 @@ fun ProfileMenuItem(
                 modifier = Modifier.weight(1f)
             )
 
-            Icon(
-                imageVector = Icons.Rounded.ChevronRight,
-                contentDescription = "Navigate",
-                tint = textColor.copy(alpha = 0.3f),
-                modifier = Modifier.size(20.dp)
-            )
+            if (trailingContent != null) {
+                trailingContent()
+            } else {
+                Icon(
+                    imageVector = Icons.Rounded.ChevronRight,
+                    contentDescription = "Navigate",
+                    tint = textColor.copy(alpha = 0.3f),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
     }
 }

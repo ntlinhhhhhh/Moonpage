@@ -10,5 +10,7 @@ data class ProfileUiState(
     val myThemes: List<Theme> = emptyList(),
     val isLoading: Boolean = false,
     val isUpdating: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val totalLogs: Int = 0,
+    val totalPhotos: Int = 0
 )

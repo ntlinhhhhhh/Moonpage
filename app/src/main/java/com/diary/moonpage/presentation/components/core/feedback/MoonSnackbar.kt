@@ -44,6 +44,7 @@ fun MoonSnackbarHost(
         val isSuccess = data.visuals.message.contains("success", ignoreCase = true) ||
                 data.visuals.message.contains("deleted", ignoreCase = true) ||
                 data.visuals.message.contains("recorded", ignoreCase = true) ||
+                data.visuals.message.contains("activated", ignoreCase = true) ||
                 data.visuals.message.contains("updated", ignoreCase = true) ||
                 data.visuals.message.contains("edited", ignoreCase = true) ||
                 data.visuals.message.contains("saved", ignoreCase = true) ||

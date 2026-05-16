@@ -8,6 +8,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
@@ -18,15 +21,19 @@ import com.diary.moonpage.core.util.ActivityPreferencesManager
 @HiltViewModel
 class CalendarViewModel @Inject constructor(
     private val repository: DailyLogRepository,
+    private val momentRepository: com.diary.moonpage.domain.repository.MomentRepository,
     private val activityPreferencesManager: ActivityPreferencesManager,
-    private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager
+    private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager,
+    private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository
 ) : ViewModel() {
 
     private val BASE_URL = "https://hieu-wikipedia.io.vn/"
 
-
     private val _uiState = MutableStateFlow(CalendarUiState())
     val uiState: StateFlow<CalendarUiState> = _uiState.asStateFlow()
+
+    private val currentMonth = MutableStateFlow(_uiState.value.currentYearMonth)
+    private val refreshTrigger = MutableStateFlow(0)
 
     init {
         viewModelScope.launch {
@@ -39,7 +46,59 @@ class CalendarViewModel @Inject constructor(
                 _uiState.update { it.copy(themeType = themeType) }
             }
         }
-        fetchLogsForMonth(_uiState.value.currentYearMonth)
+        
+        observeData()
+    }
+
+    private fun observeData() {
+        viewModelScope.launch {
+            combine(
+                currentMonth.flatMapLatest { month -> 
+                    refreshTrigger.flatMapLatest {
+                        val yearMonthStr = "${month.year}-${month.monthValue.toString().padStart(2, '0')}"
+                        repository.getDailyLogsByMonth(yearMonthStr)
+                    }
+                },
+                momentRepository.moments,
+                currentMonth
+            ) { logs, moments, month ->
+                val logsMap = logs.associateBy { LocalDate.parse(it.date) }.toMutableMap()
+                
+                moments.forEach { moment ->
+                    try {
+                        val momentDate = LocalDate.parse(moment.capturedAt.substring(0, 10))
+                        if (YearMonth.from(momentDate) == month) {
+                            val existingLog = logsMap[momentDate]
+                            val momentPhotoUrl = if (moment.imageUrl.startsWith("http")) moment.imageUrl else BASE_URL + moment.imageUrl.trimStart('/')
+                            
+                            if (existingLog != null) {
+                                val logPhotos = existingLog.dailyPhotos?.map { if (it.startsWith("http")) it else BASE_URL + it.trimStart('/') } ?: emptyList()
+                                val combinedPhotos = (logPhotos + momentPhotoUrl).distinct()
+                                logsMap[momentDate] = existingLog.copy(dailyPhotos = combinedPhotos)
+                            } else {
+                                logsMap[momentDate] = com.diary.moonpage.domain.model.DailyLog(
+                                    id = "moment_${moment.id}",
+                                    baseMoodId = 0,
+                                    date = momentDate.toString(),
+                                    note = null,
+                                    sleepHours = null,
+                                    isMenstruation = false,
+                                    menstruationPhase = null,
+                                    dailyPhotos = listOf(momentPhotoUrl),
+                                    activityIds = emptyList()
+                                )
+                            }
+                        }
+                    } catch (e: Exception) {}
+                }
+
+                val finalMap = logsMap.mapValues { (_, log) ->
+                    log.copy(dailyPhotos = log.dailyPhotos?.map { if (it.startsWith("http")) it else BASE_URL + it.trimStart('/') })
+                }
+
+                _uiState.update { it.copy(dailyLogs = finalMap, currentYearMonth = month, isLoading = false) }
+            }.collect {}
+        }
     }
 
     fun onEvent(event: CalendarUiEvent) {
@@ -50,17 +109,19 @@ class CalendarViewModel @Inject constructor(
                     currentState.copy(selectedDate = newDate)
                 }
             }
+            is CalendarUiEvent.ForceDateSelected -> {
+                _uiState.update { it.copy(selectedDate = event.date) }
+            }
             is CalendarUiEvent.OnMonthChanged -> {
-                _uiState.update { it.copy(currentYearMonth = event.yearMonth) }
-                fetchLogsForMonth(event.yearMonth)
+                _uiState.update { it.copy(isLoading = true) }
+                currentMonth.value = event.yearMonth
             }
             is CalendarUiEvent.OnDeleteLog -> {
                 deleteDailyLog(event.date)
             }
             is CalendarUiEvent.OnMonthPickerConfirm -> {
-                val newMonth = YearMonth.of(event.year, event.month)
-                _uiState.update { it.copy(currentYearMonth = newMonth, showMonthPicker = false) }
-                fetchLogsForMonth(newMonth)
+                _uiState.update { it.copy(isLoading = true, showMonthPicker = false) }
+                currentMonth.value = YearMonth.of(event.year, event.month)
             }
             CalendarUiEvent.OnMonthPickerClick -> {
                 _uiState.update { it.copy(showMonthPicker = true) }
@@ -74,14 +135,17 @@ class CalendarViewModel @Inject constructor(
             CalendarUiEvent.OnFilterDismiss -> {
                 _uiState.update { it.copy(showFilterSheet = false) }
             }
-            CalendarUiEvent.OnShareClick -> {
-                _uiState.update { it.copy(showShareSheet = true) }
-            }
             CalendarUiEvent.OnShareDismiss -> {
                 _uiState.update { it.copy(showShareSheet = false) }
             }
             is CalendarUiEvent.ApplyFilter -> {
                 _uiState.update { it.copy(selectedFilter = event.filterItem, showFilterSheet = false) }
+            }
+            CalendarUiEvent.ToggleViewMode -> {
+                _uiState.update { currentState ->
+                    val newMode = if (currentState.viewMode == CalendarViewMode.CALENDAR) CalendarViewMode.TIMELINE else CalendarViewMode.CALENDAR
+                    currentState.copy(viewMode = newMode)
+                }
             }
             CalendarUiEvent.DismissMessage -> {
                 _uiState.update { it.copy(snackbarMessage = null) }
@@ -91,37 +155,17 @@ class CalendarViewModel @Inject constructor(
     }
 
     fun refreshLogs() {
-        fetchLogsForMonth(_uiState.value.currentYearMonth)
-    }
-
-    private fun fetchLogsForMonth(yearMonth: YearMonth) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            val yearMonthStr = "${yearMonth.year}-${yearMonth.monthValue.toString().padStart(2, '0')}"
-
-            repository.getDailyLogsByMonth(yearMonthStr).collect { logs ->
-                val logsMap = logs.map { log ->
-                    log.copy(dailyPhotos = log.dailyPhotos?.map { if (it.startsWith("http")) it else BASE_URL + it.trimStart('/') })
-                }.associateBy { LocalDate.parse(it.date) }
-                _uiState.update { currentState ->
-                    // Instead of putAll which keeps old entries, we want to update the month's data
-                    // However, to keep it simple and reactive, we'll just use the new logs from the repository
-                    // If the repository is the source of truth, this map should be correct.
-                    currentState.copy(dailyLogs = logsMap, isLoading = false)
-                }
-            }
-        }
+        refreshTrigger.update { it + 1 }
     }
 
     private fun deleteDailyLog(date: LocalDate) {
         viewModelScope.launch {
             repository.deleteDailyLog(date.toString()).onSuccess {
-                // Remove the deleted log from the local state immediately for instant feedback
+                statisticsRepository.triggerRefresh()
                 _uiState.update { currentState ->
                     val newLogs = currentState.dailyLogs.filterKeys { it != date }
                     currentState.copy(dailyLogs = newLogs, selectedDate = null, snackbarMessage = "Record deleted successfully!")
                 }
-                refreshLogs()
             }.onFailure { exception ->
                 _uiState.update { it.copy(snackbarMessage = exception.message ?: "Failed to delete log") }
             }

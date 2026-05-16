@@ -6,6 +6,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import com.diary.moonpage.presentation.navigation.Screen
+import com.diary.moonpage.presentation.screens.profile.navigateToAccount
 
 fun NavController.navigateToMomentCamera(navOptions: NavOptions? = null) {
     this.navigate(Screen.Camera.route, navOptions)
@@ -27,7 +28,8 @@ fun NavGraphBuilder.momentScreen(
         screenWrapper(Screen.Camera.route) {
             MomentCameraScreen(
                 onNavigateToGallery = { navController.navigate(Screen.Gallery.route) },
-                onNavigateToHistory = { navController.navigateToMomentHistory() }
+                onNavigateToHistory = { navController.navigateToMomentHistory() },
+                onNavigateToAccount = { navController.navigateToAccount() }
             )
         }
     }
@@ -37,7 +39,8 @@ fun NavGraphBuilder.momentScreen(
             MomentHistoryScreen(
                 onBackToCamera = { navController.popBackStack() },
                 onNavigateToGallery = { navController.navigate(Screen.Gallery.route) },
-                onNavigateToDetail = { id -> navController.navigateToMomentDetail(id) }
+                onNavigateToDetail = { id -> navController.navigateToMomentDetail(id) },
+                onNavigateToAccount = { navController.navigateToAccount() }
             )
         }
     }
@@ -48,7 +51,8 @@ fun NavGraphBuilder.momentScreen(
             MomentDetailScreen(
                 momentId = momentId,
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToGallery = { navController.navigate(Screen.Gallery.route) }
+                onNavigateToGallery = { navController.navigate(Screen.Gallery.route) },
+                onNavigateToAccount = { navController.navigateToAccount() }
             )
         }
     }

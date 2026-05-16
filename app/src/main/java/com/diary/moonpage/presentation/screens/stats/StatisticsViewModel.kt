@@ -30,39 +30,54 @@ class StatisticsViewModel @Inject constructor(
             }
         }
         loadStatistics()
+        viewModelScope.launch {
+            repository.refreshTrigger.collect {
+                loadStatistics()
+            }
+        }
     }
 
     fun loadStatistics() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
+                val isMonthly = _uiState.value.isMonthly
                 val response = repository.getStatisticsSummary(
                     _uiState.value.selectedYear,
-                    _uiState.value.selectedMonth,
-                    _uiState.value.isMonthly
+                    if (isMonthly) _uiState.value.selectedMonth else null,
+                    isMonthly
                 )
                 if (response.isSuccessful && response.body() != null) {
                     val stats = response.body()!!
                     
-                    // Enhancement: Ensure we have data for the new charts (Mocking if missing)
-                    val enhancedStats = stats.copy(
-                        moodFlow = if (stats.moodFlow.isEmpty()) generateMockMoodFlow(_uiState.value.selectedYear, _uiState.value.selectedMonth, _uiState.value.isMonthly) else stats.moodFlow,
-                        sleepData = stats.sleepData ?: generateMockSleepData(_uiState.value.selectedYear, _uiState.value.selectedMonth),
-                        stepsData = stats.stepsData ?: generateMockStepsData(_uiState.value.selectedYear, _uiState.value.selectedMonth),
-                        menstruationData = stats.menstruationData ?: if (_uiState.value.gender != "Male") generateMockMenstruationData(_uiState.value.selectedYear, _uiState.value.selectedMonth) else emptyList(),
-                        moodBySleep = stats.moodBySleep ?: generateMockMoodBySleep(),
-                        yearlyMoodGrid = stats.yearlyMoodGrid ?: generateMockYearlyGrid(_uiState.value.selectedYear)
-                    )
+                    val freq = stats.bestActivities.sortedByDescending { it.occurrence }.take(3)
+                    
+                    // Improved Correlation Algorithm for Best/Worst
+                    // Filter activities that occurred at least 2 times (for better correlation)
+                    val relevantActivities = stats.bestActivities.filter { it.occurrence >= 1 }
+                    val best = relevantActivities.sortedByDescending { it.averageMoodScore }.take(3)
+                    val worst = relevantActivities.sortedBy { it.averageMoodScore }.take(3)
+                    
+                    // Calculate Average Wake Up Time based on average bedtime and sleep hours
+                    val avgWakeUpTime = stats.averageWakeupTime ?: if (stats.averageSleepStartTime != null && stats.averageSleepHours != null) {
+                        try {
+                            val sdf = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.ENGLISH)
+                            val date = sdf.parse(stats.averageSleepStartTime)
+                            if (date != null) {
+                                val cal = java.util.Calendar.getInstance().apply { time = date }
+                                cal.add(java.util.Calendar.MINUTE, (stats.averageSleepHours * 60).toInt())
+                                sdf.format(cal.time)
+                            } else null
+                        } catch (e: Exception) { null }
+                    } else null
 
-                    val freq = enhancedStats.bestActivities.sortedByDescending { it.occurrence }.take(3)
-                    val best = enhancedStats.bestActivities.sortedByDescending { it.averageMoodScore }.take(3)
-                    val worst = enhancedStats.bestActivities.sortedBy { it.averageMoodScore }.take(3)
                     
                     _uiState.update { it.copy(
-                        stats = enhancedStats, 
+                        stats = stats, 
                         frequentlyRecorded = freq,
                         bestActivities = best,
                         worstActivities = worst,
+                        averageWakeUpTime = avgWakeUpTime,
                         isLoading = false
                     ) }
                 } else {
@@ -72,94 +87,6 @@ class StatisticsViewModel @Inject constructor(
                 _uiState.update { it.copy(error = e.message, isLoading = false) }
             }
         }
-    }
-
-    private fun generateMockSleepData(year: Int, month: Int): List<com.diary.moonpage.data.remote.dto.stats.SleepDataDto> {
-        val days = java.time.YearMonth.of(year, month).lengthOfMonth()
-        return (1..days).map { d ->
-            com.diary.moonpage.data.remote.dto.stats.SleepDataDto(
-                date = String.format("%04d-%02d-%02d", year, month, d),
-                hours = (6..9).random() + (0..9).random() / 10.0
-            )
-        }
-    }
-
-    private fun generateMockStepsData(year: Int, month: Int): List<com.diary.moonpage.data.remote.dto.stats.StepsDataDto> {
-        val days = java.time.YearMonth.of(year, month).lengthOfMonth()
-        return (1..days).map { d ->
-            com.diary.moonpage.data.remote.dto.stats.StepsDataDto(
-                date = String.format("%04d-%02d-%02d", year, month, d),
-                count = (2000..12000).random()
-            )
-        }
-    }
-
-    private fun generateMockMoodBySleep(): List<com.diary.moonpage.data.remote.dto.stats.MoodBySleepDto> {
-        return listOf(
-            com.diary.moonpage.data.remote.dto.stats.MoodBySleepDto("< 5h", listOf(
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Bad", 40, 40),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Low", 30, 30),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Meh", 20, 20),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Good", 10, 10),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Rad", 0, 0)
-            )),
-            com.diary.moonpage.data.remote.dto.stats.MoodBySleepDto("6-7h", listOf(
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Bad", 10, 10),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Low", 20, 20),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Meh", 40, 40),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Good", 20, 20),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Rad", 10, 10)
-            )),
-            com.diary.moonpage.data.remote.dto.stats.MoodBySleepDto("8h+", listOf(
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Bad", 5, 5),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Low", 5, 5),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Meh", 10, 10),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Good", 40, 40),
-                com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto("Rad", 40, 40)
-            ))
-        )
-    }
-
-    private fun generateMockYearlyGrid(year: Int): List<com.diary.moonpage.data.remote.dto.stats.MoodFlowDto> {
-        val list = mutableListOf<com.diary.moonpage.data.remote.dto.stats.MoodFlowDto>()
-        for (m in 1..12) {
-            val days = java.time.YearMonth.of(year, m).lengthOfMonth()
-            for (d in 1..days) {
-                list.add(com.diary.moonpage.data.remote.dto.stats.MoodFlowDto(
-                    date = String.format("%04d-%02d-%02d", year, m, d),
-                    moodId = (1..5).random()
-                ))
-            }
-        }
-        return list
-    }
-
-    private fun generateMockMoodFlow(year: Int, month: Int, isMonthly: Boolean): List<com.diary.moonpage.data.remote.dto.stats.MoodFlowDto> {
-        return if (isMonthly) {
-            val days = java.time.YearMonth.of(year, month).lengthOfMonth()
-            (1..days).filter { it % 2 == 0 }.map { d ->
-                com.diary.moonpage.data.remote.dto.stats.MoodFlowDto(
-                    date = String.format("%04d-%02d-%02d", year, month, d),
-                    moodId = (1..5).random()
-                )
-            }
-        } else {
-            (1..12).map { m ->
-                com.diary.moonpage.data.remote.dto.stats.MoodFlowDto(
-                    date = String.format("%04d-%02d-15", year, m),
-                    moodId = (1..5).random()
-                )
-            }
-        }
-    }
-
-    private fun generateMockMenstruationData(year: Int, month: Int): List<String> {
-        return listOf(
-            String.format("%04d-%02d-12", year, month),
-            String.format("%04d-%02d-13", year, month),
-            String.format("%04d-%02d-14", year, month),
-            String.format("%04d-%02d-15", year, month)
-        )
     }
 
     fun onIconClick(id: String?) {
@@ -176,5 +103,22 @@ class StatisticsViewModel @Inject constructor(
             _uiState.update { it.copy(isMonthly = isMonthly) }
             loadStatistics()
         }
+    }
+
+    fun shareRecapCard(context: android.content.Context, bitmap: android.graphics.Bitmap) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isCapturing = true) }
+            try {
+                com.diary.moonpage.core.util.ImageUtils.shareImage(context, bitmap, "My Year in Beans")
+            } catch (e: Exception) {
+                _uiState.update { it.copy(captureError = "Failed to share: ${e.message}") }
+            } finally {
+                _uiState.update { it.copy(isCapturing = false) }
+            }
+        }
+    }
+
+    fun clearCaptureError() {
+        _uiState.update { it.copy(captureError = null) }
     }
 }

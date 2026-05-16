@@ -41,7 +41,8 @@ fun NavGraphBuilder.profileScreen(
                 onNavigateToPhotos = { navController.navigateToGallery() },
                 onNavigateToThemeCalendar = { navController.navigateToThemeCalendar() },
                 onNavigateToWidgets = { navController.navigate(Screen.Widgets.route) },
-                onNavigateToInviteFriend = { navController.navigate(Screen.InviteFriend.route) }
+                onNavigateToInviteFriend = { navController.navigate(Screen.InviteFriend.route) },
+                onNavigateToStats = { navController.navigate(Screen.Stats.route) }
             )
         }
     }

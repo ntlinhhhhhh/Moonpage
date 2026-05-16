@@ -10,23 +10,27 @@ interface DailyLogRepository {
         date: String,
         note: String?,
         sleepHours: Double?,
+        sleepStartTime: String?,
         isMenstruation: Boolean,
         menstruationPhase: String?,
         activityIds: List<String>?,
         dailyPhotos: List<File>?,
-        songTitle: String? = null,
-        artistName: String? = null,
-        albumArtUrl: String? = null,
-        sleepBedTime: String? = null,
-        sleepWakeTime: String? = null,
-        steps: Int? = null,
-        calories: Int? = null,
-        distance: Double? = null
+        steps: Int?,
+        musicRecord: String?,
+        calories: Int?,
+        distance: Double?,
+        wakeupTime: String? = null,
+        weather: String? = null,
+        temperature: Double? = null
     ): Result<Unit>
 
     suspend fun getDailyLogByDate(date: String): Result<DailyLog>
     
+    fun getDailyLogByDateFlow(date: String): Flow<DailyLog?>
+    
     suspend fun deleteDailyLog(date: String): Result<Unit>
     
     fun getDailyLogsByMonth(yearMonth: String): Flow<List<DailyLog>>
+
+    suspend fun clearCache()
 }

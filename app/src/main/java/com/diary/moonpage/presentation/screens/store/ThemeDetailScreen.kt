@@ -1,5 +1,6 @@
 package com.diary.moonpage.presentation.screens.store
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -9,7 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.rounded.ArrowBackIosNew
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,6 +27,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.res.stringResource
+import com.diary.moonpage.R
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.domain.model.ThemeType
 import com.diary.moonpage.presentation.components.core.buttons.MoonPrimaryButton
@@ -33,9 +36,11 @@ import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import com.diary.moonpage.presentation.screens.store.components.*
 import com.diary.moonpage.core.theme.*
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,6 +51,7 @@ fun ThemeDetailScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val theme = uiState.selectedThemeDetail
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     if (theme == null) {
         LaunchedEffect(Unit) {
@@ -56,9 +62,27 @@ fun ThemeDetailScreen(
 
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
-            if (effect is StoreUiEffect.ShowSnackBar) {
-                snackbarHostState.showSnackbar(effect.message)
+            when (effect) {
+                is StoreUiEffect.ShowSnackBar -> {
+                    snackbarHostState.showSnackbar(effect.message)
+                }
+                is StoreUiEffect.ThemeActivated -> {
+                    val msg = effect.message ?: context.getString(R.string.theme_updated_success)
+                    snackbarHostState.showSnackbar(msg)
+                }
+                is StoreUiEffect.NavigateBack -> {
+                    onNavigateBack()
+                }
+                else -> {}
             }
+        }
+    }
+
+    LaunchedEffect(uiState.activationSuccess) {
+        if (uiState.activationSuccess) {
+            // Success is already handled by ThemeActivated effect above
+            delay(1000)
+            viewModel.dismissSuccessMessage()
         }
     }
 
@@ -85,6 +109,7 @@ fun ThemeDetailScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .statusBarsPadding()
                     .height(64.dp)
                     .background(backgroundColor),
                 contentAlignment = Alignment.Center
@@ -95,13 +120,13 @@ fun ThemeDetailScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.ArrowBackIosNew,
-                        contentDescription = "Back",
+                        contentDescription = stringResource(R.string.back),
                         tint = onBackground
                     )
                 }
 
                 Text(
-                    text = "Theme Detail",
+                    text = stringResource(R.string.theme_detail),
                     style = MaterialTheme.typography.titleMedium,
                     color = onBackground
                 )
@@ -113,7 +138,9 @@ fun ThemeDetailScreen(
                         .height(32.dp)
                         .padding(end = 16.dp)
                         .align(Alignment.CenterEnd)
-                        .graphicsLayer(translationX = shakeOffset.value)
+                        .graphicsLayer {
+                            translationX = shakeOffset.value
+                        }
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 8.dp),
@@ -125,17 +152,12 @@ fun ThemeDetailScreen(
                                 .background(MaterialTheme.colorScheme.primary, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = "$",
-                                modifier = Modifier.offset(y = (-0.8).dp),
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                style = TextStyle(
-                                    platformStyle = PlatformTextStyle(includeFontPadding = false)
-                                )
-                            )
+                        Icon(
+                            imageVector = Icons.Rounded.Star,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(12.dp)
+                        )
                         }
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
@@ -150,80 +172,102 @@ fun ThemeDetailScreen(
         },
         containerColor = backgroundColor
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(16.dp))
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = theme.name,
-                style = MaterialTheme.typography.headlineLarge,
-                color = onBackground,
-                textAlign = TextAlign.Center
+                Text(
+                    text = theme.name,
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = onBackground,
+                    textAlign = TextAlign.Center
+                )
+
+                Text(
+                    text = theme.description ?: stringResource(R.string.theme_description_default),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = onBackground.copy(alpha = 0.6f),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(vertical = 12.dp)
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                ThemeCalendarPreview(theme = theme)
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                val themePrimaryColor = remember(theme) {
+                    getThemeShades(theme).lastOrNull() ?: backgroundColor
+                }
+
+                val buttonText = if (theme.isOwned) stringResource(R.string.activate) else stringResource(R.string.buy_for, theme.price)
+                MoonPrimaryButton(
+                    text = buttonText,
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        if (theme.isOwned) {
+                            viewModel.activateTheme(theme.id)
+                        } else {
+                            viewModel.initiatePurchase(theme)
+                        }
+                    },
+                    containerColor = themePrimaryColor,
+                    modifier = Modifier.padding(horizontal = 12.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = stringResource(R.string.theme_includes),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = onBackground.copy(alpha = 0.5f),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+            }
+
+            // Snackbar at top
+            MoonSnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.align(Alignment.TopCenter),
+                topPadding = 45.dp
             )
 
-            Text(
-                text = theme.description ?: "Experience the beauty of this unique set.",
-                style = MaterialTheme.typography.bodyLarge,
-                color = onBackground.copy(alpha = 0.6f),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(vertical = 12.dp)
-            )
+            if (uiState.showConfirmPurchaseDialog && uiState.themeToPurchase != null) {
+                ConfirmPurchaseDialog(
+                    theme = uiState.themeToPurchase!!,
+                    onConfirm = { viewModel.buyTheme(uiState.themeToPurchase!!) },
+                    onCancel = { viewModel.cancelPurchase() }
+                )
+            }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            if (uiState.showConfirmActivationDialog && uiState.selectedThemeDetail != null) {
+                val currentThemePrimaryColor = remember(uiState.selectedThemeDetail) {
+                    uiState.selectedThemeDetail?.let { getThemeShades(it).lastOrNull() }
+                }
+                ConfirmActivationDialog(
+                    themeName = uiState.selectedThemeDetail?.name ?: "",
+                    onConfirm = { viewModel.confirmActivation() },
+                    onCancel = { viewModel.cancelActivation() },
+                    primaryColor = currentThemePrimaryColor
+                )
+            }
 
-            ThemeCalendarPreview(theme = theme)
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            MoonPrimaryButton(
-                text = if (theme.isOwned) "Activate" else "Buy for ${theme.price} $",
-                onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    if (theme.isOwned) {
-                        viewModel.activateTheme(theme.id)
-                    } else {
-                        viewModel.initiatePurchase(theme)
-                    }
-                },
-                containerColor = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(horizontal = 12.dp)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "INCLUDES: CALENDAR ICONS, PREMIUM BACKGROUND, CUSTOM UI TONES",
-                style = MaterialTheme.typography.labelSmall,
-                color = onBackground.copy(alpha = 0.5f),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-        }
-
-        if (uiState.showConfirmPurchaseDialog && uiState.themeToPurchase != null) {
-            ConfirmPurchaseDialog(
-                theme = uiState.themeToPurchase!!,
-                onConfirm = { viewModel.buyTheme(uiState.themeToPurchase!!) },
-                onCancel = { viewModel.cancelPurchase() }
-            )
-        }
-
-        if (uiState.showPurchaseSuccessDialog && uiState.purchasedTheme != null) {
-            PurchaseSuccessDialog(
-                themeName = uiState.purchasedTheme?.name ?: "",
-                onDismiss = { viewModel.dismissDialog() }
-            )
-        }
-        MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
+            if (uiState.showPurchaseSuccessDialog && uiState.purchasedTheme != null) {
+                PurchaseSuccessDialog(
+                    themeName = uiState.purchasedTheme?.name ?: "",
+                    onDismiss = { viewModel.dismissDialog() }
+                )
+            }
         }
     }
 }
@@ -263,7 +307,15 @@ fun ThemeCalendarPreview(theme: Theme) {
         Spacer(modifier = Modifier.height(24.dp))
 
         // Days of week
-        val days = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+        val days = listOf(
+        stringResource(R.string.sun),
+        stringResource(R.string.mon),
+        stringResource(R.string.tue),
+        stringResource(R.string.wed),
+        stringResource(R.string.thu),
+        stringResource(R.string.fri),
+        stringResource(R.string.sat)
+    )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly

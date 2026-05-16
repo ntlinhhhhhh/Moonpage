@@ -52,4 +52,10 @@ class ThemePreferencesManager @Inject constructor(
             }
         }
     }
+
+    suspend fun clearAll() {
+        context.themeDataStore.edit { prefs ->
+            prefs.clear()
+        }
+    }
 }

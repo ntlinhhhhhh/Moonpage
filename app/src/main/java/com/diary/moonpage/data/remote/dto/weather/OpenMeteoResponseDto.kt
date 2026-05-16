@@ -21,6 +21,8 @@ data class DailyWeatherDataDto(
     val weathercode: List<Int>,
     @SerializedName("temperature_2m_max")
     val temperatureMax: List<Double>,
+    @SerializedName("temperature_2m_min")
+    val temperatureMin: List<Double>,
     @SerializedName("windspeed_10m_max")
     val windspeedMax: List<Double>
 )

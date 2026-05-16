@@ -19,6 +19,17 @@ interface SpotifyApi {
         @Query("limit") limit: Int = 20
     ): Response<SpotifySearchResponse>
 
+    @GET("https://api.spotify.com/v1/me")
+    suspend fun getCurrentUser(
+        @Header("Authorization") token: String
+    ): Response<SpotifyUserResponse>
+
+    @GET("https://api.spotify.com/v1/me/top/tracks")
+    suspend fun getTopTracks(
+        @Header("Authorization") token: String,
+        @Query("limit") limit: Int = 20
+    ): Response<SpotifyTopTracksResponse>
+
     @GET("https://api.spotify.com/v1/me/player/recently-played")
     suspend fun getRecentlyPlayedTracks(
         @Header("Authorization") token: String,
@@ -35,16 +46,25 @@ interface SpotifyApi {
         @Field("code_verifier") codeVerifier: String
     ): Response<SpotifyTokenResponse>
 
+    @FormUrlEncoded
+    @POST("https://accounts.spotify.com/api/token")
+    suspend fun refreshToken(
+        @Field("client_id") clientId: String,
+        @Field("grant_type") grantType: String = "refresh_token",
+        @Field("refresh_token") refreshToken: String
+    ): Response<SpotifyTokenResponse>
+
     companion object {
         const val CLIENT_ID = "61d0e03380e44e42b515534d6d133598"
-        const val REDIRECT_URI = "moonpage://spotify-callback"
+        const val REDIRECT_URI = "moonpage://spotify-callback/"
         const val AUTH_URL = "https://accounts.spotify.com/authorize"
         
         fun getAuthUrl(codeChallenge: String, state: String): String {
+            val encodedRedirectUri = android.net.Uri.encode(REDIRECT_URI)
             return "$AUTH_URL?client_id=$CLIENT_ID" +
                     "&response_type=code" +
-                    "&redirect_uri=$REDIRECT_URI" +
-                    "&scope=user-read-private%20user-read-email%20user-read-recently-played" +
+                    "&redirect_uri=$encodedRedirectUri" +
+                    "&scope=user-read-private%20user-read-email%20user-read-recently-played%20user-top-read" +
                     "&show_dialog=true" +
                     "&state=$state" +
                     "&code_challenge_method=S256" +
@@ -52,6 +72,15 @@ interface SpotifyApi {
         }
     }
 }
+
+data class SpotifyUserResponse(
+    val id: String,
+    val product: String?
+)
+
+data class SpotifyTopTracksResponse(
+    val items: List<SpotifyTrack>
+)
 
 data class SpotifyRecentlyPlayedResponse(
     val items: List<SpotifyRecentlyPlayedItem>

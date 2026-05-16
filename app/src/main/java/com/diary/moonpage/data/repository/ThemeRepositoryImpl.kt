@@ -194,7 +194,7 @@ class ThemeRepositoryImpl @Inject constructor(
             val response = api.setActiveTheme(SetActiveThemeRequest(themeId))
             if (response.isSuccessful) {
                 dao.clearActiveTheme()
-                dao.setActiveTheme(themeId)
+                dao.setActiveTheme(themeId, System.currentTimeMillis())
                 Result.success(Unit)
             } else {
                 Result.failure(Exception(parseErrorResponse(response.errorBody()?.string())))
@@ -243,6 +243,11 @@ class ThemeRepositoryImpl @Inject constructor(
 
     override suspend fun getActiveThemeId(): String? {
         return dao.getActiveTheme()?.id
+    }
+
+    override suspend fun clearCache() {
+        dao.deleteAllThemes()
+        dao.deleteAllThemeMoods()
     }
 
     private fun parseErrorResponse(errorBody: String?): String {

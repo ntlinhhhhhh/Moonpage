@@ -22,6 +22,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -119,39 +120,34 @@ fun AccountScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Scaffold(
-            containerColor = MaterialTheme.colorScheme.background
-        ) { padding ->
-        Box(modifier = Modifier.padding(padding)) {
-            AccountScreenContent(
-                username = user?.name ?: "",
-                gender = user?.gender ?: "Not specified",
-                birthday = user?.birthday ?: "Not specified",
-                userIdFull = user?.userId ?: "",
-                email = user?.email ?: "",
-                avatarUrl = user?.avatarUrl,
-                localAvatarPath = uiState.localAvatarPath,
-                tempAvatarPath = uiState.tempAvatarPath,
-                onNavigateBack = onNavigateBack,
-                onLogoutClick = { showLogoutDialog = true },
-                onBirthdayClick = { currentBottomSheet = BottomSheetType.BIRTHDAY },
-                onGenderClick = { currentBottomSheet = BottomSheetType.GENDER },
-                onAvatarEditClick = { avatarLauncher.launch("image/*") },
-                onUsernameEditClick = { currentBottomSheet = BottomSheetType.USERNAME }
-            )
+        AccountScreenContent(
+            username = user?.name ?: "",
+            gender = user?.gender ?: stringResource(R.string.not_specified),
+            birthday = user?.birthday ?: stringResource(R.string.not_specified),
+            userIdFull = user?.userId ?: "",
+            email = user?.email ?: "",
+            avatarUrl = user?.avatarUrl,
+            localAvatarPath = uiState.localAvatarPath,
+            tempAvatarPath = uiState.tempAvatarPath,
+            onNavigateBack = onNavigateBack,
+            onLogoutClick = { showLogoutDialog = true },
+            onBirthdayClick = { currentBottomSheet = BottomSheetType.BIRTHDAY },
+            onGenderClick = { currentBottomSheet = BottomSheetType.GENDER },
+            onAvatarEditClick = { avatarLauncher.launch("image/*") },
+            onUsernameEditClick = { currentBottomSheet = BottomSheetType.USERNAME },
+            snackbarHostState = snackbarHostState
+        )
 
-            if (uiState.isUpdating) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.3f))
-                        .clickable(enabled = false) {},
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                }
+        if (uiState.isUpdating) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.3f))
+                    .clickable(enabled = false) {},
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
-        }
         }
         MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
     }
@@ -257,7 +253,7 @@ fun LogoutConfirmationDialog(
             ) {
                 // Title
                 Text(
-                    text = "Log out",
+                    text = stringResource(R.string.log_out),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
@@ -268,7 +264,7 @@ fun LogoutConfirmationDialog(
 
                 // Main message
                 Text(
-                    text = "Are you sure you want to log out?",
+                    text = stringResource(R.string.logout_confirmation),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colorScheme.onSurface.copy(alpha = 0.8f),
                     textAlign = TextAlign.Center
@@ -278,7 +274,7 @@ fun LogoutConfirmationDialog(
 
                 // Warning message
                 Text(
-                    text = "Days recorded while logged out may not be saved.",
+                    text = stringResource(R.string.logout_warning),
                     style = MaterialTheme.typography.bodySmall,
                     color = colorScheme.error,
                     textAlign = TextAlign.Center,
@@ -304,7 +300,7 @@ fun LogoutConfirmationDialog(
                         elevation = ButtonDefaults.buttonElevation(0.dp)
                     ) {
                         Text(
-                            "Cancel",
+                            stringResource(R.string.cancel),
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
                         )
@@ -322,7 +318,7 @@ fun LogoutConfirmationDialog(
                         elevation = ButtonDefaults.buttonElevation(0.dp)
                     ) {
                         Text(
-                            "Log out",
+                            stringResource(R.string.log_out),
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
                         )
@@ -352,66 +348,67 @@ fun AccountScreenContent(
     onBirthdayClick: () -> Unit,
     onGenderClick: () -> Unit,
     onAvatarEditClick: () -> Unit,
-    onUsernameEditClick: () -> Unit
+    onUsernameEditClick: () -> Unit,
+    snackbarHostState: SnackbarHostState
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val isUsernameEmpty = username.trim().isEmpty()
     val clipboardManager = LocalClipboardManager.current
     val haptic = LocalHapticFeedback.current
-    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             containerColor = colorScheme.background,
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        "Account",
-                        fontWeight = FontWeight.Bold,
-                        color = colorScheme.onBackground
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            Icons.Rounded.ArrowBackIosNew,
-                            contentDescription = "Back",
-                            tint = colorScheme.onBackground
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            stringResource(R.string.account),
+                            fontWeight = FontWeight.Bold,
+                            color = colorScheme.onBackground
                         )
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = colorScheme.background
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(
+                                Icons.Rounded.ArrowBackIosNew,
+                                contentDescription = stringResource(R.string.back),
+                                tint = colorScheme.onBackground
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = colorScheme.background
+                    )
                 )
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(30.dp))
-
-            AccountAvatar(
-                onEditClick = onAvatarEditClick,
-                avatarUrl = avatarUrl,
-                localAvatarPath = localAvatarPath,
-                tempAvatarPath = tempAvatarPath
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+            }
+        ) { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Spacer(modifier = Modifier.height(10.dp))
+
+                AccountAvatar(
+                    onEditClick = onAvatarEditClick,
+                    avatarUrl = avatarUrl,
+                    localAvatarPath = localAvatarPath,
+                    tempAvatarPath = tempAvatarPath
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
                 Text(
-                    text = if (isUsernameEmpty) "Set Username" else username,
+                    text = if (isUsernameEmpty) stringResource(R.string.set_username) else username,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = if (isUsernameEmpty) colorScheme.onBackground.copy(alpha = 0.5f) else colorScheme.onBackground
@@ -437,22 +434,22 @@ fun AccountScreenContent(
             Spacer(modifier = Modifier.height(40.dp))
 
             AccountInfoRow(
-                label = "User ID",
+                label = stringResource(R.string.user_id),
                 value = userIdFull,
-                actionText = "Copy",
+                actionText = stringResource(R.string.copy),
                 icon = Icons.Rounded.Person,
                 isColumnValue = true,
                 onClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     clipboardManager.setText(AnnotatedString(userIdFull))
                     coroutineScope.launch {
-                        snackbarHostState.showSnackbar("User ID copied!")
+                        snackbarHostState.showSnackbar(context.getString(R.string.user_id_copied))
                     }
                 }
             )
 
             AccountInfoRow(
-                label = "Birthday",
+                label = stringResource(R.string.birthday),
                 value = birthday,
                 showArrow = true,
                 icon = Icons.Rounded.Cake,
@@ -460,7 +457,7 @@ fun AccountScreenContent(
             )
 
             AccountInfoRow(
-                label = "Gender",
+                label = stringResource(R.string.gender),
                 value = gender,
                 showArrow = true,
                 icon = Icons.Rounded.Wc,
@@ -470,7 +467,7 @@ fun AccountScreenContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Login Information",
+                text = stringResource(R.string.login_information),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = colorScheme.onBackground,
@@ -480,7 +477,7 @@ fun AccountScreenContent(
             Spacer(modifier = Modifier.height(8.dp))
 
             AccountInfoRow(
-                label = "My social account",
+                label = stringResource(R.string.my_social_account),
                 value = email,
                 iconRes = R.drawable.ic_google,
                 isColumnValue = true,
@@ -488,18 +485,22 @@ fun AccountScreenContent(
             )
 
             AccountInfoRow(
-                label = "Change social account",
+                label = stringResource(R.string.change_social_account),
                 value = "",
                 icon = Icons.Rounded.Sync,
                 showArrow = true,
-                onClick = {}
+                onClick = {
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar("Redirecting to social account provider...")
+                    }
+                }
             )
 
             Spacer(modifier = Modifier.height(40.dp))
 
             TextButton(onClick = onLogoutClick) {
                 Text(
-                    "Log out",
+                    stringResource(R.string.log_out),
                     color = colorScheme.error,
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.bodyLarge
@@ -509,28 +510,6 @@ fun AccountScreenContent(
             Spacer(modifier = Modifier.height(48.dp))
         }
         }
-        MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
-    }
-}
-
-@Preview(showBackground = true, name = "Account Screen Light")
-@Composable
-fun AccountScreenPreview() {
-    MoonPageTheme {
-        AccountScreenContent(
-            username = "Moon User",
-            gender = "Female",
-            birthday = "04/06/2005",
-            userIdFull = "01KJPADDQZ5DSB2GYGFGX384RF",
-            email = "demo@gmail.com",
-            avatarUrl = null,
-            localAvatarPath = null,
-            onNavigateBack = {},
-            onLogoutClick = {},
-            onBirthdayClick = {},
-            onGenderClick = {},
-            onAvatarEditClick = {},
-            onUsernameEditClick = {}
-        )
+        // Removed redundant MoonSnackbarHost as it's managed by the parent AccountScreen
     }
 }

@@ -279,7 +279,7 @@ object ThemeConstants {
             id = "theme_autumn",
             name = "Autumn",
             price = 100,
-            thumbnailUrl = "#D32F2F",
+            thumbnailUrl = "#E67E22",
             backgroundUrl = "#FDF5E6",
             decoration = "AUTUMN",
             moods = listOf(

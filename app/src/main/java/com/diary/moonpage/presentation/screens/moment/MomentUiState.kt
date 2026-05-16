@@ -11,6 +11,5 @@ data class MomentUiState(
     val selectedMoment: Moment? = null,
     val errorMessage: UiText? = null,
     val successMessage: UiText? = null,
-    val autoLocation: String = "",
-    val autoWeather: String = ""
+    val suggestedWeather: com.diary.moonpage.domain.repository.WeatherData? = null
 )

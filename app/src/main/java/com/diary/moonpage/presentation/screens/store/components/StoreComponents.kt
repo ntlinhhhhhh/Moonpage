@@ -10,8 +10,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.core.theme.*
 
@@ -47,44 +50,77 @@ fun CuteBeanIcon(
     }
 
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        // Circular Background
+        // Vibrant Solid Background
         Surface(
             modifier = Modifier.fillMaxSize(),
             shape = CircleShape,
-            color = color.copy(alpha = 0.2f)
+            color = color
         ) {}
 
-        // Mood Icon Image
+        // Rich Decorations
+        when (decoration) {
+            "KITTY" -> {
+                Canvas(modifier = Modifier.fillMaxSize().offset(x = (-10).dp, y = (-10).dp)) {
+                    drawCircle(color = color, radius = size.minDimension / 4)
+                }
+                Canvas(modifier = Modifier.fillMaxSize().offset(x = 10.dp, y = (-10).dp)) {
+                    drawCircle(color = color, radius = size.minDimension / 4)
+                }
+            }
+            "SPROUT" -> {
+                Canvas(modifier = Modifier.size(16.dp).offset(y = (-18).dp)) {
+                    drawCircle(color = Color(0xFF81C784), radius = 4.dp.toPx())
+                }
+            }
+            "BLUSHING" -> {
+                Row(modifier = Modifier.width(26.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Surface(modifier = Modifier.size(7.dp), shape = CircleShape, color = Color(0xFFFF8A80).copy(alpha = 0.7f)) {}
+                    Surface(modifier = Modifier.size(7.dp), shape = CircleShape, color = Color(0xFFFF8A80).copy(alpha = 0.7f)) {}
+                }
+            }
+            "PUPPY" -> {
+                Canvas(modifier = Modifier.fillMaxSize().offset(x = (-12).dp, y = (-8).dp)) {
+                    drawOval(color = color, size = Size(9.dp.toPx(), 18.dp.toPx()))
+                }
+                Canvas(modifier = Modifier.fillMaxSize().offset(x = 12.dp, y = (-8).dp)) {
+                    drawOval(color = color, size = Size(9.dp.toPx(), 18.dp.toPx()))
+                }
+            }
+            "HEART" -> {
+                Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = Color.Red.copy(alpha = 0.6f), modifier = Modifier.size(12.dp).offset(y = (-18).dp))
+            }
+            "WEATHER" -> {
+                if (emotion == "VERY_HAPPY") {
+                    Box(modifier = Modifier.size(10.dp).offset(x = 10.dp, y = (-10).dp).background(Color.Yellow, CircleShape))
+                }
+            }
+            "COOKIE" -> {
+                Box(modifier = Modifier.size(4.dp).offset(x = (-8).dp, y = (-8).dp).background(Color(0xFF3E2723), CircleShape))
+                Box(modifier = Modifier.size(4.dp).offset(x = 8.dp, y = 8.dp).background(Color(0xFF3E2723), CircleShape))
+            }
+        }
+
+        // Professional Black Facial Expression
         Image(
             painter = painterResource(id = drawableRes),
             contentDescription = null,
-            modifier = Modifier.fillMaxSize(0.65f)
+            modifier = Modifier.fillMaxSize(0.55f) // Slightly smaller to reveal decorations better
         )
     }
 }
 
 @Composable
 fun StoreTopBar(
-    coins: Int,
-    onMenuClick: () -> Unit,
-    onDoneClick: (() -> Unit)? = null
+    coins: Int
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 8.dp),
+            .statusBarsPadding()
+            .height(64.dp)
+            .padding(horizontal = 4.dp),
         contentAlignment = Alignment.Center
     ) {
-        IconButton(
-            onClick = onMenuClick,
-            modifier = Modifier.align(Alignment.CenterStart)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
-                tint = MaterialTheme.colorScheme.onBackground
-            )
-        }
 
         Text(
             text = "Store",
@@ -92,74 +128,48 @@ fun StoreTopBar(
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        if (onDoneClick != null) {
-            Button(
-                onClick = onDoneClick,
-                modifier = Modifier
-                    .padding(end = 8.dp)
-                    .height(36.dp)
-                    .align(Alignment.CenterEnd),
-                shape = RoundedCornerShape(18.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            modifier = Modifier
+                .padding(end = 16.dp)
+                .height(32.dp)
+                .align(Alignment.CenterEnd)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Done",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        } else {
-            Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-                modifier = Modifier
-                    .padding(end = 16.dp)
-                    .height(32.dp)
-                    .align(Alignment.CenterEnd)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Box(
+                    modifier = Modifier
+                        .size(16.dp)
+                        .background(MaterialTheme.colorScheme.primary, CircleShape),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(18.dp)
-                            .background(MaterialTheme.colorScheme.primary, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "$",
-                            modifier = Modifier.offset(y = (-0.8).dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center,
-                            style = TextStyle(
-                                platformStyle = PlatformTextStyle(includeFontPadding = false)
-                            )
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "$coins Coins",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontSize = 12.sp
+                    Icon(
+                        imageVector = Icons.Rounded.Star,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(12.dp)
                     )
                 }
+
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "$coins",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 11.sp
+                )
             }
         }
     }
 }
-
 @Composable
 fun ThemeCard(
     theme: Theme,
     isSelected: Boolean = false,
+    showSelectionIndicator: Boolean = true,
     onClick: () -> Unit
 ) {
     val onSurface = MaterialTheme.colorScheme.onBackground
@@ -168,6 +178,7 @@ fun ThemeCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
+            .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else MoonTheme.customColors.logCardBg)
             .clickable { onClick() }
             .padding(vertical = 12.dp, horizontal = 8.dp)
     ) {
@@ -178,24 +189,22 @@ fun ThemeCard(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                 val shades = getThemeShades(theme)
-                Box(contentAlignment = Alignment.BottomEnd) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
                     CuteBeanIcon(
                         modifier = Modifier.size(36.dp),
                         emotion = if (isSelected) "VERY_HAPPY" else "NEUTRAL",
                         decoration = theme.decoration,
                         color = shades.getOrElse(if (isSelected) 4 else 2) { Color.LightGray }
                     )
-                    if (isSelected) {
-                        Surface(
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(12.dp).offset(x = 2.dp, y = 2.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text(text = "✓", color = Color.White, fontSize = 8.sp, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    }
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 
@@ -204,7 +213,7 @@ fun ThemeCard(
                         text = theme.name,
                         style = MaterialTheme.typography.titleMedium,
                         color = onSurface,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Bold
                     )
                     Text(
                         text = theme.collection,
@@ -242,16 +251,11 @@ fun ThemeCard(
                                 .background(MaterialTheme.colorScheme.primary, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = "$", 
-                                modifier = Modifier.offset(y = (-0.8).dp),
-                                color = MaterialTheme.colorScheme.onPrimary, 
-                                fontSize = 8.sp, 
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center,
-                                style = TextStyle(
-                                    platformStyle = PlatformTextStyle(includeFontPadding = false)
-                                )
+                            Icon(
+                                imageVector = Icons.Rounded.Star,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(10.dp)
                             )
                         }
                         Spacer(modifier = Modifier.width(6.dp))
@@ -364,16 +368,11 @@ fun IconPackCard(pack: Theme, onClick: () -> Unit) {
                             .background(MaterialTheme.colorScheme.primary, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "$",
-                            modifier = Modifier.offset(y = (-0.8).dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            fontSize = 7.sp,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center,
-                            style = TextStyle(
-                                platformStyle = PlatformTextStyle(includeFontPadding = false)
-                            )
+                        Icon(
+                            imageVector = Icons.Rounded.FilterVintage, 
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimary, 
+                            modifier = Modifier.size(8.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(4.dp))
@@ -425,11 +424,12 @@ fun ExploreMoreCard(onClick: () -> Unit) {
 
 @Composable
 fun CurrentThemeCard(theme: Theme) {
+    val onSurface = MaterialTheme.colorScheme.onSurface
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MoonTheme.customColors.logCardBg
         )
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -437,33 +437,28 @@ fun CurrentThemeCard(theme: Theme) {
             Box(contentAlignment = Alignment.BottomEnd) {
                 CuteBeanIcon(
                     modifier = Modifier.size(48.dp),
-                    emotion = "HAPPY",
+                    emotion = "VERY_HAPPY",
                     decoration = theme.decoration,
-                    color = shades.getOrElse(3) { MaterialTheme.colorScheme.primary }
+                    color = shades.getOrElse(4) { MaterialTheme.colorScheme.primary }
                 )
-                if (theme.id != com.diary.moonpage.core.util.ThemeConstants.DEFAULT_THEME_ID) {
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(16.dp).offset(x = 4.dp, y = 4.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(text = "✓", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column {
                 Text(
                     text = theme.name, 
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = onSurface
                 )
+                val activatedDate = remember(theme.activatedAt) {
+                    if (theme.activatedAt != null) {
+                        val sdf = java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.ENGLISH)
+                        sdf.format(java.util.Date(theme.activatedAt))
+                    } else "Recently"
+                }
                 Text(
-                    text = "Active since Oct 24, 2023", 
+                    text = "Active since $activatedDate", 
                     style = MaterialTheme.typography.bodySmall, 
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    color = onSurface.copy(alpha = 0.6f)
                 )
             }
         }
@@ -604,6 +599,103 @@ fun PurchaseSuccessDialog(
     )
 }
 
+@Composable
+fun ConfirmActivationDialog(
+    themeName: String,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+    primaryColor: Color? = null
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    val buttonColor = primaryColor ?: colorScheme.primary
+
+    Dialog(
+        onDismissRequest = onCancel,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true,
+            usePlatformDefaultWidth = false
+        )
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth(0.88f)
+                .wrapContentHeight(),
+            shape = RoundedCornerShape(20.dp),
+            color = MoonTheme.customColors.popupBgColor,
+            tonalElevation = 0.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(28.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Title
+                Text(
+                    text = "Confirm Activation",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Main message
+                Text(
+                    text = "Do you want to set \"$themeName\" as your active theme?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colorScheme.onSurface.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(28.dp))
+
+                // Buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // No button
+                    Button(
+                        onClick = onCancel,
+                        modifier = Modifier.weight(1f).height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MoonTheme.customColors.cancelBtnBgColor,
+                            contentColor = MoonTheme.customColors.cancelBtnTextColor
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(0.dp)
+                    ) {
+                        Text(
+                            "No",
+                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+
+                    // Activate button
+                    Button(
+                        onClick = onConfirm,
+                        modifier = Modifier.weight(1f).height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = buttonColor,
+                            contentColor = colorScheme.onPrimary
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(0.dp)
+                    ) {
+                        Text(
+                            "Activate",
+                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 fun getThemeShades(theme: Theme): List<Color> {
     val predefined = com.diary.moonpage.core.util.ThemeConstants.THEMES.find { it.id == theme.id }
     if (predefined != null) {
@@ -664,6 +756,9 @@ fun getThemeShades(theme: Theme): List<Color> {
         )
         "MOON" -> listOf(
             Color(0xFFFFF176), Color(0xFFFFEE58), Color(0xFFFFD54F), Color(0xFFFFB300), Color(0xFFFFA000)
+        )
+        "AUTUMN" -> listOf(
+            Color(0xFFFDF5E6), Color(0xFFF5DEB3), Color(0xFFDEB887), Color(0xFFE67E22), Color(0xFFD35400)
         )
         else -> listOf(
             Color(0xFFE8E1DA), Color(0xFFD7CCC8), Color(0xFFBCAAA4), Color(0xFF8D6E63), Color(0xFF5D4037)

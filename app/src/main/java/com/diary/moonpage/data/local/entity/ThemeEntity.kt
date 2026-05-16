@@ -20,7 +20,8 @@ data class ThemeEntity(
     val type: String,
     val icons: String, // Comma separated
     val primaryColor: String?,
-    val decoration: String
+    val decoration: String,
+    val activatedAt: Long? = null
 ) {
     fun toDomain(): Theme {
         return Theme(
@@ -37,7 +38,8 @@ data class ThemeEntity(
             type = ThemeType.valueOf(type),
             icons = if (icons.isEmpty()) emptyList() else icons.split(","),
             primaryColor = primaryColor,
-            decoration = decoration
+            decoration = decoration,
+            activatedAt = activatedAt
         )
     }
 
@@ -57,7 +59,8 @@ data class ThemeEntity(
                 type = theme.type.name,
                 icons = theme.icons.joinToString(","),
                 primaryColor = theme.primaryColor,
-                decoration = theme.decoration
+                decoration = theme.decoration,
+                activatedAt = theme.activatedAt
             )
         }
     }

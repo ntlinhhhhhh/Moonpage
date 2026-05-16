@@ -44,8 +44,12 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core.splashscreen)
+    implementation(libs.androidx.biometric)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.process)
     implementation(libs.androidx.activity.compose)
+//    implementation("com.lokalise.android:sdk:2.12.0")
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
@@ -63,6 +67,12 @@ dependencies {
 
     implementation(libs.hilt.android)
     implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.ui.geometry)
+    implementation(libs.ui)
+    implementation(libs.firebase.crashlytics.buildtools)
+    implementation(libs.androidx.compose.remote.creation.core)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.ui.graphics)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
@@ -71,6 +81,7 @@ dependencies {
 
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
+    implementation("com.google.accompanist:accompanist-permissions:0.35.0-alpha")
     implementation("com.google.firebase:firebase-messaging")
     implementation("com.google.firebase:firebase-analytics:22.0.2")
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
@@ -85,6 +96,9 @@ dependencies {
     implementation(libs.androidx.exifinterface)
     implementation(libs.androidx.health.connect.client)
     implementation(libs.play.services.location)
+    
+    // Coroutines Play Services for Task.await()
+    implementation(libs.kotlinx.coroutines.play.services)
 
     // Room
     implementation(libs.androidx.room.runtime)

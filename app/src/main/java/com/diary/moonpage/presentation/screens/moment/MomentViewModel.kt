@@ -31,8 +31,8 @@ class MomentViewModel @Inject constructor(
     private val getMomentUseCase: GetMomentUseCase,
     private val uploadMomentUseCase: UploadMomentUseCase,
     private val deleteMomentUseCase: DeleteMomentUseCase,
-    private val weatherRepository: WeatherRepository,
-    private val locationTracker: LocationTracker,
+    private val dailyLogRepository: com.diary.moonpage.domain.repository.DailyLogRepository,
+    private val weatherRepository: com.diary.moonpage.domain.repository.WeatherRepository,
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
 
@@ -47,15 +47,59 @@ class MomentViewModel @Inject constructor(
         MomentTag("review", Icons.Rounded.Star, "Review"),
         MomentTag("location", Icons.Rounded.LocationOn, "Location"),
         MomentTag("weather", Icons.Rounded.WbSunny, "Weather"),
-        MomentTag("time", Icons.Rounded.AccessTime, SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date())),
         MomentTag("party", null, "Party Time!", containerColor = Color(0xFF80FFE8), contentColor = Color.Black),
         MomentTag("ootd", null, "OOTD", containerColor = Color.White, contentColor = Color.Black),
         MomentTag("missyou", null, "Miss you", containerColor = Color(0xFFFF4B4B), contentColor = Color.White)
     )
 
+    private val locationTracker = com.diary.moonpage.core.util.LocationTracker(
+        com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(context),
+        context
+    )
+
     init {
         observeRepository()
         onEvent(MomentUiEvent.LoadMoments)
+        triggerAutoWeatherFetch()
+    }
+
+    private fun fetchWeather() {
+        viewModelScope.launch {
+            try {
+                val location = locationTracker.getCurrentLocation()
+                if (location != null) {
+                    val today = java.time.LocalDate.now()
+                    weatherRepository.getWeatherConditions(location.latitude, location.longitude, today).onSuccess { result ->
+                        val conditions = result.conditions
+                        val temp = result.averageTemp
+                        
+                        val weatherText = if (conditions.isNotEmpty()) {
+                            val mainCondition = conditions.first()
+                            val tempText = String.format(java.util.Locale.ENGLISH, "%.1f°C", temp)
+                            "$mainCondition, $tempText"
+                        } else {
+                            "Unknown"
+                        }
+
+                        _uiState.update { it.copy(
+                            suggestedWeather = com.diary.moonpage.domain.repository.WeatherData(
+                                condition = weatherText,
+                                description = "Weather auto-filled",
+                                temp = temp,
+                                cityName = "Detected",
+                                iconUrl = ""
+                            )
+                        ) }
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("MomentVM", "Weather fetch failed", e)
+            }
+        }
+    }
+
+    fun triggerAutoWeatherFetch() {
+        fetchWeather()
     }
 
     private fun observeRepository() {
@@ -89,55 +133,7 @@ class MomentViewModel @Inject constructor(
             is MomentUiEvent.ShareMoment -> viewModelScope.launch { _uiEffect.send(MomentUiEffect.ShareMoment(event.url)) }
             MomentUiEvent.DismissMessage -> _uiState.update { it.copy(errorMessage = null, successMessage = null) }
             is MomentUiEvent.ShowSnackBar -> viewModelScope.launch { _uiEffect.send(MomentUiEffect.ShowSnackBar(event.message)) }
-            is MomentUiEvent.OnLocationPermissionGranted -> {
-                autoFetchDetails()
-            }
-        }
-    }
-
-    private fun autoFetchDetails() {
-        viewModelScope.launch {
-            val location = locationTracker.getCurrentLocation()
-            if (location != null) {
-                // 1. Fetch Weather
-                weatherRepository.getWeatherConditions(location.latitude, location.longitude, LocalDate.now())
-                    .onSuccess { weatherNames ->
-                        if (weatherNames.isNotEmpty()) {
-                            val primaryWeather = weatherNames[0]
-                            val emoji = when (primaryWeather) {
-                                "Sunny" -> "☀️"
-                                "Cloudy" -> "☁️"
-                                "Rainy" -> "🌧️"
-                                "Snowy" -> "❄️"
-                                "Windy" -> "💨"
-                                "Stormy" -> "⛈️"
-                                "Hot" -> "🔥"
-                                "Cold" -> "❄️"
-                                else -> ""
-                            }
-                            val weatherText = if (emoji.isNotEmpty()) "$primaryWeather $emoji" else primaryWeather
-                            _uiState.update { it.copy(autoWeather = weatherText) }
-                        }
-                    }
-
-                // 2. Fetch Location Name
-                launch(Dispatchers.IO) {
-                    try {
-                        val geocoder = Geocoder(context, Locale.getDefault())
-                        @Suppress("DEPRECATION")
-                        val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
-                        if (!addresses.isNullOrEmpty()) {
-                            val address = addresses[0]
-                            val district = address.subLocality ?: address.locality ?: address.subAdminArea
-                            val city = address.adminArea ?: address.locality ?: "Unknown"
-                            val locationName = if (district != null && district != city) "$district/$city" else city
-                            _uiState.update { it.copy(autoLocation = locationName) }
-                        }
-                    } catch (e: Exception) {
-                        // Keep current or empty
-                    }
-                }
-            }
+            MomentUiEvent.RefreshWeather -> triggerAutoWeatherFetch()
         }
     }
 
@@ -176,11 +172,13 @@ class MomentViewModel @Inject constructor(
             timeZone = TimeZone.getTimeZone("UTC")
         }
         val capturedAtStr = sdf.format(Date())
+        val dateOnlyStr = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+        val actualLogId = if (dailyLogId == "default_log_id") dateOnlyStr else dailyLogId
 
         viewModelScope.launch {
             _uiState.update { it.copy(isUploading = true) }
             uploadMomentUseCase(
-                dailyLogId,
+                actualLogId,
                 imageFile,
                 caption,
                 isPublic,
@@ -190,6 +188,7 @@ class MomentViewModel @Inject constructor(
                 rating
             ).onSuccess {
                 _uiState.update { it.copy(isUploading = false) }
+                
                 _uiEffect.send(MomentUiEffect.UploadSuccess)
                 _uiEffect.send(MomentUiEffect.ShowSnackBar(UiText.StringResource(R.string.moment_upload_success)))
             }.onFailure { error ->

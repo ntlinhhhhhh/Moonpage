@@ -8,6 +8,7 @@ import java.time.LocalTime
  */
 sealed class DailyLogUiEvent {
     data class OnMoodSelected(val moodId: Int) : DailyLogUiEvent()
+    data class OnCategoryToggle(val category: String) : DailyLogUiEvent()
     data class OnActivityToggled(val activityId: String) : DailyLogUiEvent()
     data class OnNoteChanged(val note: String) : DailyLogUiEvent()
     data class OnSleepChanged(val hours: Float) : DailyLogUiEvent()
@@ -28,18 +29,12 @@ sealed class DailyLogUiEvent {
     object OnDatePickerClick : DailyLogUiEvent()
     object OnDatePickerDismiss : DailyLogUiEvent()
     object OnImportSteps : DailyLogUiEvent()
+    object OnImportClick : DailyLogUiEvent()
+    data class OnHealthPermissionResult(val isGranted: Boolean) : DailyLogUiEvent()
     object OnLinkMusicAccount : DailyLogUiEvent()
     object OnSpotifyAuthConfirm : DailyLogUiEvent()
     object OnSpotifyAuthDismiss : DailyLogUiEvent()
+    data class OnPhotoZoom(val imageUrl: String?) : DailyLogUiEvent()
     object DismissMessage : DailyLogUiEvent()
     object OnLocationPermissionGranted : DailyLogUiEvent()
-}
-
-/**
- * Effects: VM -> UI
- */
-sealed class DailyLogUiEffect {
-    data class ShowSnackBar(val message: String) : DailyLogUiEffect()
-    data class SaveSuccess(val message: String) : DailyLogUiEffect()
-    object NavigateBack : DailyLogUiEffect()
 }

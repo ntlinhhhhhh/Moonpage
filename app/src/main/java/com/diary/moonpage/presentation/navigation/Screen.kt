@@ -3,6 +3,7 @@ package com.diary.moonpage.presentation.navigation
 sealed class Screen (val route: String) {
     // Auth Screens
     object Loading: Screen("loading_screen")
+    object Tutorial: Screen("tutorial_screen")
     object Landing: Screen("landing_screen")
     object Login: Screen("login_screen")
     object Register: Screen("register_screen")
@@ -11,12 +12,13 @@ sealed class Screen (val route: String) {
     object VerifyOtp: Screen("verify_otp_screen")
     object OnboardingBirthday: Screen("onboarding_birthday_screen")
     object OnboardingGender: Screen("onboarding_gender_screen")
+    object OnboardingReminder: Screen("onboarding_reminder_screen")
     object ActivityCategorySelection: Screen("activity_category_selection_screen")
 
     // Main App Screens (Bottom Nav)
     object Calendar: Screen("calendar_screen")
     object Stats: Screen("stats_screen")
-    object Camera: Screen("camera_screen")
+    object Camera: Screen("camera_screen?momentId={momentId}")
     object Store: Screen("store_screen")
     object Profile: Screen("profile_screen")
 
@@ -36,9 +38,15 @@ sealed class Screen (val route: String) {
     object Music: Screen("music_screen")
     object MenstrualCycle: Screen("menstrual_cycle_screen")
     object DailyPhoto: Screen("daily_photo_screen")
+    object ShareLog: Screen("share_log_screen/{date}")
+    object ShareCalendar: Screen("share_calendar_screen/{yearMonth}")
 
     // Moment Sub-screens
     object MomentDetail: Screen("moment_detail_screen/{momentId}")
+
+    // Security Screens
+    object CreatePasscode: Screen("create_passcode_screen")
+    object Lock: Screen("lock_screen")
 
     // Store Sub-screens
     object ThemeDetail: Screen("theme_detail_screen")

@@ -1,0 +1,237 @@
+<resources>
+    <string name="app_name">Moon Page</string>
+    <string name="google_web_client_id">511455154390-m8jmplb158akjj874288pipkt3emset0.apps.googleusercontent.com</string>
+
+    <!-- Validation Errors -->
+    <string name="error_email_empty">Email không được để trống.</string>
+    <string name="error_invalid_email">Định dạng email không hợp lệ.</string>
+    <string name="error_password_empty">Mật khẩu không được để trống.</string>
+    <string name="error_password_too_short">Mật khẩu phải có ít nhất 6 ký tự.</string>
+    <string name="error_passwords_not_match">Mật khẩu không khớp.</string>
+    <string name="error_username_empty">Tên người dùng không được để trống.</string>
+    <string name="error_unknown">Đã xảy ra lỗi không xác định.</string>
+    <string name="error_connection">Lỗi kết nối.</string>
+
+    <!-- Moment -->
+    <string name="moment_upload_success">Tải lên khoảnh khắc thành công!</string>
+    <string name="moment_deleted">Đã xóa khoảnh khắc.</string>
+
+    <!-- Settings -->
+    <string name="settings">Cài đặt</string>
+    <string name="preferences">Tùy chỉnh</string>
+    <string name="language">Ngôn ngữ</string>
+    <string name="app_theme">Giao diện</string>
+    <string name="security">Bảo mật</string>
+    <string name="passcode_lock">Khóa mã PIN</string>
+    <string name="biometric_auth">Xác thực vân tay</string>
+    <string name="support">Hỗ trợ</string>
+    <string name="help_center">Trung tâm trợ giúp</string>
+    <string name="terms_of_service">Điều khoản dịch vụ</string>
+    <string name="privacy_policy">Chính sách bảo mật</string>
+    <string name="account_action">Hành động tài khoản</string>
+    <string name="delete_account">Xóa tài khoản</string>
+    <string name="select_language">Chọn ngôn ngữ</string>
+    <string name="close">Đóng</string>
+    <string name="dark">Tối</string>
+    <string name="light">Sáng</string>
+    <string name="system">Hệ thống</string>
+    <string name="delete_account_confirmation">Bạn có chắc chắn muốn xóa tài khoản? Hành động này không thể hoàn tác.</string>
+    <string name="delete">Xóa</string>
+    <string name="cancel">Hủy</string>
+    <string name="ok">OK</string>
+
+    <!-- Calendar & Stats -->
+    <string name="report">Báo cáo</string>
+    <string name="monthly">Hàng tháng</string>
+    <string name="annual">Hàng năm</string>
+    <string name="select_date">Chọn ngày</string>
+    <string name="select_year">Chọn năm</string>
+    <string name="share">Chia sẻ</string>
+    <string name="edit">Sửa</string>
+    <string name="my_info">Thông tin</string>
+    <string name="recorded_days">Ngày đã ghi</string>
+    <string name="photos">Ảnh</string>
+    <string name="theme_store">Cửa hàng giao diện</string>
+    <string name="widgets">Tiện ích</string>
+    <string name="invite_friends">Mời bạn bè</string>
+    <string name="logout">Đăng xuất</string>
+    <string name="log_out">Đăng xuất</string>
+    <string name="logout_confirmation">Bạn có chắc chắn muốn đăng xuất?</string>
+    <string name="logout_warning">Các ngày đã ghi khi đăng xuất có thể không được lưu.</string>
+
+    <!-- Days of Week -->
+    <string name="sun">CN</string>
+    <string name="mon">T2</string>
+    <string name="tue">T3</string>
+    <string name="wed">T4</string>
+    <string name="thu">T5</string>
+    <string name="fri">T6</string>
+    <string name="sat">T7</string>
+
+    <!-- Short Days of Week -->
+    <string name="sun_short">CN</string>
+    <string name="mon_short">T2</string>
+    <string name="tue_short">T3</string>
+    <string name="wed_short">T4</string>
+    <string name="thu_short">T5</string>
+    <string name="fri_short">T6</string>
+    <string name="sat_short">T7</string>
+
+    <!-- Profile -->
+    <string name="account">Tài khoản</string>
+    <string name="my_records">Ghi chép của tôi</string>
+    <string name="my_photos">Ảnh của tôi</string>
+    <string name="theme_calendar">Lịch giao diện</string>
+    <string name="more">Thêm</string>
+    <string name="invite_a_friend">Mời bạn bè</string>
+
+    <!-- Stats Titles -->
+    <string name="mood_flow">Dòng cảm xúc</string>
+    <string name="sleep_analysis">Phân tích giấc ngủ</string>
+    <string name="moods_by_sleep">Cảm xúc theo giấc ngủ</string>
+    <string name="mood_bar">Phân bổ cảm xúc</string>
+    <string name="activity_stats">Thống kê hoạt động</string>
+    <string name="best_worst">Tốt nhất &amp; Tệ nhất</string>
+    <string name="icon_deep_dive">Phân tích chuyên sâu</string>
+    <string name="top_music">Nhạc hàng đầu</string>
+    <string name="year_in_beans">Một năm nhìn lại</string>
+    <string name="monthly_average">Trung bình hàng tháng</string>
+    <string name="yearly_top_activities">Hoạt động hàng đầu năm</string>
+    <string name="trends">Xu hướng</string>
+    <string name="yearly_cycle_trends">Xu hướng chu kỳ năm</string>
+    <string name="yearly_sleep_trends">Xu hướng giấc ngủ năm</string>
+
+    <!-- Filter -->
+    <string name="filter_title">Lọc dữ liệu tháng</string>
+    <string name="clear_all">Xóa tất cả</string>
+    <string name="filter_by_mood">Lọc theo cảm xúc</string>
+    <string name="filter_by_activities">Lọc theo hoạt động</string>
+    <string name="show_results">Hiển thị kết quả</string>
+
+    <!-- Share -->
+    <string name="share_title">Chia sẻ lịch cảm xúc</string>
+    <string name="square">Hình vuông (1:1)</string>
+    <string name="portrait">Hình dọc (9:16)</string>
+
+    <!-- Daily Log -->
+    <string name="select_mood">Ngày hôm nay của bạn thế nào?</string>
+    <string name="select_activities">Bạn đã làm gì hôm nay?</string>
+    <string name="sleep_question">Bạn đã ngủ bao lâu?</string>
+    <string name="period_cycle">Chu kỳ kinh nguyệt</string>
+    <string name="daily_photo">Ảnh trong ngày</string>
+    <string name="note">Ghi chú</string>
+    <string name="done">Xong</string>
+    <string name="save">Lưu</string>
+    <string name="discard_changes">Hủy bỏ thay đổi?</string>
+    <string name="discard_confirmation">Bạn có thay đổi chưa lưu. Bạn có chắc muốn hủy bỏ chúng?</string>
+    <string name="discard">Hủy bỏ</string>
+
+    <!-- Store -->
+    <string name="home">Trang chủ</string>
+    <string name="my_theme">Của tôi</string>
+    <string name="collections">Bộ sưu tập</string>
+    <string name="all_themes">Tất cả</string>
+    <string name="light_mode">Chế độ sáng</string>
+    <string name="dark_mode">Chế độ tối</string>
+    <string name="exclusive">Độc quyền</string>
+    <string name="newest">Mới nhất</string>
+    <string name="featured_collections">Bộ sưu tập nổi bật</string>
+    <string name="view_all">Xem tất cả</string>
+    <string name="icon_collections">Bộ sưu tập biểu tượng</string>
+    <string name="current_theme">GIAO DIỆN HIỆN TẠI</string>
+    <string name="theme_updated_success">Cập nhật giao diện thành công!</string>
+    <string name="confirm_activation">Xác nhận kích hoạt</string>
+    <string name="confirm_activation_msg">Bạn có chắc chắn muốn kích hoạt %1$s?</string>
+    <string name="purchase_success">Mua thành công!</string>
+    <string name="purchase_success_msg">Bạn đã mua thành công %1$s.</string>
+
+    <!-- Security -->
+    <string name="enter_passcode">Nhập mã PIN</string>
+    <string name="create_passcode">Tạo mã PIN</string>
+    <string name="confirm_passcode">Xác nhận mã PIN</string>
+    <string name="passcodes_do_not_match">Mã PIN không khớp. Vui lòng thử lại.</string>
+    <string name="wrong_passcode">Sai mã PIN. Vui lòng thử lại.</string>
+    <string name="use_biometric">Sử dụng vân tay để mở khóa</string>
+    <string name="unlock_app">Mở khóa Moon Page</string>
+    <string name="forgot_passcode">Quên mã PIN?</string>
+
+    <!-- Stats Extra -->
+    <string name="look_back">Nhìn lại năm %1$s của bạn.</string>
+    <string name="avg_cycle">Chu kỳ trung bình: %1$d ngày</string>
+    <string name="avg_period">Kinh nguyệt trung bình: %1$d ngày</string>
+    <string name="avg_sleep">Ngủ trung bình: %1$.1fh</string>
+    <string name="sleep_quality">Chất lượng giấc ngủ: %1$s</string>
+    <string name="good">Tốt</string>
+    <string name="fair">Bình thường</string>
+    <string name="poor">Kém</string>
+
+    <!-- Calendar Extra -->
+    <string name="delete_moment">Xóa khoảnh khắc</string>
+    <string name="delete_moment_confirmation">Bạn có chắc chắn muốn xóa khoảnh khắc này?</string>
+    <string name="delete_moment_warning">Hành động này không thể hoàn tác và bản ghi sẽ bị mất vĩnh viễn.</string>
+    <string name="future_date_error">Bạn không thể ghi chép cho ngày trong tương lai!</string>
+    <string name="month_format">Tháng %1$d %2$d</string>
+    <string name="reflect_journey">Nhìn lại hành trình của bạn với MoonPage</string>
+    <string name="strength_training">Tập thể lực %1$dp</string>
+    <string name="not_started">Chưa bắt đầu</string>
+    <string name="on_day_x">Ngày thứ %1$d</string>
+    <string name="streak">Chuỗi</string>
+    <string name="back">Quay lại</string>
+    <string name="theme_detail">Chi tiết giao diện</string>
+    <string name="theme_description_default">Trải nghiệm vẻ đẹp của bộ giao diện độc đáo này.</string>
+    <string name="activate">Kích hoạt</string>
+    <string name="buy_for">Mua với %1$d</string>
+    <string name="theme_includes">BAO GỒM: BIỂU TƯỢNG LỊCH, HÌNH NỀN CAO CẤP, TÔNG MÀU UI RIÊNG</string>
+
+    <!-- Account & Settings Extra -->
+    <string name="set_username">Đổi tên người dùng</string>
+    <string name="user_id">Mã người dùng</string>
+    <string name="copy">Sao chép</string>
+    <string name="user_id_copied">Đã sao chép mã người dùng!</string>
+    <string name="birthday">Ngày sinh</string>
+    <string name="gender">Giới tính</string>
+    <string name="login_information">Thông tin đăng nhập</string>
+    <string name="my_social_account">Tài khoản xã hội</string>
+    <string name="change_social_account">Đổi tài khoản xã hội</string>
+    <string name="not_specified">Chưa xác định</string>
+    <string name="current_passcode">Mã PIN hiện tại</string>
+    <string name="wrong_passcode_try_again">Sai mã PIN. Vui lòng thử lại.</string>
+
+    <!-- Notifications & Reminders -->
+    <string name="notifications">Thông báo</string>
+    <string name="reminders">Nhắc nhở</string>
+    <string name="daily_reminder">Nhắc nhở ghi nhật ký</string>
+    <string name="daily_reminder_desc">Nhắc bạn viết nhật ký mỗi ngày</string>
+    <string name="reminder_time">Giờ nhắc nhở</string>
+    <string name="app_updates">Cập nhật ứng dụng</string>
+    <string name="news_and_updates">Tin tức &amp; Cập nhật</string>
+    <string name="news_and_updates_desc">Nhận thông báo về tính năng và giao diện mới</string>
+    <string name="moments">Khoảnh khắc</string>
+    <string name="moment_alerts">Thông báo khoảnh khắc</string>
+    <string name="moment_alerts_desc">Nhận thông báo về các khoảnh khắc đã chia sẻ</string>
+
+    <!-- Notifications -->
+    <string name="noti_reminder_title">Ngày hôm nay của bạn thế nào? 🌱</string>
+    <string name="noti_reminder_body">Dành 1 phút kể cho mình nghe nhé. Dù vui hay buồn, ở đây luôn có chỗ để bạn tựa vào.</string>
+    
+    <string name="noti_empathy_title">Gửi bạn một cái ôm thật chặt 🫂</string>
+    <string name="noti_empathy_body">Có vẻ mấy hôm nay bạn đang mang nhiều tâm sự. Nghỉ ngơi một chút nhé, mọi chuyện rồi sẽ ổn thôi!</string>
+    
+    <string name="noti_weather_sunny_title">Nắng lên rực rỡ rồi 🌻</string>
+    <string name="noti_weather_sunny_body">Một ngày mới trong lành đang chờ bạn. Nhớ bôi kem chống nắng và mang theo một nụ cười thật tươi nhé!</string>
+    <string name="noti_weather_rainy_title">Trời đổ mưa rồi, nhớ mang ô bạn nhé ☔</string>
+    <string name="noti_weather_rainy_body">Dù bên ngoài ướt át, mong rằng trong lòng bạn hôm nay vẫn có một ngày thật ấm áp và bình yên.</string>
+    
+    <string name="noti_milestone_3d_title">Khởi đầu tuyệt vời! ✨</string>
+    <string name="noti_milestone_3d_body">Bạn đã ghi lại cảm xúc 3 ngày liên tiếp rồi. Thói quen nhỏ, niềm vui to. Cứ thế phát huy nhé!</string>
+    <string name="noti_milestone_7d_title">Ta-da! 1 tuần gắn bó cùng nhau 🎉</string>
+    <string name="noti_milestone_7d_body">Bạn đã dành trọn vẹn 7 ngày để yêu thương bản thân. Phần thưởng là một huy hiệu mới vừa được mở khóa, vào xem ngay nào!</string>
+    <string name="noti_milestone_broken_title">Trạm dừng chân nhỏ ⛺</string>
+    <string name="noti_milestone_broken_body">Hôm qua bạn đã bận rộn quá đúng không? Không sao cả, chuỗi ngày có thể bắt đầu lại, quan trọng là bạn đã quay về đây!</string>
+    
+    <string name="noti_report_monthly_title">Hộp thư tháng trước đã đến! 💌</string>
+    <string name="noti_report_monthly_body">Cuốn phim cảm xúc tháng qua của bạn đã được cuộn lại. Cùng mở ra xem tháng này màu sắc nào đang thống trị nhé!</string>
+    
+    <string name="noti_memory_title">Cỗ máy thời gian khởi động 🕰️</string>
+    <string name="noti_memory_body">Đúng ngày này 1 năm trước, bạn đã lưu lại một khoảnh khắc ở đây. Có muốn quay về quá khứ một chút không?</string>
+</resources>

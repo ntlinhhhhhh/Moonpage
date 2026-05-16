@@ -20,4 +20,7 @@ interface StatisticsDao {
 
     @Query("DELETE FROM statistics WHERE userId = :userId AND year = :year AND month = :month AND isMonthly = :isMonthly")
     suspend fun deleteStatistics(userId: String, year: Int, month: Int, isMonthly: Boolean)
+
+    @Query("DELETE FROM statistics")
+    suspend fun clearAllStatistics()
 }

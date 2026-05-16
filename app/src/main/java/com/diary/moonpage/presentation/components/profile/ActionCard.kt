@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 fun ActionCard(
     title: String,
     value: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector = Icons.Rounded.PhotoLibrary,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
@@ -77,7 +78,7 @@ fun ActionCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.PhotoLibrary,
+                        imageVector = icon,
                         contentDescription = null,
                         tint = iconColor,
                         modifier = Modifier.size(24.dp)

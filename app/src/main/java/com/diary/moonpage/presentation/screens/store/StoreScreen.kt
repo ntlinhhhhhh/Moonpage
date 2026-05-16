@@ -17,12 +17,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.diary.moonpage.R
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.domain.model.ThemeType
 import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
@@ -33,102 +35,117 @@ import com.diary.moonpage.core.theme.*
 @Composable
 fun StoreScreen(
     viewModel: StoreViewModel,
+    mainViewModel: com.diary.moonpage.MainViewModel = hiltViewModel(),
     onNavigateToDetail: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
-            if (effect is StoreUiEffect.ShowSnackBar) {
-                snackbarHostState.showSnackbar(effect.message)
+            when (effect) {
+                is StoreUiEffect.ShowSnackBar -> {
+                    snackbarHostState.showSnackbar(effect.message)
+                }
+                is StoreUiEffect.ThemeActivated -> {
+                    val msg = effect.message ?: context.getString(R.string.theme_updated_success)
+                    snackbarHostState.showSnackbar(msg)
+                }
+                is StoreUiEffect.NavigateBack -> {
+                    onNavigateBack()
+                }
+                else -> {}
             }
         }
     }
 
-    Scaffold() { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.background)
-        ) {
-            StoreTopBar(
-                coins = uiState.userCoins,
-                onMenuClick = onNavigateBack,
-                onDoneClick = if (uiState.temporarySelectedThemeId != null) {
-                    { viewModel.applyTheme() }
-                } else null
-            )
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                StoreTopBar(
+                    coins = uiState.userCoins
+                )
 
-            StoreTabs(
-                selectedIndex = uiState.selectedTabIndex,
-                onTabSelected = { viewModel.onTabSelected(it) }
-            )
+                StoreTabs(
+                    selectedIndex = uiState.selectedTabIndex,
+                    onTabSelected = { viewModel.onTabSelected(it) }
+                )
 
-            AnimatedContent(
-                targetState = uiState.selectedTabIndex,
-                transitionSpec = {
-                    val slideSpec = tween<IntOffset>(300)
-                    if (targetState > initialState) {
-                        (slideInHorizontally(animationSpec = slideSpec) { it } + fadeIn()).togetherWith(
-                            slideOutHorizontally(animationSpec = slideSpec) { -it } + fadeOut()
+                Crossfade(
+                    targetState = uiState.selectedTabIndex,
+                    animationSpec = tween(300),
+                    label = "TabAnimation"
+                ) { targetIndex ->
+                    when (targetIndex) {
+                        0 -> HomeTabContent(
+                            themes = uiState.themes,
+                            selectedCategory = uiState.selectedCategory,
+                            onCategoryClick = { viewModel.onCategorySelected(it) },
+                            onThemeClick = {
+                                viewModel.selectTheme(it)
+                                onNavigateToDetail()
+                            },
+                            onViewAllClick = { viewModel.onTabSelected(2) }
                         )
-                    } else {
-                        (slideInHorizontally(animationSpec = slideSpec) { -it } + fadeIn()).togetherWith(
-                            slideOutHorizontally(animationSpec = slideSpec) { it } + fadeOut()
-                        )
-                    }.using(SizeTransform(clip = false))
-                },
-                label = "TabAnimation"
-            ) { targetIndex ->
-                when (targetIndex) {
-                    0 -> HomeTabContent(
-                        themes = uiState.themes,
-                        selectedCategory = uiState.selectedCategory,
-                        onCategoryClick = { viewModel.onCategorySelected(it) },
-                        onThemeClick = {
-                            viewModel.selectTheme(it)
-                            onNavigateToDetail()
-                        },
-                        onViewAllClick = { viewModel.onTabSelected(2) }
-                    )
-                    1 -> MyThemeTabContent(
-                        ownedThemes = uiState.ownedThemes,
-                        temporarySelectedId = uiState.temporarySelectedThemeId,
-                        onThemeClick = { theme ->
-                            if (theme.isActive) {
+                        1 -> MyThemeTabContent(
+                            ownedThemes = uiState.ownedThemes,
+                            temporarySelectedId = uiState.temporarySelectedThemeId,
+                            onThemeClick = { theme ->
                                 viewModel.selectTheme(theme)
                                 onNavigateToDetail()
-                            } else {
-                                viewModel.selectThemeTemporarily(theme.id)
+                            },
+                            onExploreMore = { viewModel.onTabSelected(0) }
+                        )
+                        2 -> CollectionsTabContent(
+                            themes = uiState.themes,
+                            onThemeClick = {
+                                viewModel.selectTheme(it)
+                                onNavigateToDetail()
                             }
-                        },
-                        onExploreMore = { viewModel.onTabSelected(0) }
-                    )
-                    2 -> CollectionsTabContent(
-                        themes = uiState.themes,
-                        onThemeClick = {
-                            viewModel.selectTheme(it)
-                            onNavigateToDetail()
-                        }
-                    )
+                        )
+                    }
                 }
             }
+
+            // Snackbar at top
+            MoonSnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.align(Alignment.TopCenter),
+                topPadding = 45.dp
+            )
+            
+            if (uiState.showConfirmActivationDialog) {
+                val tempTheme = remember(uiState.temporarySelectedThemeId, uiState.ownedThemes) {
+                    uiState.ownedThemes.find { it.id == uiState.temporarySelectedThemeId }
+                }
+                val tempThemePrimaryColor = remember(tempTheme) {
+                    tempTheme?.let { getThemeShades(it).lastOrNull() }
+                }
+                ConfirmActivationDialog(
+                    themeName = tempTheme?.name ?: "this theme",
+                    onConfirm = { viewModel.confirmActivation() },
+                    onCancel = { viewModel.cancelActivation() },
+                    primaryColor = tempThemePrimaryColor
+                )
             }
-            MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
+            
+            if (uiState.showPurchaseSuccessDialog && uiState.purchasedTheme != null) {
+                PurchaseSuccessDialog(
+                    themeName = uiState.purchasedTheme?.name ?: "",
+                    onDismiss = { viewModel.dismissDialog() }
+                )
+            }
         }
     }
-
-    if (uiState.showPurchaseSuccessDialog && uiState.purchasedTheme != null) {
-        PurchaseSuccessDialog(
-            themeName = uiState.purchasedTheme?.name ?: "",
-            onDismiss = { viewModel.dismissDialog() }
-        )
-    }
 }
+
 @Composable
 fun StoreTabs(
     selectedIndex: Int,
@@ -140,11 +157,11 @@ fun StoreTabs(
             .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.Start
     ) {
-        TabItem("Home", selectedIndex == 0) { onTabSelected(0) }
+        TabItem(stringResource(R.string.home), selectedIndex == 0) { onTabSelected(0) }
         Spacer(modifier = Modifier.width(16.dp))
-        TabItem("My Theme", selectedIndex == 1) { onTabSelected(1) }
+        TabItem(stringResource(R.string.my_theme), selectedIndex == 1) { onTabSelected(1) }
         Spacer(modifier = Modifier.width(16.dp))
-        TabItem("Collections", selectedIndex == 2) { onTabSelected(2) }
+        TabItem(stringResource(R.string.collections), selectedIndex == 2) { onTabSelected(2) }
     }
 }
 
@@ -184,46 +201,46 @@ fun HomeTabContent(
     onViewAllClick: () -> Unit
 ) {
     val filteredThemes = remember(themes, selectedCategory) {
-        if (selectedCategory == "ALL") {
-            themes.filter { it.type == ThemeType.THEME }
-        } else {
-            themes.filter { it.type == ThemeType.THEME && it.category == selectedCategory }
+        when (selectedCategory) {
+            "ALL" -> themes.filter { it.type == ThemeType.THEME }
+            "LIGHT", "DARK" -> themes.filter { it.type == ThemeType.THEME }
+            else -> themes.filter { it.type == ThemeType.THEME && it.category == selectedCategory }
         }
     }
     val iconPacks = themes.filter { it.type == ThemeType.ICON_PACK }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp)
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
             LazyRow(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                item { MoonFilterChip("All Themes", selectedCategory == "ALL") { onCategoryClick("ALL") } }
-                item { MoonFilterChip("Light Mode", selectedCategory == "LIGHT") { onCategoryClick("LIGHT") } }
-                item { MoonFilterChip("Dark Mode", selectedCategory == "DARK") { onCategoryClick("DARK") } }
-                item { MoonFilterChip("Exclusive", selectedCategory == "EXCLUSIVE") { onCategoryClick("EXCLUSIVE") } }
-                item { MoonFilterChip("Newest", selectedCategory == "NEWEST") { onCategoryClick("NEWEST") } }
+                item { MoonFilterChip(stringResource(R.string.all_themes), selectedCategory == "ALL") { onCategoryClick("ALL") } }
+                item { MoonFilterChip(stringResource(R.string.light_mode), selectedCategory == "LIGHT") { onCategoryClick("LIGHT") } }
+                item { MoonFilterChip(stringResource(R.string.dark_mode), selectedCategory == "DARK") { onCategoryClick("DARK") } }
+                item { MoonFilterChip(stringResource(R.string.exclusive), selectedCategory == "EXCLUSIVE") { onCategoryClick("EXCLUSIVE") } }
+                item { MoonFilterChip(stringResource(R.string.newest), selectedCategory == "NEWEST") { onCategoryClick("NEWEST") } }
             }
         }
 
         item {
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Featured Collections",
+                    text = stringResource(R.string.featured_collections),
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
-                    text = "View All",
+                    text = stringResource(R.string.view_all),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                     modifier = Modifier
@@ -234,25 +251,28 @@ fun HomeTabContent(
             }
         }
 
-        items(filteredThemes) { theme ->
+        items(
+            items = filteredThemes,
+            key = { it.id },
+            contentType = { "theme" }
+        ) { theme ->
             ThemeCard(theme = theme, onClick = { onThemeClick(theme) })
         }
 
         item {
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 24.dp, bottom = 16.dp),
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Icon Collections",
+                    text = stringResource(R.string.icon_collections),
                     color = MaterialTheme.colorScheme.onBackground,
                     style = MaterialTheme.typography.titleLarge
                 )
                 Text(
-                    text = "View All",
+                    text = stringResource(R.string.view_all),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                     modifier = Modifier
@@ -263,19 +283,17 @@ fun HomeTabContent(
             }
         }
 
-        item {
-            iconPacks.chunked(2).forEach { row ->
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    row.forEach { pack ->
-                        Box(modifier = Modifier.weight(1f)) {
-                            IconPackCard(pack) { onThemeClick(pack) }
-                        }
+        items(iconPacks.chunked(2)) { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                row.forEach { pack ->
+                    Box(modifier = Modifier.weight(1f)) {
+                        IconPackCard(pack) { onThemeClick(pack) }
                     }
-                    if (row.size == 1) Spacer(modifier = Modifier.weight(1f))
                 }
+                if (row.size == 1) Spacer(modifier = Modifier.weight(1f))
             }
         }
     }
@@ -293,26 +311,31 @@ fun MyThemeTabContent(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp)
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         if (currentTheme != null) {
             item {
                 Text(
-                    text = "CURRENT THEME",
+                    text = stringResource(R.string.current_theme),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                     fontSize = 10.sp,
                     letterSpacing = 1.sp
                 )
                 CurrentThemeCard(currentTheme)
-                Spacer(modifier = Modifier.height(16.dp))
             }
         }
 
-        items(otherThemes) { theme ->
+        items(
+            items = otherThemes,
+            key = { it.id },
+            contentType = { "theme" }
+        ) { theme ->
             ThemeCard(
                 theme = theme, 
                 isSelected = theme.id == temporarySelectedId,
+                showSelectionIndicator = false,
                 onClick = { onThemeClick(theme) }
             )
         }
@@ -330,18 +353,23 @@ fun CollectionsTabContent(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp)
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
             Text(
-                text = "All Collections",
+                text = stringResource(R.string.collections),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
         }
 
-        items(themes) { theme ->
+        items(
+            items = themes,
+            key = { it.id },
+            contentType = { "theme" }
+        ) { theme ->
             ThemeCard(theme = theme, onClick = { onThemeClick(theme) })
         }
     }

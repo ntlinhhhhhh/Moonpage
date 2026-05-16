@@ -6,4 +6,5 @@ import kotlinx.coroutines.flow.Flow
 interface ActivityRepository {
     val activities: Flow<List<Activity>>
     suspend fun syncActivities(): Result<Unit>
+    suspend fun clearCache()
 }

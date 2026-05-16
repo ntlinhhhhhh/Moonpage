@@ -1,5 +1,6 @@
 package com.diary.moonpage.presentation.screens.auth
 
+import androidx.compose.remote.creation.first
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.data.remote.dto.auth.UpdateProfileRequestDto
@@ -9,6 +10,7 @@ import com.diary.moonpage.core.util.TokenManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,11 +25,28 @@ data class OnboardingUiState(
 class OnboardingViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val onboardingPrefsManager: OnboardingPrefsManager,
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val settingsPreferencesManager: com.diary.moonpage.core.util.SettingsPreferencesManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OnboardingUiState())
     val uiState = _uiState.asStateFlow()
+
+    fun setReminderTime(time: String) {
+        viewModelScope.launch {
+            settingsPreferencesManager.setReminderTime(time)
+        }
+    }
+
+    fun setReminderEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsPreferencesManager.setReminderEnabled(enabled)
+        }
+    }
+
+    suspend fun isReminderSet(): Boolean {
+        return settingsPreferencesManager.isReminderEnabled.first()
+    }
 
     fun setBirthday(birthday: String) {
         _uiState.value = _uiState.value.copy(birthday = birthday)
@@ -41,8 +60,6 @@ class OnboardingViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
 
-            // Lấy name từ TokenManager (đã lưu tại login) thay vì currentUser
-            // để tránh dùng nhầm tên của tài khoản cũ đang cache trong singleton
             val currentName = tokenManager.getUserName()
                 ?: userRepository.getCurrentUser().getOrNull()?.name
                 ?: ""

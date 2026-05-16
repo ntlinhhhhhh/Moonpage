@@ -16,10 +16,12 @@ import com.diary.moonpage.domain.usecase.validation.ValidateUsername
 import dagger.hilt.android.lifecycle.HiltViewModel
 import com.diary.moonpage.domain.repository.UserRepository
 import com.diary.moonpage.domain.repository.ActivityRepository
+import com.diary.moonpage.domain.repository.NotificationRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.async
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 @HiltViewModel
@@ -35,8 +37,16 @@ class AuthViewModel @Inject constructor (
     private val validateUsername: ValidateUsername,
     private val tokenManager: TokenManager,
     private val onboardingPrefsManager: OnboardingPrefsManager,
+    private val settingsPreferencesManager: com.diary.moonpage.core.util.SettingsPreferencesManager,
     private val userRepository: UserRepository,
-    private val activityRepository: ActivityRepository
+    private val activityRepository: ActivityRepository,
+    private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository,
+    private val themeRepository: com.diary.moonpage.domain.repository.ThemeRepository,
+    private val dailyLogRepository: com.diary.moonpage.domain.repository.DailyLogRepository,
+    private val momentRepository: com.diary.moonpage.domain.repository.MomentRepository,
+    private val authApi: com.diary.moonpage.data.remote.api.AuthApi,
+    private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager,
+    private val notificationRepository: NotificationRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AuthUiState())
@@ -70,33 +80,97 @@ class AuthViewModel @Inject constructor (
         }
     }
 
+    /** Dùng bởi LoadingScreen: kiểm tra xem tutorial đã được xem chưa */
+    suspend fun checkTutorialCompleted(): Boolean {
+        return settingsPreferencesManager.isTutorialCompleted.first()
+    }
+
     /** Dùng bởi LoadingScreen: kiểm tra user hiện tại đã hoàn thành onboarding chưa */
     suspend fun checkOnboardingForCurrentUser(): Boolean {
         val userId = tokenManager.getUserId() ?: return false
         return onboardingPrefsManager.checkOnboardingCompleted(userId)
     }
 
+    private var isResourcesLoading = false
+
     fun loadInitialAppResources(onComplete: () -> Unit) {
-        viewModelScope.launch {
-            // Start with a small progress so it's not empty at first
-            val initialProgress = 0.15f
-            _uiState.update { it.copy(loadingProgress = initialProgress) }
-            
-            val jobs = listOf(
-                async { userRepository.getCurrentUser() },
-                async { userRepository.getMyThemes() },
-                async { activityRepository.syncActivities() }
-            )
-
-            val remainingProgress = 1f - initialProgress
-            val step = remainingProgress / jobs.size
-            jobs.forEach { job ->
-                job.await()
-                _uiState.update { it.copy(loadingProgress = (it.loadingProgress + step).coerceAtMost(1f)) }
+        // If already loading, wait for it to finish and then call onComplete
+        if (isResourcesLoading) {
+            viewModelScope.launch {
+                _uiState.map { it.loadingProgress }.filter { it >= 1f }.first()
+                onComplete()
             }
-
-            _uiState.update { it.copy(loadingProgress = 1f) }
+            return
+        }
+        
+        // If already loaded successfully in a previous call
+        if (_uiState.value.loadingProgress >= 1f) {
             onComplete()
+            return
+        }
+
+        isResourcesLoading = true
+        viewModelScope.launch {
+            try {
+                // Start with a small progress so it's not empty at first
+                val initialProgress = 0.15f
+                _uiState.update { it.copy(loadingProgress = initialProgress) }
+                
+                val jobs = listOf(
+                    async { userRepository.getCurrentUser() },
+                    async { userRepository.getMyThemes() },
+                    async { activityRepository.syncActivities() }
+                )
+
+                val remainingProgress = 1f - initialProgress
+                val step = remainingProgress / jobs.size
+                jobs.forEach { job ->
+                    try {
+                        val result = job.await()
+                        // If result is from getMyThemes, check for active theme
+                        if (result is Result<*> && result.isSuccess) {
+                            val data = result.getOrNull()
+                            if (data is List<*> && data.isNotEmpty() && data.first() is com.diary.moonpage.domain.model.Theme) {
+                                val themes = data as List<com.diary.moonpage.domain.model.Theme>
+                                val activeTheme = themes.find { it.isActive }
+                                if (activeTheme != null) {
+                                    try {
+                                         val cleanId = activeTheme.id.replace("theme_", "").uppercase()
+                                         val themeType = try {
+                                             com.diary.moonpage.core.theme.MoonThemeType.valueOf(cleanId)
+                                         } catch (e: Exception) {
+                                             try {
+                                                 com.diary.moonpage.core.theme.MoonThemeType.valueOf(activeTheme.decoration.uppercase())
+                                             } catch (ex: Exception) {
+                                                 com.diary.moonpage.core.theme.MoonThemeType.DEFAULT
+                                             }
+                                         }
+                                         themePreferencesManager.setThemeType(themeType)
+                                        
+                                        // Also set dark mode if theme category suggests it
+                                        if (activeTheme.category == "DARK") {
+                                            themePreferencesManager.setDarkMode(true)
+                                        } else if (activeTheme.category == "LIGHT") {
+                                            themePreferencesManager.setDarkMode(false)
+                                        }
+                                    } catch (e: Exception) {
+                                        // Ignore if theme name doesn't match enum
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                    _uiState.update { it.copy(loadingProgress = (it.loadingProgress + step).coerceAtMost(1f)) }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _uiState.update { it.copy(loadingProgress = 1f) }
+                isResourcesLoading = false
+                onComplete()
+            }
         }
     }
 
@@ -125,6 +199,7 @@ class AuthViewModel @Inject constructor (
                     tokenManager.saveUserId(user.userId)
                     tokenManager.saveUserName(user.name)
                     val isOnboarded = onboardingPrefsManager.checkOnboardingCompleted(user.userId)
+                    
                     _uiState.update { it.copy(isLoading = false) }
                     _uiEvent.send(AuthUiEvent.LoginSuccess(user.token, user.userId, isNewUser = !isOnboarded))
                 }.onFailure { exception ->
@@ -212,6 +287,7 @@ class AuthViewModel @Inject constructor (
                     tokenManager.saveUserId(user.userId)
                     tokenManager.saveUserName(user.name)
                     val isOnboarded = onboardingPrefsManager.checkOnboardingCompleted(user.userId)
+                    
                     _uiState.update { it.copy(isLoading = false) }
                     _uiEvent.send(AuthUiEvent.LoginSuccess(user.token, user.userId, isNewUser = !isOnboarded))
                 }.onFailure { exception ->
@@ -227,7 +303,26 @@ class AuthViewModel @Inject constructor (
 
     fun logout() {
         viewModelScope.launch {
-            tokenManager.clearToken()
+            _uiState.update { it.copy(isLoading = true) }
+            
+            // 1. Call backend logout (best effort)
+            try {
+                authApi.logout()
+            } catch (e: Exception) {
+                // Ignore backend logout failures as we're clearing locally anyway
+            }
+
+            // 2. Clear all local session data and caches
+            tokenManager.clearAll()
+            userRepository.clearCache()
+            statisticsRepository.clearCache()
+            themeRepository.clearCache()
+            dailyLogRepository.clearCache()
+            momentRepository.clearCache()
+            activityRepository.clearCache()
+            themePreferencesManager.clearAll()
+
+            // 3. Reset UI state and navigate
             _uiState.update { AuthUiState() }
             _uiEvent.send(AuthUiEvent.NavigateToLogin)
         }

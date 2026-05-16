@@ -13,6 +13,8 @@ sealed class StoreUiEvent {
     object CancelPurchase : StoreUiEvent()
     data class BuyTheme(val theme: Theme) : StoreUiEvent()
     data class ActivateTheme(val themeId: String) : StoreUiEvent()
+    object ConfirmActivation : StoreUiEvent()
+    object CancelActivation : StoreUiEvent()
     object DismissDialog : StoreUiEvent()
 }
 
@@ -22,6 +24,6 @@ sealed class StoreUiEvent {
 sealed class StoreUiEffect {
     data class ShowSnackBar(val message: String) : StoreUiEffect()
     object PurchaseSuccess : StoreUiEffect()
-    object ThemeActivated : StoreUiEffect()
+    data class ThemeActivated(val message: String? = null) : StoreUiEffect()
     object NavigateBack : StoreUiEffect()
 }

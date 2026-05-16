@@ -8,19 +8,20 @@ data class DailyLogResponseDto(
     @SerializedName("baseMoodId") val baseMoodId: Int,
     @SerializedName("date") val date: String,
     @SerializedName("note") val note: String?,
-    @SerializedName("sleepHours") val sleepHours: Double?,
-    @SerializedName("isMenstruation") val isMenstruation: Boolean,
-    @SerializedName("menstruationPhase") val menstruationPhase: String?,
-    @SerializedName("dailyPhotos") val dailyPhotos: List<String>?,
-    @SerializedName("activityIds") val activityIds: List<String>?,
-    @SerializedName("songTitle") val songTitle: String? = null,
-    @SerializedName("artistName") val artistName: String? = null,
-    @SerializedName("albumArtUrl") val albumArtUrl: String? = null,
-    @SerializedName("sleepBedTime") val sleepBedTime: String? = null,
-    @SerializedName("sleepWakeTime") val sleepWakeTime: String? = null,
-    @SerializedName("steps") val steps: Int? = null,
-    @SerializedName("calories") val calories: Int? = null,
-    @SerializedName("distance") val distance: Double? = null
+    @SerializedName(value = "sleepHours", alternate = ["SleepHours"]) val sleepHours: Double?,
+    @SerializedName(value = "sleepStartTime", alternate = ["startSleep", "StartSleep", "SleepStartTime"]) val sleepStartTime: String? = null,
+    @SerializedName(value = "isMenstruation", alternate = ["IsMenstruation"]) val isMenstruation: Boolean,
+    @SerializedName(value = "menstruationPhase", alternate = ["MenstruationPhase"]) val menstruationPhase: String?,
+    @SerializedName(value = "steps", alternate = ["Steps"]) val steps: Int? = null,
+    @SerializedName("musicRecord") val musicRecord: String? = null,
+    @SerializedName(value = "dailyPhotos", alternate = ["DailyPhotos"]) val dailyPhotos: List<String>?,
+    @SerializedName(value = "activityIds", alternate = ["ActivityIds"]) val activityIds: List<String>?,
+    @SerializedName("createdAt") val createdAt: String? = null,
+    @SerializedName(value = "calories", alternate = ["Calories"]) val calories: Int? = null,
+    @SerializedName(value = "distance", alternate = ["Distance"]) val distance: Double? = null,
+    @SerializedName(value = "wakeupTime", alternate = ["WakeupTime"]) val wakeupTime: String? = null,
+    @SerializedName(value = "weather", alternate = ["Weather"]) val weather: String? = null,
+    @SerializedName(value = "temperature", alternate = ["Temperature"]) val temperature: Double? = null
 ) {
     fun toDomain(): DailyLog {
         return DailyLog(
@@ -29,18 +30,19 @@ data class DailyLogResponseDto(
             date = date,
             note = note,
             sleepHours = sleepHours,
+            sleepStartTime = sleepStartTime,
             isMenstruation = isMenstruation,
             menstruationPhase = menstruationPhase,
+            steps = steps,
+            musicRecord = musicRecord,
             dailyPhotos = dailyPhotos,
             activityIds = activityIds,
-            songTitle = songTitle,
-            artistName = artistName,
-            albumArtUrl = albumArtUrl,
-            sleepBedTime = sleepBedTime,
-            sleepWakeTime = sleepWakeTime,
-            steps = steps,
+            createdAt = createdAt,
             calories = calories,
-            distance = distance
+            distance = distance,
+            wakeupTime = wakeupTime,
+            weather = weather,
+            temperature = temperature
         )
     }
 }

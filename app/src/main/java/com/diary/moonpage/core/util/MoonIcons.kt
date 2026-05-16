@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.*
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -38,11 +39,11 @@ data class MoonIcon(
 object MoonIcons {
 
     object Moods {
-        val Happy = MoonIcon(null, Color.Unspecified, "Happy", R.drawable.very_happy)
-        val Good = MoonIcon(null, Color.Unspecified, "Good", R.drawable.happy) 
+        val VeryHappy = MoonIcon(null, Color.Unspecified, "Very Happy", R.drawable.very_happy)
+        val Happy = MoonIcon(null, Color.Unspecified, "Happy", R.drawable.happy) 
         val Neutral = MoonIcon(null, Color.Unspecified, "Neutral", R.drawable.neutral) 
         val Sad = MoonIcon(null, Color.Unspecified, "Sad", R.drawable.sad) 
-        val Angry = MoonIcon(null, Color.Unspecified, "Angry", R.drawable.very_sad)
+        val VerySad = MoonIcon(null, Color.Unspecified, "Very Sad", R.drawable.very_sad)
 
         fun getMoodColor(level: Int, themeType: com.diary.moonpage.core.theme.MoonThemeType): Color {
             val shades = com.diary.moonpage.core.theme.getThemeShades(themeType)
@@ -66,11 +67,11 @@ object MoonIcons {
             }
             val color = getMoodColor(level, themeType)
             return when (level) {
-                1 -> Angry.copy(color = color)
+                1 -> VerySad.copy(color = color)
                 2 -> Sad.copy(color = color)
                 3 -> Neutral.copy(color = color)
-                4 -> Good.copy(color = color)
-                5 -> Happy.copy(color = color)
+                4 -> Happy.copy(color = color)
+                5 -> VeryHappy.copy(color = color)
                 else -> Neutral.copy(color = color)
             }
         }
@@ -82,7 +83,7 @@ object MoonIcons {
         val Movie = MoonIcon(Icons.Rounded.Movie, Color(0xFF3D5AFE), "Movie")
         val Gaming = MoonIcon(Icons.Rounded.SportsEsports, Color(0xFF0091EA), "Gaming")
         val Reading = MoonIcon(Icons.Rounded.AutoStories, Color(0xFF6D4C41), "Reading")
-        val Walk = MoonIcon(Icons.Rounded.DirectionsWalk, Color(0xFF2E7D32), "Walk")
+        val Walk = MoonIcon(Icons.AutoMirrored.Rounded.DirectionsWalk, Color(0xFF2E7D32), "Walk")
         val Music = MoonIcon(Icons.Rounded.MusicNote, Color(0xFFF50057), "Music")
         val Drawing = MoonIcon(Icons.Rounded.Brush, Color(0xFFFF8F00), "Drawing")
     }
@@ -194,7 +195,7 @@ object MoonIcons {
         val Class = MoonIcon(Icons.Rounded.CastForEducation, Color(0xFF3949AB), "Class")
         val Study = MoonIcon(Icons.Rounded.AutoStories, Color(0xFF3F51B5), "Study")
         val Homework = MoonIcon(Icons.Rounded.EditNote, Color(0xFF5C6BC0), "Homework")
-        val Exam = MoonIcon(Icons.Rounded.FactCheck, Color(0xFFD32F2F), "Exam")
+        val Exam = MoonIcon(Icons.AutoMirrored.Rounded.FactCheck, Color(0xFFD32F2F), "Exam")
     }
 
     object Relationship {
@@ -207,11 +208,11 @@ object MoonIcons {
 
     fun getAllCategories(): Map<String, List<MoonIcon>> {
         return mapOf(
-            "Moods" to listOf(Moods.Happy, Moods.Good, Moods.Neutral, Moods.Sad, Moods.Angry),
+            "Moods" to listOf(Moods.VeryHappy, Moods.Happy, Moods.Neutral, Moods.Sad, Moods.VerySad),
             "Hobbies" to listOf(Hobbies.Exercise, Hobbies.TvContent, Hobbies.Movie, Hobbies.Gaming, Hobbies.Reading, Hobbies.Walk, Hobbies.Music, Hobbies.Drawing),
             "Emotions" to listOf(Emotions.Excited, Emotions.Relaxed, Emotions.Proud, Emotions.Hopeful, Emotions.Happy, Emotions.Enthusiastic, Emotions.PitAPat, Emotions.Refreshed, Emotions.Calm, Emotions.Grateful, Emotions.Depressed, Emotions.Lonely, Emotions.Anxious, Emotions.Sad, Emotions.Angry, Emotions.Pressured, Emotions.Annoyed, Emotions.Tired, Emotions.Stressed, Emotions.Bored),
             "Meals" to listOf(Meals.Breakfast, Meals.Lunch, Meals.Dinner, Meals.NightSnack),
-            "Self-Care" to listOf(SelfCare.Shower, SelfCare.BrushTeeth, SelfCare.WashFace, SelfCare.DrinkWater),
+            "SelfCare" to listOf(SelfCare.Shower, SelfCare.BrushTeeth, SelfCare.WashFace, SelfCare.DrinkWater),
             "Chores" to listOf(Chores.Cleaning, Chores.Cooking, Chores.Laundry, Chores.Dishes),
             "Events" to listOf(Events.StayHome, Events.School, Events.Restaurant, Events.Cafe, Events.Shopping, Events.Travel, Events.Party, Events.Cinema),
             "People" to listOf(People.Friends, People.Family, People.Partner, People.None),

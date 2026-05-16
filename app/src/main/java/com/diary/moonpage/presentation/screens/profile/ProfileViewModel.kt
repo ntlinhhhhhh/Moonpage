@@ -22,7 +22,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -47,6 +48,32 @@ class ProfileViewModel @Inject constructor(
 
         loadProfile(forceRefresh = false)
         loadMyThemes()
+        loadStatistics()
+    }
+
+    fun loadStatistics() {
+        viewModelScope.launch {
+            try {
+                _uiState.update { it.copy(isLoading = it.totalLogs == 0 && it.totalPhotos == 0) }
+                val response = statisticsRepository.getGlobalSummary()
+                if (response.isSuccessful && response.body() != null) {
+                    val stats = response.body()!!
+                    android.util.Log.d("ProfileViewModel", "Stats received: Logs=${stats.totalLogs}, Photos=${stats.totalPhotos}")
+                    _uiState.update { it.copy(
+                        totalLogs = stats.totalLogs,
+                        totalPhotos = stats.totalPhotos,
+                        isLoading = false
+                    ) }
+                } else {
+                    val errorMsg = response.errorBody()?.string() ?: "Unknown error"
+                    android.util.Log.e("ProfileViewModel", "Stats failed: $errorMsg")
+                    _uiState.update { it.copy(isLoading = false) }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("ProfileViewModel", "Stats exception", e)
+                _uiState.update { it.copy(isLoading = false) }
+            }
+        }
     }
 
     fun onEvent(event: ProfileUiEvent) {
@@ -70,6 +97,7 @@ class ProfileViewModel @Inject constructor(
             userRepository.getCurrentUser()
                 .onSuccess { user ->
                     _uiState.update { it.copy(user = user, isLoading = false) }
+                    loadStatistics()
                 }
                 .onFailure { e ->
                     _uiState.update { it.copy(error = e.message, isLoading = false) }
