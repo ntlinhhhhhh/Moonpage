@@ -1,5 +1,6 @@
 package com.diary.moonpage.presentation.screens.profile
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -13,14 +14,20 @@ import androidx.compose.material.icons.rounded.PersonAdd
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,9 +36,14 @@ fun InviteFriendScreen(
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val referralCode = "MOON-2026-HAPPY"
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         containerColor = colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -121,7 +133,12 @@ fun InviteFriendScreen(
                     letterSpacing = 1.sp
                 )
                 
-                IconButton(onClick = { /* Copy to clipboard */ }) {
+                IconButton(onClick = { 
+                    clipboardManager.setText(AnnotatedString(referralCode))
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar("Referral code copied to clipboard!")
+                    }
+                }) {
                     Icon(Icons.Rounded.ContentCopy, contentDescription = "Copy", tint = colorScheme.primary)
                 }
             }
@@ -129,7 +146,14 @@ fun InviteFriendScreen(
             Spacer(modifier = Modifier.height(32.dp))
             
             Button(
-                onClick = { /* Share link */ },
+                onClick = { 
+                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_SUBJECT, "Join me on MoonPage!")
+                        putExtra(Intent.EXTRA_TEXT, "Hey! I'm using MoonPage to track my moods and write my diary. Join me and use my referral code: $referralCode. Download now: https://moonpage.diary/invite")
+                    }
+                    context.startActivity(Intent.createChooser(shareIntent, "Share Invitation"))
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 contentPadding = PaddingValues(16.dp)

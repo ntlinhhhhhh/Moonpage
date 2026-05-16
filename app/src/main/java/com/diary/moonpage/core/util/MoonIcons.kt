@@ -212,7 +212,7 @@ object MoonIcons {
             "Hobbies" to listOf(Hobbies.Exercise, Hobbies.TvContent, Hobbies.Movie, Hobbies.Gaming, Hobbies.Reading, Hobbies.Walk, Hobbies.Music, Hobbies.Drawing),
             "Emotions" to listOf(Emotions.Excited, Emotions.Relaxed, Emotions.Proud, Emotions.Hopeful, Emotions.Happy, Emotions.Enthusiastic, Emotions.PitAPat, Emotions.Refreshed, Emotions.Calm, Emotions.Grateful, Emotions.Depressed, Emotions.Lonely, Emotions.Anxious, Emotions.Sad, Emotions.Angry, Emotions.Pressured, Emotions.Annoyed, Emotions.Tired, Emotions.Stressed, Emotions.Bored),
             "Meals" to listOf(Meals.Breakfast, Meals.Lunch, Meals.Dinner, Meals.NightSnack),
-            "Self-Care" to listOf(SelfCare.Shower, SelfCare.BrushTeeth, SelfCare.WashFace, SelfCare.DrinkWater),
+            "SelfCare" to listOf(SelfCare.Shower, SelfCare.BrushTeeth, SelfCare.WashFace, SelfCare.DrinkWater),
             "Chores" to listOf(Chores.Cleaning, Chores.Cooking, Chores.Laundry, Chores.Dishes),
             "Events" to listOf(Events.StayHome, Events.School, Events.Restaurant, Events.Cafe, Events.Shopping, Events.Travel, Events.Party, Events.Cinema),
             "People" to listOf(People.Friends, People.Family, People.Partner, People.None),
@@ -239,5 +239,20 @@ object MoonIcons {
     fun getIconForActivity(activityName: String): MoonIcon {
         val searchKey = activityName.replace(" ", "").lowercase()
         return iconMapByName[searchKey] ?: Other.Coffee
+    }
+
+    fun getWeatherIconVector(weatherText: String): ImageVector? {
+        val cleanName = weatherText.split(" ")[0].lowercase()
+        return when {
+            cleanName.contains("sunny") -> Weather.Sunny.vector
+            cleanName.contains("cloudy") -> Weather.Cloudy.vector
+            cleanName.contains("rainy") -> Weather.Rainy.vector
+            cleanName.contains("snowy") -> Weather.Snowy.vector
+            cleanName.contains("windy") -> Weather.Windy.vector
+            cleanName.contains("stormy") -> Weather.Stormy.vector
+            cleanName.contains("hot") -> Weather.Hot.vector
+            cleanName.contains("cold") -> Weather.Cold.vector
+            else -> null
+        }
     }
 }

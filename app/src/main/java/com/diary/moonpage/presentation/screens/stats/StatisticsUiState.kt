@@ -17,5 +17,8 @@ data class StatisticsUiState(
     val isMonthly: Boolean = true,
     val themeType: MoonThemeType = MoonThemeType.DEFAULT,
     val gender: String? = null,
-    val selectedIconId: String? = null
+    val selectedIconId: String? = null,
+    val averageWakeUpTime: String? = null,
+    val isCapturing: Boolean = false,
+    val captureError: String? = null
 )

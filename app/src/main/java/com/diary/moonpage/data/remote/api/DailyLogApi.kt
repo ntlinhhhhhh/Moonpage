@@ -16,15 +16,18 @@ interface DailyLogApi {
         @Part("Note") note: RequestBody?,
         @Part("SleepHours") sleepHours: RequestBody?,
         @Part("SleepStartTime") sleepStartTime: RequestBody?,
-        @Part("IsMenstruation") isMenstruation: RequestBody?,
+        @Part("IsMenstruation") isMenstruation: RequestBody,
         @Part("MenstruationPhase") menstruationPhase: RequestBody?,
         @Part("Steps") steps: RequestBody?,
         @Part("MusicRecord") musicRecord: RequestBody?,
-        @Part activityIds: List<MultipartBody.Part>?, 
+        @Part("Calories") calories: RequestBody?,
+        @Part("Distance") distance: RequestBody?,
+        @Part("WakeupTime") wakeupTime: RequestBody?,
+        @Part("Weather") weather: RequestBody?,
+        @Part("Temperature") temperature: RequestBody?,
         @Part dailyPhotos: List<MultipartBody.Part>?,
-        @Part("Calories") calories: RequestBody? = null,
-        @Part("Distance") distance: RequestBody? = null
-    ): Response<Unit>
+        @Part activityIds: List<MultipartBody.Part>?
+    ): Response<okhttp3.ResponseBody>
 
     @GET("api/dailylogs/date/{date}")
     suspend fun getDailyLogByDate(@Path("date") date: String): Response<DailyLogResponseDto>

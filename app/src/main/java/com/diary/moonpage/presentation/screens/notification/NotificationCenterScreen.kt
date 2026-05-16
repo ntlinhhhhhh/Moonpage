@@ -1,5 +1,6 @@
 package com.diary.moonpage.presentation.screens.notification
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -22,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.diary.moonpage.core.theme.MoonTheme
 import com.diary.moonpage.data.remote.dto.notification.NotificationDto
 import com.diary.moonpage.data.remote.dto.notification.NotificationType
 import java.time.ZonedDateTime
@@ -119,36 +121,39 @@ fun NotificationItem(
 ) {
     val (icon, color) = getNotificationStyle(notification.type)
     
-    Card(
+    // Unified design: no elevation difference to avoid "2 boxes" feel
+    // Use a subtler but full-box color change for read status
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (notification.isRead) 
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-            else 
-                MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (notification.isRead) 0.dp else 2.dp)
+        shape = RoundedCornerShape(24.dp),
+        color = if (notification.isRead) 
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        else 
+            MoonTheme.customColors.logItemBg.copy(alpha = 0.8f),
+        border = BorderStroke(
+            width = 1.dp,
+            color = if (notification.isRead) Color.Transparent else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
+        )
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Icon Section
+            // Icon Section - Integrated smoothly
             Box(
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(44.dp)
                     .clip(CircleShape)
-                    .background(color.copy(alpha = 0.15f)),
+                    .background(if (notification.isRead) color.copy(alpha = 0.1f) else color.copy(alpha = 0.2f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = color,
-                    modifier = Modifier.size(24.dp)
+                    tint = if (notification.isRead) color.copy(alpha = 0.6f) else color,
+                    modifier = Modifier.size(22.dp)
                 )
             }
 
@@ -159,14 +164,19 @@ fun NotificationItem(
                     Text(
                         text = notification.title,
                         style = MaterialTheme.typography.titleSmall.copy(
-                            fontWeight = if (notification.isRead) FontWeight.Medium else FontWeight.Bold
+                            fontWeight = if (notification.isRead) FontWeight.Medium else FontWeight.Bold,
+                            color = if (notification.isRead) 
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            else 
+                                MaterialTheme.colorScheme.onSurface
                         ),
                         modifier = Modifier.weight(1f)
                     )
+                    // Blue dot only for unread
                     if (!notification.isRead) {
                         Box(
                             modifier = Modifier
-                                .size(8.dp)
+                                .size(6.dp)
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.primary)
                         )
@@ -176,14 +186,17 @@ fun NotificationItem(
                 Text(
                     text = notification.message,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (notification.isRead) 
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    else 
+                        MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 4.dp)
                 )
 
                 Text(
                     text = formatNotificationTime(notification.createdAt),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                 )
             }
 
@@ -191,7 +204,7 @@ fun NotificationItem(
                 Icon(
                     Icons.Rounded.Close,
                     contentDescription = "Dismiss",
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(18.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
                 )
             }

@@ -489,7 +489,11 @@ fun AccountScreenContent(
                 value = "",
                 icon = Icons.Rounded.Sync,
                 showArrow = true,
-                onClick = {}
+                onClick = {
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar("Redirecting to social account provider...")
+                    }
+                }
             )
 
             Spacer(modifier = Modifier.height(40.dp))

@@ -1,6 +1,10 @@
 package com.diary.moonpage
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 import android.net.Uri
+import android.os.Build
 import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -12,12 +16,14 @@ import com.diary.moonpage.core.util.SettingsPreferencesManager
 import com.diary.moonpage.core.util.TokenManager
 import com.diary.moonpage.data.remote.api.SpotifyApi
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val themePreferencesManager: ThemePreferencesManager,
     private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
     private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository,
@@ -25,7 +31,8 @@ class MainViewModel @Inject constructor(
     private val tokenManager: TokenManager,
     private val spotifyApi: SpotifyApi,
     private val notificationRepository: com.diary.moonpage.domain.repository.NotificationRepository,
-    private val reminderManager: com.diary.moonpage.core.util.ReminderManager
+    private val reminderManager: com.diary.moonpage.core.util.ReminderManager,
+    private val notificationBus: com.diary.moonpage.core.util.NotificationBus
 ) : ViewModel(), DefaultLifecycleObserver {
 
     private val _notifications = MutableStateFlow<List<com.diary.moonpage.data.remote.dto.notification.NotificationDto>>(emptyList())
@@ -64,15 +71,22 @@ class MainViewModel @Inject constructor(
     }
 
     init {
+        createNotificationChannel()
+
+        // Listen for in-app notifications
         viewModelScope.launch {
-            // Log FCM Token for debugging
+            notificationBus.events.collect { event ->
+                showSnackbar("${event.title}: ${event.body}")
+                fetchNotifications() // Refresh list if needed
+            }
+        }
+
+        viewModelScope.launch {
+            // Fetch FCM Token for debugging
             com.google.firebase.messaging.FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val token = task.result
-                    Log.d("FCM_TOKEN", "=================================")
-                    Log.d("FCM_TOKEN", "MÃ TOKEN CỦA MÁY NÀY LÀ:")
-                    Log.d("FCM_TOKEN", token)
-                    Log.d("FCM_TOKEN", "=================================")
+                    Log.d("FCM_TOKEN", "MÃ TOKEN CỦA MÁY NÀY LÀ: $token")
                 }
             }
 
@@ -101,6 +115,20 @@ class MainViewModel @Inject constructor(
             
             kotlinx.coroutines.delay(600)
             _isReady.value = true
+        }
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val name = "Moonpage Notifications"
+            val descriptionText = "Daily reminders and system notifications"
+            val importance = NotificationManager.IMPORTANCE_HIGH
+            val channel = NotificationChannel("moonpage_notification_channel", name, importance).apply {
+                description = descriptionText
+            }
+            val notificationManager: NotificationManager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
         }
     }
 

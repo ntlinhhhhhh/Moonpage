@@ -219,9 +219,11 @@ class StoreViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true) }
             
             setActiveThemeUseCase(themeId).onSuccess {
+                val theme = _uiState.value.ownedThemes.find { it.id == themeId }
+                
                 _uiState.update { state ->
-                    val updatedOwned = state.ownedThemes.map { theme ->
-                        theme.copy(isActive = theme.id == themeId)
+                    val updatedOwned = state.ownedThemes.map { t ->
+                        t.copy(isActive = t.id == themeId)
                     }
                     
                     val updatedDetail = state.selectedThemeDetail?.copy(
@@ -236,14 +238,14 @@ class StoreViewModel @Inject constructor(
                     )
                 }
                 
-                // Emit effect immediately to trigger UI
-                _uiEffect.emit(StoreUiEffect.ThemeActivated)
+                // Emit effect immediately to trigger UI with a custom message
+                val themeName = theme?.name ?: "theme"
+                _uiEffect.emit(StoreUiEffect.ThemeActivated(message = "Theme \"$themeName\" has been activated successfully!"))
                 
-                // Small delay to allow UI to show snackbar before theme change (which causes recomposition)
-                delay(200)
+                // Sufficient delay to allow UI to show snackbar before theme change (which causes global recomposition)
+                delay(600)
 
                 // Map theme and save locally
-                val theme = _uiState.value.ownedThemes.find { it.id == themeId }
                 theme?.let {
                     themePreferencesManager.setThemeType(it.toMoonThemeType())
                 }
@@ -264,4 +266,3 @@ fun Theme.toMoonThemeType(): MoonThemeType {
         MoonThemeType.DEFAULT
     }
 }
-

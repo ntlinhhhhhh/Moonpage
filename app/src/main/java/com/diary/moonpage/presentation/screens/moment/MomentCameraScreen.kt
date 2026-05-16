@@ -228,8 +228,6 @@ fun MomentCameraScreenContent(
 
     val uploadPagerState = rememberPagerState(pageCount = { allTags.size })
 
-    val weatherIcons = listOf("Sunny ☀️", "Cloudy ☁️", "Rainy 🌧️", "Snowy ❄️", "Windy 💨")
-
     val reverseGeocode = { location: Location ->
         scope.launch(Dispatchers.IO) {
             try {
@@ -277,7 +275,16 @@ fun MomentCameraScreenContent(
 
     LaunchedEffect(uiState.suggestedWeather) {
         uiState.suggestedWeather?.let { weather ->
-            userWeather = "${weather.condition} ${weather.temp.toInt()}°C"
+            val icon = when {
+                weather.condition.contains("Sunny") -> "☀️"
+                weather.condition.contains("Cloudy") -> "☁️"
+                weather.condition.contains("Rainy") -> "🌧️"
+                weather.condition.contains("Snowy") -> "❄️"
+                weather.condition.contains("Windy") -> "💨"
+                weather.condition.contains("Stormy") -> "⛈️"
+                else -> "🌡️"
+            }
+            userWeather = "${weather.condition} $icon"
         }
     }
 
@@ -342,8 +349,7 @@ fun MomentCameraScreenContent(
                     },
                     userWeather = userWeather,
                     onWeatherClick = {
-                        val currentIndex = weatherIcons.indexOf(userWeather)
-                        userWeather = weatherIcons[(currentIndex + 1) % weatherIcons.size]
+                        onEvent(MomentUiEvent.RefreshWeather)
                     },
                     isLoading = uiState.isUploading,
                     isSuccess = isSuccess,

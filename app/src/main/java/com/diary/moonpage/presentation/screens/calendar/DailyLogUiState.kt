@@ -21,6 +21,7 @@ data class DailyLogUiState(
     val isMenstruation: Boolean = false,
     val menstruationPhase: String? = null,
     val dailyPhotos: List<String> = emptyList(),
+    val momentPhotos: List<String> = emptyList(),
     val musicTitle: String? = null,
     val artistName: String? = null,
     val albumArtUrl: String? = null,
@@ -42,5 +43,6 @@ data class DailyLogUiState(
     val suggestedWeather: com.diary.moonpage.domain.repository.WeatherData? = null,
     val recentTracks: List<com.diary.moonpage.data.remote.api.SpotifyTrack> = emptyList(),
     val isInitialized: Boolean = false,
-    val zoomImageUrl: String? = null
+    val zoomImageUrl: String? = null,
+    val snackbarMessage: String? = null
 )

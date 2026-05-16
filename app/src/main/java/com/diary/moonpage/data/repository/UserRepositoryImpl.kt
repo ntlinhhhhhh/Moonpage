@@ -140,4 +140,17 @@ class UserRepositoryImpl @Inject constructor(
         _currentUser.value = null
         userManager.clearUser()
     }
+
+    override suspend fun updateLanguage(language: String): Result<Unit> {
+        return try {
+            val response = userApi.updateLanguage(com.diary.moonpage.data.remote.api.LanguageRequest(language))
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Failed to sync language: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

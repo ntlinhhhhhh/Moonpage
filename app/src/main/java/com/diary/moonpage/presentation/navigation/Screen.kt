@@ -3,6 +3,7 @@ package com.diary.moonpage.presentation.navigation
 sealed class Screen (val route: String) {
     // Auth Screens
     object Loading: Screen("loading_screen")
+    object Tutorial: Screen("tutorial_screen")
     object Landing: Screen("landing_screen")
     object Login: Screen("login_screen")
     object Register: Screen("register_screen")

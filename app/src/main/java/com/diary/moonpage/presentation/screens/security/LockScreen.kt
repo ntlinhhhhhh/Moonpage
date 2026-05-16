@@ -10,12 +10,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.diary.moonpage.R
 
 @Composable
@@ -24,6 +27,7 @@ fun LockScreen(
     viewModel: SecurityViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     var passcode by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val isBiometricEnabled by viewModel.isBiometricEnabled.collectAsState()
@@ -71,9 +75,18 @@ fun LockScreen(
         biometricPrompt.authenticate(promptInfo)
     }
 
-    LaunchedEffect(isBiometricEnabled) {
-        if (isBiometricEnabled && viewModel.isBiometricAvailable()) {
-            showBiometricPrompt()
+    // Trigger biometric prompt on composition and on app resume
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                if (isBiometricEnabled && viewModel.isBiometricAvailable()) {
+                    showBiometricPrompt()
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 

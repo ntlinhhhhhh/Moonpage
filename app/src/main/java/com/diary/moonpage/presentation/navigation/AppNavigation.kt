@@ -60,14 +60,16 @@ fun AppNavigation(
     val tutorialState by tutorialViewModel.state.collectAsState()
     var tutorialTargetBounds by remember { mutableStateOf<Map<TutorialStep, Rect>>(emptyMap()) }
 
-    val mainAppRoutes = listOf(
-        Screen.Calendar.route,
-        Screen.Stats.route,
-        Screen.Camera.route,
-        Screen.Store.route,
-        Screen.Profile.route
-    )
-    val showBottomBar = currentRoute in mainAppRoutes && !isAppLocked
+    val mainAppRoutes = remember {
+        listOf(
+            Screen.Calendar.route,
+            Screen.Stats.route,
+            Screen.Camera.route,
+            Screen.Store.route,
+            Screen.Profile.route
+        )
+    }
+    val showBottomBar = currentRoute != null && currentRoute in mainAppRoutes && !isAppLocked
 
     Scaffold(
         // We keep BottomBar outside AnimatedVisibility for main routes to prevent jitter
@@ -153,8 +155,10 @@ fun AppNavigation(
                                 }
                                 
                                 scope.launch {
+                                    val isTutorialCompleted = authViewModel.checkTutorialCompleted()
                                     val isReminderSet = onboardingViewModel.isReminderSet()
                                     val nextDestination = when {
+                                        !isTutorialCompleted -> Screen.Tutorial.route
                                         !isLoggedIn      -> Screen.Landing.route
                                         needsOnboarding  -> Screen.OnboardingBirthday.route
                                         !isReminderSet   -> Screen.OnboardingReminder.route
@@ -163,6 +167,18 @@ fun AppNavigation(
                                     navController.navigate(nextDestination) {
                                         popUpTo(Screen.Loading.route) { inclusive = true }
                                     }
+                                }
+                            }
+                        )
+                    }
+                }
+
+                composable(Screen.Tutorial.route) {
+                    ScreenWrapper(Screen.Tutorial.route, mainAppRoutes, totalBottomPadding, paddingValues) {
+                        TutorialScreen(
+                            onFinish = {
+                                navController.navigate(Screen.Landing.route) {
+                                    popUpTo(Screen.Tutorial.route) { inclusive = true }
                                 }
                             }
                         )
@@ -308,16 +324,15 @@ fun AppNavigation(
                             onNavigateToMenstrualCycle = { navController.navigate(Screen.MenstrualCycle.route) },
                             onNavigateToDailyPhoto = { navController.navigate(Screen.DailyPhoto.route) },
                             onNavigateToShare = { date -> navController.navigate("share_log_screen/$date") },
-                            onDone = { message ->
+                            onDone = { date, message ->
                                 navController.previousBackStackEntry?.savedStateHandle?.apply {
-                                    set("created_log_date", dateStr)
+                                    set("created_log_date", date)
                                     set("logSavedMessage", message)
                                 }
                                 navController.popBackStack()
                             }
                         )
                         
-                        // Trigger the VM update when a song is returned from MusicScreen
                         val viewModel: com.diary.moonpage.presentation.screens.calendar.DailyLogViewModel = hiltViewModel()
                         LaunchedEffect(selectedSongTitle) {
                             if (selectedSongTitle != null) {
@@ -539,12 +554,16 @@ fun AppNavigation(
             }
 
             // Fixed Bottom Bar - No more AnimatedVisibility for Tab Switches
-            if (showBottomBar) {
+            // But we use it here to handle global show/hide (e.g. Loading -> Calendar)
+            AnimatedVisibility(
+                visible = showBottomBar,
+                enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
+                exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 }),
+                modifier = Modifier.align(Alignment.BottomCenter)
+            ) {
                 MoonBottomNavBar(
                     selectedRoute = currentRoute ?: Screen.Calendar.route,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .navigationBarsPadding(),
+                    modifier = Modifier.navigationBarsPadding(),
                     onItemSelected = { route ->
                         if (currentRoute != route) {
                             navController.navigate(route) {

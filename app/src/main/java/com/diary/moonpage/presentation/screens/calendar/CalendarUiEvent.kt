@@ -8,6 +8,7 @@ import java.time.YearMonth
  */
 sealed class CalendarUiEvent {
     data class OnDateSelected(val date: LocalDate) : CalendarUiEvent()
+    data class ForceDateSelected(val date: LocalDate) : CalendarUiEvent()
     data class OnMonthChanged(val yearMonth: YearMonth) : CalendarUiEvent()
     data class OnDeleteLog(val date: LocalDate) : CalendarUiEvent()
     data class OnMonthPickerConfirm(val year: Int, val month: Int) : CalendarUiEvent()

@@ -51,14 +51,33 @@ class StatisticsViewModel @Inject constructor(
                     val stats = response.body()!!
                     
                     val freq = stats.bestActivities.sortedByDescending { it.occurrence }.take(3)
-                    val best = stats.bestActivities.sortedByDescending { it.averageMoodScore }.take(3)
-                    val worst = stats.bestActivities.sortedBy { it.averageMoodScore }.take(3)
+                    
+                    // Improved Correlation Algorithm for Best/Worst
+                    // Filter activities that occurred at least 2 times (for better correlation)
+                    val relevantActivities = stats.bestActivities.filter { it.occurrence >= 1 }
+                    val best = relevantActivities.sortedByDescending { it.averageMoodScore }.take(3)
+                    val worst = relevantActivities.sortedBy { it.averageMoodScore }.take(3)
+                    
+                    // Calculate Average Wake Up Time based on average bedtime and sleep hours
+                    val avgWakeUpTime = stats.averageWakeupTime ?: if (stats.averageSleepStartTime != null && stats.averageSleepHours != null) {
+                        try {
+                            val sdf = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.ENGLISH)
+                            val date = sdf.parse(stats.averageSleepStartTime)
+                            if (date != null) {
+                                val cal = java.util.Calendar.getInstance().apply { time = date }
+                                cal.add(java.util.Calendar.MINUTE, (stats.averageSleepHours * 60).toInt())
+                                sdf.format(cal.time)
+                            } else null
+                        } catch (e: Exception) { null }
+                    } else null
+
                     
                     _uiState.update { it.copy(
                         stats = stats, 
                         frequentlyRecorded = freq,
                         bestActivities = best,
                         worstActivities = worst,
+                        averageWakeUpTime = avgWakeUpTime,
                         isLoading = false
                     ) }
                 } else {
@@ -84,5 +103,22 @@ class StatisticsViewModel @Inject constructor(
             _uiState.update { it.copy(isMonthly = isMonthly) }
             loadStatistics()
         }
+    }
+
+    fun shareRecapCard(context: android.content.Context, bitmap: android.graphics.Bitmap) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isCapturing = true) }
+            try {
+                com.diary.moonpage.core.util.ImageUtils.shareImage(context, bitmap, "My Year in Beans")
+            } catch (e: Exception) {
+                _uiState.update { it.copy(captureError = "Failed to share: ${e.message}") }
+            } finally {
+                _uiState.update { it.copy(isCapturing = false) }
+            }
+        }
+    }
+
+    fun clearCaptureError() {
+        _uiState.update { it.copy(captureError = null) }
     }
 }

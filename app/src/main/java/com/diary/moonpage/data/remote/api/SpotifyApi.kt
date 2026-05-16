@@ -19,6 +19,17 @@ interface SpotifyApi {
         @Query("limit") limit: Int = 20
     ): Response<SpotifySearchResponse>
 
+    @GET("https://api.spotify.com/v1/me")
+    suspend fun getCurrentUser(
+        @Header("Authorization") token: String
+    ): Response<SpotifyUserResponse>
+
+    @GET("https://api.spotify.com/v1/me/top/tracks")
+    suspend fun getTopTracks(
+        @Header("Authorization") token: String,
+        @Query("limit") limit: Int = 20
+    ): Response<SpotifyTopTracksResponse>
+
     @GET("https://api.spotify.com/v1/me/player/recently-played")
     suspend fun getRecentlyPlayedTracks(
         @Header("Authorization") token: String,
@@ -53,7 +64,7 @@ interface SpotifyApi {
             return "$AUTH_URL?client_id=$CLIENT_ID" +
                     "&response_type=code" +
                     "&redirect_uri=$encodedRedirectUri" +
-                    "&scope=user-read-private%20user-read-email%20user-read-recently-played" +
+                    "&scope=user-read-private%20user-read-email%20user-read-recently-played%20user-top-read" +
                     "&show_dialog=true" +
                     "&state=$state" +
                     "&code_challenge_method=S256" +
@@ -61,6 +72,15 @@ interface SpotifyApi {
         }
     }
 }
+
+data class SpotifyUserResponse(
+    val id: String,
+    val product: String?
+)
+
+data class SpotifyTopTracksResponse(
+    val items: List<SpotifyTrack>
+)
 
 data class SpotifyRecentlyPlayedResponse(
     val items: List<SpotifyRecentlyPlayedItem>

@@ -22,10 +22,16 @@
 - **Moment Gallery:** Revisit your past photos and memories in a beautiful, organized gallery.
 - **Public/Private Moments:** Choose whether to keep your moments private or share them with the community.
 
-### 📊 Insightful Statistics
+### 📊 Insightful Statistics & Recap
 - **Mood Distribution:** Detailed charts showing your emotional patterns over months and years.
-- **Activity Analysis:** Identify which activities are most associated with your happiest days.
+- **Activity Analysis (Best/Worst):** Advanced correlation algorithms to identify habits that impact your mood positively or negatively.
+- **Year in Pixels & Annual Recap:** A shareable, visually stunning 365-day grid summarizing your entire year's emotional journey.
 - **Streak System:** Stay motivated with daily login streaks and "Streak Freeze" items.
+
+### 🔔 Smart Notification System
+- **Real-time Push Notifications:** Integrated with Firebase Cloud Messaging (FCM) to deliver and permanently record system messages, streaks, and updates.
+- **Reliable Local Reminders:** Punctual daily journaling reminders powered by Android's Exact Alarms (`setExactAndAllowWhileIdle`) and self-rescheduling receivers.
+- **In-App Notification Bus:** Seamless real-time Snackbars and automatic UI refreshing without interrupting the user experience.
 
 ### 🎨 Personalization & Store
 - **Premium Themes:** Unlock unique UI skins and icon packs (Blushing, Midnight, Forest, etc.) using in-app "Moon Coins."
@@ -34,8 +40,8 @@
 
 ### 🔒 Security & Integrations
 - **Biometric Lock:** Secure your private diary with Fingerprint or Face ID.
-- **Spotify Integration:** Attach the song you were listening to when you wrote your log.
-- **Health Connect:** Sync steps and physical activity data for a holistic view of your day.
+- **Spotify Integration:** Automatically attach recently played or top tracks to your logs, intelligently adapting to Spotify Free or Premium accounts.
+- **Health Connect API:** Deep integration to seamlessly aggregate your daily steps, total calories burned, distance, and detailed sleep analysis (Bedtime & Wake-up averages).
 
 ---
 
@@ -55,16 +61,25 @@ Moon Page is built following **Clean Architecture** principles and the **MVVM** 
 
 - **Language:** [Kotlin](https://kotlinlang.org/)
 - **UI:** [Jetpack Compose](https://developer.android.com/compose) (Modern Android Toolkit)
+  - *Advanced Graphics:* `GraphicsLayer` and Canvas capture for rendering and sharing Composable bitmaps natively.
 - **Dependency Injection:** [Dagger Hilt](https://dagger.dev/hilt/)
 - **Database:** [Room Persistence Library](https://developer.android.com/training/data-storage/room)
 - **Networking:** [Retrofit 2](https://square.github.io/retrofit/) & [OkHttp](https://square.github.io/okhttp/)
+- **Third-Party APIs:**
+  - **Spotify Web API:** OAuth 2.0 (PKCE) integration, handling Free vs. Premium account endpoints (`/me/top/tracks` vs `/me/player/recently-played`).
+- **Health & Fitness:** [Health Connect API](https://developer.android.com/guide/health-and-fitness/health-connect) (Aggregate Data fetching for Steps, Calories, Distance, and Sleep Session analysis).
 - **Image Loading:** [Coil](https://coil-kt.github.io/coil/)
-- **Asynchronous Flow:** [Kotlin Coroutines](https://kotlinlang.org/docs/coroutines-overview.html) & [Flow](https://kotlinlang.org/docs/flow.html)
+- **Asynchronous Flow:** [Kotlin Coroutines](https://kotlinlang.org/docs/coroutines-overview.html) (Dispatchers.IO for background processing) & [Flow](https://kotlinlang.org/docs/flow.html)
 - **Navigation:** [Jetpack Compose Navigation](https://developer.android.com/jetpack/compose/navigation)
-- **Local Storage:** [DataStore Preferences](https://developer.android.com/topic/libraries/architecture/datastore)
-- **Firebase:** [Firebase Cloud Messaging (FCM)](https://firebase.google.com/docs/cloud-messaging) for Push Notifications.
+- **Local Storage:** [DataStore Preferences](https://developer.android.com/topic/libraries/architecture/datastore) (Typed, asynchronous storage for settings and onboarding flags).
+- **Notifications & Background Tasks:** 
+  - [Firebase Cloud Messaging (FCM)](https://firebase.google.com/docs/cloud-messaging) for real-time Push Notifications.
+  - `AlarmManager` with `setExactAndAllowWhileIdle` for punctual local daily reminders.
+  - Custom `NotificationBus` using `SharedFlow` for real-time in-app Snackbar alerts.
 - **Camera:** [CameraX](https://developer.android.com/training/camerax)
-- **Google Integration:** [Credential Manager](https://developer.android.com/training/sign-in/credential-manager) for Google One Tap Sign-In.
+- **Security:** 
+  - [Credential Manager](https://developer.android.com/training/sign-in/credential-manager) for Google One Tap Sign-In.
+  - `BiometricPrompt` for local Face ID/Fingerprint app lock.
 
 ---
 

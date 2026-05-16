@@ -311,6 +311,10 @@ fun DayDetailArea(
     dailyPhotos: List<String> = emptyList(),
     sleepHours: Double? = null,
     isMenstruation: Boolean = false,
+    steps: Int? = null,
+    musicRecord: String? = null,
+    weather: String? = null,
+    temperature: Double? = null,
     modifier: Modifier = Modifier
 ) {
     val cs = MaterialTheme.colorScheme
@@ -447,6 +451,29 @@ fun DayDetailArea(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    // Weather
+                    if (weather != null || (temperature != null && temperature != 0.0)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 12.dp)) {
+                            val weatherIcon = when {
+                                weather?.contains("Sunny") == true -> "☀️"
+                                weather?.contains("Cloudy") == true -> "☁️"
+                                weather?.contains("Rainy") == true -> "🌧️"
+                                weather?.contains("Snowy") == true -> "❄️"
+                                weather?.contains("Windy") == true -> "💨"
+                                weather?.contains("Stormy") == true -> "⛈️"
+                                else -> "🌡️"
+                            }
+                            Text(weatherIcon, fontSize = 18.sp)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            val weatherText = buildString {
+                                if (weather != null) append(weather)
+                                if (weather != null && temperature != null && temperature != 0.0) append(", ")
+                                if (temperature != null && temperature != 0.0) append("${temperature.toInt()}°C")
+                            }
+                            Text(weatherText, color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
+                        }
+                    }
+
                     // Sleep
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 12.dp)) {
                         Icon(Icons.Rounded.Nightlight, contentDescription = null, tint = Color(0xFFFFCA28), modifier = Modifier.size(18.dp))
@@ -456,62 +483,64 @@ fun DayDetailArea(
                             val mins = ((sleepHours - hrs) * 60).toInt()
                             if (mins == 0) "${hrs}h" else "${hrs}h ${mins}m"
                         } else {
-                            "00:00 AM - 07:20 AM"
+                            "No data"
                         }
                         Text(sleepText, color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
                     }
                     
-                    // Exercise Placeholder
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 12.dp)) {
-                        Icon(Icons.Rounded.LocalFireDepartment, contentDescription = null, tint = Color(0xFFFF7043), modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(stringResource(R.string.strength_training, 28), color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
-                    }
-
                     // Menstruation
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 12.dp)) {
-                        Icon(Icons.Rounded.WaterDrop, contentDescription = null, tint = Color(0xFFF48FB1), modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(if (isMenstruation) stringResource(R.string.on_day_x, 3) else stringResource(R.string.not_started), color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
+                    if (isMenstruation) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 12.dp)) {
+                            Icon(Icons.Rounded.WaterDrop, contentDescription = null, tint = Color(0xFFF48FB1), modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(stringResource(R.string.on_day_x, 3), color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
+                        }
                     }
 
-                    // Steps Placeholder
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Rounded.DirectionsWalk, contentDescription = null, tint = Color(0xFF64B5F6), modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text("4,077 steps", color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
+                    // Steps
+                    if (steps != null && steps > 0) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Rounded.DirectionsWalk, contentDescription = null, tint = Color(0xFF64B5F6), modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(String.format(Locale.ENGLISH, "%,d steps", steps), color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
+                        }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            if (!musicRecord.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(12.dp))
 
-            // Music Card Placeholder
-            Card(
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MoonTheme.customColors.logItemBg
-                ),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                // Music Card
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MoonTheme.customColors.logItemBg
+                    ),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFFE57373)), // Placeholder image background
-                        contentAlignment = Alignment.Center
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Rounded.MusicNote, contentDescription = null, tint = Color.White)
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text("Choosin' Texas", color = cs.onSurface, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text("Ella Langley", color = cs.onSurface.copy(alpha = 0.6f), fontSize = 12.sp)
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(cs.primary.copy(alpha = 0.1f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Rounded.MusicNote, contentDescription = null, tint = cs.primary)
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            val parts = musicRecord.split(" - ")
+                            Text(parts.first(), color = cs.onSurface, fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 1)
+                            if (parts.size > 1) {
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(parts[1], color = cs.onSurface.copy(alpha = 0.6f), fontSize = 12.sp, maxLines = 1)
+                            }
+                        }
                     }
                 }
             }
@@ -635,6 +664,10 @@ fun DayDetailBottomSheet(
     dailyPhotos: List<String> = emptyList(),
     sleepHours: Double? = null,
     isMenstruation: Boolean = false,
+    steps: Int? = null,
+    musicRecord: String? = null,
+    weather: String? = null,
+    temperature: Double? = null,
     onDismiss: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
@@ -673,7 +706,11 @@ fun DayDetailBottomSheet(
                     activityNames = activityNames,
                     dailyPhotos = dailyPhotos,
                     sleepHours = sleepHours,
-                    isMenstruation = isMenstruation
+                    isMenstruation = isMenstruation,
+                    steps = steps,
+                    musicRecord = musicRecord,
+                    weather = weather,
+                    temperature = temperature
                 )
             }
 

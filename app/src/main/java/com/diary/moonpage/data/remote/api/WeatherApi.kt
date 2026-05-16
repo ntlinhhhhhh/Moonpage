@@ -1,5 +1,6 @@
 package com.diary.moonpage.data.remote.api
 
+import com.diary.moonpage.data.remote.dto.weather.OpenMeteoResponseDto
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -12,10 +13,29 @@ interface WeatherApi {
         @Query("appid") apiKey: String,
         @Query("units") units: String = "metric"
     ): Response<WeatherResponse>
+    @GET("https://api.open-meteo.com/v1/forecast")
+    suspend fun getForecast(
+        @Query("latitude") latitude: Double,
+        @Query("longitude") longitude: Double,
+        @Query("current_weather") currentWeather: Boolean = true,
+        @Query("daily") daily: String? = "weathercode,temperature_2m_max,windspeed_10m_max",
+        @Query("start_date") startDate: String? = null,
+        @Query("end_date") endDate: String? = null,
+        @Query("timezone") timezone: String = "auto"
+    ): Response<OpenMeteoResponseDto>
 
     companion object {
         const val API_KEY = "895284fb2d2c1d87c12662f3a61d670a" // Placeholder, user should provide their own
     }
+    @GET("https://archive-api.open-meteo.com/v1/archive")
+    suspend fun getArchive(
+        @Query("latitude") latitude: Double,
+        @Query("longitude") longitude: Double,
+        @Query("start_date") startDate: String,
+        @Query("end_date") endDate: String,
+        @Query("daily") daily: String = "weathercode,temperature_2m_max,windspeed_10m_max",
+        @Query("timezone") timezone: String = "auto"
+    ): Response<OpenMeteoResponseDto>
 }
 
 data class WeatherResponse(

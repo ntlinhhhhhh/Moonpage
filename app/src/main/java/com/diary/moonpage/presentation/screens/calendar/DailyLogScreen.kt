@@ -1,5 +1,6 @@
 package com.diary.moonpage.presentation.screens.calendar
 
+import android.Manifest
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -54,9 +55,9 @@ import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import com.diary.moonpage.presentation.components.core.feedback.MoonDeleteConfirmDialog
 import com.diary.moonpage.core.theme.MoonTheme
 import com.diary.moonpage.core.theme.MoonThemeType
-import com.diary.moonpage.presentation.tutorial.LocalTutorialController
-import com.diary.moonpage.presentation.tutorial.TutorialStep
-import com.diary.moonpage.presentation.tutorial.tutorialTarget
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.YearMonth
@@ -68,6 +69,7 @@ import androidx.compose.ui.platform.LocalLocale
 /**
  * Stateful Component
  */
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun DailyLogScreen(
     dateString: String,
@@ -76,26 +78,25 @@ fun DailyLogScreen(
     onNavigateToMenstrualCycle: () -> Unit,
     onNavigateToDailyPhoto: () -> Unit,
     onNavigateToShare: (String) -> Unit,
-    onDone: (String) -> Unit,
+    onDone: (String, String) -> Unit,
     viewModel: DailyLogViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
+    val context = androidx.compose.ui.platform.LocalContext.current
     var photoToDelete by remember { mutableStateOf<String?>(null) }
-    val tutorialController = LocalTutorialController.current
+
+    val locationPermissionState = rememberMultiplePermissionsState(
+        permissions = listOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+    )
 
     LaunchedEffect(dateString) {
         viewModel.setInitialDate(LocalDate.parse(dateString))
     }
 
-    LaunchedEffect(dateString, tutorialController.activeStep) {
-        if (
-            tutorialController.activeStep == TutorialStep.HighlightCurrentDay &&
-            dateString == LocalDate.now().toString()
-        ) {
-            tutorialController.onStepCompleted(TutorialStep.HighlightCurrentDay)
-        }
-    }
 
     // Permission Launcher for Health Connect
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -109,13 +110,21 @@ fun DailyLogScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // Auto-trigger weather fetch for any selected date if it's a new log
+    LaunchedEffect(uiState.isInitialized, uiState.date, uiState.existingLog) {
+        if (uiState.isInitialized && uiState.existingLog == null) {
+            if (locationPermissionState.allPermissionsGranted) {
+                viewModel.onEvent(DailyLogUiEvent.OnLocationPermissionGranted)
+            } else {
+                locationPermissionState.launchMultiplePermissionRequest()
+            }
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
             when (effect) {
-                is DailyLogUiEffect.SaveSuccess -> {
-                    tutorialController.onStepCompleted(TutorialStep.HighlightDoneButton)
-                    onDone(effect.message)
-                }
+                is DailyLogUiEffect.SaveSuccess -> onDone(effect.date, effect.snackbarMessage)
                 is DailyLogUiEffect.LaunchHealthPermissions -> {
                     // Safe launch of permission activity with a small delay to avoid transition conflicts on MIUI
                     scope.launch {
@@ -124,12 +133,26 @@ fun DailyLogScreen(
                     }
                 }
                 is DailyLogUiEffect.ShowSnackBar -> {
-                    scope.launch {
-                        snackbarHostState.showSnackbar(effect.message)
-                    }
+                   scope.launch {
+                       snackbarHostState.showSnackbar(effect.message)
+                   }
                 }
-                else -> {}
-            }
+                is DailyLogUiEffect.NavigateToPlayStore -> {
+                   val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                       data = android.net.Uri.parse("market://details?id=${effect.packageName}")
+                       addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                   }
+                   try {
+                       context.startActivity(intent)
+                   } catch (e: Exception) {
+                       // Fallback to browser
+                       val webIntent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                           data = android.net.Uri.parse("https://play.google.com/store/apps/details?id=${effect.packageName}")
+                       }
+                       context.startActivity(webIntent)
+                   }
+                }
+                else -> {}            }
         }
     }
 
@@ -138,7 +161,6 @@ fun DailyLogScreen(
     ) { uris ->
         if (uris.isNotEmpty()) {
             viewModel.onEvent(DailyLogUiEvent.OnPhotosChanged(uris.map { it.toString() }))
-            tutorialController.onStepCompleted(TutorialStep.HighlightTodayPhotos)
         }
     }
 
@@ -162,19 +184,19 @@ fun DailyLogScreen(
         onPhotoDeleteRequest = { photoToDelete = it },
         onPhotoZoomRequest = { url -> viewModel.onEvent(DailyLogUiEvent.OnPhotoZoom(url)) }
     )
-    
+
     if (uiState.zoomImageUrl != null) {
         com.diary.moonpage.presentation.components.moment.MomentZoomOverlay(
             imageUrl = uiState.zoomImageUrl!!,
             localPath = null,
             onDismiss = { viewModel.onEvent(DailyLogUiEvent.OnPhotoZoom(null)) },
             onShare = {
-                // For now, share is handled via the main bottom bar, 
+                // For now, share is handled via the main bottom bar,
                 // but we can add logic here if needed.
             }
         )
     }
-    
+
     if (photoToDelete != null) {
         MoonDeleteConfirmDialog(
             title = "Delete Photo",
@@ -224,7 +246,7 @@ fun DailyLogScreenContent(
             val menstruationChanged = uiState.isMenstruation != existing.isMenstruation
             val photosChanged = uiState.dailyPhotos != (existing.dailyPhotos ?: emptyList<String>())
             val musicChanged = uiState.musicTitle != existing.musicRecord
-            
+
             moodChanged || activitiesChanged || noteChanged || sleepChanged || menstruationChanged || photosChanged || musicChanged
         }
     }
@@ -255,8 +277,7 @@ fun DailyLogScreenContent(
                 isLoading = uiState.isLoading,
                 onSaveClick = { onEvent(DailyLogUiEvent.OnSaveClick) },
                 enabled = isChanged,
-                themeColor = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.tutorialTarget(TutorialStep.HighlightDoneButton)
+                themeColor = MaterialTheme.colorScheme.primary
             )
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -394,8 +415,7 @@ private fun DailyLogBottomBar(
     isLoading: Boolean,
     onSaveClick: () -> Unit,
     enabled: Boolean,
-    themeColor: Color,
-    modifier: Modifier = Modifier
+    themeColor: Color
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surface,
@@ -411,7 +431,7 @@ private fun DailyLogBottomBar(
             // Done Button (Full Width)
             Button(
                 onClick = onSaveClick,
-                modifier = modifier
+                modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -446,10 +466,11 @@ private fun DailyLogMainContent(
     onPhotoZoomRequest: (String) -> Unit
 ) {
     val themeType = uiState.themeType
-    val tutorialController = LocalTutorialController.current
 
     val activitiesByCategory = remember(uiState.dynamicActivities) {
-        uiState.dynamicActivities.groupBy { it.category }.mapValues { entry ->
+        uiState.dynamicActivities.groupBy {
+            if (it.category == "Self-Care") "SelfCare" else it.category
+        }.mapValues { entry ->
             entry.value.map { activity ->
                 DailyActivity(
                     id = activity.id,
@@ -471,11 +492,9 @@ private fun DailyLogMainContent(
                 themeType = themeType,
                 customMoods = uiState.customMoods,
                 suggestedWeather = uiState.suggestedWeather,
-                modifier = Modifier.tutorialTarget(TutorialStep.HighlightHowWasYourDay),
                 onMoodSelected = { onMoodId ->
                     if (onMoodId != 0) {
                         onEvent(DailyLogUiEvent.OnMoodSelected(onMoodId))
-                        tutorialController.onStepCompleted(TutorialStep.HighlightHowWasYourDay)
                     }
                 }
             )
@@ -486,11 +505,7 @@ private fun DailyLogMainContent(
             DailyCategoryBar(
                 categories = uiState.enabledCategories,
                 expandedCategories = uiState.expandedCategories,
-                modifier = Modifier.tutorialTarget(TutorialStep.HighlightHobbiesButton),
-                onCategoryClick = {
-                    onEvent(DailyLogUiEvent.OnCategoryToggle(it))
-                    tutorialController.onStepCompleted(TutorialStep.HighlightHobbiesButton)
-                }
+                onCategoryClick = { onEvent(DailyLogUiEvent.OnCategoryToggle(it)) }
             )
         }
 
@@ -506,11 +521,7 @@ private fun DailyLogMainContent(
                             items = categoryActivities,
                             selectedIds = uiState.selectedActivities,
                             onItemClick = { onEvent(DailyLogUiEvent.OnActivityToggled(it)) },
-                            isInitiallyCollapsed = false,
-                            highlightFirstItemForTutorial = tutorialController.activeStep == TutorialStep.HighlightFirstHobby,
-                            onFirstItemTutorialClick = {
-                                tutorialController.onStepCompleted(TutorialStep.HighlightFirstHobby)
-                            }
+                            isInitiallyCollapsed = false
                         )
                     }
                 }
@@ -521,31 +532,25 @@ private fun DailyLogMainContent(
         item {
             DailyNoteSection(
                 noteText = uiState.noteText,
-                modifier = Modifier.tutorialTarget(TutorialStep.HighlightTodayNotes),
-                onNoteChanged = {
-                    onEvent(DailyLogUiEvent.OnNoteChanged(it))
-                    if (it.isNotBlank()) {
-                        tutorialController.onStepCompleted(TutorialStep.HighlightTodayNotes)
-                    }
-                }
+                onNoteChanged = { onEvent(DailyLogUiEvent.OnNoteChanged(it)) }
             )
         }
 
         // 5. Photo Section
         item {
             DailyPhotoSection(
-                photos = uiState.dailyPhotos, 
+                logPhotos = uiState.dailyPhotos,
+                momentPhotos = uiState.momentPhotos,
                 onPhotoClick = onNavigateToDailyPhoto,
                 onPhotoRemove = onPhotoDeleteRequest,
-                onPhotoZoom = onPhotoZoomRequest,
-                modifier = Modifier.tutorialTarget(TutorialStep.HighlightTodayPhotos)
+                onPhotoZoom = onPhotoZoomRequest
             )
         }
 
         // 6. Music Section
         item {
             DailyMusicSection(
-                musicTitle = uiState.musicTitle, 
+                musicTitle = uiState.musicTitle,
                 artistName = uiState.artistName,
                 albumArtUrl = uiState.albumArtUrl,
                 isLinked = uiState.isSpotifyLinked,
@@ -604,17 +609,16 @@ private fun DailyLogMainContent(
 private fun DailyCategoryBar(
     categories: List<String>,
     expandedCategories: Set<String>,
-    modifier: Modifier = Modifier,
     onCategoryClick: (String) -> Unit
 ) {
     androidx.compose.foundation.lazy.LazyRow(
-        modifier = modifier.fillMaxWidth().padding(vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(categories) { category ->
             val isSelected = expandedCategories.contains(category)
             val label = if (category == "SelfCare") "Self-Care" else category
-            
+
             FilterChip(
                 selected = isSelected,
                 onClick = { onCategoryClick(category) },
@@ -636,7 +640,6 @@ private fun DailyCategoryBar(
 private fun DailyMoodSection(
     selectedMood: Int?,
     themeType: MoonThemeType,
-    modifier: Modifier = Modifier,
     customMoods: Map<Int, MoonIcon>? = null,
     suggestedWeather: com.diary.moonpage.domain.repository.WeatherData? = null,
     onMoodSelected: (Int) -> Unit
@@ -644,25 +647,31 @@ private fun DailyMoodSection(
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
-        modifier = modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth()
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
             if (suggestedWeather != null) {
+                val weatherIcon = when {
+                    suggestedWeather.condition.contains("Sunny") -> "☀️"
+                    suggestedWeather.condition.contains("Cloudy") -> "☁️"
+                    suggestedWeather.condition.contains("Rainy") -> "🌧️"
+                    suggestedWeather.condition.contains("Snowy") -> "❄️"
+                    suggestedWeather.condition.contains("Windy") -> "💨"
+                    suggestedWeather.condition.contains("Stormy") -> "⛈️"
+                    else -> "🌡️"
+                }
+
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    coil.compose.AsyncImage(
-                        model = suggestedWeather.iconUrl,
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "${suggestedWeather.cityName}: ${suggestedWeather.temp.toInt()}°C, ${suggestedWeather.condition}",
-                        fontSize = 13.sp,
-                        color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.7f)
+                        text = "$weatherIcon ${suggestedWeather.condition} ${suggestedWeather.temp.toInt()}°C",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.8f),
+                        textAlign = TextAlign.Center
                     )
                 }
             }
@@ -808,9 +817,7 @@ fun DailyActivitySection(
     items: List<DailyActivity>,
     selectedIds: List<String>,
     onItemClick: (String) -> Unit,
-    isInitiallyCollapsed: Boolean = true,
-    highlightFirstItemForTutorial: Boolean = false,
-    onFirstItemTutorialClick: () -> Unit = {}
+    isInitiallyCollapsed: Boolean = true
 ) {
     var isCollapsed by remember { mutableStateOf(isInitiallyCollapsed) }
     val rotation by animateFloatAsState(targetValue = if (isCollapsed) -90f else 0f, label = "")
@@ -854,13 +861,7 @@ fun DailyActivitySection(
             ) {
                 Column {
                     Spacer(modifier = Modifier.height(12.dp))
-                    DailyLogGrid(
-                        items = items,
-                        selectedIds = selectedIds,
-                        onItemClick = onItemClick,
-                        highlightFirstItemForTutorial = highlightFirstItemForTutorial,
-                        onFirstItemTutorialClick = onFirstItemTutorialClick
-                    )
+                    DailyLogGrid(items = items, selectedIds = selectedIds, onItemClick = onItemClick)
                 }
             }
         }
@@ -871,27 +872,22 @@ fun DailyActivitySection(
 fun DailyLogGrid(
     items: List<DailyActivity>,
     selectedIds: List<String>,
-    onItemClick: (String) -> Unit,
-    highlightFirstItemForTutorial: Boolean = false,
-    onFirstItemTutorialClick: () -> Unit = {}
+    onItemClick: (String) -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        items.chunked(4).forEachIndexed { rowIndex, rowItems ->
+        items.chunked(4).forEach { rowItems ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                rowItems.forEachIndexed { itemIndex, item ->
-                    val isFirstTutorialItem = highlightFirstItemForTutorial && rowIndex == 0 && itemIndex == 0
+                rowItems.forEach { item ->
                     val isSelected = selectedIds.contains(item.id)
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .width(68.dp)
-                            .tutorialTarget(TutorialStep.HighlightFirstHobby, enabled = isFirstTutorialItem)
+                        modifier = Modifier.width(68.dp)
                     ) {
                         Box(
                             modifier = Modifier
@@ -901,12 +897,7 @@ fun DailyLogGrid(
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null
-                                ) {
-                                    onItemClick(item.id)
-                                    if (isFirstTutorialItem) {
-                                        onFirstItemTutorialClick()
-                                    }
-                                },
+                                ) { onItemClick(item.id) },
                             contentAlignment = Alignment.Center
                         ) {
                             if (item.icon.drawableRes != null) {
@@ -966,8 +957,8 @@ private fun DailyHealthSection(steps: Int, calories: Int, distance: Double, isIm
                     CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                 } else {
                     Text(
-                        "Import", 
-                        fontSize = 12.sp, 
+                        "Import",
+                        fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.clickable(
                             interactionSource = remember { MutableInteractionSource() },
@@ -1030,8 +1021,8 @@ private fun DailySleepSection(
                     CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                 } else {
                     Text(
-                        "Import", 
-                        fontSize = 12.sp, 
+                        "Import",
+                        fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.clickable(
                             interactionSource = remember { MutableInteractionSource() },
@@ -1043,7 +1034,7 @@ private fun DailySleepSection(
             Spacer(modifier = Modifier.height(12.dp))
             
             Surface(
-                color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MoonTheme.customColors.logItemBg, 
+                color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MoonTheme.customColors.logItemBg,
                 shape = RoundedCornerShape(12.dp), 
                 modifier = Modifier.fillMaxWidth().clickable(
                     interactionSource = remember { MutableInteractionSource() },
@@ -1075,12 +1066,12 @@ private fun DailySleepSection(
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(28.dp).weight(0.12f)
                         )
-                        
+
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(0.25f)) {
                             Text(bedTime.format(fmt), fontWeight = FontWeight.Bold, color = if (sleepHours > 0) MaterialTheme.colorScheme.primary else MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
                             Text("Went to bed", color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
                         }
-                        
+
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(0.26f)) {
                             Text(
                                 if (mins == 0) "${hrs}h" else "${hrs}h ${mins}m", 
@@ -1090,12 +1081,12 @@ private fun DailySleepSection(
                             )
                             Text("Asleep", color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
                         }
-                        
+
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(0.25f)) {
                             Text(wakeTime.format(fmt), fontWeight = FontWeight.Bold, color = if (sleepHours > 0) MaterialTheme.colorScheme.primary else MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
                             Text("Woke up", color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
                         }
-                        
+
                         Icon(
                             Icons.Rounded.AlarmOn, 
                             contentDescription = null, 
@@ -1178,12 +1169,8 @@ private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean
 }
 
 @Composable
-private fun DailyNoteSection(
-    noteText: String,
-    modifier: Modifier = Modifier,
-    onNoteChanged: (String) -> Unit
-) {
-    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = modifier.fillMaxWidth()) {
+private fun DailyNoteSection(noteText: String, onNoteChanged: (String) -> Unit) {
+    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {      
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Today's note", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
             Spacer(modifier = Modifier.height(12.dp))
@@ -1209,18 +1196,19 @@ private fun DailyNoteSection(
 
 @Composable
 private fun DailyPhotoSection(
-    photos: List<String>, 
+    logPhotos: List<String>,
+    momentPhotos: List<String>,
     onPhotoClick: () -> Unit,
     onPhotoRemove: (String) -> Unit,
-    onPhotoZoom: (String) -> Unit,
-    modifier: Modifier = Modifier
+    onPhotoZoom: (String) -> Unit
 ) {
-    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = modifier.fillMaxWidth()) {
+    val allPhotos = (logPhotos + momentPhotos).distinct()
+    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Today's photo", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
             Spacer(modifier = Modifier.height(12.dp))
             
-            if (photos.isEmpty()) {
+            if (allPhotos.isEmpty()) {
                     Surface(
                         color = MoonTheme.customColors.logItemBg, 
                         shape = RoundedCornerShape(12.dp), 
@@ -1240,7 +1228,8 @@ private fun DailyPhotoSection(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(photos.take(10)) { photoUri ->
+                    items(allPhotos.take(10)) { photoUri ->
+                        val isMoment = momentPhotos.contains(photoUri)
                         Box(
                             modifier = Modifier
                                 .size(100.dp)
@@ -1262,28 +1251,47 @@ private fun DailyPhotoSection(
                                 )
                             }
                             
-                            Surface(
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .padding(4.dp)
-                                    .size(20.dp)
-                                    .clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null
-                                    ) { onPhotoRemove(photoUri) },
-                                shape = CircleShape,
-                                color = Color.Black.copy(alpha = 0.5f)
-                            ) {
-                                Icon(
-                                    Icons.Rounded.Close,
-                                    contentDescription = "Remove",
-                                    tint = Color.White,
-                                    modifier = Modifier.padding(4.dp)
-                                )
+                            if (!isMoment) {
+                                Surface(
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(4.dp)
+                                        .size(20.dp)
+                                        .clickable(
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = null
+                                        ) { onPhotoRemove(photoUri) },
+                                    shape = CircleShape,
+                                    color = Color.Black.copy(alpha = 0.5f)
+                                ) {
+                                    Icon(
+                                        Icons.Rounded.Close,
+                                        contentDescription = "Remove",
+                                        tint = Color.White,
+                                        modifier = Modifier.padding(4.dp)
+                                    )
+                                }
+                            } else {
+                                // Indicator for moment photos
+                                Surface(
+                                    modifier = Modifier
+                                        .align(Alignment.BottomEnd)
+                                        .padding(4.dp)
+                                        .size(18.dp),
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                                ) {
+                                    Icon(
+                                        Icons.Rounded.AutoAwesome,
+                                        contentDescription = "Moment",
+                                        tint = Color.White,
+                                        modifier = Modifier.padding(3.dp)
+                                    )
+                                }
                             }
                         }
                     }
-                    if (photos.size < 10) {
+                    if (allPhotos.size < 10) {
                         item {
                             Box(
                                 modifier = Modifier
@@ -1310,29 +1318,29 @@ private fun DailyPhotoSection(
 private fun DailyLogExitDialog(onDismiss: () -> Unit, onExit: () -> Unit) {
     val colorScheme = MaterialTheme.colorScheme
     Dialog(
-        onDismissRequest = onDismiss, 
+        onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Surface(
-            shape = RoundedCornerShape(20.dp), 
-            color = MoonTheme.customColors.popupBgColor, 
+            shape = RoundedCornerShape(20.dp),
+            color = MoonTheme.customColors.popupBgColor,
             modifier = Modifier.fillMaxWidth(0.88f).wrapContentHeight(),
             tonalElevation = 0.dp
         ) {
             Column(
-                modifier = Modifier.padding(28.dp), 
+                modifier = Modifier.padding(28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Changes have not been saved.", 
-                    style = MaterialTheme.typography.titleLarge, 
-                    fontWeight = FontWeight.Bold, 
-                    color = colorScheme.onSurface, 
+                    text = "Changes have not been saved.",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface,
                     textAlign = TextAlign.Center
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 Text(
                     text = "Do you want to discard your changes and exit?",
                     style = MaterialTheme.typography.bodyMedium,
@@ -1341,42 +1349,42 @@ private fun DailyLogExitDialog(onDismiss: () -> Unit, onExit: () -> Unit) {
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
-                
+
                 Row(
-                    modifier = Modifier.fillMaxWidth(), 
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Button(
-                        onClick = onDismiss, 
-                        modifier = Modifier.weight(1f).height(52.dp), 
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f).height(52.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MoonTheme.customColors.cancelBtnBgColor, 
+                            containerColor = MoonTheme.customColors.cancelBtnBgColor,
                             contentColor = MoonTheme.customColors.cancelBtnTextColor
-                        ), 
+                        ),
                         shape = RoundedCornerShape(14.dp),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
-                    ) { 
+                    ) {
                         Text(
-                            "Cancel", 
+                            "Cancel",
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
-                        ) 
+                        )
                     }
                     Button(
-                        onClick = onExit, 
-                        modifier = Modifier.weight(1f).height(52.dp), 
+                        onClick = onExit,
+                        modifier = Modifier.weight(1f).height(52.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = colorScheme.primary, 
+                            containerColor = colorScheme.primary,
                             contentColor = colorScheme.onPrimary
-                        ), 
+                        ),
                         shape = RoundedCornerShape(14.dp),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
-                    ) { 
+                    ) {
                         Text(
-                            "Exit", 
+                            "Exit",
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
-                        ) 
+                        )
                     }
                 }
             }
@@ -1388,82 +1396,82 @@ private fun DailyLogExitDialog(onDismiss: () -> Unit, onExit: () -> Unit) {
 private fun DailyLogOverwriteDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
     val colorScheme = MaterialTheme.colorScheme
     Dialog(
-        onDismissRequest = onDismiss, 
+        onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Surface(
-            shape = RoundedCornerShape(20.dp), 
-            color = MoonTheme.customColors.popupBgColor, 
+            shape = RoundedCornerShape(20.dp),
+            color = MoonTheme.customColors.popupBgColor,
             modifier = Modifier.fillMaxWidth(0.88f).wrapContentHeight(),
             tonalElevation = 0.dp
         ) {
             Column(
-                modifier = Modifier.padding(28.dp), 
+                modifier = Modifier.padding(28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
-                    Icons.Rounded.Warning, 
-                    contentDescription = null, 
-                    tint = colorScheme.error, 
+                    Icons.Rounded.Warning,
+                    contentDescription = null,
+                    tint = colorScheme.error,
                     modifier = Modifier.size(48.dp)
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 Text(
-                    text = "Data already exists", 
-                    style = MaterialTheme.typography.titleLarge, 
-                    fontWeight = FontWeight.Bold, 
+                    text = "Data already exists",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
                     textAlign = TextAlign.Center
-                )  
-                
+                )
+
                 Spacer(modifier = Modifier.height(12.dp))
-                
+
                 Text(
-                    text = "There is already a record for this day. Do you want to overwrite it?", 
-                    style = MaterialTheme.typography.bodyMedium, 
-                    color = colorScheme.onSurface.copy(alpha = 0.8f), 
+                    text = "There is already a record for this day. Do you want to overwrite it?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colorScheme.onSurface.copy(alpha = 0.8f),
                     textAlign = TextAlign.Center
                 )
-                
+
                 Spacer(modifier = Modifier.height(32.dp))
-                
+
                 Row(
-                    modifier = Modifier.fillMaxWidth(), 
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Button(
-                        onClick = onDismiss, 
-                        modifier = Modifier.weight(1f).height(52.dp), 
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f).height(52.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MoonTheme.customColors.cancelBtnBgColor, 
+                            containerColor = MoonTheme.customColors.cancelBtnBgColor,
                             contentColor = MoonTheme.customColors.cancelBtnTextColor
-                        ), 
+                        ),
                         shape = RoundedCornerShape(14.dp),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
-                    ) { 
+                    ) {
                         Text(
-                            "Cancel", 
+                            "Cancel",
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
-                        ) 
+                        )
                     }
                     Button(
-                        onClick = { onConfirm() }, 
-                        modifier = Modifier.weight(1f).height(52.dp), 
+                        onClick = { onConfirm() },
+                        modifier = Modifier.weight(1f).height(52.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = colorScheme.error, 
+                            containerColor = colorScheme.error,
                             contentColor = colorScheme.onError
-                        ), 
+                        ),
                         shape = RoundedCornerShape(14.dp),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
-                    ) { 
+                    ) {
                         Text(
-                            "Overwrite", 
+                            "Overwrite",
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
-                        ) 
+                        )
                     }
                 }
             }
@@ -1485,10 +1493,10 @@ fun DailyLogDatePickerDialog(initialDate: LocalDate, onDateSelected: (LocalDate)
         Surface(shape = RoundedCornerShape(28.dp), color = MoonTheme.customColors.popupBgColor, modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
             Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "Which day is this record for?", 
-                    style = MaterialTheme.typography.titleMedium, 
-                    fontWeight = FontWeight.Bold, 
-                    color = MaterialTheme.colorScheme.onSurface, 
+                    text = "Which day is this record for?",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
                     textAlign = TextAlign.Center
                 )
@@ -1497,22 +1505,22 @@ fun DailyLogDatePickerDialog(initialDate: LocalDate, onDateSelected: (LocalDate)
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } }) { 
-                        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = null, tint = MaterialTheme.colorScheme.primary) 
+                    IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } }) {
+                        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     }
-                    
+
                     val currentPageMonth = baseYearMonth.plusMonths((pagerState.currentPage - initialPage).toLong())
                     Text(
-                        text = currentPageMonth.format(DateTimeFormatter.ofPattern("MMM yyyy")), 
-                        style = MaterialTheme.typography.titleMedium, 
-                        fontWeight = FontWeight.Bold, 
+                        text = currentPageMonth.format(DateTimeFormatter.ofPattern("MMM yyyy")),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f),
                         textAlign = TextAlign.Center
                     )
-                    
-                    IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } }) { 
-                        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.primary) 
+
+                    IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } }) {
+                        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     }
                 }
                 HorizontalPager(state = pagerState, modifier = Modifier.fillMaxWidth().height(260.dp)) { page ->
@@ -1534,36 +1542,36 @@ fun DailyLogDatePickerDialog(initialDate: LocalDate, onDateSelected: (LocalDate)
                 Spacer(modifier = Modifier.height(24.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Button(
-                        onClick = onDismiss, 
-                        modifier = Modifier.weight(1f).height(52.dp), 
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f).height(52.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MoonTheme.customColors.cancelBtnBgColor, 
+                            containerColor = MoonTheme.customColors.cancelBtnBgColor,
                             contentColor = MoonTheme.customColors.cancelBtnTextColor
-                        ), 
+                        ),
                         shape = RoundedCornerShape(14.dp),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
-                    ) { 
+                    ) {
                         Text(
-                            "Cancel", 
+                            "Cancel",
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
-                        ) 
+                        )
                     }
                     Button(
-                        onClick = { onDateSelected(selectedDateInPicker) }, 
-                        modifier = Modifier.weight(1f).height(52.dp), 
+                        onClick = { onDateSelected(selectedDateInPicker) },
+                        modifier = Modifier.weight(1f).height(52.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary, 
+                            containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary
-                        ), 
+                        ),
                         shape = RoundedCornerShape(14.dp),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
-                    ) { 
+                    ) {
                         Text(
-                            "OK", 
+                            "OK",
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
-                        ) 
+                        )
                     }
                 }
             }
@@ -1575,82 +1583,82 @@ fun DailyLogDatePickerDialog(initialDate: LocalDate, onDateSelected: (LocalDate)
 fun SpotifyAuthDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
     val colorScheme = MaterialTheme.colorScheme
     Dialog(
-        onDismissRequest = onDismiss, 
+        onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Surface(
-            shape = RoundedCornerShape(20.dp), 
-            color = MoonTheme.customColors.popupBgColor, 
+            shape = RoundedCornerShape(20.dp),
+            color = MoonTheme.customColors.popupBgColor,
             modifier = Modifier.fillMaxWidth(0.88f).wrapContentHeight(),
             tonalElevation = 0.dp
         ) {
             Column(
-                modifier = Modifier.padding(28.dp), 
+                modifier = Modifier.padding(28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
-                    Icons.Rounded.MusicNote, 
-                    contentDescription = null, 
-                    tint = Color(0xFF1DB954), 
+                    Icons.Rounded.MusicNote,
+                    contentDescription = null,
+                    tint = Color(0xFF1DB954),
                     modifier = Modifier.size(48.dp)
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 Text(
-                    text = "Connect to Spotify", 
-                    style = MaterialTheme.typography.titleLarge, 
-                    fontWeight = FontWeight.Bold, 
+                    text = "Connect to Spotify",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
                     textAlign = TextAlign.Center
                 )
-                
+
                 Spacer(modifier = Modifier.height(12.dp))
-                
+
                 Text(
-                    text = "MoonPage wants to access your Spotify account to search and add music to your logs.", 
-                    style = MaterialTheme.typography.bodyMedium, 
-                    color = colorScheme.onSurface.copy(alpha = 0.8f), 
+                    text = "MoonPage wants to access your Spotify account to search and add music to your logs.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colorScheme.onSurface.copy(alpha = 0.8f),
                     textAlign = TextAlign.Center
                 )
-                
+
                 Spacer(modifier = Modifier.height(32.dp))
-                
+
                 Row(
-                    modifier = Modifier.fillMaxWidth(), 
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Button(
-                        onClick = onDismiss, 
-                        modifier = Modifier.weight(1f).height(52.dp), 
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f).height(52.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MoonTheme.customColors.cancelBtnBgColor, 
+                            containerColor = MoonTheme.customColors.cancelBtnBgColor,
                             contentColor = MoonTheme.customColors.cancelBtnTextColor
-                        ), 
+                        ),
                         shape = RoundedCornerShape(14.dp),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
-                    ) { 
+                    ) {
                         Text(
-                            "Cancel", 
+                            "Cancel",
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
-                        ) 
+                        )
                     }
                     Button(
-                        onClick = onConfirm, 
-                        modifier = Modifier.weight(1f).height(52.dp), 
+                        onClick = onConfirm,
+                        modifier = Modifier.weight(1f).height(52.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF1DB954), 
+                            containerColor = Color(0xFF1DB954),
                             contentColor = Color.White
-                        ), 
+                        ),
                         shape = RoundedCornerShape(14.dp),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
-                    ) { 
+                    ) {
                         Text(
-                            "Allow Access", 
+                            "Allow Access",
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
-                        ) 
+                        )
                     }
                 }
             }

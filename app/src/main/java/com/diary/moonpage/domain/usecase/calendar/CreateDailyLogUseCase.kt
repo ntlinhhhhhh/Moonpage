@@ -1,5 +1,6 @@
 package com.diary.moonpage.domain.usecase.calendar
 
+import com.diary.moonpage.domain.model.DailyLog
 import com.diary.moonpage.domain.repository.DailyLogRepository
 import java.io.File
 import javax.inject.Inject
@@ -20,10 +21,15 @@ class CreateDailyLogUseCase @Inject constructor(
         steps: Int?,
         musicRecord: String?,
         calories: Int?,
-        distance: Double?
+        distance: Double?,
+        wakeupTime: String? = null,
+        weather: String? = null,
+        temperature: Double? = null
     ): Result<Unit> {
         return repository.createDailyLog(
-            baseMoodId, date, note, sleepHours, sleepStartTime, isMenstruation, menstruationPhase, activityIds, dailyPhotos, steps, musicRecord, calories, distance
+            baseMoodId, date, note, sleepHours, sleepStartTime, 
+            isMenstruation, menstruationPhase, activityIds, dailyPhotos, 
+            steps, musicRecord, calories, distance, wakeupTime, weather, temperature
         )
     }
 }

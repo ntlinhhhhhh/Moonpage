@@ -50,7 +50,8 @@ fun StoreScreen(
                     snackbarHostState.showSnackbar(effect.message)
                 }
                 is StoreUiEffect.ThemeActivated -> {
-                    snackbarHostState.showSnackbar(context.getString(R.string.theme_updated_success))
+                    val msg = effect.message ?: context.getString(R.string.theme_updated_success)
+                    snackbarHostState.showSnackbar(msg)
                 }
                 is StoreUiEffect.NavigateBack -> {
                     onNavigateBack()
@@ -63,11 +64,10 @@ fun StoreScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = paddingValues.calculateBottomPadding())
             ) {
                 StoreTopBar(
                     coins = uiState.userCoins

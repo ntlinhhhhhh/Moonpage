@@ -17,4 +17,5 @@ interface UserRepository {
     suspend fun deleteUser(id: String): Result<Unit>
     suspend fun updateAvatar(image: okhttp3.MultipartBody.Part, localFile: File): Result<User>
     suspend fun clearCache()
+    suspend fun updateLanguage(language: String): Result<Unit>
 }

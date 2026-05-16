@@ -57,8 +57,11 @@ fun CalendarScreen(
 
     LaunchedEffect(createdLogDate) {
         if (createdLogDate != null) {
+            val date = LocalDate.parse(createdLogDate)
             viewModel.refreshLogs()
-            viewModel.onEvent(CalendarUiEvent.OnDateSelected(LocalDate.parse(createdLogDate)))
+            viewModel.onEvent(CalendarUiEvent.ForceDateSelected(date))
+            // Ensure the calendar jumps to the month of the created log
+            viewModel.onEvent(CalendarUiEvent.OnMonthChanged(YearMonth.from(date)))
             onLogDateHandled()
         }
     }
@@ -234,6 +237,7 @@ fun CalendarScreenContent(
                     CalendarViewMode.TIMELINE -> {
                         TimelineView(
                             dailyLogs = uiState.dailyLogs,
+                            selectedFilter = uiState.selectedFilter,
                             dynamicActivities = uiState.dynamicActivities,
                             themeType = uiState.themeType,
                             onEditLog = { date -> onNavigateToDailyLog(date.toString()) },
@@ -530,7 +534,11 @@ fun CalendarSelectedLogDetail(
                 activityNames = activityNames,
                 dailyPhotos = selectedLog.dailyPhotos ?: emptyList(),
                 sleepHours = selectedLog.sleepHours,
-                isMenstruation = selectedLog.isMenstruation
+                isMenstruation = selectedLog.isMenstruation,
+                steps = selectedLog.steps,
+                musicRecord = selectedLog.musicRecord,
+                weather = selectedLog.weather,
+                temperature = selectedLog.temperature
             )
         }
     }
@@ -539,6 +547,7 @@ fun CalendarSelectedLogDetail(
 @Composable
 fun TimelineView(
     dailyLogs: Map<LocalDate, DailyLog>,
+    selectedFilter: FilterItem?,
     dynamicActivities: List<com.diary.moonpage.domain.model.Activity>,
     themeType: com.diary.moonpage.core.theme.MoonThemeType,
     onEditLog: (LocalDate) -> Unit,
@@ -546,31 +555,48 @@ fun TimelineView(
     onShareLog: (LocalDate) -> Unit,
     onAddLog: (LocalDate) -> Unit
 ) {
-    val sortedLogs = remember(dailyLogs) {
-        dailyLogs.values.sortedByDescending { it.date }
+    val filteredLogs = remember(dailyLogs, selectedFilter) {
+        dailyLogs.values.filter { log ->
+            when (val filter = selectedFilter) {
+                null -> true
+                is FilterItem.Mood -> log.baseMoodId == filter.id
+                is FilterItem.Activity -> log.activityIds?.contains(filter.id) == true
+                is FilterItem.Special -> {
+                    when (filter.id) {
+                        "music" -> log.activityIds?.any { it.contains("music", ignoreCase = true) } == true
+                        "sleep" -> (log.sleepHours ?: 0.0) > 0.0
+                        "sleep_long" -> (log.sleepHours ?: 0.0) in 6.0..8.0
+                        "menstruation" -> log.isMenstruation
+                        else -> false
+                    }
+                }
+            }
+        }.sortedByDescending { it.date }
     }
 
-    if (sortedLogs.isEmpty()) {
+    if (filteredLogs.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(
-                    imageVector = Icons.Rounded.EditNote,
+                    imageVector = if (selectedFilter != null) Icons.Rounded.SearchOff else Icons.Rounded.EditNote,
                     contentDescription = null,
                     modifier = Modifier.size(64.dp),
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "No entries yet",
+                    text = if (selectedFilter != null) "No matching entries" else "No entries yet",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                 )
                 Spacer(modifier = Modifier.height(24.dp))
-                Button(
-                    onClick = { onAddLog(LocalDate.now()) },
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Write first entry")
+                if (selectedFilter == null) {
+                    Button(
+                        onClick = { onAddLog(LocalDate.now()) },
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Write first entry")
+                    }
                 }
             }
         }
@@ -581,7 +607,7 @@ fun TimelineView(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(
-                items = sortedLogs,
+                items = filteredLogs,
                 key = { it.id }
             ) { log ->
                 val date = LocalDate.parse(log.date)
@@ -670,7 +696,11 @@ fun TimelineItem(
                 activityNames = activityNames,
                 dailyPhotos = log.dailyPhotos ?: emptyList(),
                 sleepHours = log.sleepHours,
-                isMenstruation = log.isMenstruation
+                isMenstruation = log.isMenstruation,
+                steps = log.steps,
+                musicRecord = log.musicRecord,
+                weather = log.weather,
+                temperature = log.temperature
             )
         }
     }

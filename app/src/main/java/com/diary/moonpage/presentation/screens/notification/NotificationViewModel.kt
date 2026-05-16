@@ -20,7 +20,8 @@ data class NotificationUiState(
 
 @HiltViewModel
 class NotificationViewModel @Inject constructor(
-    private val repository: NotificationRepository
+    private val repository: NotificationRepository,
+    private val notificationBus: com.diary.moonpage.core.util.NotificationBus
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(NotificationUiState())
@@ -28,6 +29,15 @@ class NotificationViewModel @Inject constructor(
 
     init {
         loadNotifications()
+        
+        // Listen for new incoming notifications to refresh list automatically
+        viewModelScope.launch {
+            notificationBus.events.collect {
+                // Short delay to give the backend time to process the createNotification call from FCM Service
+                kotlinx.coroutines.delay(1000)
+                loadNotifications()
+            }
+        }
     }
 
     fun loadNotifications() {
@@ -111,36 +121,6 @@ class NotificationViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 android.util.Log.e("NotificationVM", "Delete all error", e)
-            }
-        }
-    }
-
-    fun sendTestPush() {
-        viewModelScope.launch {
-            try {
-                android.util.Log.d("NotificationVM", "Requesting FCM token for test push...")
-                val token = com.google.firebase.messaging.FirebaseMessaging.getInstance().token.await()
-                android.util.Log.d("NotificationVM", "FCM Token: $token")
-                
-                val request = com.diary.moonpage.data.remote.dto.notification.SendPushRequest(
-                    token = token,
-                    title = "MoonPage Test 🌙",
-                    body = "This is a comprehensive test of your notification system! 🚀",
-                    imageUrl = null
-                )
-                
-                val response = repository.sendPushNotification(request)
-                if (response.isSuccessful) {
-                    android.util.Log.d("NotificationVM", "Test push sent successfully to backend")
-                    showSnackbar("Test push sent!")
-                } else {
-                    val errorMsg = "Test push failed: ${response.code()}"
-                    android.util.Log.e("NotificationVM", errorMsg)
-                    _uiState.update { it.copy(error = errorMsg) }
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("NotificationVM", "Test push execution error", e)
-                _uiState.update { it.copy(error = "Test push failed: ${e.message}") }
             }
         }
     }

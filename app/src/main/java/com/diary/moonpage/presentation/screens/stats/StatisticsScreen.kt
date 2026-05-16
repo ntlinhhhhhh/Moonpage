@@ -36,7 +36,9 @@ fun StatisticsScreen(
         uiState = uiState,
         onMonthChange = viewModel::onMonthSelected,
         onTabChange = viewModel::setMonthly,
-        onIconClick = viewModel::onIconClick
+        onIconClick = viewModel::onIconClick,
+        onShareRecap = viewModel::shareRecapCard,
+        onClearCaptureError = viewModel::clearCaptureError
     )
 }
 
@@ -46,10 +48,15 @@ fun StatisticsScreenContent(
     uiState: StatisticsUiState,
     onMonthChange: (Int, Int) -> Unit,
     onTabChange: (Boolean) -> Unit,
-    onIconClick: (String?) -> Unit
+    onIconClick: (String?) -> Unit,
+    onShareRecap: (android.content.Context, android.graphics.Bitmap) -> Unit,
+    onClearCaptureError: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     var showDatePicker by remember { mutableStateOf(false) }
+    
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val viewContext = androidx.compose.ui.platform.LocalView.current
 
     val stats = uiState.stats
     val frequentlyRecorded = uiState.frequentlyRecorded
@@ -139,7 +146,10 @@ fun StatisticsScreenContent(
                             SleepSummaryView(
                                 averageSleepHours = s.averageSleepHours ?: 0.0,
                                 averageSleepStartTime = s.averageSleepStartTime,
-                                totalSteps = s.totalSteps ?: 0
+                                averageWakeUpTime = uiState.averageWakeUpTime,
+                                totalSteps = s.totalSteps ?: 0,
+                                totalCalories = s.totalCalories ?: 0,
+                                totalDistance = s.totalDistance ?: 0.0
                             )
                         }
                         
@@ -201,6 +211,54 @@ fun StatisticsScreenContent(
                     } else {
                         // --- ANNUAL VIEW ---
                         
+                        // 0. Shareable Yearly Recap Card
+                        StatsCard(
+                            title = stringResource(R.string.look_back, uiState.selectedYear.toString()),
+                            actionText = "Share",
+                            onActionClick = {
+                                // Trigger capture and share
+                                onClearCaptureError()
+                                val view = viewContext
+                                com.diary.moonpage.core.util.ComposeCaptureUtils.captureComposable(
+                                    view = view,
+                                    content = {
+                                        com.diary.moonpage.core.theme.MoonPageTheme {
+                                            YearlyRecapCard(
+                                                year = uiState.selectedYear,
+                                                totalLogs = stats?.totalLogs ?: 0,
+                                                totalPhotos = stats?.totalPhotos ?: 0,
+                                                yearlyMoodGrid = stats?.yearlyMoodGrid ?: emptyList(),
+                                                themeType = uiState.themeType,
+                                                bestActivities = stats?.bestActivities ?: emptyList(),
+                                                totalDistance = stats?.totalDistance ?: 0.0,
+                                                totalSteps = stats?.totalSteps ?: 0,
+                                                longestStreak = stats?.longestStreak ?: 0
+                                            )
+                                        }
+                                    },
+                                    width = 1080,
+                                    onBitmapCaptured = { bitmap ->
+                                        onShareRecap(context, bitmap)
+                                    },
+                                    onFailure = { error ->
+                                        // Handle failure if needed
+                                    }
+                                )
+                            }
+                        ) {
+                            YearlyRecapCard(
+                                year = uiState.selectedYear,
+                                totalLogs = stats?.totalLogs ?: 0,
+                                totalPhotos = stats?.totalPhotos ?: 0,
+                                yearlyMoodGrid = stats?.yearlyMoodGrid ?: emptyList(),
+                                themeType = uiState.themeType,
+                                bestActivities = stats?.bestActivities ?: emptyList(),
+                                totalDistance = stats?.totalDistance ?: 0.0,
+                                totalSteps = stats?.totalSteps ?: 0,
+                                longestStreak = stats?.longestStreak ?: 0
+                            )
+                        }
+
                         // 1. Mood Flow (Yearly)
                         StatsCard(title = stringResource(R.string.mood_flow)) {
                             MoodFlowChart(

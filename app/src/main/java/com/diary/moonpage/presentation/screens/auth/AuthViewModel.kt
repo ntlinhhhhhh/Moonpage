@@ -16,10 +16,12 @@ import com.diary.moonpage.domain.usecase.validation.ValidateUsername
 import dagger.hilt.android.lifecycle.HiltViewModel
 import com.diary.moonpage.domain.repository.UserRepository
 import com.diary.moonpage.domain.repository.ActivityRepository
+import com.diary.moonpage.domain.repository.NotificationRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.async
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 @HiltViewModel
@@ -35,6 +37,7 @@ class AuthViewModel @Inject constructor (
     private val validateUsername: ValidateUsername,
     private val tokenManager: TokenManager,
     private val onboardingPrefsManager: OnboardingPrefsManager,
+    private val settingsPreferencesManager: com.diary.moonpage.core.util.SettingsPreferencesManager,
     private val userRepository: UserRepository,
     private val activityRepository: ActivityRepository,
     private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository,
@@ -42,7 +45,8 @@ class AuthViewModel @Inject constructor (
     private val dailyLogRepository: com.diary.moonpage.domain.repository.DailyLogRepository,
     private val momentRepository: com.diary.moonpage.domain.repository.MomentRepository,
     private val authApi: com.diary.moonpage.data.remote.api.AuthApi,
-    private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager
+    private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager,
+    private val notificationRepository: NotificationRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AuthUiState())
@@ -74,6 +78,11 @@ class AuthViewModel @Inject constructor (
         if (otpCode.length == 6) {
             verifyOtp()
         }
+    }
+
+    /** Dùng bởi LoadingScreen: kiểm tra xem tutorial đã được xem chưa */
+    suspend fun checkTutorialCompleted(): Boolean {
+        return settingsPreferencesManager.isTutorialCompleted.first()
     }
 
     /** Dùng bởi LoadingScreen: kiểm tra user hiện tại đã hoàn thành onboarding chưa */
@@ -190,6 +199,7 @@ class AuthViewModel @Inject constructor (
                     tokenManager.saveUserId(user.userId)
                     tokenManager.saveUserName(user.name)
                     val isOnboarded = onboardingPrefsManager.checkOnboardingCompleted(user.userId)
+                    
                     _uiState.update { it.copy(isLoading = false) }
                     _uiEvent.send(AuthUiEvent.LoginSuccess(user.token, user.userId, isNewUser = !isOnboarded))
                 }.onFailure { exception ->
@@ -277,6 +287,7 @@ class AuthViewModel @Inject constructor (
                     tokenManager.saveUserId(user.userId)
                     tokenManager.saveUserName(user.name)
                     val isOnboarded = onboardingPrefsManager.checkOnboardingCompleted(user.userId)
+                    
                     _uiState.update { it.copy(isLoading = false) }
                     _uiEvent.send(AuthUiEvent.LoginSuccess(user.token, user.userId, isNewUser = !isOnboarded))
                 }.onFailure { exception ->

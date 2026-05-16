@@ -3,28 +3,36 @@ package com.diary.moonpage.presentation.screens.calendar
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.core.util.ActivityPreferencesManager
+import com.diary.moonpage.domain.model.DailyLog
 import com.diary.moonpage.domain.repository.DailyLogRepository
 import com.diary.moonpage.core.util.PkceUtil
 import com.diary.moonpage.core.util.MoonIcons
+import com.diary.moonpage.core.util.LocationTracker
+import com.diary.moonpage.domain.repository.WeatherRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import okio.buffer
+import okio.sink
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 
 @HiltViewModel
 class DailyLogViewModel @Inject constructor(
     private val repository: DailyLogRepository,
     private val themeRepository: com.diary.moonpage.domain.repository.ThemeRepository,
+    private val weatherRepository: WeatherRepository,
+    private val locationTracker: LocationTracker,
     private val activityPreferencesManager: ActivityPreferencesManager,
     private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager,
     private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
     private val tokenManager: com.diary.moonpage.core.util.TokenManager,
     private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository,
-    private val weatherRepository: com.diary.moonpage.domain.repository.WeatherRepository,
     private val spotifyApi: com.diary.moonpage.data.remote.api.SpotifyApi,
     private val momentRepository: com.diary.moonpage.domain.repository.MomentRepository,
     private val checkAndTriggerNotificationsUseCase: com.diary.moonpage.domain.usecase.notification.CheckAndTriggerNotificationsUseCase,
@@ -40,6 +48,8 @@ class DailyLogViewModel @Inject constructor(
 
     private val _uiEffect = MutableSharedFlow<DailyLogUiEffect>()
     val uiEffect: SharedFlow<DailyLogUiEffect> = _uiEffect.asSharedFlow()
+
+    private val currentDate = MutableStateFlow<LocalDate?>(null)
 
     init {
         viewModelScope.launch {
@@ -68,6 +78,81 @@ class DailyLogViewModel @Inject constructor(
                 _uiState.update { it.copy(gender = user?.gender) }
             }
         }
+        observeData()
+    }
+
+    private fun observeData() {
+        viewModelScope.launch {
+            currentDate.filterNotNull().flatMapLatest { date ->
+                combine(
+                    repository.getDailyLogByDateFlow(date.toString()),
+                    momentRepository.moments
+                ) { log, moments ->
+                    val momentPhotos = moments.filter { it.capturedAt.startsWith(date.toString()) }
+                        .map { if (it.imageUrl.startsWith("http")) it.imageUrl else BASE_URL + it.imageUrl.trimStart('/') }
+                    Pair(log, momentPhotos)
+                }
+            }.collect { (log, momentPhotos) ->
+                _uiState.update { currentState ->
+                    val updatedState = if (log != null) {
+                        val formatter = DateTimeFormatter.ofPattern("HH:mm")
+                        val bedTime = log.sleepStartTime?.let { try { LocalTime.parse(it, formatter) } catch(e: Exception) { LocalTime.of(0, 0) } } ?: LocalTime.of(0, 0)
+                        val wakeTime = log.wakeupTime?.let { try { LocalTime.parse(it, formatter) } catch(e: Exception) { bedTime.plusMinutes(((log.sleepHours ?: 8.0) * 60).toLong()) } } 
+                            ?: bedTime.plusMinutes(((log.sleepHours ?: 8.0) * 60).toLong())
+                        val calculatedHours = log.sleepHours?.toFloat() ?: 0f
+                        val logPhotos = log.dailyPhotos?.map { if (it.startsWith("http")) it else BASE_URL + it.trimStart('/') } ?: emptyList()
+
+                        if (!currentState.isInitialized || currentState.date != log.date.let { LocalDate.parse(it) }) {
+                            currentState.copy(
+                                existingLog = log,
+                                date = LocalDate.parse(log.date),
+                                selectedMood = log.baseMoodId,
+                                selectedActivities = log.activityIds ?: emptyList(),
+                                noteText = log.note ?: "",
+                                sleepHours = calculatedHours,
+                                sleepBedTime = bedTime,
+                                sleepWakeTime = wakeTime,
+                                isMenstruation = log.isMenstruation,
+                                menstruationPhase = log.menstruationPhase,
+                                dailyPhotos = logPhotos,
+                                momentPhotos = momentPhotos,
+                                musicTitle = log.musicRecord,
+                                steps = log.steps ?: 0,
+                                calories = log.calories ?: 0,
+                                distance = log.distance ?: 0.0,
+                                isInitialized = true,
+                                isLoading = false
+                            )
+                        } else {
+                            // Only update metadata and photos, keep user's current edits
+                            currentState.copy(
+                                existingLog = log,
+                                dailyPhotos = logPhotos,
+                                momentPhotos = momentPhotos,
+                                isLoading = false
+                            )
+                        }
+                    } else {
+                        // Log is null (new log or deleted)
+                        if (!currentState.isInitialized) {
+                            currentState.copy(
+                                existingLog = null,
+                                dailyPhotos = emptyList(),
+                                momentPhotos = momentPhotos,
+                                isInitialized = true,
+                                isLoading = false
+                            )
+                        } else {
+                            currentState.copy(
+                                momentPhotos = momentPhotos,
+                                isLoading = false
+                            )
+                        }
+                    }
+                    updatedState
+                }
+            }
+        }
     }
 
     fun fetchExternalData() {
@@ -79,18 +164,9 @@ class DailyLogViewModel @Inject constructor(
     private fun fetchWeather() {
         viewModelScope.launch {
             try {
-                val fusedLocationClient = com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(context)
-                if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                        if (location != null) {
-                            viewModelScope.launch {
-                                weatherRepository.getCurrentWeather(location.latitude, location.longitude).onSuccess { data ->
-                                    _uiState.update { it.copy(suggestedWeather = data) }
-                                    suggestWeatherActivity(data.condition)
-                                }
-                            }
-                        }
-                    }
+                val location = locationTracker.getCurrentLocation()
+                if (location != null) {
+                    autoFetchWeather(_uiState.value.date)
                 }
             } catch (e: Exception) {
                 // Silently fail weather suggestions
@@ -146,21 +222,32 @@ class DailyLogViewModel @Inject constructor(
         viewModelScope.launch {
             getValidSpotifyToken()?.let { token ->
                 try {
-                    val response = spotifyApi.getRecentlyPlayedTracks(token)
-                    if (response.isSuccessful) {
-                        val tracks = response.body()?.items?.map { it.track } ?: emptyList()
-                        _uiState.update { it.copy(recentTracks = tracks) }
-                        
-                        if (_uiState.value.musicTitle.isNullOrBlank() && tracks.isNotEmpty()) {
-                            val lastTrack = tracks.first()
-                            _uiState.update { it.copy(
-                                musicTitle = lastTrack.name,
-                                artistName = lastTrack.artists.firstOrNull()?.name,
-                                albumArtUrl = lastTrack.album.images.firstOrNull()?.url
-                            ) }
-                        }
+                    val userResponse = spotifyApi.getCurrentUser(token)
+                    val tracks = if (userResponse.isSuccessful && userResponse.body()?.product == "premium") {
+                        val recentResponse = spotifyApi.getRecentlyPlayedTracks(token)
+                        if (recentResponse.isSuccessful) {
+                            recentResponse.body()?.items?.map { it.track } ?: emptyList()
+                        } else emptyList()
+                    } else {
+                        val topResponse = spotifyApi.getTopTracks(token)
+                        if (topResponse.isSuccessful) {
+                            topResponse.body()?.items ?: emptyList()
+                        } else emptyList()
                     }
-                } catch (e: Exception) {}
+
+                    _uiState.update { it.copy(recentTracks = tracks) }
+
+                    if (_uiState.value.musicTitle.isNullOrBlank() && tracks.isNotEmpty()) {
+                        val lastTrack = tracks.first()
+                        _uiState.update { it.copy(
+                            musicTitle = lastTrack.name,
+                            artistName = lastTrack.artists.firstOrNull()?.name,
+                            albumArtUrl = lastTrack.album.images.firstOrNull()?.url
+                        ) }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("SpotifyFetch", "Failed to fetch tracks", e)
+                }
             }
         }
     }
@@ -215,9 +302,9 @@ class DailyLogViewModel @Inject constructor(
     }
 
     fun setInitialDate(date: LocalDate) {
-        if (_uiState.value.isInitialized && _uiState.value.date == date) return
-        _uiState.update { it.copy(date = date, isInitialized = true) }
-        fetchLogForDate(date)
+        if (currentDate.value == date) return
+        _uiState.update { it.copy(date = date, isLoading = true) }
+        currentDate.value = date
         if (date == LocalDate.now()) {
             fetchExternalData()
         }
@@ -244,14 +331,14 @@ class DailyLogViewModel @Inject constructor(
                 } else {
                     current.add(event.activityId)
                 }
-                _uiState.update { it.copy(selectedActivities = current) }
+                _uiState.update { it.copy(selectedActivities = current.toList()) }
             }
             is DailyLogUiEvent.OnNoteChanged -> {
                 _uiState.update { it.copy(noteText = event.note) }
             }
             is DailyLogUiEvent.OnDateChanged -> {
-                _uiState.update { it.copy(date = event.date) }
-                fetchLogForDate(event.date)
+                _uiState.update { it.copy(date = event.date, isInitialized = false) }
+                currentDate.value = event.date
             }
             is DailyLogUiEvent.OnMenstruationToggled -> {
                 _uiState.update { it.copy(isMenstruation = event.isMenstruation) }
@@ -290,24 +377,36 @@ class DailyLogViewModel @Inject constructor(
                     try {
                         val status = healthConnectManager.getSdkStatus()
                         if (status != androidx.health.connect.client.HealthConnectClient.SDK_AVAILABLE) {
-                            val msg = when (status) {
-                                androidx.health.connect.client.HealthConnectClient.SDK_UNAVAILABLE -> "Health Connect is not installed on this device."
-                                androidx.health.connect.client.HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> "Health Connect needs an update from the Play Store."
-                                else -> "Health Connect is not available (Status: $status)."
+                            if (status == androidx.health.connect.client.HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED || 
+                                status == androidx.health.connect.client.HealthConnectClient.SDK_UNAVAILABLE) {
+                                val providerPackageName = "com.google.android.apps.healthdata"
+                                _uiEffect.emit(DailyLogUiEffect.NavigateToPlayStore(providerPackageName))
+                            } else {
+                                val msg = "Health Connect is not available (Status: $status)."
+                                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(msg))
                             }
-                            _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(msg))
                             _uiState.update { it.copy(isImportingHealth = false) }
                         } else if (healthConnectManager.hasAllPermissions()) {
                             val data = healthConnectManager.readHealthData(_uiState.value.date)
-                            if (data.steps == 0 && data.calories == 0 && data.distance == 0.0) {
+                            if (data.steps == 0 && data.calories == 0 && data.distance == 0.0 && data.sleepHours == 0.0) {
                                 _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("No health data found for this day in Health Connect. Make sure Google Fit is syncing."))
                             } else {
-                                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Health data updated: ${data.steps} steps!"))
+                                val msg = buildString {
+                                    append("Imported:")
+                                    if (data.steps > 0) append(" ${data.steps} steps")
+                                    if (data.calories > 0) append("${if (this.length > 9) "," else ""} ${data.calories} kcal")
+                                    if (data.distance > 0.0) append("${if (this.length > 9) "," else ""} ${String.format(java.util.Locale.ENGLISH, "%.1f", data.distance)} km")
+                                    if (data.sleepHours > 0) append("${if (this.length > 9) "," else ""} ${String.format(java.util.Locale.ENGLISH, "%.1f", data.sleepHours)}h sleep")
+                                }
+                                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(msg))
                             }
-                            _uiState.update { it.copy(
+                            _uiState.update { state -> state.copy(
                                 steps = data.steps,
                                 calories = data.calories,
                                 distance = data.distance,
+                                sleepHours = if (data.sleepHours > 0) data.sleepHours.toFloat() else state.sleepHours,
+                                sleepBedTime = data.sleepStartTime?.let { timeStr -> try { java.time.LocalTime.parse(timeStr) } catch(e: Exception) { state.sleepBedTime } } ?: state.sleepBedTime,
+                                sleepWakeTime = data.sleepWakeTime?.let { timeStr -> try { java.time.LocalTime.parse(timeStr) } catch(e: Exception) { state.sleepWakeTime } } ?: state.sleepWakeTime,
                                 isImportingHealth = false
                             ) }
                         } else {
@@ -337,10 +436,12 @@ class DailyLogViewModel @Inject constructor(
                         if (status == androidx.health.connect.client.HealthConnectClient.SDK_AVAILABLE) {
                             if (healthConnectManager.hasAllPermissions()) {
                                 val data = healthConnectManager.readHealthData(_uiState.value.date)
-                                _uiState.update { it.copy(
+                                _uiState.update { state -> state.copy(
                                     steps = data.steps,
                                     calories = data.calories,
                                     distance = data.distance,
+                                    sleepBedTime = data.sleepStartTime?.let { timeStr -> try { java.time.LocalTime.parse(timeStr) } catch(e: Exception) { state.sleepBedTime } } ?: state.sleepBedTime,
+                                    sleepWakeTime = data.sleepWakeTime?.let { timeStr -> try { java.time.LocalTime.parse(timeStr) } catch(e: Exception) { state.sleepWakeTime } } ?: state.sleepWakeTime,
                                 ) }
                             }
                         }
@@ -397,12 +498,18 @@ class DailyLogViewModel @Inject constructor(
             DailyLogUiEvent.OnConfirmOverwrite -> {
                 val pending = _uiState.value.pendingDate
                 if (pending != null) {
-                    _uiState.update { it.copy(date = pending, showOverwriteDialog = false) }
-                    fetchLogForDate(pending)
+                    _uiState.update { it.copy(date = pending, showOverwriteDialog = false, isInitialized = false) }
+                    currentDate.value = pending
                 }
             }
             DailyLogUiEvent.OnDismissOverwriteDialog -> {
                 _uiState.update { it.copy(showOverwriteDialog = false) }
+            }
+            DailyLogUiEvent.DismissMessage -> {
+                _uiState.update { it.copy(snackbarMessage = null) }
+            }
+            DailyLogUiEvent.OnLocationPermissionGranted -> {
+                autoFetchWeather(_uiState.value.date)
             }
         }
     }
@@ -429,68 +536,85 @@ class DailyLogViewModel @Inject constructor(
         return com.diary.moonpage.data.remote.api.SpotifyApi.getAuthUrl(challenge, state)
     }
 
-    private fun fetchLogForDate(date: LocalDate) {
+    private fun autoFetchWeather(date: LocalDate) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            android.util.Log.d("WeatherFetch", "Triggered for date: $date")
             
-            val dateStr = date.toString()
-            val momentPhotos = try {
-                momentRepository.moments.first()
-                    .filter { it.capturedAt.startsWith(dateStr) }
-                    .map { it.imageUrl }
-            } catch (e: Exception) {
-                emptyList<String>()
+            // Check if we already have weather for THIS specific date to avoid double notification
+            val currentState = _uiState.value
+            if (currentState.suggestedWeather != null && 
+                currentState.suggestedWeather?.cityName == "Detected" &&
+                currentState.date == date) {
+                android.util.Log.d("WeatherFetch", "Skipping: already fetched for this date.")
+                return@launch
             }
-            
-            val momentPhotoUrls = momentPhotos.map { if (it.startsWith("http")) it else BASE_URL + it.trimStart('/') }
 
-            repository.getDailyLogByDate(dateStr).onSuccess { log ->
-                val formatter = DateTimeFormatter.ofPattern("HH:mm")
-                val bedTime = log.sleepStartTime?.let { try { LocalTime.parse(it, formatter) } catch(e: Exception) { LocalTime.of(0, 0) } } ?: LocalTime.of(0, 0)
+            val location = try {
+                locationTracker.getCurrentLocation()
+            } catch (e: Exception) {
+                android.util.Log.e("WeatherFetch", "Location error", e)
+                null
+            }
+
+            if (location != null) {
+                android.util.Log.d("WeatherFetch", "Location found: ${location.latitude}, ${location.longitude}")
                 
-                val wakeTime = bedTime.plusMinutes(( (log.sleepHours ?: 8.0) * 60).toLong())
-                val calculatedHours = log.sleepHours?.toFloat() ?: 0f
+                // Ensure UI is ready
+                delay(500)
+                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Updating weather conditions..."))
+                
+                val weatherResult = weatherRepository.getWeatherConditions(location.latitude, location.longitude, date)
+                weatherResult.onSuccess { result ->
+                    val weatherNames = result.conditions
+                    val temp = result.averageTemp
+                    
+                    android.util.Log.d("WeatherFetch", "Success: $weatherNames, Temp: $temp°C")
+                    
+                    // Ensure activities are loaded
+                    if (_uiState.value.dynamicActivities.isEmpty()) {
+                        android.util.Log.d("WeatherFetch", "Waiting for dynamicActivities...")
+                        activityPreferencesManager.activities.first { it.isNotEmpty() }
+                    }
 
-                val logPhotos = log.dailyPhotos?.map { if (it.startsWith("http")) it else BASE_URL + it.trimStart('/') } ?: emptyList()
-                val combinedPhotos = (logPhotos + momentPhotoUrls).distinct()
-
-                _uiState.update { it.copy(
-                    existingLog = log,
-                    selectedMood = log.baseMoodId,
-                    selectedActivities = log.activityIds ?: emptyList(),
-                    noteText = log.note ?: "",
-                    sleepHours = calculatedHours,
-                    sleepBedTime = bedTime,
-                    sleepWakeTime = wakeTime,
-                    isMenstruation = log.isMenstruation,
-                    menstruationPhase = log.menstruationPhase,
-                    dailyPhotos = combinedPhotos,
-                    musicTitle = log.musicRecord,
-                    steps = log.steps ?: 0,
-                    calories = log.calories ?: 0,
-                    distance = log.distance ?: 0.0,
-                    isLoading = false
-                ) }
-            }.onFailure {
-                _uiState.update { it.copy(
-                    existingLog = null,
-                    selectedMood = null,
-                    selectedActivities = emptyList(),
-                    noteText = "",
-                    sleepHours = 0f,
-                    sleepBedTime = LocalTime.of(0, 0),
-                    sleepWakeTime = LocalTime.of(7, 0),
-                    isMenstruation = false,
-                    menstruationPhase = null,
-                    dailyPhotos = momentPhotoUrls,
-                    musicTitle = null,
-                    artistName = null,
-                    albumArtUrl = null,
-                    steps = 0,
-                    calories = 0,
-                    distance = 0.0,
-                    isLoading = false
-                ) }
+                    val currentActivities = _uiState.value.selectedActivities.toMutableList()
+                    var addedCount = 0
+                    weatherNames.forEach { weatherName ->
+                        val weatherActivity = _uiState.value.dynamicActivities.find {
+                            it.name.equals(weatherName, ignoreCase = true)
+                        }
+                        weatherActivity?.let { activity ->
+                            if (!currentActivities.contains(activity.id)) {
+                                currentActivities.add(activity.id)
+                                addedCount++
+                                android.util.Log.d("WeatherFetch", "Auto-selected activity: ${activity.name}")
+                            }
+                        }
+                    }
+                    
+                    _uiState.update { it.copy(
+                        selectedActivities = currentActivities.toList(),
+                        suggestedWeather = com.diary.moonpage.domain.repository.WeatherData(
+                            condition = weatherNames.firstOrNull() ?: "Unknown",
+                            description = "Weather auto-filled",
+                            temp = temp,
+                            cityName = "Detected",
+                            iconUrl = ""
+                        )
+                    ) }
+                    
+                    if (addedCount > 0) {
+                        delay(300)
+                        val tempText = String.format(java.util.Locale.ENGLISH, "%.1f°C", temp)
+                        _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Weather data fetched: ${weatherNames.joinToString(", ")} ($tempText)"))
+                    } else {
+                        android.util.Log.d("WeatherFetch", "No new activities added.")
+                    }
+                }.onFailure { e ->
+                    android.util.Log.e("WeatherFetch", "API Error", e)
+                    _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Could not update weather data automatically."))
+                }
+            } else {
+                android.util.Log.w("WeatherFetch", "Location is NULL - check permissions and GPS.")
             }
         }
     }
@@ -504,9 +628,10 @@ class DailyLogViewModel @Inject constructor(
             return
         }
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { it.copy(isLoading = true) }
             
+            // 1. Process local photos
             val photoFiles = state.dailyPhotos.filter { !it.startsWith("http") }.mapNotNull { uriString ->
                 try {
                     val uri = android.net.Uri.parse(uriString)
@@ -515,7 +640,31 @@ class DailyLogViewModel @Inject constructor(
                     null
                 }
             }
-            
+
+            // 2. Download existing HTTP photos to include them in the upload,
+            // so the backend doesn't overwrite them.
+            val existingPhotoUrls = state.dailyPhotos.filter { it.startsWith("http") }
+            val existingPhotoFiles = mutableListOf<java.io.File>()
+            if (existingPhotoUrls.isNotEmpty()) {
+                val client = okhttp3.OkHttpClient()
+                for (url in existingPhotoUrls) {
+                    try {
+                        val request = okhttp3.Request.Builder().url(url).build()
+                        val response = client.newCall(request).execute()
+                        if (response.isSuccessful && response.body != null) {
+                            val tempFile = java.io.File(context.cacheDir, "retained_photo_${UUID.randomUUID()}.jpg")
+                            val sink = tempFile.sink().buffer()
+                            sink.writeAll(response.body!!.source())
+                            sink.close()
+                            existingPhotoFiles.add(tempFile)
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("DailyLogVM", "Failed to download retained photo: $url", e)
+                    }
+                }
+            }
+
+            val allPhotoFiles = existingPhotoFiles + photoFiles
             val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
             
             repository.createDailyLog(
@@ -527,15 +676,21 @@ class DailyLogViewModel @Inject constructor(
                 isMenstruation = state.isMenstruation,
                 menstruationPhase = state.menstruationPhase,
                 activityIds = state.selectedActivities,
-                dailyPhotos = photoFiles.takeIf { it.isNotEmpty() },
+                dailyPhotos = allPhotoFiles.takeIf { it.isNotEmpty() },
                 steps = state.steps,
                 musicRecord = state.musicTitle,
                 calories = state.calories,
-                distance = state.distance
+                distance = state.distance,
+                wakeupTime = state.sleepWakeTime.format(timeFormatter),
+                weather = state.suggestedWeather?.condition,
+                temperature = state.suggestedWeather?.temp
             ).onSuccess {
                 val msg = if (state.existingLog != null) "Record updated successfully!" else "Record created successfully!"
                 statisticsRepository.triggerRefresh()
-                
+
+                // Cleanup temporary retained files
+                existingPhotoFiles.forEach { it.delete() }
+
                 // Trigger notification evaluation using ApplicationScope to survive VM clearing
                 applicationScope.launch {
                     try {
@@ -545,9 +700,10 @@ class DailyLogViewModel @Inject constructor(
                     }
                 }
 
-                _uiEffect.emit(DailyLogUiEffect.SaveSuccess(msg))
+                _uiEffect.emit(DailyLogUiEffect.SaveSuccess(state.date.toString(), msg))
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false) }
+                existingPhotoFiles.forEach { it.delete() }
                 _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(error.message ?: "Failed to save log"))
             }
         }
