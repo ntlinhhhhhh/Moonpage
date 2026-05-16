@@ -24,6 +24,6 @@ sealed class StoreUiEvent {
 sealed class StoreUiEffect {
     data class ShowSnackBar(val message: String) : StoreUiEffect()
     object PurchaseSuccess : StoreUiEffect()
-    object ThemeActivated : StoreUiEffect()
+    data class ThemeActivated(val message: String? = null) : StoreUiEffect()
     object NavigateBack : StoreUiEffect()
 }

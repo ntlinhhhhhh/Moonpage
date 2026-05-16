@@ -300,9 +300,9 @@ fun ShareCalendarContent(
         val totalCells = firstDayOffset + daysInMonth
         val rows = 6 // Standardized to 6 rows
 
-        Column(verticalArrangement = Arrangement.spacedBy(if (isSquare) 1.5.dp else 8.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(if (isSquare) 0.dp else 8.dp)) {
             for (rowIndex in 0 until rows) {
-                Row(modifier = Modifier.fillMaxWidth()) {
+                Row(modifier = Modifier.fillMaxWidth().height(if (isSquare) 40.dp else 50.dp)) {
                     for (colIndex in 0 until 7) {
                         val cellIndex = rowIndex * 7 + colIndex
                         Box(

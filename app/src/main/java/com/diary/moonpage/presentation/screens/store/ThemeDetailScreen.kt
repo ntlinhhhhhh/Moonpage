@@ -67,7 +67,8 @@ fun ThemeDetailScreen(
                     snackbarHostState.showSnackbar(effect.message)
                 }
                 is StoreUiEffect.ThemeActivated -> {
-                    snackbarHostState.showSnackbar(context.getString(R.string.theme_updated_success))
+                    val msg = effect.message ?: context.getString(R.string.theme_updated_success)
+                    snackbarHostState.showSnackbar(msg)
                 }
                 is StoreUiEffect.NavigateBack -> {
                     onNavigateBack()
@@ -79,7 +80,7 @@ fun ThemeDetailScreen(
 
     LaunchedEffect(uiState.activationSuccess) {
         if (uiState.activationSuccess) {
-            snackbarHostState.showSnackbar(context.getString(R.string.theme_updated_success))
+            // Success is already handled by ThemeActivated effect above
             delay(1000)
             viewModel.dismissSuccessMessage()
         }
@@ -171,11 +172,10 @@ fun ThemeDetailScreen(
         },
         containerColor = backgroundColor
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
