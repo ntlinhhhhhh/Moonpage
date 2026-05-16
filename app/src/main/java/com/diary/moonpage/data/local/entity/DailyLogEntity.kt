@@ -21,7 +21,9 @@ data class DailyLogEntity(
     val createdAt: String? = null,
     val calories: Int? = null,
     val distance: Double? = null,
-    val wakeupTime: String? = null
+    val wakeupTime: String? = null,
+    val weather: String? = null,
+    val temperature: Double? = null
 ) {
     fun toResponse(): DailyLogResponseDto {
         return DailyLogResponseDto(
@@ -40,7 +42,9 @@ data class DailyLogEntity(
             createdAt = createdAt,
             calories = calories,
             distance = distance,
-            wakeupTime = wakeupTime
+            wakeupTime = wakeupTime,
+            weather = weather,
+            temperature = temperature
         )
     }
 
@@ -61,7 +65,9 @@ data class DailyLogEntity(
             createdAt = createdAt,
             calories = calories,
             distance = distance,
-            wakeupTime = wakeupTime
+            wakeupTime = wakeupTime,
+            weather = weather,
+            temperature = temperature
         )
     }
 
@@ -83,7 +89,9 @@ data class DailyLogEntity(
                 createdAt = response.createdAt,
                 calories = response.calories,
                 distance = response.distance,
-                wakeupTime = response.wakeupTime
+                wakeupTime = response.wakeupTime,
+                weather = response.weather,
+                temperature = response.temperature
             )
         }
     }

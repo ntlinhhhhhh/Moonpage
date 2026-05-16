@@ -6,13 +6,13 @@ import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
+import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import androidx.health.connect.client.PermissionController
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.Duration
-import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import javax.inject.Inject
@@ -31,6 +31,7 @@ class HealthConnectManager @Inject constructor(
     val permissions = setOf(
         HealthPermission.getReadPermission(StepsRecord::class),
         HealthPermission.getReadPermission(TotalCaloriesBurnedRecord::class),
+        HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class),
         HealthPermission.getReadPermission(DistanceRecord::class),
         HealthPermission.getReadPermission(SleepSessionRecord::class)
     )
@@ -68,12 +69,17 @@ class HealthConnectManager @Inject constructor(
                     metrics = setOf(
                         StepsRecord.COUNT_TOTAL,
                         TotalCaloriesBurnedRecord.ENERGY_TOTAL,
+                        ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL,
                         DistanceRecord.DISTANCE_TOTAL
                     ),
                     timeRangeFilter = timeRangeFilter
                 )
             )
             
+            val totalCalories = response[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories?.toInt() ?: 0
+            val activeCalories = response[ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL]?.inKilocalories?.toInt() ?: 0
+            val finalCalories = if (activeCalories > totalCalories) activeCalories else totalCalories
+
             // Read sleep sessions separately as they are read via ReadRecordsRequest
             val sleepRequest = ReadRecordsRequest(
                 recordType = SleepSessionRecord::class,
@@ -89,7 +95,7 @@ class HealthConnectManager @Inject constructor(
 
             HealthData(
                 steps = response[StepsRecord.COUNT_TOTAL]?.toInt() ?: 0,
-                calories = response[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories?.toInt() ?: 0,
+                calories = finalCalories,
                 distance = (response[DistanceRecord.DISTANCE_TOTAL]?.inMeters ?: 0.0) / 1000.0,
                 sleepHours = sleepHours,
                 sleepStartTime = sleepStartStr,

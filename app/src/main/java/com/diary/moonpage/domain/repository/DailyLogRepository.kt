@@ -10,16 +10,18 @@ interface DailyLogRepository {
         date: String,
         note: String?,
         sleepHours: Double?,
-        sleepStartTime: String? = null,
+        sleepStartTime: String?,
         isMenstruation: Boolean,
         menstruationPhase: String?,
         activityIds: List<String>?,
         dailyPhotos: List<File>?,
-        steps: Int? = null,
-        musicRecord: String? = null,
-        calories: Int? = null,
-        distance: Double? = null,
-        wakeupTime: String? = null
+        steps: Int?,
+        musicRecord: String?,
+        calories: Int?,
+        distance: Double?,
+        wakeupTime: String? = null,
+        weather: String? = null,
+        temperature: Double? = null
     ): Result<Unit>
 
     suspend fun getDailyLogByDate(date: String): Result<DailyLog>

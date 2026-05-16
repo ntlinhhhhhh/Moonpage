@@ -651,21 +651,27 @@ private fun DailyMoodSection(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
             if (suggestedWeather != null) {
+                val weatherIcon = when {
+                    suggestedWeather.condition.contains("Sunny") -> "☀️"
+                    suggestedWeather.condition.contains("Cloudy") -> "☁️"
+                    suggestedWeather.condition.contains("Rainy") -> "🌧️"
+                    suggestedWeather.condition.contains("Snowy") -> "❄️"
+                    suggestedWeather.condition.contains("Windy") -> "💨"
+                    suggestedWeather.condition.contains("Stormy") -> "⛈️"
+                    else -> "🌡️"
+                }
+
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    coil.compose.AsyncImage(
-                        model = suggestedWeather.iconUrl,
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "${suggestedWeather.cityName}: ${suggestedWeather.temp.toInt()}°C, ${suggestedWeather.condition}",
-                        fontSize = 13.sp,
-                        color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.7f)
+                        text = "$weatherIcon ${suggestedWeather.condition} ${suggestedWeather.temp.toInt()}°C",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.8f),
+                        textAlign = TextAlign.Center
                     )
                 }
             }

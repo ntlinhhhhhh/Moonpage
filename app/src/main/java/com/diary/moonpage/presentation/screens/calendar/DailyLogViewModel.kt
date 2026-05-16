@@ -97,7 +97,8 @@ class DailyLogViewModel @Inject constructor(
                     val updatedState = if (log != null) {
                         val formatter = DateTimeFormatter.ofPattern("HH:mm")
                         val bedTime = log.sleepStartTime?.let { try { LocalTime.parse(it, formatter) } catch(e: Exception) { LocalTime.of(0, 0) } } ?: LocalTime.of(0, 0)
-                        val wakeTime = bedTime.plusMinutes(( (log.sleepHours ?: 8.0) * 60).toLong())
+                        val wakeTime = log.wakeupTime?.let { try { LocalTime.parse(it, formatter) } catch(e: Exception) { bedTime.plusMinutes(((log.sleepHours ?: 8.0) * 60).toLong()) } } 
+                            ?: bedTime.plusMinutes(((log.sleepHours ?: 8.0) * 60).toLong())
                         val calculatedHours = log.sleepHours?.toFloat() ?: 0f
                         val logPhotos = log.dailyPhotos?.map { if (it.startsWith("http")) it else BASE_URL + it.trimStart('/') } ?: emptyList()
 
@@ -387,18 +388,25 @@ class DailyLogViewModel @Inject constructor(
                             _uiState.update { it.copy(isImportingHealth = false) }
                         } else if (healthConnectManager.hasAllPermissions()) {
                             val data = healthConnectManager.readHealthData(_uiState.value.date)
-                            if (data.steps == 0 && data.calories == 0 && data.distance == 0.0) {
+                            if (data.steps == 0 && data.calories == 0 && data.distance == 0.0 && data.sleepHours == 0.0) {
                                 _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("No health data found for this day in Health Connect. Make sure Google Fit is syncing."))
                             } else {
-                                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Health data updated: ${data.steps} steps!"))
+                                val msg = buildString {
+                                    append("Imported:")
+                                    if (data.steps > 0) append(" ${data.steps} steps")
+                                    if (data.calories > 0) append("${if (this.length > 9) "," else ""} ${data.calories} kcal")
+                                    if (data.distance > 0.0) append("${if (this.length > 9) "," else ""} ${String.format(java.util.Locale.ENGLISH, "%.1f", data.distance)} km")
+                                    if (data.sleepHours > 0) append("${if (this.length > 9) "," else ""} ${String.format(java.util.Locale.ENGLISH, "%.1f", data.sleepHours)}h sleep")
+                                }
+                                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(msg))
                             }
-                            _uiState.update { it.copy(
+                            _uiState.update { state -> state.copy(
                                 steps = data.steps,
                                 calories = data.calories,
                                 distance = data.distance,
-                                sleepHours = if (data.sleepHours > 0) data.sleepHours.toFloat() else it.sleepHours,
-                                sleepBedTime = data.sleepStartTime?.let { try { java.time.LocalTime.parse(it) } catch(e: Exception) { it.sleepBedTime } } ?: it.sleepBedTime,
-                                sleepWakeTime = data.sleepWakeTime?.let { try { java.time.LocalTime.parse(it) } catch(e: Exception) { it.sleepWakeTime } } ?: it.sleepWakeTime,
+                                sleepHours = if (data.sleepHours > 0) data.sleepHours.toFloat() else state.sleepHours,
+                                sleepBedTime = data.sleepStartTime?.let { timeStr -> try { java.time.LocalTime.parse(timeStr) } catch(e: Exception) { state.sleepBedTime } } ?: state.sleepBedTime,
+                                sleepWakeTime = data.sleepWakeTime?.let { timeStr -> try { java.time.LocalTime.parse(timeStr) } catch(e: Exception) { state.sleepWakeTime } } ?: state.sleepWakeTime,
                                 isImportingHealth = false
                             ) }
                         } else {
@@ -428,12 +436,12 @@ class DailyLogViewModel @Inject constructor(
                         if (status == androidx.health.connect.client.HealthConnectClient.SDK_AVAILABLE) {
                             if (healthConnectManager.hasAllPermissions()) {
                                 val data = healthConnectManager.readHealthData(_uiState.value.date)
-                                _uiState.update { it.copy(
+                                _uiState.update { state -> state.copy(
                                     steps = data.steps,
                                     calories = data.calories,
                                     distance = data.distance,
-                                    sleepBedTime = data.sleepStartTime?.let { try { java.time.LocalTime.parse(it) } catch(e: Exception) { it.sleepBedTime } } ?: it.sleepBedTime,
-                                    sleepWakeTime = data.sleepWakeTime?.let { try { java.time.LocalTime.parse(it) } catch(e: Exception) { it.sleepWakeTime } } ?: it.sleepWakeTime,
+                                    sleepBedTime = data.sleepStartTime?.let { timeStr -> try { java.time.LocalTime.parse(timeStr) } catch(e: Exception) { state.sleepBedTime } } ?: state.sleepBedTime,
+                                    sleepWakeTime = data.sleepWakeTime?.let { timeStr -> try { java.time.LocalTime.parse(timeStr) } catch(e: Exception) { state.sleepWakeTime } } ?: state.sleepWakeTime,
                                 ) }
                             }
                         }
@@ -673,7 +681,9 @@ class DailyLogViewModel @Inject constructor(
                 musicRecord = state.musicTitle,
                 calories = state.calories,
                 distance = state.distance,
-                wakeupTime = state.sleepWakeTime.format(timeFormatter)
+                wakeupTime = state.sleepWakeTime.format(timeFormatter),
+                weather = state.suggestedWeather?.condition,
+                temperature = state.suggestedWeather?.temp
             ).onSuccess {
                 val msg = if (state.existingLog != null) "Record updated successfully!" else "Record created successfully!"
                 statisticsRepository.triggerRefresh()

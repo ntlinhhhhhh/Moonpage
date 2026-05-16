@@ -528,7 +528,9 @@ fun CalendarSelectedLogDetail(
                 sleepHours = selectedLog.sleepHours,
                 isMenstruation = selectedLog.isMenstruation,
                 steps = selectedLog.steps,
-                musicRecord = selectedLog.musicRecord
+                musicRecord = selectedLog.musicRecord,
+                weather = selectedLog.weather,
+                temperature = selectedLog.temperature
             )
         }
     }
@@ -688,7 +690,9 @@ fun TimelineItem(
                 sleepHours = log.sleepHours,
                 isMenstruation = log.isMenstruation,
                 steps = log.steps,
-                musicRecord = log.musicRecord
+                musicRecord = log.musicRecord,
+                weather = log.weather,
+                temperature = log.temperature
             )
         }
     }

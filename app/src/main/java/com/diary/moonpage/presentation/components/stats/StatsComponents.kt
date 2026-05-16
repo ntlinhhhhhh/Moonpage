@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
+import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -111,7 +112,14 @@ fun SummaryItem(label: String, value: String, modifier: Modifier = Modifier, ico
                     Icon(icon, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.width(4.dp))
                 }
-                Text(value, fontSize = 18.sp, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onSurface)
+                Text(
+                    text = value,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    softWrap = false
+                )
             }
         }
     }
@@ -512,36 +520,57 @@ fun SleepSummaryView(
     averageSleepHours: Double,
     averageSleepStartTime: String?,
     averageWakeUpTime: String?,
-    totalSteps: Int
+    totalSteps: Int,
+    totalCalories: Int = 0,
+    totalDistance: Double = 0.0
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        SummaryItem(
-            label = "Avg Sleep", 
-            value = String.format(Locale.ENGLISH, "%.1fh", averageSleepHours), 
-            modifier = Modifier.weight(1f),
-            icon = Icons.Rounded.Bedtime
-        )
-        SummaryItem(
-            label = "Bedtime", 
-            value = averageSleepStartTime ?: "--:--", 
-            modifier = Modifier.weight(1f),
-            icon = Icons.Rounded.Alarm
-        )
-        SummaryItem(
-            label = "Wake up", 
-            value = averageWakeUpTime ?: "--:--", 
-            modifier = Modifier.weight(1f),
-            icon = Icons.Rounded.WbSunny
-        )
-        SummaryItem(
-            label = "Steps", 
-            value = String.format(Locale.ENGLISH, "%,d", totalSteps), 
-            modifier = Modifier.weight(1f),
-            icon = Icons.AutoMirrored.Rounded.DirectionsRun
-        )
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            SummaryItem(
+                label = "Avg Sleep", 
+                value = String.format(Locale.ENGLISH, "%.1fh", averageSleepHours), 
+                modifier = Modifier.weight(1f),
+                icon = Icons.Rounded.Bedtime
+            )
+            SummaryItem(
+                label = "Bedtime", 
+                value = averageSleepStartTime ?: "--:--", 
+                modifier = Modifier.weight(1f),
+                icon = Icons.Rounded.Alarm
+            )
+            SummaryItem(
+                label = "Wake up", 
+                value = averageWakeUpTime ?: "--:--", 
+                modifier = Modifier.weight(1f),
+                icon = Icons.Rounded.WbSunny
+            )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            SummaryItem(
+                label = "Steps", 
+                value = String.format(Locale.ENGLISH, "%,d", totalSteps), 
+                modifier = Modifier.weight(1f),
+                icon = Icons.AutoMirrored.Rounded.DirectionsWalk
+            )
+            SummaryItem(
+                label = "Calories", 
+                value = String.format(Locale.ENGLISH, "%,d kcal", totalCalories), 
+                modifier = Modifier.weight(1f),
+                icon = Icons.Rounded.LocalFireDepartment
+            )
+            SummaryItem(
+                label = "Distance", 
+                value = String.format(Locale.ENGLISH, "%.1f km", totalDistance), 
+                modifier = Modifier.weight(1f),
+                icon = Icons.Rounded.Route
+            )
+        }
     }
 }
 
@@ -555,18 +584,26 @@ fun SleepAnalysisChart(
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
     val labelColor = onSurfaceVariant.copy(alpha = 0.6f)
 
-    // Calculate averages for summary boxes
-    val avgDuration = if (sleepData.isNotEmpty()) sleepData.map { it.duration }.average() else 0.0
+    // Derive month and year from data or current date
+    val calendar = Calendar.getInstance()
+    val firstDate = sleepData.firstOrNull()?.date
+    val year = firstDate?.split("-")?.get(0)?.toInt() ?: calendar.get(Calendar.YEAR)
+    val month = firstDate?.split("-")?.get(1)?.toInt() ?: (calendar.get(Calendar.MONTH) + 1)
+    val daysInMonth = try { java.time.YearMonth.of(year, month).lengthOfMonth() } catch(e: Exception) { 31 }
+    
+    val sleepMap = remember(sleepData) { sleepData.associateBy { it.date } }
     val latestSleep = sleepData.lastOrNull()
+    val avgDuration = if (sleepData.isNotEmpty()) sleepData.map { it.duration }.average() else 0.0
     
     Column {
         // Summary Row
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            SleepStatBox(label = "Bedtime", value = latestSleep?.startTime ?: "--:--", modifier = Modifier.weight(1f))
-            val wakeUpTime = if (latestSleep?.startTime != null) {
+            SleepStatBox(label = "Bedtime", value = latestSleep?.startTime ?: "12:00 AM", modifier = Modifier.weight(1f))
+            val wakeUpTime = if (latestSleep != null) {
                 try {
+                    val startTime = latestSleep.startTime ?: "12:00 AM"
                     val sdf = java.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH)
-                    val date = sdf.parse(latestSleep.startTime)
+                    val date = sdf.parse(startTime)
                     if (date != null) {
                         val cal = Calendar.getInstance().apply { time = date }
                         cal.add(Calendar.MINUTE, (latestSleep.duration * 60).toInt())
@@ -610,16 +647,19 @@ fun SleepAnalysisChart(
                         )
                     }
 
-                    // Floating Bars
-                    if (sleepData.isNotEmpty()) {
-                        val barWidth = (width / 31f) * 0.6f
-                        val spacing = width / 31f
+                    // Floating Bars for each day of the month
+                    val barWidth = (width / daysInMonth) * 0.6f
+                    val spacing = width / daysInMonth
+                    
+                    for (day in 1..daysInMonth) {
+                        val dateStr = String.format(Locale.ENGLISH, "%04d-%02d-%02d", year, month, day)
+                        val data = sleepMap[dateStr]
                         
-                        sleepData.forEachIndexed { index, data ->
-                            val x = index * spacing + spacing / 2f
+                        if (data != null && data.duration > 0) {
+                            val x = (day - 1) * spacing + spacing / 2f
                             
                             // Parse Start Time to Float (Hours from 6PM)
-                            val startTimeFloat = parseTimeToFloat(data.startTime)
+                            val startTimeFloat = parseTimeToFloat(data.startTime ?: "12:00 AM")
                             val duration = data.duration.toFloat()
                             
                             val startY = (startTimeFloat / 24f) * height
@@ -648,8 +688,9 @@ fun SleepAnalysisChart(
             modifier = Modifier.fillMaxWidth().padding(start = 45.dp, end = 10.dp, top = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            listOf("5/1", "5/6", "5/11", "5/16", "5/21", "5/26", "5/31").forEach {
-                Text(it, fontSize = 11.sp, color = labelColor)
+            val labelDays = listOf(1, 6, 11, 16, 21, 26, daysInMonth).distinct()
+            labelDays.forEach { day ->
+                Text("$month/$day", fontSize = 11.sp, color = labelColor)
             }
         }
 
@@ -662,10 +703,12 @@ fun SleepAnalysisChart(
             color = MoonTheme.customColors.logItemBg
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                SleepLegendItem(color = Color(0xFFEF5350), label = "Less than 6h", value = "${sleepData.count { it.duration < 6.0 }}/31 days")
-                SleepLegendItem(color = primaryColor, label = "6-8h", value = "${sleepData.count { it.duration in 6.0..8.0 }}/31 days")
-                SleepLegendItem(color = shades[1], label = "Over 8h", value = "${sleepData.count { it.duration > 8.0 }}/31 days")
-                SleepLegendItem(color = Color(0xFFE0E0E0), label = "No record", value = "${31 - sleepData.size}/31 days")
+                val totalDays = daysInMonth
+                val reportedDays = sleepData.size
+                SleepLegendItem(color = Color(0xFFEF5350), label = "Less than 6h", value = "${sleepData.count { it.duration < 6.0 }}/$totalDays days")
+                SleepLegendItem(color = primaryColor, label = "6-8h", value = "${sleepData.count { it.duration in 6.0..8.0 }}/$totalDays days")
+                SleepLegendItem(color = shades[1], label = "Over 8h", value = "${sleepData.count { it.duration > 8.0 }}/$totalDays days")
+                SleepLegendItem(color = Color(0xFFE0E0E0), label = "No record", value = "${totalDays - reportedDays}/$totalDays days")
             }
         }
 
@@ -699,7 +742,7 @@ private fun SleepStatBox(label: String, value: String, modifier: Modifier) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
             Spacer(modifier = Modifier.height(4.dp))
-            Text(value, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(value, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, softWrap = false)
         }
     }
 }
@@ -1297,8 +1340,13 @@ fun ActivityScoreCard(rank: Int, name: String, score: Double, color: Color, modi
 fun YearlyRecapCard(
     year: Int,
     totalLogs: Int,
+    totalPhotos: Int,
     yearlyMoodGrid: List<MoodFlowDto>,
-    themeType: MoonThemeType
+    themeType: MoonThemeType,
+    bestActivities: List<BestActivityDto> = emptyList(),
+    totalDistance: Double = 0.0,
+    totalSteps: Int = 0,
+    longestStreak: Int = 0
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
     val onSurface = MaterialTheme.colorScheme.onSurface
@@ -1334,26 +1382,31 @@ fun YearlyRecapCard(
     } else "N/A"
 
     Surface(
-        modifier = Modifier.fillMaxWidth().aspectRatio(0.8f),
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(32.dp),
         color = MoonTheme.customColors.logCardBg
     ) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(24.dp),
+            modifier = Modifier.padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Header
             Text(
                 text = "$year Recap",
                 fontWeight = FontWeight.Bold,
-                fontSize = 28.sp,
+                fontSize = 32.sp,
                 color = primaryColor
             )
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Stats Row
+            // Main Stats Row
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 RecapStatItem("Days Logged", "$totalLogs", Modifier.weight(1f))
+                RecapStatItem("Photos", "$totalPhotos", Modifier.weight(1f))
+                RecapStatItem("Longest Streak", "$longestStreak", Modifier.weight(1f))
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 RecapStatItem("Happiest Month", happiestMonth, Modifier.weight(1f))
                 RecapStatItem("Dominant Mood", dominantMoodName, Modifier.weight(1f), color = MoonIcons.Moods.getMoodColor(dominantMood, themeType))
             }
@@ -1363,9 +1416,9 @@ fun YearlyRecapCard(
             // Year in Pixels Grid
             Text(
                 "Your Year in Pixels",
-                fontSize = 14.sp,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
-                color = onSurfaceVariant,
+                color = onSurface,
                 modifier = Modifier.align(Alignment.Start)
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -1373,7 +1426,6 @@ fun YearlyRecapCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
                     .clip(RoundedCornerShape(16.dp))
                     .background(MoonTheme.customColors.logItemBg.copy(alpha = 0.5f))
                     .padding(8.dp)
@@ -1381,7 +1433,90 @@ fun YearlyRecapCard(
                 YearInPixelsGrid(yearlyMoodGrid, year, themeType)
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
+            if (bestActivities.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(32.dp))
+                Text(
+                    "Top Activities",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = onSurface,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    bestActivities.take(3).forEach { activity ->
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .background(MoonTheme.customColors.logItemBg),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                MoonActivityIcon(MoonIcons.getIconForActivity(activity.activityName), size = 28.dp)
+                            }
+                            Text(activity.activityName, fontSize = 11.sp, color = onSurfaceVariant, maxLines = 1, textAlign = TextAlign.Center)
+                        }
+                    }
+                }
+            }
+
+            if (totalSteps > 0 || totalDistance > 0) {
+                Spacer(modifier = Modifier.height(32.dp))
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = primaryColor.copy(alpha = 0.05f),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.AutoMirrored.Rounded.DirectionsWalk, null, tint = primaryColor, modifier = Modifier.size(20.dp))
+                            Text(String.format(Locale.ENGLISH, "%,d", totalSteps), fontWeight = FontWeight.Bold, color = primaryColor)
+                            Text("Total Steps", fontSize = 10.sp, color = onSurfaceVariant)
+                        }
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Rounded.Route, null, tint = primaryColor, modifier = Modifier.size(20.dp))
+                            Text(String.format(Locale.ENGLISH, "%.1f km", totalDistance), fontWeight = FontWeight.Bold, color = primaryColor)
+                            Text("Total Distance", fontSize = 10.sp, color = onSurfaceVariant)
+                        }
+                    }
+                }
+            }
+            
+            // Narrative Summary
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = onSurface.copy(alpha = 0.03f),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = buildAnnotatedString {
+                        append("In $year, you shared ")
+                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = primaryColor)) {
+                            append("$totalLogs days")
+                        }
+                        append(" of your journey. Your spirit was mostly ")
+                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MoonIcons.Moods.getMoodColor(dominantMood, themeType))) {
+                            append(dominantMoodName.lowercase())
+                        }
+                        append(". ")
+                        if (bestActivities.isNotEmpty()) {
+                            append("You found the most joy in ")
+                            withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = primaryColor)) {
+                                append(bestActivities.first().activityName)
+                            }
+                            append(".")
+                        }
+                    },
+                    modifier = Modifier.padding(16.dp),
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp,
+                    color = onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
             
             // Footer branding
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1396,7 +1531,7 @@ fun YearlyRecapCard(
 @Composable
 private fun RecapStatItem(label: String, value: String, modifier: Modifier = Modifier, color: Color = MaterialTheme.colorScheme.primary) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier) {
-        Text(value, fontSize = 18.sp, fontWeight = FontWeight.Black, color = color, textAlign = TextAlign.Center)
+        Text(value, fontSize = 15.sp, fontWeight = FontWeight.Black, color = color, textAlign = TextAlign.Center, maxLines = 1, softWrap = false)
         Spacer(modifier = Modifier.height(4.dp))
         Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
     }

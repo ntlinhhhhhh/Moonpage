@@ -59,7 +59,7 @@ class StatisticsViewModel @Inject constructor(
                     val worst = relevantActivities.sortedBy { it.averageMoodScore }.take(3)
                     
                     // Calculate Average Wake Up Time based on average bedtime and sleep hours
-                    val avgWakeUpTime = if (stats.averageSleepStartTime != null && stats.averageSleepHours != null) {
+                    val avgWakeUpTime = stats.averageWakeupTime ?: if (stats.averageSleepStartTime != null && stats.averageSleepHours != null) {
                         try {
                             val sdf = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.ENGLISH)
                             val date = sdf.parse(stats.averageSleepStartTime)

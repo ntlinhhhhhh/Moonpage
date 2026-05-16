@@ -312,6 +312,8 @@ fun DayDetailArea(
     isMenstruation: Boolean = false,
     steps: Int? = null,
     musicRecord: String? = null,
+    weather: String? = null,
+    temperature: Double? = null,
     modifier: Modifier = Modifier
 ) {
     val cs = MaterialTheme.colorScheme
@@ -448,6 +450,29 @@ fun DayDetailArea(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    // Weather
+                    if (weather != null || (temperature != null && temperature != 0.0)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 12.dp)) {
+                            val weatherIcon = when {
+                                weather?.contains("Sunny") == true -> "☀️"
+                                weather?.contains("Cloudy") == true -> "☁️"
+                                weather?.contains("Rainy") == true -> "🌧️"
+                                weather?.contains("Snowy") == true -> "❄️"
+                                weather?.contains("Windy") == true -> "💨"
+                                weather?.contains("Stormy") == true -> "⛈️"
+                                else -> "🌡️"
+                            }
+                            Text(weatherIcon, fontSize = 18.sp)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            val weatherText = buildString {
+                                if (weather != null) append(weather)
+                                if (weather != null && temperature != null && temperature != 0.0) append(", ")
+                                if (temperature != null && temperature != 0.0) append("${temperature.toInt()}°C")
+                            }
+                            Text(weatherText, color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
+                        }
+                    }
+
                     // Sleep
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 12.dp)) {
                         Icon(Icons.Rounded.Nightlight, contentDescription = null, tint = Color(0xFFFFCA28), modifier = Modifier.size(18.dp))
@@ -640,6 +665,8 @@ fun DayDetailBottomSheet(
     isMenstruation: Boolean = false,
     steps: Int? = null,
     musicRecord: String? = null,
+    weather: String? = null,
+    temperature: Double? = null,
     onDismiss: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
@@ -680,7 +707,9 @@ fun DayDetailBottomSheet(
                     sleepHours = sleepHours,
                     isMenstruation = isMenstruation,
                     steps = steps,
-                    musicRecord = musicRecord
+                    musicRecord = musicRecord,
+                    weather = weather,
+                    temperature = temperature
                 )
             }
 

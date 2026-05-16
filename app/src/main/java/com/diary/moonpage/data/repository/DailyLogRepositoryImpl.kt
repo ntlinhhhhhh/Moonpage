@@ -6,10 +6,7 @@ import com.diary.moonpage.domain.repository.DailyLogRepository
 import com.diary.moonpage.data.local.dao.DailyLogDao
 import com.diary.moonpage.data.local.entity.DailyLogEntity
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -17,7 +14,9 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class DailyLogRepositoryImpl @Inject constructor(
     private val api: DailyLogApi,
     private val dao: DailyLogDao
@@ -37,7 +36,9 @@ class DailyLogRepositoryImpl @Inject constructor(
         musicRecord: String?,
         calories: Int?,
         distance: Double?,
-        wakeupTime: String?
+        wakeupTime: String?,
+        weather: String?,
+        temperature: Double?
     ): Result<Unit> {
         return try {
             val baseMoodIdBody = baseMoodId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
@@ -52,6 +53,8 @@ class DailyLogRepositoryImpl @Inject constructor(
             val caloriesBody = calories?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
             val distanceBody = distance?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
             val wakeupTimeBody = wakeupTime?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val weatherBody = weather?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val temperatureBody = temperature?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
 
             val activityParts = activityIds?.map { id ->
                 MultipartBody.Part.createFormData("ActivityIds", id)
@@ -63,16 +66,15 @@ class DailyLogRepositoryImpl @Inject constructor(
             }
 
             val response = api.createDailyLog(
-                baseMoodIdBody, dateBody, noteBody, sleepHoursBody, sleepStartTimeBody, isMenstruationBody, menstruationPhaseBody, stepsBody, musicRecordBody, activityParts, photoParts,
-                caloriesBody, distanceBody, wakeupTimeBody
+                baseMoodIdBody, dateBody, noteBody, sleepHoursBody, sleepStartTimeBody, 
+                isMenstruationBody, menstruationPhaseBody, stepsBody, musicRecordBody,
+                caloriesBody, distanceBody, wakeupTimeBody, weatherBody, temperatureBody,
+                photoParts, activityParts
             )
             
             if (response.isSuccessful) {
-                // Refresh local cache for this date
-                val getResponse = api.getDailyLogByDate(date)
-                if (getResponse.isSuccessful && getResponse.body() != null) {
-                    dao.insertLog(DailyLogEntity.fromResponse(getResponse.body()!!))
-                }
+                // Background fetch to ensure local cache is exactly same as server
+                getDailyLogByDate(date)
                 Result.success(Unit)
             } else {
                 Result.failure(Exception("Failed to create DailyLog: ${response.code()}"))
@@ -87,7 +89,7 @@ class DailyLogRepositoryImpl @Inject constructor(
             val cached = dao.getLogByDate(date)
             
             // Fetch network in background for single source of truth
-            kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
+            kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
                 try {
                     val response = api.getDailyLogByDate(date)
                     if (response.isSuccessful && response.body() != null) {
@@ -102,24 +104,22 @@ class DailyLogRepositoryImpl @Inject constructor(
             if (cached != null) {
                 Result.success(cached.toDomain())
             } else {
-                // If not cached, we have to wait for the API response
                 val response = api.getDailyLogByDate(date)
                 if (response.isSuccessful && response.body() != null) {
                     val logDto = response.body()!!
                     dao.insertLog(DailyLogEntity.fromResponse(logDto))
                     Result.success(logDto.toDomain())
                 } else {
-                    Result.failure(Exception("Failed to get DailyLog for date $date: ${response.code()}"))
+                    Result.failure(Exception("DailyLog not found"))
                 }
             }
         } catch (e: Exception) {
-            val cached = dao.getLogByDate(date)
-            cached?.let { Result.success(it.toDomain()) } ?: Result.failure(e)
+            Result.failure(e)
         }
     }
 
     override fun getDailyLogByDateFlow(date: String): Flow<DailyLog?> {
-        // Optional: trigger background sync for this specific date
+        // trigger background sync for this specific date
         kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
             try {
                 val response = api.getDailyLogByDate(date)
@@ -152,10 +152,6 @@ class DailyLogRepositoryImpl @Inject constructor(
                 val response = api.getDailyLogsByMonth(yearMonth)
                 if (response.isSuccessful && response.body() != null) {
                     val networkLogs = response.body()!!
-                    // We don't delete all logs for the month immediately to avoid flickering,
-                    // Room's insert (REPLACE) will handle updates correctly.
-                    // But if some logs were deleted on server, we might need a more complex sync.
-                    // For now, let's just insert everything.
                     dao.insertLogs(networkLogs.map { DailyLogEntity.fromResponse(it) })
                 }
             } catch (e: Exception) {}

@@ -147,7 +147,9 @@ fun StatisticsScreenContent(
                                 averageSleepHours = s.averageSleepHours ?: 0.0,
                                 averageSleepStartTime = s.averageSleepStartTime,
                                 averageWakeUpTime = uiState.averageWakeUpTime,
-                                totalSteps = s.totalSteps ?: 0
+                                totalSteps = s.totalSteps ?: 0,
+                                totalCalories = s.totalCalories ?: 0,
+                                totalDistance = s.totalDistance ?: 0.0
                             )
                         }
                         
@@ -224,8 +226,13 @@ fun StatisticsScreenContent(
                                             YearlyRecapCard(
                                                 year = uiState.selectedYear,
                                                 totalLogs = stats?.totalLogs ?: 0,
+                                                totalPhotos = stats?.totalPhotos ?: 0,
                                                 yearlyMoodGrid = stats?.yearlyMoodGrid ?: emptyList(),
-                                                themeType = uiState.themeType
+                                                themeType = uiState.themeType,
+                                                bestActivities = stats?.bestActivities ?: emptyList(),
+                                                totalDistance = stats?.totalDistance ?: 0.0,
+                                                totalSteps = stats?.totalSteps ?: 0,
+                                                longestStreak = stats?.longestStreak ?: 0
                                             )
                                         }
                                     },
@@ -242,8 +249,13 @@ fun StatisticsScreenContent(
                             YearlyRecapCard(
                                 year = uiState.selectedYear,
                                 totalLogs = stats?.totalLogs ?: 0,
+                                totalPhotos = stats?.totalPhotos ?: 0,
                                 yearlyMoodGrid = stats?.yearlyMoodGrid ?: emptyList(),
-                                themeType = uiState.themeType
+                                themeType = uiState.themeType,
+                                bestActivities = stats?.bestActivities ?: emptyList(),
+                                totalDistance = stats?.totalDistance ?: 0.0,
+                                totalSteps = stats?.totalSteps ?: 0,
+                                longestStreak = stats?.longestStreak ?: 0
                             )
                         }
 
