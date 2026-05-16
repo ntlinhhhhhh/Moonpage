@@ -240,4 +240,19 @@ object MoonIcons {
         val searchKey = activityName.replace(" ", "").lowercase()
         return iconMapByName[searchKey] ?: Other.Coffee
     }
+
+    fun getWeatherIconVector(weatherText: String): ImageVector? {
+        val cleanName = weatherText.split(" ")[0].lowercase()
+        return when {
+            cleanName.contains("sunny") -> Weather.Sunny.vector
+            cleanName.contains("cloudy") -> Weather.Cloudy.vector
+            cleanName.contains("rainy") -> Weather.Rainy.vector
+            cleanName.contains("snowy") -> Weather.Snowy.vector
+            cleanName.contains("windy") -> Weather.Windy.vector
+            cleanName.contains("stormy") -> Weather.Stormy.vector
+            cleanName.contains("hot") -> Weather.Hot.vector
+            cleanName.contains("cold") -> Weather.Cold.vector
+            else -> null
+        }
+    }
 }

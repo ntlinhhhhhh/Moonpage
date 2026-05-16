@@ -58,39 +58,19 @@ class StatisticsViewModel @Inject constructor(
                     val best = relevantActivities.sortedByDescending { it.averageMoodScore }.take(3)
                     val worst = relevantActivities.sortedBy { it.averageMoodScore }.take(3)
                     
-                    // Calculate Average Wake Up Time
-                    val avgWakeUpTime = stats.sleepAnalysis?.let { analysis ->
-                        if (analysis.isEmpty()) null
-                        else {
-                            var totalMinutes = 0L
-                            var count = 0
+                    // Calculate Average Wake Up Time based on average bedtime and sleep hours
+                    val avgWakeUpTime = if (stats.averageSleepStartTime != null && stats.averageSleepHours != null) {
+                        try {
                             val sdf = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.ENGLISH)
-                            analysis.forEach { data ->
-                                data.startTime?.let { start ->
-                                    try {
-                                        val date = sdf.parse(start)
-                                        if (date != null) {
-                                            val cal = java.util.Calendar.getInstance().apply { time = date }
-                                            cal.add(java.util.Calendar.MINUTE, (data.duration * 60).toInt())
-                                            val minutesFromMidnight = cal.get(java.util.Calendar.HOUR_OF_DAY) * 60 + cal.get(java.util.Calendar.MINUTE)
-                                            totalMinutes += minutesFromMidnight
-                                            count++
-                                        }
-                                    } catch (e: Exception) {}
-                                }
-                            }
-                            if (count > 0) {
-                                val avgMins = totalMinutes / count
-                                val h = avgMins / 60
-                                val m = avgMins % 60
-                                val cal = java.util.Calendar.getInstance().apply {
-                                    set(java.util.Calendar.HOUR_OF_DAY, h.toInt())
-                                    set(java.util.Calendar.MINUTE, m.toInt())
-                                }
+                            val date = sdf.parse(stats.averageSleepStartTime)
+                            if (date != null) {
+                                val cal = java.util.Calendar.getInstance().apply { time = date }
+                                cal.add(java.util.Calendar.MINUTE, (stats.averageSleepHours * 60).toInt())
                                 sdf.format(cal.time)
                             } else null
-                        }
-                    }
+                        } catch (e: Exception) { null }
+                    } else null
+
                     
                     _uiState.update { it.copy(
                         stats = stats, 

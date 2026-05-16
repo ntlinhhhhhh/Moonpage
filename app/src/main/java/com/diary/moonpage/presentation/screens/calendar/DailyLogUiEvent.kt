@@ -35,4 +35,6 @@ sealed class DailyLogUiEvent {
     object OnSpotifyAuthConfirm : DailyLogUiEvent()
     object OnSpotifyAuthDismiss : DailyLogUiEvent()
     data class OnPhotoZoom(val imageUrl: String?) : DailyLogUiEvent()
+    object DismissMessage : DailyLogUiEvent()
+    object OnLocationPermissionGranted : DailyLogUiEvent()
 }

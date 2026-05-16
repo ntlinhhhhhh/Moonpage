@@ -1,5 +1,6 @@
 package com.diary.moonpage.presentation.screens.calendar
 
+import android.Manifest
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -54,6 +55,9 @@ import com.diary.moonpage.presentation.components.core.feedback.MoonSnackbarHost
 import com.diary.moonpage.presentation.components.core.feedback.MoonDeleteConfirmDialog
 import com.diary.moonpage.core.theme.MoonTheme
 import com.diary.moonpage.core.theme.MoonThemeType
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.YearMonth
@@ -65,6 +69,7 @@ import androidx.compose.ui.platform.LocalLocale
 /**
  * Stateful Component
  */
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun DailyLogScreen(
     dateString: String,
@@ -81,9 +86,17 @@ fun DailyLogScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
     var photoToDelete by remember { mutableStateOf<String?>(null) }
 
+    val locationPermissionState = rememberMultiplePermissionsState(
+        permissions = listOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+    )
+
     LaunchedEffect(dateString) {
         viewModel.setInitialDate(LocalDate.parse(dateString))
     }
+
 
     // Permission Launcher for Health Connect
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -96,6 +109,17 @@ fun DailyLogScreen(
     }
 
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Auto-trigger weather fetch for any selected date if it's a new log
+    LaunchedEffect(uiState.isInitialized, uiState.date, uiState.existingLog) {
+        if (uiState.isInitialized && uiState.existingLog == null) {
+            if (locationPermissionState.allPermissionsGranted) {
+                viewModel.onEvent(DailyLogUiEvent.OnLocationPermissionGranted)
+            } else {
+                locationPermissionState.launchMultiplePermissionRequest()
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
@@ -160,19 +184,19 @@ fun DailyLogScreen(
         onPhotoDeleteRequest = { photoToDelete = it },
         onPhotoZoomRequest = { url -> viewModel.onEvent(DailyLogUiEvent.OnPhotoZoom(url)) }
     )
-    
+
     if (uiState.zoomImageUrl != null) {
         com.diary.moonpage.presentation.components.moment.MomentZoomOverlay(
             imageUrl = uiState.zoomImageUrl!!,
             localPath = null,
             onDismiss = { viewModel.onEvent(DailyLogUiEvent.OnPhotoZoom(null)) },
             onShare = {
-                // For now, share is handled via the main bottom bar, 
+                // For now, share is handled via the main bottom bar,
                 // but we can add logic here if needed.
             }
         )
     }
-    
+
     if (photoToDelete != null) {
         MoonDeleteConfirmDialog(
             title = "Delete Photo",
@@ -222,7 +246,7 @@ fun DailyLogScreenContent(
             val menstruationChanged = uiState.isMenstruation != existing.isMenstruation
             val photosChanged = uiState.dailyPhotos != (existing.dailyPhotos ?: emptyList<String>())
             val musicChanged = uiState.musicTitle != existing.musicRecord
-            
+
             moodChanged || activitiesChanged || noteChanged || sleepChanged || menstruationChanged || photosChanged || musicChanged
         }
     }
@@ -444,8 +468,8 @@ private fun DailyLogMainContent(
     val themeType = uiState.themeType
 
     val activitiesByCategory = remember(uiState.dynamicActivities) {
-        uiState.dynamicActivities.groupBy { 
-            if (it.category == "Self-Care") "SelfCare" else it.category 
+        uiState.dynamicActivities.groupBy {
+            if (it.category == "Self-Care") "SelfCare" else it.category
         }.mapValues { entry ->
             entry.value.map { activity ->
                 DailyActivity(
@@ -515,7 +539,7 @@ private fun DailyLogMainContent(
         // 5. Photo Section
         item {
             DailyPhotoSection(
-                logPhotos = uiState.dailyPhotos, 
+                logPhotos = uiState.dailyPhotos,
                 momentPhotos = uiState.momentPhotos,
                 onPhotoClick = onNavigateToDailyPhoto,
                 onPhotoRemove = onPhotoDeleteRequest,
@@ -526,7 +550,7 @@ private fun DailyLogMainContent(
         // 6. Music Section
         item {
             DailyMusicSection(
-                musicTitle = uiState.musicTitle, 
+                musicTitle = uiState.musicTitle,
                 artistName = uiState.artistName,
                 albumArtUrl = uiState.albumArtUrl,
                 isLinked = uiState.isSpotifyLinked,
@@ -594,7 +618,7 @@ private fun DailyCategoryBar(
         items(categories) { category ->
             val isSelected = expandedCategories.contains(category)
             val label = if (category == "SelfCare") "Self-Care" else category
-            
+
             FilterChip(
                 selected = isSelected,
                 onClick = { onCategoryClick(category) },
@@ -927,8 +951,8 @@ private fun DailyHealthSection(steps: Int, calories: Int, distance: Double, isIm
                     CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                 } else {
                     Text(
-                        "Import", 
-                        fontSize = 12.sp, 
+                        "Import",
+                        fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.clickable(
                             interactionSource = remember { MutableInteractionSource() },
@@ -991,8 +1015,8 @@ private fun DailySleepSection(
                     CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                 } else {
                     Text(
-                        "Import", 
-                        fontSize = 12.sp, 
+                        "Import",
+                        fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.clickable(
                             interactionSource = remember { MutableInteractionSource() },
@@ -1004,7 +1028,7 @@ private fun DailySleepSection(
             Spacer(modifier = Modifier.height(12.dp))
             
             Surface(
-                color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MoonTheme.customColors.logItemBg, 
+                color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MoonTheme.customColors.logItemBg,
                 shape = RoundedCornerShape(12.dp), 
                 modifier = Modifier.fillMaxWidth().clickable(
                     interactionSource = remember { MutableInteractionSource() },
@@ -1036,12 +1060,12 @@ private fun DailySleepSection(
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(28.dp).weight(0.12f)
                         )
-                        
+
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(0.25f)) {
                             Text(bedTime.format(fmt), fontWeight = FontWeight.Bold, color = if (sleepHours > 0) MaterialTheme.colorScheme.primary else MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
                             Text("Went to bed", color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
                         }
-                        
+
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(0.26f)) {
                             Text(
                                 if (mins == 0) "${hrs}h" else "${hrs}h ${mins}m", 
@@ -1051,12 +1075,12 @@ private fun DailySleepSection(
                             )
                             Text("Asleep", color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
                         }
-                        
+
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(0.25f)) {
                             Text(wakeTime.format(fmt), fontWeight = FontWeight.Bold, color = if (sleepHours > 0) MaterialTheme.colorScheme.primary else MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
                             Text("Woke up", color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
                         }
-                        
+
                         Icon(
                             Icons.Rounded.AlarmOn, 
                             contentDescription = null, 
@@ -1166,14 +1190,14 @@ private fun DailyNoteSection(noteText: String, onNoteChanged: (String) -> Unit) 
 
 @Composable
 private fun DailyPhotoSection(
-    logPhotos: List<String>, 
+    logPhotos: List<String>,
     momentPhotos: List<String>,
     onPhotoClick: () -> Unit,
     onPhotoRemove: (String) -> Unit,
     onPhotoZoom: (String) -> Unit
 ) {
     val allPhotos = (logPhotos + momentPhotos).distinct()
-    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {      
+    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Today's photo", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
             Spacer(modifier = Modifier.height(12.dp))
@@ -1288,29 +1312,29 @@ private fun DailyPhotoSection(
 private fun DailyLogExitDialog(onDismiss: () -> Unit, onExit: () -> Unit) {
     val colorScheme = MaterialTheme.colorScheme
     Dialog(
-        onDismissRequest = onDismiss, 
+        onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Surface(
-            shape = RoundedCornerShape(20.dp), 
-            color = MoonTheme.customColors.popupBgColor, 
+            shape = RoundedCornerShape(20.dp),
+            color = MoonTheme.customColors.popupBgColor,
             modifier = Modifier.fillMaxWidth(0.88f).wrapContentHeight(),
             tonalElevation = 0.dp
         ) {
             Column(
-                modifier = Modifier.padding(28.dp), 
+                modifier = Modifier.padding(28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Changes have not been saved.", 
-                    style = MaterialTheme.typography.titleLarge, 
-                    fontWeight = FontWeight.Bold, 
-                    color = colorScheme.onSurface, 
+                    text = "Changes have not been saved.",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface,
                     textAlign = TextAlign.Center
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 Text(
                     text = "Do you want to discard your changes and exit?",
                     style = MaterialTheme.typography.bodyMedium,
@@ -1319,42 +1343,42 @@ private fun DailyLogExitDialog(onDismiss: () -> Unit, onExit: () -> Unit) {
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
-                
+
                 Row(
-                    modifier = Modifier.fillMaxWidth(), 
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Button(
-                        onClick = onDismiss, 
-                        modifier = Modifier.weight(1f).height(52.dp), 
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f).height(52.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MoonTheme.customColors.cancelBtnBgColor, 
+                            containerColor = MoonTheme.customColors.cancelBtnBgColor,
                             contentColor = MoonTheme.customColors.cancelBtnTextColor
-                        ), 
+                        ),
                         shape = RoundedCornerShape(14.dp),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
-                    ) { 
+                    ) {
                         Text(
-                            "Cancel", 
+                            "Cancel",
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
-                        ) 
+                        )
                     }
                     Button(
-                        onClick = onExit, 
-                        modifier = Modifier.weight(1f).height(52.dp), 
+                        onClick = onExit,
+                        modifier = Modifier.weight(1f).height(52.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = colorScheme.primary, 
+                            containerColor = colorScheme.primary,
                             contentColor = colorScheme.onPrimary
-                        ), 
+                        ),
                         shape = RoundedCornerShape(14.dp),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
-                    ) { 
+                    ) {
                         Text(
-                            "Exit", 
+                            "Exit",
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
-                        ) 
+                        )
                     }
                 }
             }
@@ -1366,82 +1390,82 @@ private fun DailyLogExitDialog(onDismiss: () -> Unit, onExit: () -> Unit) {
 private fun DailyLogOverwriteDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
     val colorScheme = MaterialTheme.colorScheme
     Dialog(
-        onDismissRequest = onDismiss, 
+        onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Surface(
-            shape = RoundedCornerShape(20.dp), 
-            color = MoonTheme.customColors.popupBgColor, 
+            shape = RoundedCornerShape(20.dp),
+            color = MoonTheme.customColors.popupBgColor,
             modifier = Modifier.fillMaxWidth(0.88f).wrapContentHeight(),
             tonalElevation = 0.dp
         ) {
             Column(
-                modifier = Modifier.padding(28.dp), 
+                modifier = Modifier.padding(28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
-                    Icons.Rounded.Warning, 
-                    contentDescription = null, 
-                    tint = colorScheme.error, 
+                    Icons.Rounded.Warning,
+                    contentDescription = null,
+                    tint = colorScheme.error,
                     modifier = Modifier.size(48.dp)
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 Text(
-                    text = "Data already exists", 
-                    style = MaterialTheme.typography.titleLarge, 
-                    fontWeight = FontWeight.Bold, 
+                    text = "Data already exists",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
                     textAlign = TextAlign.Center
-                )  
-                
+                )
+
                 Spacer(modifier = Modifier.height(12.dp))
-                
+
                 Text(
-                    text = "There is already a record for this day. Do you want to overwrite it?", 
-                    style = MaterialTheme.typography.bodyMedium, 
-                    color = colorScheme.onSurface.copy(alpha = 0.8f), 
+                    text = "There is already a record for this day. Do you want to overwrite it?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colorScheme.onSurface.copy(alpha = 0.8f),
                     textAlign = TextAlign.Center
                 )
-                
+
                 Spacer(modifier = Modifier.height(32.dp))
-                
+
                 Row(
-                    modifier = Modifier.fillMaxWidth(), 
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Button(
-                        onClick = onDismiss, 
-                        modifier = Modifier.weight(1f).height(52.dp), 
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f).height(52.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MoonTheme.customColors.cancelBtnBgColor, 
+                            containerColor = MoonTheme.customColors.cancelBtnBgColor,
                             contentColor = MoonTheme.customColors.cancelBtnTextColor
-                        ), 
+                        ),
                         shape = RoundedCornerShape(14.dp),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
-                    ) { 
+                    ) {
                         Text(
-                            "Cancel", 
+                            "Cancel",
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
-                        ) 
+                        )
                     }
                     Button(
-                        onClick = { onConfirm() }, 
-                        modifier = Modifier.weight(1f).height(52.dp), 
+                        onClick = { onConfirm() },
+                        modifier = Modifier.weight(1f).height(52.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = colorScheme.error, 
+                            containerColor = colorScheme.error,
                             contentColor = colorScheme.onError
-                        ), 
+                        ),
                         shape = RoundedCornerShape(14.dp),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
-                    ) { 
+                    ) {
                         Text(
-                            "Overwrite", 
+                            "Overwrite",
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
-                        ) 
+                        )
                     }
                 }
             }
@@ -1463,10 +1487,10 @@ fun DailyLogDatePickerDialog(initialDate: LocalDate, onDateSelected: (LocalDate)
         Surface(shape = RoundedCornerShape(28.dp), color = MoonTheme.customColors.popupBgColor, modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
             Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "Which day is this record for?", 
-                    style = MaterialTheme.typography.titleMedium, 
-                    fontWeight = FontWeight.Bold, 
-                    color = MaterialTheme.colorScheme.onSurface, 
+                    text = "Which day is this record for?",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
                     textAlign = TextAlign.Center
                 )
@@ -1475,22 +1499,22 @@ fun DailyLogDatePickerDialog(initialDate: LocalDate, onDateSelected: (LocalDate)
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } }) { 
-                        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = null, tint = MaterialTheme.colorScheme.primary) 
+                    IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } }) {
+                        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     }
-                    
+
                     val currentPageMonth = baseYearMonth.plusMonths((pagerState.currentPage - initialPage).toLong())
                     Text(
-                        text = currentPageMonth.format(DateTimeFormatter.ofPattern("MMM yyyy")), 
-                        style = MaterialTheme.typography.titleMedium, 
-                        fontWeight = FontWeight.Bold, 
+                        text = currentPageMonth.format(DateTimeFormatter.ofPattern("MMM yyyy")),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f),
                         textAlign = TextAlign.Center
                     )
-                    
-                    IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } }) { 
-                        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.primary) 
+
+                    IconButton(onClick = { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } }) {
+                        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     }
                 }
                 HorizontalPager(state = pagerState, modifier = Modifier.fillMaxWidth().height(260.dp)) { page ->
@@ -1512,36 +1536,36 @@ fun DailyLogDatePickerDialog(initialDate: LocalDate, onDateSelected: (LocalDate)
                 Spacer(modifier = Modifier.height(24.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Button(
-                        onClick = onDismiss, 
-                        modifier = Modifier.weight(1f).height(52.dp), 
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f).height(52.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MoonTheme.customColors.cancelBtnBgColor, 
+                            containerColor = MoonTheme.customColors.cancelBtnBgColor,
                             contentColor = MoonTheme.customColors.cancelBtnTextColor
-                        ), 
+                        ),
                         shape = RoundedCornerShape(14.dp),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
-                    ) { 
+                    ) {
                         Text(
-                            "Cancel", 
+                            "Cancel",
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
-                        ) 
+                        )
                     }
                     Button(
-                        onClick = { onDateSelected(selectedDateInPicker) }, 
-                        modifier = Modifier.weight(1f).height(52.dp), 
+                        onClick = { onDateSelected(selectedDateInPicker) },
+                        modifier = Modifier.weight(1f).height(52.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary, 
+                            containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary
-                        ), 
+                        ),
                         shape = RoundedCornerShape(14.dp),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
-                    ) { 
+                    ) {
                         Text(
-                            "OK", 
+                            "OK",
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
-                        ) 
+                        )
                     }
                 }
             }
@@ -1553,82 +1577,82 @@ fun DailyLogDatePickerDialog(initialDate: LocalDate, onDateSelected: (LocalDate)
 fun SpotifyAuthDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
     val colorScheme = MaterialTheme.colorScheme
     Dialog(
-        onDismissRequest = onDismiss, 
+        onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Surface(
-            shape = RoundedCornerShape(20.dp), 
-            color = MoonTheme.customColors.popupBgColor, 
+            shape = RoundedCornerShape(20.dp),
+            color = MoonTheme.customColors.popupBgColor,
             modifier = Modifier.fillMaxWidth(0.88f).wrapContentHeight(),
             tonalElevation = 0.dp
         ) {
             Column(
-                modifier = Modifier.padding(28.dp), 
+                modifier = Modifier.padding(28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
-                    Icons.Rounded.MusicNote, 
-                    contentDescription = null, 
-                    tint = Color(0xFF1DB954), 
+                    Icons.Rounded.MusicNote,
+                    contentDescription = null,
+                    tint = Color(0xFF1DB954),
                     modifier = Modifier.size(48.dp)
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 Text(
-                    text = "Connect to Spotify", 
-                    style = MaterialTheme.typography.titleLarge, 
-                    fontWeight = FontWeight.Bold, 
+                    text = "Connect to Spotify",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
                     textAlign = TextAlign.Center
                 )
-                
+
                 Spacer(modifier = Modifier.height(12.dp))
-                
+
                 Text(
-                    text = "MoonPage wants to access your Spotify account to search and add music to your logs.", 
-                    style = MaterialTheme.typography.bodyMedium, 
-                    color = colorScheme.onSurface.copy(alpha = 0.8f), 
+                    text = "MoonPage wants to access your Spotify account to search and add music to your logs.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colorScheme.onSurface.copy(alpha = 0.8f),
                     textAlign = TextAlign.Center
                 )
-                
+
                 Spacer(modifier = Modifier.height(32.dp))
-                
+
                 Row(
-                    modifier = Modifier.fillMaxWidth(), 
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Button(
-                        onClick = onDismiss, 
-                        modifier = Modifier.weight(1f).height(52.dp), 
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f).height(52.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MoonTheme.customColors.cancelBtnBgColor, 
+                            containerColor = MoonTheme.customColors.cancelBtnBgColor,
                             contentColor = MoonTheme.customColors.cancelBtnTextColor
-                        ), 
+                        ),
                         shape = RoundedCornerShape(14.dp),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
-                    ) { 
+                    ) {
                         Text(
-                            "Cancel", 
+                            "Cancel",
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
-                        ) 
+                        )
                     }
                     Button(
-                        onClick = onConfirm, 
-                        modifier = Modifier.weight(1f).height(52.dp), 
+                        onClick = onConfirm,
+                        modifier = Modifier.weight(1f).height(52.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF1DB954), 
+                            containerColor = Color(0xFF1DB954),
                             contentColor = Color.White
-                        ), 
+                        ),
                         shape = RoundedCornerShape(14.dp),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
-                    ) { 
+                    ) {
                         Text(
-                            "Allow Access", 
+                            "Allow Access",
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
-                        ) 
+                        )
                     }
                 }
             }

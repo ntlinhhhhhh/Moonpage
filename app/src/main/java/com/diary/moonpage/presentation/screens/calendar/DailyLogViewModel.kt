@@ -3,13 +3,15 @@ package com.diary.moonpage.presentation.screens.calendar
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.core.util.ActivityPreferencesManager
+import com.diary.moonpage.domain.model.DailyLog
 import com.diary.moonpage.domain.repository.DailyLogRepository
 import com.diary.moonpage.core.util.PkceUtil
 import com.diary.moonpage.core.util.MoonIcons
+import com.diary.moonpage.core.util.LocationTracker
+import com.diary.moonpage.domain.repository.WeatherRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import okio.Okio
 import okio.buffer
 import okio.sink
 import java.time.LocalDate
@@ -17,17 +19,19 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 
 @HiltViewModel
 class DailyLogViewModel @Inject constructor(
     private val repository: DailyLogRepository,
     private val themeRepository: com.diary.moonpage.domain.repository.ThemeRepository,
+    private val weatherRepository: WeatherRepository,
+    private val locationTracker: LocationTracker,
     private val activityPreferencesManager: ActivityPreferencesManager,
     private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager,
     private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
     private val tokenManager: com.diary.moonpage.core.util.TokenManager,
     private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository,
-    private val weatherRepository: com.diary.moonpage.domain.repository.WeatherRepository,
     private val spotifyApi: com.diary.moonpage.data.remote.api.SpotifyApi,
     private val momentRepository: com.diary.moonpage.domain.repository.MomentRepository,
     private val checkAndTriggerNotificationsUseCase: com.diary.moonpage.domain.usecase.notification.CheckAndTriggerNotificationsUseCase,
@@ -158,18 +162,9 @@ class DailyLogViewModel @Inject constructor(
     private fun fetchWeather() {
         viewModelScope.launch {
             try {
-                val fusedLocationClient = com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(context)
-                if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                        if (location != null) {
-                            viewModelScope.launch {
-                                weatherRepository.getCurrentWeather(location.latitude, location.longitude).onSuccess { data ->
-                                    _uiState.update { it.copy(suggestedWeather = data) }
-                                    suggestWeatherActivity(data.condition)
-                                }
-                            }
-                        }
-                    }
+                val location = locationTracker.getCurrentLocation()
+                if (location != null) {
+                    autoFetchWeather(_uiState.value.date)
                 }
             } catch (e: Exception) {
                 // Silently fail weather suggestions
@@ -334,7 +329,7 @@ class DailyLogViewModel @Inject constructor(
                 } else {
                     current.add(event.activityId)
                 }
-                _uiState.update { it.copy(selectedActivities = current) }
+                _uiState.update { it.copy(selectedActivities = current.toList()) }
             }
             is DailyLogUiEvent.OnNoteChanged -> {
                 _uiState.update { it.copy(noteText = event.note) }
@@ -497,6 +492,12 @@ class DailyLogViewModel @Inject constructor(
             DailyLogUiEvent.OnDismissOverwriteDialog -> {
                 _uiState.update { it.copy(showOverwriteDialog = false) }
             }
+            DailyLogUiEvent.DismissMessage -> {
+                _uiState.update { it.copy(snackbarMessage = null) }
+            }
+            DailyLogUiEvent.OnLocationPermissionGranted -> {
+                autoFetchWeather(_uiState.value.date)
+            }
         }
     }
 
@@ -522,6 +523,45 @@ class DailyLogViewModel @Inject constructor(
         return com.diary.moonpage.data.remote.api.SpotifyApi.getAuthUrl(challenge, state)
     }
 
+    private fun autoFetchWeather(date: LocalDate) {
+        viewModelScope.launch {
+            // Only proceed if permissions are likely there (tracked by screen)
+            val location = locationTracker.getCurrentLocation()
+            if (location != null) {
+                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Updating weather conditions for your location..."))
+                
+                val weatherResult = weatherRepository.getWeatherConditions(location.latitude, location.longitude, date)
+                weatherResult.onSuccess { weatherNames ->
+                    // Wait for dynamicActivities to be loaded if they aren't yet
+                    if (_uiState.value.dynamicActivities.isEmpty()) {
+                        activityPreferencesManager.activities.first { it.isNotEmpty() }
+                    }
+
+                    val current = _uiState.value.selectedActivities.toMutableList()
+                    var addedCount = 0
+                    weatherNames.forEach { weatherName ->
+                        val weatherActivity = _uiState.value.dynamicActivities.find {
+                            it.name.equals(weatherName, ignoreCase = true)
+                        }
+                        weatherActivity?.let { activity ->
+                            if (!current.contains(activity.id)) {
+                                current.add(activity.id)
+                                addedCount++
+                            }
+                        }
+                    }
+                    _uiState.update { it.copy(selectedActivities = current.toList()) }
+                    
+                    if (addedCount > 0) {
+                        _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Weather data fetched: ${weatherNames.joinToString(", ")}"))
+                    }
+                }.onFailure {
+                    _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Could not update weather data automatically."))
+                }
+            }
+        }
+    }
+
     private fun saveDailyLog() {
         val state = _uiState.value
         if (state.selectedMood == null || state.selectedMood == 0) {
@@ -531,11 +571,11 @@ class DailyLogViewModel @Inject constructor(
             return
         }
 
-        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { it.copy(isLoading = true) }
             
-            // 1. Process newly selected local photos
-            val newPhotoFiles = state.dailyPhotos.filter { !it.startsWith("http") }.mapNotNull { uriString ->
+            // 1. Process local photos
+            val photoFiles = state.dailyPhotos.filter { !it.startsWith("http") }.mapNotNull { uriString ->
                 try {
                     val uri = android.net.Uri.parse(uriString)
                     com.diary.moonpage.core.util.ImageUtils.compressAndCropSquare(context, uri)
@@ -544,7 +584,7 @@ class DailyLogViewModel @Inject constructor(
                 }
             }
 
-            // 2. Download existing HTTP photos to include them in the upload, 
+            // 2. Download existing HTTP photos to include them in the upload,
             // so the backend doesn't overwrite them.
             val existingPhotoUrls = state.dailyPhotos.filter { it.startsWith("http") }
             val existingPhotoFiles = mutableListOf<java.io.File>()
@@ -555,7 +595,7 @@ class DailyLogViewModel @Inject constructor(
                         val request = okhttp3.Request.Builder().url(url).build()
                         val response = client.newCall(request).execute()
                         if (response.isSuccessful && response.body != null) {
-                            val tempFile = java.io.File(context.cacheDir, "retained_photo_${java.util.UUID.randomUUID()}.jpg")
+                            val tempFile = java.io.File(context.cacheDir, "retained_photo_${UUID.randomUUID()}.jpg")
                             val sink = tempFile.sink().buffer()
                             sink.writeAll(response.body!!.source())
                             sink.close()
@@ -566,8 +606,8 @@ class DailyLogViewModel @Inject constructor(
                     }
                 }
             }
-            
-            val allPhotoFiles = existingPhotoFiles + newPhotoFiles
+
+            val allPhotoFiles = existingPhotoFiles + photoFiles
             val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
             
             repository.createDailyLog(
@@ -587,10 +627,10 @@ class DailyLogViewModel @Inject constructor(
             ).onSuccess {
                 val msg = if (state.existingLog != null) "Record updated successfully!" else "Record created successfully!"
                 statisticsRepository.triggerRefresh()
-                
+
                 // Cleanup temporary retained files
                 existingPhotoFiles.forEach { it.delete() }
-                
+
                 // Trigger notification evaluation using ApplicationScope to survive VM clearing
                 applicationScope.launch {
                     try {
@@ -602,8 +642,8 @@ class DailyLogViewModel @Inject constructor(
 
                 _uiEffect.emit(DailyLogUiEffect.SaveSuccess(state.date.toString(), msg))
             }.onFailure { error ->
-                _uiState.update { it.copy(isLoading = true) } // Keep loading while showing error? No, set false.
                 _uiState.update { it.copy(isLoading = false) }
+                existingPhotoFiles.forEach { it.delete() }
                 _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(error.message ?: "Failed to save log"))
             }
         }
