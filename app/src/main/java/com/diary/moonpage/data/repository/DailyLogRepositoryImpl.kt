@@ -36,7 +36,8 @@ class DailyLogRepositoryImpl @Inject constructor(
         steps: Int?,
         musicRecord: String?,
         calories: Int?,
-        distance: Double?
+        distance: Double?,
+        wakeupTime: String?
     ): Result<Unit> {
         return try {
             val baseMoodIdBody = baseMoodId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
@@ -50,6 +51,7 @@ class DailyLogRepositoryImpl @Inject constructor(
             val musicRecordBody = musicRecord?.toRequestBody("text/plain".toMediaTypeOrNull())
             val caloriesBody = calories?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
             val distanceBody = distance?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val wakeupTimeBody = wakeupTime?.toRequestBody("text/plain".toMediaTypeOrNull())
 
             val activityParts = activityIds?.map { id ->
                 MultipartBody.Part.createFormData("ActivityIds", id)
@@ -62,7 +64,7 @@ class DailyLogRepositoryImpl @Inject constructor(
 
             val response = api.createDailyLog(
                 baseMoodIdBody, dateBody, noteBody, sleepHoursBody, sleepStartTimeBody, isMenstruationBody, menstruationPhaseBody, stepsBody, musicRecordBody, activityParts, photoParts,
-                caloriesBody, distanceBody
+                caloriesBody, distanceBody, wakeupTimeBody
             )
             
             if (response.isSuccessful) {

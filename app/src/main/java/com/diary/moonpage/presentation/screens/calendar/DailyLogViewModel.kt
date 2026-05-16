@@ -397,6 +397,8 @@ class DailyLogViewModel @Inject constructor(
                                 calories = data.calories,
                                 distance = data.distance,
                                 sleepHours = if (data.sleepHours > 0) data.sleepHours.toFloat() else it.sleepHours,
+                                sleepBedTime = data.sleepStartTime?.let { try { java.time.LocalTime.parse(it) } catch(e: Exception) { it.sleepBedTime } } ?: it.sleepBedTime,
+                                sleepWakeTime = data.sleepWakeTime?.let { try { java.time.LocalTime.parse(it) } catch(e: Exception) { it.sleepWakeTime } } ?: it.sleepWakeTime,
                                 isImportingHealth = false
                             ) }
                         } else {
@@ -430,6 +432,8 @@ class DailyLogViewModel @Inject constructor(
                                     steps = data.steps,
                                     calories = data.calories,
                                     distance = data.distance,
+                                    sleepBedTime = data.sleepStartTime?.let { try { java.time.LocalTime.parse(it) } catch(e: Exception) { it.sleepBedTime } } ?: it.sleepBedTime,
+                                    sleepWakeTime = data.sleepWakeTime?.let { try { java.time.LocalTime.parse(it) } catch(e: Exception) { it.sleepWakeTime } } ?: it.sleepWakeTime,
                                 ) }
                             }
                         }
@@ -552,8 +556,11 @@ class DailyLogViewModel @Inject constructor(
                 _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Updating weather conditions..."))
                 
                 val weatherResult = weatherRepository.getWeatherConditions(location.latitude, location.longitude, date)
-                weatherResult.onSuccess { weatherNames ->
-                    android.util.Log.d("WeatherFetch", "Success: $weatherNames")
+                weatherResult.onSuccess { result ->
+                    val weatherNames = result.conditions
+                    val temp = result.averageTemp
+                    
+                    android.util.Log.d("WeatherFetch", "Success: $weatherNames, Temp: $temp°C")
                     
                     // Ensure activities are loaded
                     if (_uiState.value.dynamicActivities.isEmpty()) {
@@ -581,7 +588,7 @@ class DailyLogViewModel @Inject constructor(
                         suggestedWeather = com.diary.moonpage.domain.repository.WeatherData(
                             condition = weatherNames.firstOrNull() ?: "Unknown",
                             description = "Weather auto-filled",
-                            temp = 0.0,
+                            temp = temp,
                             cityName = "Detected",
                             iconUrl = ""
                         )
@@ -589,7 +596,8 @@ class DailyLogViewModel @Inject constructor(
                     
                     if (addedCount > 0) {
                         delay(300)
-                        _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Weather data fetched: ${weatherNames.joinToString(", ")}"))
+                        val tempText = String.format(java.util.Locale.ENGLISH, "%.1f°C", temp)
+                        _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Weather data fetched: ${weatherNames.joinToString(", ")} ($tempText)"))
                     } else {
                         android.util.Log.d("WeatherFetch", "No new activities added.")
                     }
@@ -664,7 +672,8 @@ class DailyLogViewModel @Inject constructor(
                 steps = state.steps,
                 musicRecord = state.musicTitle,
                 calories = state.calories,
-                distance = state.distance
+                distance = state.distance,
+                wakeupTime = state.sleepWakeTime.format(timeFormatter)
             ).onSuccess {
                 val msg = if (state.existingLog != null) "Record updated successfully!" else "Record created successfully!"
                 statisticsRepository.triggerRefresh()

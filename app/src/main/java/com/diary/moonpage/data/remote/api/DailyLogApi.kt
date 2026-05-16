@@ -23,7 +23,8 @@ interface DailyLogApi {
         @Part activityIds: List<MultipartBody.Part>?, 
         @Part dailyPhotos: List<MultipartBody.Part>?,
         @Part("Calories") calories: RequestBody? = null,
-        @Part("Distance") distance: RequestBody? = null
+        @Part("Distance") distance: RequestBody? = null,
+        @Part("WakeupTime") wakeupTime: RequestBody? = null
     ): Response<Unit>
 
     @GET("api/dailylogs/date/{date}")

@@ -18,7 +18,8 @@ data class DailyLogResponseDto(
     @SerializedName(value = "activityIds", alternate = ["ActivityIds"]) val activityIds: List<String>?,
     @SerializedName("createdAt") val createdAt: String? = null,
     @SerializedName(value = "calories", alternate = ["Calories"]) val calories: Int? = null,
-    @SerializedName(value = "distance", alternate = ["Distance"]) val distance: Double? = null
+    @SerializedName(value = "distance", alternate = ["Distance"]) val distance: Double? = null,
+    @SerializedName(value = "wakeupTime", alternate = ["WakeupTime"]) val wakeupTime: String? = null
 ) {
     fun toDomain(): DailyLog {
         return DailyLog(
@@ -36,7 +37,8 @@ data class DailyLogResponseDto(
             activityIds = activityIds,
             createdAt = createdAt,
             calories = calories,
-            distance = distance
+            distance = distance,
+            wakeupTime = wakeupTime
         )
     }
 }

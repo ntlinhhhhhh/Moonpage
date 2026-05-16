@@ -4,8 +4,13 @@ import java.time.LocalDate
 
 interface WeatherRepository {
     suspend fun getCurrentWeather(lat: Double, lon: Double): Result<WeatherData>
-    suspend fun getWeatherConditions(lat: Double, lon: Double, date: java.time.LocalDate): Result<List<String>>
+    suspend fun getWeatherConditions(lat: Double, lon: Double, date: java.time.LocalDate): Result<WeatherResult>
 }
+
+data class WeatherResult(
+    val conditions: List<String>,
+    val averageTemp: Double
+)
 
 data class WeatherData(
     val condition: String,

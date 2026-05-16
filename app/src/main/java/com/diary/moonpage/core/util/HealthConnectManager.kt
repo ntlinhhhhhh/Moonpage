@@ -83,11 +83,17 @@ class HealthConnectManager @Inject constructor(
             val totalSleepMinutes = sleepRecords.sumOf { Duration.between(it.startTime, it.endTime).toMinutes() }
             val sleepHours = totalSleepMinutes / 60.0
 
+            // Get earliest sleep start and latest wake up time
+            val sleepStartStr = sleepRecords.minByOrNull { it.startTime }?.startTime?.atZone(ZoneId.systemDefault())?.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
+            val sleepWakeStr = sleepRecords.maxByOrNull { it.endTime }?.endTime?.atZone(ZoneId.systemDefault())?.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
+
             HealthData(
                 steps = response[StepsRecord.COUNT_TOTAL]?.toInt() ?: 0,
                 calories = response[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories?.toInt() ?: 0,
                 distance = (response[DistanceRecord.DISTANCE_TOTAL]?.inMeters ?: 0.0) / 1000.0,
-                sleepHours = sleepHours
+                sleepHours = sleepHours,
+                sleepStartTime = sleepStartStr,
+                sleepWakeTime = sleepWakeStr
             )
         } catch (e: Exception) {
             android.util.Log.e("HealthConnect", "Data fetch failed", e)
@@ -100,5 +106,7 @@ data class HealthData(
     val steps: Int = 0,
     val calories: Int = 0,
     val distance: Double = 0.0,
-    val sleepHours: Double = 0.0
+    val sleepHours: Double = 0.0,
+    val sleepStartTime: String? = null,
+    val sleepWakeTime: String? = null
 )

@@ -18,7 +18,8 @@ interface DailyLogRepository {
         steps: Int? = null,
         musicRecord: String? = null,
         calories: Int? = null,
-        distance: Double? = null
+        distance: Double? = null,
+        wakeupTime: String? = null
     ): Result<Unit>
 
     suspend fun getDailyLogByDate(date: String): Result<DailyLog>

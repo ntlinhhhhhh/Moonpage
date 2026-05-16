@@ -18,5 +18,6 @@ data class DailyLog(
     val activityIds: List<String>?,
     val createdAt: String? = null,
     val calories: Int? = null,
-    val distance: Double? = null
+    val distance: Double? = null,
+    val wakeupTime: String? = null
 )

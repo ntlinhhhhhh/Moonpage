@@ -1345,7 +1345,7 @@ fun YearlyRecapCard(
             // Header
             Text(
                 text = "$year Recap",
-                fontWeight = FontWeight.Black,
+                fontWeight = FontWeight.Bold,
                 fontSize = 28.sp,
                 color = primaryColor
             )

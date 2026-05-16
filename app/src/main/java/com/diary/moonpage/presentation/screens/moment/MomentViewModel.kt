@@ -47,29 +47,54 @@ class MomentViewModel @Inject constructor(
         MomentTag("missyou", null, "Miss you", containerColor = Color(0xFFFF4B4B), contentColor = Color.White)
     )
 
+    private val locationTracker = com.diary.moonpage.core.util.LocationTracker(
+        com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(context),
+        context
+    )
+
     init {
         observeRepository()
         onEvent(MomentUiEvent.LoadMoments)
-        fetchWeather()
+        triggerAutoWeatherFetch()
     }
 
     private fun fetchWeather() {
         viewModelScope.launch {
             try {
-                val fusedLocationClient = com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(context)
-                if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                        if (location != null) {
-                            viewModelScope.launch {
-                                weatherRepository.getCurrentWeather(location.latitude, location.longitude).onSuccess { data ->
-                                    _uiState.update { it.copy(suggestedWeather = data) }
-                                }
-                            }
+                val location = locationTracker.getCurrentLocation()
+                if (location != null) {
+                    val today = java.time.LocalDate.now()
+                    weatherRepository.getWeatherConditions(location.latitude, location.longitude, today).onSuccess { result ->
+                        val conditions = result.conditions
+                        val temp = result.averageTemp
+                        
+                        val weatherText = if (conditions.isNotEmpty()) {
+                            val mainCondition = conditions.first()
+                            val tempText = String.format(java.util.Locale.ENGLISH, "%.1f°C", temp)
+                            "$mainCondition, $tempText"
+                        } else {
+                            "Unknown"
                         }
+
+                        _uiState.update { it.copy(
+                            suggestedWeather = com.diary.moonpage.domain.repository.WeatherData(
+                                condition = weatherText,
+                                description = "Weather auto-filled",
+                                temp = temp,
+                                cityName = "Detected",
+                                iconUrl = ""
+                            )
+                        ) }
                     }
                 }
-            } catch (e: Exception) {}
+            } catch (e: Exception) {
+                android.util.Log.e("MomentVM", "Weather fetch failed", e)
+            }
         }
+    }
+
+    fun triggerAutoWeatherFetch() {
+        fetchWeather()
     }
 
     private fun observeRepository() {
@@ -103,6 +128,7 @@ class MomentViewModel @Inject constructor(
             is MomentUiEvent.ShareMoment -> viewModelScope.launch { _uiEffect.send(MomentUiEffect.ShareMoment(event.url)) }
             MomentUiEvent.DismissMessage -> _uiState.update { it.copy(errorMessage = null, successMessage = null) }
             is MomentUiEvent.ShowSnackBar -> viewModelScope.launch { _uiEffect.send(MomentUiEffect.ShowSnackBar(event.message)) }
+            MomentUiEvent.RefreshWeather -> triggerAutoWeatherFetch()
         }
     }
 
