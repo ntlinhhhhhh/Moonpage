@@ -602,9 +602,8 @@ class DailyLogViewModel @Inject constructor(
 
                 _uiEffect.emit(DailyLogUiEffect.SaveSuccess(state.date.toString(), msg))
             }.onFailure { error ->
+                _uiState.update { it.copy(isLoading = true) } // Keep loading while showing error? No, set false.
                 _uiState.update { it.copy(isLoading = false) }
-                // Cleanup temporary retained files on failure too
-                existingPhotoFiles.forEach { it.delete() }
                 _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(error.message ?: "Failed to save log"))
             }
         }

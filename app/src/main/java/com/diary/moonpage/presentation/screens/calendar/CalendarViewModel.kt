@@ -33,6 +33,7 @@ class CalendarViewModel @Inject constructor(
     val uiState: StateFlow<CalendarUiState> = _uiState.asStateFlow()
 
     private val currentMonth = MutableStateFlow(_uiState.value.currentYearMonth)
+    private val refreshTrigger = MutableStateFlow(0)
 
     init {
         viewModelScope.launch {
@@ -53,8 +54,10 @@ class CalendarViewModel @Inject constructor(
         viewModelScope.launch {
             combine(
                 currentMonth.flatMapLatest { month -> 
-                    val yearMonthStr = "${month.year}-${month.monthValue.toString().padStart(2, '0')}"
-                    repository.getDailyLogsByMonth(yearMonthStr)
+                    refreshTrigger.flatMapLatest {
+                        val yearMonthStr = "${month.year}-${month.monthValue.toString().padStart(2, '0')}"
+                        repository.getDailyLogsByMonth(yearMonthStr)
+                    }
                 },
                 momentRepository.moments,
                 currentMonth
@@ -144,13 +147,15 @@ class CalendarViewModel @Inject constructor(
                     currentState.copy(viewMode = newMode)
                 }
             }
+            CalendarUiEvent.DismissMessage -> {
+                _uiState.update { it.copy(snackbarMessage = null) }
+            }
             else -> {}
         }
     }
 
     fun refreshLogs() {
-        // Now just triggers a re-fetch of the month's data by resetting the currentMonth state flow
-        currentMonth.value = currentMonth.value
+        refreshTrigger.update { it + 1 }
     }
 
     private fun deleteDailyLog(date: LocalDate) {

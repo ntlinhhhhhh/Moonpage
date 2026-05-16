@@ -73,7 +73,7 @@ fun DailyLogScreen(
     onNavigateToMenstrualCycle: () -> Unit,
     onNavigateToDailyPhoto: () -> Unit,
     onNavigateToShare: (String) -> Unit,
-    onDone: (String) -> Unit,
+    onDone: (String, String) -> Unit,
     viewModel: DailyLogViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -100,7 +100,7 @@ fun DailyLogScreen(
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
             when (effect) {
-                is DailyLogUiEffect.SaveSuccess -> onDone(effect.message)
+                is DailyLogUiEffect.SaveSuccess -> onDone(effect.date, effect.snackbarMessage)
                 is DailyLogUiEffect.LaunchHealthPermissions -> {
                     // Safe launch of permission activity with a small delay to avoid transition conflicts on MIUI
                     scope.launch {
