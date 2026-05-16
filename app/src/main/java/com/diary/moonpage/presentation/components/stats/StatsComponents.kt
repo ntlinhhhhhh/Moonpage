@@ -639,12 +639,15 @@ fun SleepAnalysisChart(
             val wakeUpTime = if (latestSleep != null) {
                 try {
                     val startTime = latestSleep.startTime ?: "12:00 AM"
-                    val sdf = java.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH)
-                    val date = sdf.parse(startTime)
+                    val date = try {
+                        java.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH).parse(startTime)
+                    } catch (e: Exception) {
+                        java.text.SimpleDateFormat("HH:mm", Locale.ENGLISH).parse(startTime)
+                    }
                     if (date != null) {
                         val cal = Calendar.getInstance().apply { time = date }
                         cal.add(Calendar.MINUTE, (latestSleep.duration * 60).toInt())
-                        sdf.format(cal.time)
+                        java.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH).format(cal.time)
                     } else "--:--"
                 } catch (e: Exception) { "--:--" }
             } else "--:--"
@@ -795,24 +798,27 @@ private fun SleepLegendItem(color: Color, label: String, value: String) {
 }
 
 private fun parseTimeToFloat(timeStr: String?): Float {
-    if (timeStr == null) return 0f
+    if (timeStr == null) return 6f // Default to Midnight (6 hours after 6PM)
     try {
-        val sdf = java.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH)
-        val date = sdf.parse(timeStr) ?: return 0f
+        val date = try {
+            java.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH).parse(timeStr)
+        } catch (e: Exception) {
+            java.text.SimpleDateFormat("HH:mm", Locale.ENGLISH).parse(timeStr)
+        } ?: return 6f
+        
         val cal = Calendar.getInstance().apply { time = date }
         val hours = cal.get(Calendar.HOUR_OF_DAY).toFloat()
         val minutes = cal.get(Calendar.MINUTE).toFloat()
         val totalHoursFromMidnight = hours + minutes / 60f
         
         // Offset so 6PM is 0
-        // Midnight is 6 hours after 6PM
         var offset = totalHoursFromMidnight + 6f
         if (totalHoursFromMidnight >= 18f) {
             offset = totalHoursFromMidnight - 18f
         }
         return offset
     } catch (e: Exception) {
-        return 0f
+        return 6f
     }
 }
 
@@ -1468,6 +1474,26 @@ fun YearlyRecapCard(
                     .padding(8.dp)
             ) {
                 YearInPixelsGrid(yearlyMoodGrid, year, themeType)
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Mood Legend for the Grid
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                listOf(5, 4, 3, 2, 1).forEach { level ->
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(MoonIcons.Moods.getMoodColor(level, themeType))
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                }
+                Text("Mood intensity", fontSize = 10.sp, color = onSurfaceVariant.copy(alpha = 0.6f))
             }
             
             if (bestActivities.isNotEmpty()) {
