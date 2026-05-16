@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -115,6 +116,19 @@ class DailyLogRepositoryImpl @Inject constructor(
         }
     }
 
+    override fun getDailyLogByDateFlow(date: String): Flow<DailyLog?> {
+        // Optional: trigger background sync for this specific date
+        kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
+            try {
+                val response = api.getDailyLogByDate(date)
+                if (response.isSuccessful && response.body() != null) {
+                    dao.insertLog(DailyLogEntity.fromResponse(response.body()!!))
+                }
+            } catch (e: Exception) {}
+        }
+        return dao.getLogByDateFlow(date).map { it?.toDomain() }.flowOn(Dispatchers.IO)
+    }
+
     override suspend fun deleteDailyLog(date: String): Result<Unit> {
         return try {
             val response = api.deleteDailyLog(date)
@@ -129,22 +143,26 @@ class DailyLogRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getDailyLogsByMonth(yearMonth: String): Flow<List<DailyLog>> = flow {
-        val cachedLogs = dao.getLogsByMonth(yearMonth).map { it.toDomain() }
-        emit(cachedLogs)
-        
-        try {
-            val response = api.getDailyLogsByMonth(yearMonth)
-            if (response.isSuccessful && response.body() != null) {
-                val networkLogs = response.body()!!
-                dao.deleteLogsByMonth(yearMonth)
-                dao.insertLogs(networkLogs.map { DailyLogEntity.fromResponse(it) })
-                emit(networkLogs.map { it.toDomain() })
-            }
-        } catch (e: Exception) {
-            // Error handled by the flow consumer (if needed)
+    override fun getDailyLogsByMonth(yearMonth: String): Flow<List<DailyLog>> {
+        // Trigger background sync
+        kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
+            try {
+                val response = api.getDailyLogsByMonth(yearMonth)
+                if (response.isSuccessful && response.body() != null) {
+                    val networkLogs = response.body()!!
+                    // We don't delete all logs for the month immediately to avoid flickering,
+                    // Room's insert (REPLACE) will handle updates correctly.
+                    // But if some logs were deleted on server, we might need a more complex sync.
+                    // For now, let's just insert everything.
+                    dao.insertLogs(networkLogs.map { DailyLogEntity.fromResponse(it) })
+                }
+            } catch (e: Exception) {}
         }
-    }.flowOn(Dispatchers.IO)
+
+        return dao.getLogsByMonthFlow(yearMonth).map { entities ->
+            entities.map { it.toDomain() }
+        }.flowOn(Dispatchers.IO)
+    }
 
     override suspend fun clearCache() {
         dao.clearAllDailyLogs()

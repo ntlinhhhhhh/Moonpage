@@ -200,23 +200,6 @@ class AuthViewModel @Inject constructor (
                     tokenManager.saveUserName(user.name)
                     val isOnboarded = onboardingPrefsManager.checkOnboardingCompleted(user.userId)
                     
-                    // Sync FCM Token after successful login using the push endpoint
-                    viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-                        try {
-                            val token = com.google.firebase.messaging.FirebaseMessaging.getInstance().token.await()
-                            notificationRepository.sendPushNotification(
-                                com.diary.moonpage.data.remote.dto.notification.SendPushRequest(
-                                    token = token,
-                                    title = "Device Linked",
-                                    body = "You will now receive notifications on this device.",
-                                    imageUrl = null
-                                )
-                            )
-                        } catch (e: Exception) {
-                            android.util.Log.e("AuthViewModel", "Failed to link device token after login", e)
-                        }
-                    }
-
                     _uiState.update { it.copy(isLoading = false) }
                     _uiEvent.send(AuthUiEvent.LoginSuccess(user.token, user.userId, isNewUser = !isOnboarded))
                 }.onFailure { exception ->
@@ -305,23 +288,6 @@ class AuthViewModel @Inject constructor (
                     tokenManager.saveUserName(user.name)
                     val isOnboarded = onboardingPrefsManager.checkOnboardingCompleted(user.userId)
                     
-                    // Sync FCM Token after successful login using the push endpoint
-                    viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-                        try {
-                            val token = com.google.firebase.messaging.FirebaseMessaging.getInstance().token.await()
-                            notificationRepository.sendPushNotification(
-                                com.diary.moonpage.data.remote.dto.notification.SendPushRequest(
-                                    token = token,
-                                    title = "Device Linked",
-                                    body = "You will now receive notifications on this device.",
-                                    imageUrl = null
-                                )
-                            )
-                        } catch (e: Exception) {
-                            android.util.Log.e("AuthViewModel", "Failed to link device token after login", e)
-                        }
-                    }
-
                     _uiState.update { it.copy(isLoading = false) }
                     _uiEvent.send(AuthUiEvent.LoginSuccess(user.token, user.userId, isNewUser = !isOnboarded))
                 }.onFailure { exception ->

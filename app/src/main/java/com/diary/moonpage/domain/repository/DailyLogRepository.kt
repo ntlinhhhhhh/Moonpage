@@ -23,6 +23,8 @@ interface DailyLogRepository {
 
     suspend fun getDailyLogByDate(date: String): Result<DailyLog>
     
+    fun getDailyLogByDateFlow(date: String): Flow<DailyLog?>
+    
     suspend fun deleteDailyLog(date: String): Result<Unit>
     
     fun getDailyLogsByMonth(yearMonth: String): Flow<List<DailyLog>>

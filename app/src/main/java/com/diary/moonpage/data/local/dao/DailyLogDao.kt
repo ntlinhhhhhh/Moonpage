@@ -6,10 +6,13 @@ import com.diary.moonpage.data.local.entity.DailyLogEntity
 @Dao
 interface DailyLogDao {
     @Query("SELECT * FROM daily_logs WHERE date LIKE :yearMonth || '%'")
-    suspend fun getLogsByMonth(yearMonth: String): List<DailyLogEntity>
+    fun getLogsByMonthFlow(yearMonth: String): kotlinx.coroutines.flow.Flow<List<DailyLogEntity>>
 
     @Query("SELECT * FROM daily_logs WHERE date = :date LIMIT 1")
     suspend fun getLogByDate(date: String): DailyLogEntity?
+
+    @Query("SELECT * FROM daily_logs WHERE date = :date LIMIT 1")
+    fun getLogByDateFlow(date: String): kotlinx.coroutines.flow.Flow<DailyLogEntity?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLogs(logs: List<DailyLogEntity>)

@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
@@ -58,8 +59,6 @@ class CalendarViewModel @Inject constructor(
                 momentRepository.moments,
                 currentMonth
             ) { logs, moments, month ->
-                Triple(logs, moments, month)
-            }.collect { (logs, moments, month) ->
                 val logsMap = logs.associateBy { LocalDate.parse(it.date) }.toMutableMap()
                 
                 moments.forEach { moment ->
@@ -95,7 +94,7 @@ class CalendarViewModel @Inject constructor(
                 }
 
                 _uiState.update { it.copy(dailyLogs = finalMap, currentYearMonth = month, isLoading = false) }
-            }
+            }.collect {}
         }
     }
 
@@ -150,7 +149,8 @@ class CalendarViewModel @Inject constructor(
     }
 
     fun refreshLogs() {
-        currentMonth.value = currentMonth.value // Trigger re-collection
+        // Now just triggers a re-fetch of the month's data by resetting the currentMonth state flow
+        currentMonth.value = currentMonth.value
     }
 
     private fun deleteDailyLog(date: LocalDate) {
@@ -161,7 +161,6 @@ class CalendarViewModel @Inject constructor(
                     val newLogs = currentState.dailyLogs.filterKeys { it != date }
                     currentState.copy(dailyLogs = newLogs, selectedDate = null, snackbarMessage = "Record deleted successfully!")
                 }
-                refreshLogs()
             }.onFailure { exception ->
                 _uiState.update { it.copy(snackbarMessage = exception.message ?: "Failed to delete log") }
             }

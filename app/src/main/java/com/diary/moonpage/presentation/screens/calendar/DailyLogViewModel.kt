@@ -9,6 +9,9 @@ import com.diary.moonpage.core.util.MoonIcons
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import okio.Okio
+import okio.buffer
+import okio.sink
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -41,6 +44,8 @@ class DailyLogViewModel @Inject constructor(
     private val _uiEffect = MutableSharedFlow<DailyLogUiEffect>()
     val uiEffect: SharedFlow<DailyLogUiEffect> = _uiEffect.asSharedFlow()
 
+    private val currentDate = MutableStateFlow<LocalDate?>(null)
+
     init {
         viewModelScope.launch {
             activityPreferencesManager.enabledCategories.collect { categories ->
@@ -66,6 +71,80 @@ class DailyLogViewModel @Inject constructor(
         viewModelScope.launch {
             userRepository.currentUser.collect { user ->
                 _uiState.update { it.copy(gender = user?.gender) }
+            }
+        }
+        observeData()
+    }
+
+    private fun observeData() {
+        viewModelScope.launch {
+            currentDate.filterNotNull().flatMapLatest { date ->
+                combine(
+                    repository.getDailyLogByDateFlow(date.toString()),
+                    momentRepository.moments
+                ) { log, moments ->
+                    val momentPhotos = moments.filter { it.capturedAt.startsWith(date.toString()) }
+                        .map { if (it.imageUrl.startsWith("http")) it.imageUrl else BASE_URL + it.imageUrl.trimStart('/') }
+                    Pair(log, momentPhotos)
+                }
+            }.collect { (log, momentPhotos) ->
+                _uiState.update { currentState ->
+                    val updatedState = if (log != null) {
+                        val formatter = DateTimeFormatter.ofPattern("HH:mm")
+                        val bedTime = log.sleepStartTime?.let { try { LocalTime.parse(it, formatter) } catch(e: Exception) { LocalTime.of(0, 0) } } ?: LocalTime.of(0, 0)
+                        val wakeTime = bedTime.plusMinutes(( (log.sleepHours ?: 8.0) * 60).toLong())
+                        val calculatedHours = log.sleepHours?.toFloat() ?: 0f
+                        val logPhotos = log.dailyPhotos?.map { if (it.startsWith("http")) it else BASE_URL + it.trimStart('/') } ?: emptyList()
+
+                        if (!currentState.isInitialized || currentState.date != log.date.let { LocalDate.parse(it) }) {
+                            currentState.copy(
+                                existingLog = log,
+                                date = LocalDate.parse(log.date),
+                                selectedMood = log.baseMoodId,
+                                selectedActivities = log.activityIds ?: emptyList(),
+                                noteText = log.note ?: "",
+                                sleepHours = calculatedHours,
+                                sleepBedTime = bedTime,
+                                sleepWakeTime = wakeTime,
+                                isMenstruation = log.isMenstruation,
+                                menstruationPhase = log.menstruationPhase,
+                                dailyPhotos = logPhotos,
+                                momentPhotos = momentPhotos,
+                                musicTitle = log.musicRecord,
+                                steps = log.steps ?: 0,
+                                calories = log.calories ?: 0,
+                                distance = log.distance ?: 0.0,
+                                isInitialized = true,
+                                isLoading = false
+                            )
+                        } else {
+                            // Only update metadata and photos, keep user's current edits
+                            currentState.copy(
+                                existingLog = log,
+                                dailyPhotos = logPhotos,
+                                momentPhotos = momentPhotos,
+                                isLoading = false
+                            )
+                        }
+                    } else {
+                        // Log is null (new log or deleted)
+                        if (!currentState.isInitialized) {
+                            currentState.copy(
+                                existingLog = null,
+                                dailyPhotos = emptyList(),
+                                momentPhotos = momentPhotos,
+                                isInitialized = true,
+                                isLoading = false
+                            )
+                        } else {
+                            currentState.copy(
+                                momentPhotos = momentPhotos,
+                                isLoading = false
+                            )
+                        }
+                    }
+                    updatedState
+                }
             }
         }
     }
@@ -226,9 +305,9 @@ class DailyLogViewModel @Inject constructor(
     }
 
     fun setInitialDate(date: LocalDate) {
-        if (_uiState.value.isInitialized && _uiState.value.date == date) return
-        _uiState.update { it.copy(date = date, isInitialized = true) }
-        fetchLogForDate(date)
+        if (currentDate.value == date) return
+        _uiState.update { it.copy(date = date, isLoading = true) }
+        currentDate.value = date
         if (date == LocalDate.now()) {
             fetchExternalData()
         }
@@ -261,8 +340,8 @@ class DailyLogViewModel @Inject constructor(
                 _uiState.update { it.copy(noteText = event.note) }
             }
             is DailyLogUiEvent.OnDateChanged -> {
-                _uiState.update { it.copy(date = event.date) }
-                fetchLogForDate(event.date)
+                _uiState.update { it.copy(date = event.date, isInitialized = false) }
+                currentDate.value = event.date
             }
             is DailyLogUiEvent.OnMenstruationToggled -> {
                 _uiState.update { it.copy(isMenstruation = event.isMenstruation) }
@@ -411,8 +490,8 @@ class DailyLogViewModel @Inject constructor(
             DailyLogUiEvent.OnConfirmOverwrite -> {
                 val pending = _uiState.value.pendingDate
                 if (pending != null) {
-                    _uiState.update { it.copy(date = pending, showOverwriteDialog = false) }
-                    fetchLogForDate(pending)
+                    _uiState.update { it.copy(date = pending, showOverwriteDialog = false, isInitialized = false) }
+                    currentDate.value = pending
                 }
             }
             DailyLogUiEvent.OnDismissOverwriteDialog -> {
@@ -443,73 +522,6 @@ class DailyLogViewModel @Inject constructor(
         return com.diary.moonpage.data.remote.api.SpotifyApi.getAuthUrl(challenge, state)
     }
 
-    private fun fetchLogForDate(date: LocalDate) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            
-            val dateStr = date.toString()
-            val momentPhotos = try {
-                momentRepository.moments.first()
-                    .filter { it.capturedAt.startsWith(dateStr) }
-                    .map { it.imageUrl }
-            } catch (e: Exception) {
-                emptyList<String>()
-            }
-            
-            val momentPhotoUrls = momentPhotos.map { if (it.startsWith("http")) it else BASE_URL + it.trimStart('/') }
-
-            repository.getDailyLogByDate(dateStr).onSuccess { log ->
-                val formatter = DateTimeFormatter.ofPattern("HH:mm")
-                val bedTime = log.sleepStartTime?.let { try { LocalTime.parse(it, formatter) } catch(e: Exception) { LocalTime.of(0, 0) } } ?: LocalTime.of(0, 0)
-                
-                val wakeTime = bedTime.plusMinutes(( (log.sleepHours ?: 8.0) * 60).toLong())
-                val calculatedHours = log.sleepHours?.toFloat() ?: 0f
-
-                val logPhotos = log.dailyPhotos?.map { if (it.startsWith("http")) it else BASE_URL + it.trimStart('/') } ?: emptyList()
-
-                _uiState.update { it.copy(
-                    existingLog = log,
-                    selectedMood = log.baseMoodId,
-                    selectedActivities = log.activityIds ?: emptyList(),
-                    noteText = log.note ?: "",
-                    sleepHours = calculatedHours,
-                    sleepBedTime = bedTime,
-                    sleepWakeTime = wakeTime,
-                    isMenstruation = log.isMenstruation,
-                    menstruationPhase = log.menstruationPhase,
-                    dailyPhotos = logPhotos,
-                    momentPhotos = momentPhotoUrls,
-                    musicTitle = log.musicRecord,
-                    steps = log.steps ?: 0,
-                    calories = log.calories ?: 0,
-                    distance = log.distance ?: 0.0,
-                    isLoading = false
-                ) }
-            }.onFailure {
-                _uiState.update { it.copy(
-                    existingLog = null,
-                    selectedMood = null,
-                    selectedActivities = emptyList(),
-                    noteText = "",
-                    sleepHours = 0f,
-                    sleepBedTime = LocalTime.of(0, 0),
-                    sleepWakeTime = LocalTime.of(7, 0),
-                    isMenstruation = false,
-                    menstruationPhase = null,
-                    dailyPhotos = emptyList(),
-                    momentPhotos = momentPhotoUrls,
-                    musicTitle = null,
-                    artistName = null,
-                    albumArtUrl = null,
-                    steps = 0,
-                    calories = 0,
-                    distance = 0.0,
-                    isLoading = false
-                ) }
-            }
-        }
-    }
-
     private fun saveDailyLog() {
         val state = _uiState.value
         if (state.selectedMood == null || state.selectedMood == 0) {
@@ -519,10 +531,11 @@ class DailyLogViewModel @Inject constructor(
             return
         }
 
-        viewModelScope.launch {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             _uiState.update { it.copy(isLoading = true) }
             
-            val photoFiles = state.dailyPhotos.filter { !it.startsWith("http") }.mapNotNull { uriString ->
+            // 1. Process newly selected local photos
+            val newPhotoFiles = state.dailyPhotos.filter { !it.startsWith("http") }.mapNotNull { uriString ->
                 try {
                     val uri = android.net.Uri.parse(uriString)
                     com.diary.moonpage.core.util.ImageUtils.compressAndCropSquare(context, uri)
@@ -530,7 +543,31 @@ class DailyLogViewModel @Inject constructor(
                     null
                 }
             }
+
+            // 2. Download existing HTTP photos to include them in the upload, 
+            // so the backend doesn't overwrite them.
+            val existingPhotoUrls = state.dailyPhotos.filter { it.startsWith("http") }
+            val existingPhotoFiles = mutableListOf<java.io.File>()
+            if (existingPhotoUrls.isNotEmpty()) {
+                val client = okhttp3.OkHttpClient()
+                for (url in existingPhotoUrls) {
+                    try {
+                        val request = okhttp3.Request.Builder().url(url).build()
+                        val response = client.newCall(request).execute()
+                        if (response.isSuccessful && response.body != null) {
+                            val tempFile = java.io.File(context.cacheDir, "retained_photo_${java.util.UUID.randomUUID()}.jpg")
+                            val sink = tempFile.sink().buffer()
+                            sink.writeAll(response.body!!.source())
+                            sink.close()
+                            existingPhotoFiles.add(tempFile)
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("DailyLogVM", "Failed to download retained photo: $url", e)
+                    }
+                }
+            }
             
+            val allPhotoFiles = existingPhotoFiles + newPhotoFiles
             val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
             
             repository.createDailyLog(
@@ -542,7 +579,7 @@ class DailyLogViewModel @Inject constructor(
                 isMenstruation = state.isMenstruation,
                 menstruationPhase = state.menstruationPhase,
                 activityIds = state.selectedActivities,
-                dailyPhotos = photoFiles.takeIf { it.isNotEmpty() },
+                dailyPhotos = allPhotoFiles.takeIf { it.isNotEmpty() },
                 steps = state.steps,
                 musicRecord = state.musicTitle,
                 calories = state.calories,
@@ -550,6 +587,9 @@ class DailyLogViewModel @Inject constructor(
             ).onSuccess {
                 val msg = if (state.existingLog != null) "Record updated successfully!" else "Record created successfully!"
                 statisticsRepository.triggerRefresh()
+                
+                // Cleanup temporary retained files
+                existingPhotoFiles.forEach { it.delete() }
                 
                 // Trigger notification evaluation using ApplicationScope to survive VM clearing
                 applicationScope.launch {
@@ -560,9 +600,11 @@ class DailyLogViewModel @Inject constructor(
                     }
                 }
 
-                _uiEffect.emit(DailyLogUiEffect.SaveSuccess(msg))
+                _uiEffect.emit(DailyLogUiEffect.SaveSuccess(state.date.toString(), msg))
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false) }
+                // Cleanup temporary retained files on failure too
+                existingPhotoFiles.forEach { it.delete() }
                 _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(error.message ?: "Failed to save log"))
             }
         }
