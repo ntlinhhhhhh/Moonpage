@@ -804,23 +804,20 @@ fun MoodFlowFrame(isVisible: Boolean) {
                     )
                 }
 
-                // Jagged Path Points (Mapped to mood levels: 0.0=Level 5, 1.0=Level 1)
+                // Jagged Path Points (Snapped to mood levels: 0.0=Level 5, 0.25=Level 4, 0.5=Level 3, 0.75=Level 2, 1.0=Level 1)
                 val rawPoints = listOf(
-                    Offset(0f, 0.1f), Offset(0.05f, 0.25f), Offset(0.1f, 0.4f), 
-                    Offset(0.15f, 0.6f), Offset(0.2f, 0.25f), Offset(0.23f, 0.1f),
-                    Offset(0.26f, 0.15f), Offset(0.3f, 0.35f), Offset(0.33f, 0.65f),
-                    Offset(0.37f, 0.4f), Offset(0.42f, 0.2f), Offset(0.45f, 0.1f),
-                    Offset(0.48f, 0.15f), Offset(0.53f, 0.45f), Offset(0.58f, 0.75f),
-                    Offset(0.62f, 0.85f), Offset(0.66f, 0.65f), Offset(0.7f, 0.45f),
-                    Offset(0.73f, 0.8f), Offset(0.77f, 0.85f), Offset(0.82f, 0.65f),
-                    Offset(0.86f, 0.55f), Offset(0.9f, 0.35f), Offset(0.95f, 0.15f),
-                    Offset(1f, 0.05f), Offset(1.05f, 0.4f)
+                    Offset(0.0f, 0.25f), Offset(0.08f, 0.0f), Offset(0.16f, 0.25f), 
+                    Offset(0.25f, 0.5f), Offset(0.33f, 0.25f), Offset(0.41f, 0.0f),
+                    Offset(0.5f, 0.25f), Offset(0.58f, 0.5f), Offset(0.66f, 0.75f),
+                    Offset(0.75f, 0.5f), Offset(0.83f, 0.25f), Offset(0.91f, 0.0f),
+                    Offset(1.0f, 0.25f)
                 )
                 
-                val points = rawPoints.map { Offset(startX + it.x * (width / 1f), it.y * height) }
+                // Only take points before 1.0 (Day 31) for the main display if requested
+                val displayPoints = rawPoints.filter { it.x <= 1.0f }.map { Offset(startX + it.x * width, it.y * height) }
 
                 val path = Path()
-                points.forEachIndexed { index, p ->
+                displayPoints.forEachIndexed { index, p ->
                     if (index == 0) path.moveTo(p.x, p.y)
                     else path.lineTo(p.x, p.y)
                 }
@@ -828,15 +825,17 @@ fun MoodFlowFrame(isVisible: Boolean) {
                 val pathMeasure = PathMeasure()
                 pathMeasure.setPath(path, false)
                 val partialPath = Path()
+                // Stop the line slightly before the end for a cleaner look
                 pathMeasure.getSegment(0f, pathMeasure.length * pathProgress.value, partialPath, true)
                 
                 val selectionColor = MoonIcons.Moods.getMoodVisual(4, MoonThemeType.DEFAULT).color
                 drawPath(partialPath, selectionColor, style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
                 
-                // Draw dots at points
-                points.forEach { p ->
-                    if (p.x <= startX + width * pathProgress.value && p.x <= startX + width) {
-                        drawCircle(selectionColor, radius = 3.dp.toPx(), center = p)
+                // Draw dots at points (only before Day 31)
+                displayPoints.forEach { p ->
+                    // Only draw circles if the path has reached that point AND it's strictly before the last grid line (Day 31)
+                    if (p.x <= startX + width * pathProgress.value && p.x < startX + width) {
+                        drawCircle(selectionColor, radius = 3.5.dp.toPx(), center = p)
                     }
                 }
             }
