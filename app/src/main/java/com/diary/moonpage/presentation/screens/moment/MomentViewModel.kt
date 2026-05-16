@@ -1,21 +1,26 @@
 package com.diary.moonpage.presentation.screens.moment
 
+import android.location.Geocoder
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.R
+import com.diary.moonpage.core.util.LocationTracker
 import com.diary.moonpage.core.util.UiText
 import com.diary.moonpage.domain.repository.MomentRepository
+import com.diary.moonpage.domain.repository.WeatherRepository
 import com.diary.moonpage.domain.usecase.moment.*
 import com.diary.moonpage.presentation.components.moment.MomentTag
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
+import java.time.LocalDate
 import java.util.*
 import javax.inject.Inject
 
@@ -25,7 +30,10 @@ class MomentViewModel @Inject constructor(
     private val getMyMomentsUseCase: GetMyMomentsUseCase,
     private val getMomentUseCase: GetMomentUseCase,
     private val uploadMomentUseCase: UploadMomentUseCase,
-    private val deleteMomentUseCase: DeleteMomentUseCase
+    private val deleteMomentUseCase: DeleteMomentUseCase,
+    private val weatherRepository: WeatherRepository,
+    private val locationTracker: LocationTracker,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MomentUiState())
@@ -81,6 +89,55 @@ class MomentViewModel @Inject constructor(
             is MomentUiEvent.ShareMoment -> viewModelScope.launch { _uiEffect.send(MomentUiEffect.ShareMoment(event.url)) }
             MomentUiEvent.DismissMessage -> _uiState.update { it.copy(errorMessage = null, successMessage = null) }
             is MomentUiEvent.ShowSnackBar -> viewModelScope.launch { _uiEffect.send(MomentUiEffect.ShowSnackBar(event.message)) }
+            is MomentUiEvent.OnLocationPermissionGranted -> {
+                autoFetchDetails()
+            }
+        }
+    }
+
+    private fun autoFetchDetails() {
+        viewModelScope.launch {
+            val location = locationTracker.getCurrentLocation()
+            if (location != null) {
+                // 1. Fetch Weather
+                weatherRepository.getWeatherConditions(location.latitude, location.longitude, LocalDate.now())
+                    .onSuccess { weatherNames ->
+                        if (weatherNames.isNotEmpty()) {
+                            val primaryWeather = weatherNames[0]
+                            val emoji = when (primaryWeather) {
+                                "Sunny" -> "☀️"
+                                "Cloudy" -> "☁️"
+                                "Rainy" -> "🌧️"
+                                "Snowy" -> "❄️"
+                                "Windy" -> "💨"
+                                "Stormy" -> "⛈️"
+                                "Hot" -> "🔥"
+                                "Cold" -> "❄️"
+                                else -> ""
+                            }
+                            val weatherText = if (emoji.isNotEmpty()) "$primaryWeather $emoji" else primaryWeather
+                            _uiState.update { it.copy(autoWeather = weatherText) }
+                        }
+                    }
+
+                // 2. Fetch Location Name
+                launch(Dispatchers.IO) {
+                    try {
+                        val geocoder = Geocoder(context, Locale.getDefault())
+                        @Suppress("DEPRECATION")
+                        val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                        if (!addresses.isNullOrEmpty()) {
+                            val address = addresses[0]
+                            val district = address.subLocality ?: address.locality ?: address.subAdminArea
+                            val city = address.adminArea ?: address.locality ?: "Unknown"
+                            val locationName = if (district != null && district != city) "$district/$city" else city
+                            _uiState.update { it.copy(autoLocation = locationName) }
+                        }
+                    } catch (e: Exception) {
+                        // Keep current or empty
+                    }
+                }
+            }
         }
     }
 
