@@ -213,15 +213,19 @@ fun TutorialOverlay(
             val yCenter = targetBounds.center.y
             // If the target is in the bottom half of the screen, show tooltip ABOVE it.
             // If it's in the top half, show tooltip BELOW it.
-            val showAbove = yCenter > (screenHeightPx / 2)
+            // Also, only show above if there is enough space at the top of the screen (top > 240dp)
+            val showAbove = yCenter > (screenHeightPx / 2) && targetBounds.top > with(density) { 240.dp.toPx() }
 
             val yOffset = with(density) {
                 if (showAbove) {
                     // Tooltip bottom edge should be slightly above the target's top edge
                     (targetBounds.top - 20.dp.toPx()).toDp()
                 } else {
-                    // Tooltip top edge should be slightly below the target's bottom edge
-                    (targetBounds.bottom + 20.dp.toPx()).toDp()
+                    // Tooltip top edge should be slightly below the target's bottom edge.
+                    // Enforce a minimum safe offset of 116.dp so it is never cut off by the status bar!
+                    val calculatedOffset = targetBounds.bottom + 20.dp.toPx()
+                    val minSafeOffset = 116.dp.toPx()
+                    calculatedOffset.coerceAtLeast(minSafeOffset).toDp()
                 }
             }
 
