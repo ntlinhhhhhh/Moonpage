@@ -12,10 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -25,6 +22,8 @@ import com.diary.moonpage.R
 import com.diary.moonpage.core.theme.MoonTheme
 import com.diary.moonpage.ui.screens.calendar.components.MonthYearPickerDialog
 import com.diary.moonpage.ui.screens.stats.components.*
+import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
+import com.diary.moonpage.ui.screens.tutorial.TutorialStep
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
@@ -173,14 +172,16 @@ fun StatisticsScreen(
                         // --- MONTHLY DASHBOARD VIEW ---
 
                         // 1. Mood Overview Card (full width, bấm → Mood Detail)
-                        MoodOverviewCard(
-                            stats = stats,
-                            themeType = uiState.themeType,
-                            isMonthly = true,
-                            year = uiState.selectedYear,
-                            month = uiState.selectedMonth,
-                            onClick = onNavigateToMoodDetail
-                        )
+                        Box(modifier = Modifier.fillMaxWidth().tutorialTarget(TutorialStep.HighlightYearlyReport)) {
+                            MoodOverviewCard(
+                                stats = stats,
+                                themeType = uiState.themeType,
+                                isMonthly = true,
+                                year = uiState.selectedYear,
+                                month = uiState.selectedMonth,
+                                onClick = onNavigateToMoodDetail
+                            )
+                        }
 
                         // 2. Sleep & Physical Row (2 columns, bấm → Sleep Detail)
                         SleepPhysicalRow(

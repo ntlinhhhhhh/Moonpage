@@ -71,9 +71,9 @@ fun StatsSleepDetailScreen(
                         averageSleepHours = s.averageSleepHours ?: 0.0,
                         averageSleepStartTime = s.averageSleepStartTime,
                         averageWakeUpTime = uiState.averageWakeUpTime,
-                        totalSteps = s.totalSteps ?: 0,
-                        totalCalories = s.totalCalories ?: 0,
-                        totalDistance = s.totalDistance ?: 0.0
+                        avgSteps = s.averageSteps?.toInt() ?: 0,
+                        avgCalories = s.averageCalories?.toInt() ?: 0,
+                        avgDistance = s.averageDistance ?: 0.0
                     )
                 }
 
@@ -81,6 +81,9 @@ fun StatsSleepDetailScreen(
                 StatsCard(title = "Sleep Analysis") {
                     SleepAnalysisChart(
                         sleepData = stats?.sleepAnalysis ?: emptyList(),
+                        year = uiState.selectedYear,
+                        month = uiState.selectedMonth,
+                        isMonthly = true,
                         themeType = uiState.themeType
                     )
                 }

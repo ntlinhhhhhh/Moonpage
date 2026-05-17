@@ -14,6 +14,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -32,9 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.core.graphics.drawable.toBitmap
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
 import androidx.compose.ui.platform.LocalFocusManager
@@ -56,7 +55,6 @@ import com.diary.moonpage.ui.components.feedback.MoonDeleteConfirmDialog
 import com.diary.moonpage.core.theme.MoonTheme
 import com.diary.moonpage.core.theme.MoonThemeType
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import java.time.LocalDate
 import java.time.LocalTime
@@ -65,6 +63,10 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalLocale
+import com.diary.moonpage.ui.screens.tutorial.LocalTutorialController
+
+import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
+import com.diary.moonpage.ui.screens.tutorial.TutorialStep
 
 /**
  * Stateful Component
@@ -252,8 +254,19 @@ fun DailyLogScreen(
     val isChanged = remember<Boolean>(uiState) {
         val existing = uiState.existingLog
         if (existing == null) {
-            // New Log: Enabled if mood or activities are selected
-            (uiState.selectedMood != null && uiState.selectedMood != 0) || uiState.selectedActivities.isNotEmpty()
+            // New Log: Enabled/Visible if ANY information has been modified/added from default
+            val moodChanged = uiState.selectedMood != null && uiState.selectedMood != 0
+            val activitiesChanged = uiState.selectedActivities.isNotEmpty()
+            val noteChanged = uiState.noteText.isNotEmpty()
+            val sleepChanged = uiState.sleepHours != 7f || uiState.sleepBedTime != LocalTime.of(0, 0) || uiState.sleepWakeTime != LocalTime.of(7, 0)
+            val menstruationChanged = uiState.isMenstruation
+            val photosChanged = uiState.dailyPhotos.isNotEmpty()
+            val musicChanged = !uiState.musicTitle.isNullOrBlank()
+            val stepsChanged = uiState.steps > 0
+            val caloriesChanged = uiState.calories > 0
+            val distanceChanged = uiState.distance > 0.0
+
+            moodChanged || activitiesChanged || noteChanged || sleepChanged || menstruationChanged || photosChanged || musicChanged || stepsChanged || caloriesChanged || distanceChanged
         } else {
             // Edit Log: Enabled if any field differs from the existing record
             val moodChanged = uiState.selectedMood != existing.baseMoodId
@@ -293,12 +306,20 @@ fun DailyLogScreen(
             )
         },
         bottomBar = {
-            DailyLogBottomBar(
-                isLoading = uiState.isLoading,
-                onSaveClick = { onEvent(DailyLogUiEvent.OnSaveClick) },
-                enabled = isChanged,
-                themeColor = MaterialTheme.colorScheme.primary
-            )
+            val tutorialActive = LocalTutorialController.current.activeStep == TutorialStep.HighlightDoneButton
+            AnimatedVisibility(
+                visible = isChanged || tutorialActive,
+                enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
+                exit = fadeOut() + slideOutVertically(targetOffsetY = { it })
+            ) {
+                DailyLogBottomBar(
+                    isLoading = uiState.isLoading,
+                    onSaveClick = { onEvent(DailyLogUiEvent.OnSaveClick) },
+                    enabled = true,
+                    themeColor = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.tutorialTarget(TutorialStep.HighlightDoneButton)
+                )
+            }
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
@@ -445,7 +466,8 @@ private fun DailyLogBottomBar(
     isLoading: Boolean,
     onSaveClick: () -> Unit,
     enabled: Boolean,
-    themeColor: Color
+    themeColor: Color,
+    modifier: Modifier = Modifier
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surface,
@@ -461,7 +483,7 @@ private fun DailyLogBottomBar(
             // Done Button (Full Width)
             Button(
                 onClick = onSaveClick,
-                modifier = Modifier
+                modifier = modifier
                     .fillMaxWidth()
                     .height(52.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -511,7 +533,33 @@ private fun DailyLogMainContent(
         }
     }
 
+    val lazyListState = rememberLazyListState()
+    val activeStep = LocalTutorialController.current.activeStep
+
+    LaunchedEffect(activeStep) {
+        when (activeStep) {
+            TutorialStep.HighlightMoodSelection -> {
+                lazyListState.animateScrollToItem(0)
+            }
+            TutorialStep.HighlightActivityCategory -> {
+                lazyListState.animateScrollToItem(1)
+            }
+            TutorialStep.HighlightActivitySelection -> {
+                lazyListState.animateScrollToItem(2)
+            }
+            TutorialStep.HighlightSleepSelection -> {
+                val expandedCount = uiState.enabledCategories.count { category ->
+                    uiState.expandedCategories.contains(category) && 
+                    (activitiesByCategory[category] ?: emptyList()).isNotEmpty()
+                }
+                lazyListState.animateScrollToItem(5 + expandedCount)
+            }
+            else -> { /* No-op */ }
+        }
+    }
+
     LazyColumn(
+        state = lazyListState,
         modifier = modifier.fillMaxSize().padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
@@ -532,11 +580,19 @@ private fun DailyLogMainContent(
 
         // 2. Horizontal Category Bar
         item {
-            DailyCategoryBar(
-                categories = uiState.enabledCategories,
-                expandedCategories = uiState.expandedCategories,
-                onCategoryClick = { onEvent(DailyLogUiEvent.OnCategoryToggle(it)) }
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .tutorialTarget(TutorialStep.HighlightActivityCategory)
+            ) {
+                DailyCategoryBar(
+                    categories = uiState.enabledCategories,
+                    expandedCategories = uiState.expandedCategories,
+                    onCategoryClick = { category ->
+                        onEvent(DailyLogUiEvent.OnCategoryToggle(category))
+                    }
+                )
+            }
         }
 
         // 3. Dynamic Expanded Activities Area
@@ -707,11 +763,15 @@ private fun DailyMoodSection(
             }
 
             Text("How was your day?", color = MoonTheme.customColors.logCardOnBg, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(
+                modifier = Modifier.fillMaxWidth().tutorialTarget(TutorialStep.HighlightMoodSelection), 
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 (5 downTo 1).forEach { id ->
                     val isSelected = selectedMood == id
                     val moodVisual = MoonIcons.Moods.getMoodVisual(id, themeType, customMoods)
                     val moodColor = moodVisual.color
+                    val tutorialController = LocalTutorialController.current
                     Box(
                         modifier = Modifier.size(54.dp).clip(CircleShape)
                             .background(
@@ -721,7 +781,9 @@ private fun DailyMoodSection(
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null
-                            ) { onMoodSelected(id) },
+                            ) { 
+                                onMoodSelected(id)
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         if (moodVisual.drawableRes != null) {
@@ -855,7 +917,7 @@ fun DailyActivitySection(
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().tutorialTarget(TutorialStep.HighlightActivitySelection),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -889,7 +951,7 @@ fun DailyActivitySection(
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically()
             ) {
-                Column {
+                Column(modifier = Modifier.fillMaxWidth()) {
                     Spacer(modifier = Modifier.height(12.dp))
                     DailyLogGrid(items = items, selectedIds = selectedIds, onItemClick = onItemClick)
                 }
@@ -919,6 +981,7 @@ fun DailyLogGrid(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.width(68.dp)
                     ) {
+                        val tutorialController = LocalTutorialController.current
                         Box(
                             modifier = Modifier
                                 .size(54.dp)
@@ -927,7 +990,9 @@ fun DailyLogGrid(
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null
-                                ) { onItemClick(item.id) },
+                                ) { 
+                                    onItemClick(item.id)
+                                },
                             contentAlignment = Alignment.Center
                         ) {
                             if (item.icon.drawableRes != null) {
@@ -1042,7 +1107,7 @@ private fun DailySleepSection(
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().tutorialTarget(TutorialStep.HighlightSleepSelection)
     ) {      
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -1063,13 +1128,16 @@ private fun DailySleepSection(
             }
             Spacer(modifier = Modifier.height(12.dp))
             
+            val tutorialController = LocalTutorialController.current
             Surface(
                 color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f) else MoonTheme.customColors.logItemBg,
                 shape = RoundedCornerShape(12.dp), 
                 modifier = Modifier.fillMaxWidth().clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
-                ) { onSleepClick() }
+                ) { 
+                    onSleepClick()
+                }
             ) {
                 if (sleepHours <= 0) {
                     Row(

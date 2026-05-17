@@ -26,7 +26,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -36,8 +35,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.R
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.screens.profile.components.*
-import com.diary.moonpage.core.theme.MoonPageTheme
 import kotlinx.coroutines.launch
+import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
+import com.diary.moonpage.ui.screens.tutorial.TutorialStep
 
 /**
  * BottomSheet type management
@@ -371,7 +371,10 @@ fun AccountScreen(
                         )
                     },
                     navigationIcon = {
-                        IconButton(onClick = onNavigateBack) {
+                        IconButton(
+                            onClick = onNavigateBack,
+                            modifier = Modifier.tutorialTarget(TutorialStep.HighlightAccountBackButton)
+                        ) {
                             Icon(
                                 Icons.Rounded.ArrowBackIosNew,
                                 contentDescription = stringResource(R.string.back),
@@ -394,12 +397,14 @@ fun AccountScreen(
             ) {
                 Spacer(modifier = Modifier.height(10.dp))
 
-                AccountAvatar(
-                    onEditClick = onAvatarEditClick,
-                    avatarUrl = avatarUrl,
-                    localAvatarPath = localAvatarPath,
-                    tempAvatarPath = tempAvatarPath
-                )
+                Box(modifier = Modifier.tutorialTarget(TutorialStep.HighlightAccountInfo)) {
+                    AccountAvatar(
+                        onEditClick = onAvatarEditClick,
+                        avatarUrl = avatarUrl,
+                        localAvatarPath = localAvatarPath,
+                        tempAvatarPath = tempAvatarPath
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 

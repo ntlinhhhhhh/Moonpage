@@ -43,9 +43,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
+import com.diary.moonpage.ui.screens.tutorial.TutorialStep
 import coil.compose.AsyncImage
-import com.diary.moonpage.data.remote.dto.auth.UserResponseDto
-import com.diary.moonpage.domain.repository.UserRepository
 import java.io.File
 import java.util.concurrent.Executor
 
@@ -224,16 +224,19 @@ fun CameraMainUI(
             }
 
             // Capture Button
-            CaptureButton(onClick = {
-                takePhoto(
-                    context = context,
-                    imageCapture = imageCapture,
-                    flashMode = flashMode,
-                    executor = mainExecutor,
-                    onImageCaptured = { uri -> onImageCaptured(uri, lensFacing) },
-                    onError = { Log.e("CameraMainUI", "Capture failed", it) }
-                )
-            })
+            CaptureButton(
+                onClick = {
+                    takePhoto(
+                        context = context,
+                        imageCapture = imageCapture,
+                        flashMode = flashMode,
+                        executor = mainExecutor,
+                        onImageCaptured = { uri -> onImageCaptured(uri, lensFacing) },
+                        onError = { Log.e("CameraMainUI", "Capture failed", it) }
+                    )
+                },
+                modifier = Modifier.tutorialTarget(TutorialStep.HighlightCameraCapture)
+            )
 
             // Flip Camera Button
             Box(
@@ -261,7 +264,8 @@ fun CameraMainUI(
                 .padding(bottom = 32.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .clickable { onNavigateToHistory() }
-                .padding(8.dp),
+                .padding(8.dp)
+                .tutorialTarget(TutorialStep.HighlightMomentHistoryButton),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(Icons.Rounded.History, "History", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))

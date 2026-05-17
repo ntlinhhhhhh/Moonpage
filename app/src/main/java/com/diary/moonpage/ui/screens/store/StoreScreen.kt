@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -32,6 +33,8 @@ import com.diary.moonpage.ui.screens.store.components.PurchaseSuccessDialog
 import com.diary.moonpage.ui.screens.store.components.StoreTopBar
 import com.diary.moonpage.ui.screens.store.components.ThemeCard
 import com.diary.moonpage.ui.screens.store.components.getThemeShades
+import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
+import com.diary.moonpage.ui.screens.tutorial.TutorialStep
 
 /**
  * Stateful Component
@@ -98,7 +101,15 @@ fun StoreScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    bottom = paddingValues.calculateBottomPadding(),
+                    start = paddingValues.calculateStartPadding(androidx.compose.ui.unit.LayoutDirection.Ltr),
+                    end = paddingValues.calculateEndPadding(androidx.compose.ui.unit.LayoutDirection.Ltr)
+                )
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -276,12 +287,15 @@ fun HomeTabContent(
             }
         }
 
-        items(
+        itemsIndexed(
             items = filteredThemes,
-            key = { it.id },
-            contentType = { "theme" }
-        ) { theme ->
-            ThemeCard(theme = theme, onClick = { onThemeClick(theme) })
+            key = { _, theme -> theme.id }
+        ) { index, theme ->
+            Box(
+                modifier = if (index == 0) Modifier.tutorialTarget(TutorialStep.HighlightStoreThemes) else Modifier
+            ) {
+                ThemeCard(theme = theme, onClick = { onThemeClick(theme) })
+            }
         }
 
         item {

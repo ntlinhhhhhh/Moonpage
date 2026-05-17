@@ -2,14 +2,11 @@ package com.diary.moonpage.ui.screens.calendar.components
 
 import com.diary.moonpage.ui.screens.calendar.CalendarViewMode
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -19,13 +16,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -39,14 +34,15 @@ import androidx.compose.ui.res.stringResource
 import com.diary.moonpage.R
 import java.time.LocalDate
 import java.time.YearMonth
-import java.time.format.TextStyle
 import java.util.*
 import com.diary.moonpage.core.theme.LocalLocale
-import com.diary.moonpage.core.theme.MoonPageTheme
 import com.diary.moonpage.core.theme.MoonTheme
 import kotlinx.coroutines.launch
 import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.core.theme.MoonThemeType
+
+import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
+import com.diary.moonpage.ui.screens.tutorial.TutorialStep
 
 @Composable
 fun CalendarTopBar(
@@ -114,6 +110,7 @@ fun CalendarTopBar(
                         indication = null
                     ) { onStreakClick() }
                     .padding(4.dp)
+                    .tutorialTarget(TutorialStep.HighlightStreak)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(

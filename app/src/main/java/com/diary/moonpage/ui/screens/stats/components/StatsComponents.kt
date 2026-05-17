@@ -42,6 +42,9 @@ import java.util.Calendar
 import java.util.Locale
 import kotlin.math.roundToInt
 
+import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
+import com.diary.moonpage.ui.screens.tutorial.TutorialStep
+
 @Composable
 fun TabItem(text: String, isSelected: Boolean, onClick: () -> Unit) {
     val color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
@@ -83,7 +86,7 @@ fun SummaryStatsView(
     longestStreak: Int
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().tutorialTarget(TutorialStep.HighlightYearlyReport),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         SummaryItem(label = "Logs", value = totalLogs.toString(), modifier = Modifier.weight(1f))
@@ -535,9 +538,9 @@ fun SleepSummaryView(
     averageSleepHours: Double,
     averageSleepStartTime: String?,
     averageWakeUpTime: String?,
-    totalSteps: Int,
-    totalCalories: Int = 0,
-    totalDistance: Double = 0.0
+    avgSteps: Int,
+    avgCalories: Int = 0,
+    avgDistance: Double = 0.0
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -592,31 +595,31 @@ fun SleepSummaryView(
                 icon = Icons.Rounded.WbSunny
             )
             SummaryItem(
-                label = "Steps",
-                value = String.format(Locale.ENGLISH, "%,d", totalSteps),
+                label = "Avg Steps",
+                value = String.format(Locale.ENGLISH, "%,d", avgSteps),
                 modifier = Modifier.weight(1f),
                 icon = Icons.AutoMirrored.Rounded.DirectionsWalk
             )
         }
         
         // Calories and Distance if available
-        if (totalCalories > 0 || totalDistance > 0.0) {
+        if (avgCalories > 0 || avgDistance > 0.0) {
              Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                if (totalCalories > 0) {
+                if (avgCalories > 0) {
                     SummaryItem(
-                        label = "Calories", 
-                        value = String.format(Locale.ENGLISH, "%,d", totalCalories), 
+                        label = "Avg Calories", 
+                        value = String.format(Locale.ENGLISH, "%,d kcal", avgCalories), 
                         modifier = Modifier.weight(1f),
                         icon = Icons.Rounded.LocalFireDepartment
                     )
                 }
-                if (totalDistance > 0.0) {
+                if (avgDistance > 0.0) {
                     SummaryItem(
-                        label = "Distance", 
-                        value = String.format(Locale.ENGLISH, "%.1f km", totalDistance), 
+                        label = "Avg Distance", 
+                        value = String.format(Locale.ENGLISH, "%.1f km", avgDistance), 
                         modifier = Modifier.weight(1f),
                         icon = Icons.Rounded.Route
                     )
@@ -629,6 +632,9 @@ fun SleepSummaryView(
 @Composable
 fun SleepAnalysisChart(
     sleepData: List<com.diary.moonpage.data.remote.dto.stats.SleepAnalysisDto>,
+    year: Int,
+    month: Int,
+    isMonthly: Boolean = true,
     themeType: MoonThemeType = MoonThemeType.DEFAULT
 ) {
     val shades = getThemeShades(themeType)
@@ -636,16 +642,43 @@ fun SleepAnalysisChart(
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
     val labelColor = onSurfaceVariant.copy(alpha = 0.6f)
 
-    // Derive month and year from data or current date
-    val calendar = Calendar.getInstance()
-    val firstDate = sleepData.firstOrNull()?.date
-    val year = firstDate?.split("-")?.get(0)?.toInt() ?: calendar.get(Calendar.YEAR)
-    val month = firstDate?.split("-")?.get(1)?.toInt() ?: (calendar.get(Calendar.MONTH) + 1)
     val daysInMonth = try { java.time.YearMonth.of(year, month).lengthOfMonth() } catch(e: Exception) { 31 }
     
-    val sleepMap = remember(sleepData) { sleepData.associateBy { it.date } }
-    val latestSleep = sleepData.lastOrNull()
-    val avgDuration = if (sleepData.isNotEmpty()) sleepData.map { it.duration }.average() else 0.0
+    // Filter sleep records by the active month (in monthly view) or active year (in annual view)
+    val filteredSleepData = remember(sleepData, year, month, isMonthly) {
+        sleepData.filter { dto ->
+            try {
+                val parts = dto.date.split("-")
+                val y = parts[0].toInt()
+                val m = parts[1].toInt()
+                if (isMonthly) {
+                    y == year && m == month
+                } else {
+                    y == year
+                }
+            } catch (e: Exception) {
+                false
+            }
+        }
+    }
+
+    // Group logs by date to correctly aggregate multiple sleep sessions on the same day (e.g. nap + night sleep)
+    val sleepGroups = remember(filteredSleepData) {
+        filteredSleepData.groupBy { dto ->
+            try {
+                val parts = dto.date.split("-")
+                val y = parts[0].toInt()
+                val m = parts[1].toInt()
+                val d = parts[2].toInt()
+                String.format(Locale.ENGLISH, "%04d-%02d-%02d", y, m, d)
+            } catch (e: Exception) {
+                dto.date
+            }
+        }
+    }
+
+    val latestSleep = filteredSleepData.lastOrNull()
+    val avgDuration = if (filteredSleepData.isNotEmpty()) filteredSleepData.map { it.duration }.average() else 0.0
     
     Column {
         // Summary Row
@@ -673,9 +706,9 @@ fun SleepAnalysisChart(
         // Dynamic bounds
         var minHourFromNoon = 6f  // Default 6 PM
         var maxHourFromNoon = 20f // Default 8 AM
-        if (sleepData.isNotEmpty()) {
-            val allStarts = sleepData.filter { it.duration > 0 }.map { parseTimeFromNoon(it.startTime?.ifBlank { null }) }
-            val allEnds = sleepData.filter { it.duration > 0 }.map { parseTimeFromNoon(it.startTime?.ifBlank { null }) + it.duration.toFloat() }
+        if (filteredSleepData.isNotEmpty()) {
+            val allStarts = filteredSleepData.filter { it.duration > 0 }.map { parseTimeFromNoon(it.startTime?.ifBlank { null }) }
+            val allEnds = filteredSleepData.filter { it.duration > 0 }.map { parseTimeFromNoon(it.startTime?.ifBlank { null }) + it.duration.toFloat() }
             if (allStarts.isNotEmpty()) {
                 minHourFromNoon = allStarts.minOrNull() ?: 6f
                 maxHourFromNoon = allEnds.maxOrNull() ?: 20f
@@ -724,49 +757,106 @@ fun SleepAnalysisChart(
                         )
                     }
 
-                    // Floating Bars for each day of the month
-                    val barWidth = (width / daysInMonth) * 0.6f
-                    val spacing = width / daysInMonth
-                    
-                    for (day in 1..daysInMonth) {
-                        val dateStr = String.format(Locale.ENGLISH, "%04d-%02d-%02d", year, month, day)
-                        val data = sleepMap[dateStr]
+                    if (isMonthly) {
+                        // Floating Bars for each day of the month (made wider as requested)
+                        val barWidth = (width / daysInMonth) * 0.75f
+                        val spacing = width / daysInMonth
                         
-                        if (data != null && data.duration > 0) {
-                            val x = (day - 1) * spacing + spacing / 2f
+                        for (day in 1..daysInMonth) {
+                            val dateStr = String.format(Locale.ENGLISH, "%04d-%02d-%02d", year, month, day)
+                            val dayLogs = sleepGroups[dateStr]
                             
-                            val startTimeFloat = parseTimeFromNoon(data.startTime?.ifBlank { null })
-                            val duration = data.duration.toFloat()
-                            
-                            val startY = ((startTimeFloat - minHourDisplay) / hourRange) * height
-                            val endY = ((startTimeFloat + duration - minHourDisplay) / hourRange) * height
-                            
-                            val barColor = when {
-                                duration < 6.0f -> Color(0xFFEF5350) // Solid Red
-                                duration <= 8.0f -> primaryColor
-                                else -> shades[1] // Solid Light Theme Green
+                            if (dayLogs != null && dayLogs.isNotEmpty()) {
+                                val x = (day - 1) * spacing + spacing / 2f
+                                
+                                val totalDurationForDay = dayLogs.sumOf { it.duration }.toFloat()
+                                val barColor = when {
+                                    totalDurationForDay < 6.0f -> Color(0xFFEF5350) // Solid Red
+                                    totalDurationForDay <= 8.0f -> primaryColor
+                                    else -> shades[1] // Solid Light Theme Green
+                                }
+                                
+                                for (session in dayLogs) {
+                                    if (session.duration <= 0) continue
+                                    val startTimeFloat = parseTimeFromNoon(session.startTime?.ifBlank { null })
+                                    val sessionDuration = session.duration.toFloat()
+                                    
+                                    val startY = ((startTimeFloat - minHourDisplay) / hourRange) * height
+                                    val endY = ((startTimeFloat + sessionDuration - minHourDisplay) / hourRange) * height
+                                    
+                                    drawRoundRect(
+                                        color = barColor,
+                                        topLeft = Offset(x - barWidth/2, startY.coerceAtLeast(0f)),
+                                        size = Size(barWidth, (endY - startY).coerceAtLeast(4f)),
+                                        cornerRadius = CornerRadius(barWidth/2, barWidth/2)
+                                    )
+                                }
                             }
+                        }
+                    } else {
+                        // Floating Bars for each of the 12 months (made narrower as requested)
+                        val barWidth = (width / 12) * 0.35f
+                        val spacing = width / 12
+                        
+                        for (m in 1..12) {
+                            val monthPrefix = String.format(Locale.ENGLISH, "%04d-%02d", year, m)
+                            val monthLogs = filteredSleepData.filter { it.date.startsWith(monthPrefix) || (try { it.date.split("-")[1].toInt() == m } catch(e: Exception) { false }) }
                             
-                            drawRoundRect(
-                                color = barColor,
-                                topLeft = Offset(x - barWidth/2, startY.coerceAtLeast(0f)),
-                                size = Size(barWidth, (endY - startY).coerceAtLeast(4f)),
-                                cornerRadius = CornerRadius(barWidth/2, barWidth/2)
-                            )
+                            if (monthLogs.isNotEmpty()) {
+                                val x = (m - 1) * spacing + spacing / 2f
+                                
+                                val dailyLogs = monthLogs.groupBy { it.date }
+                                val dailyDurations = dailyLogs.values.map { it.sumOf { dto -> dto.duration } }
+                                val dailyStarts = dailyLogs.values.map { dayList ->
+                                    val mainSession = dayList.maxByOrNull { it.duration }
+                                    parseTimeFromNoon(mainSession?.startTime?.ifBlank { null })
+                                }
+                                
+                                val avgStartTime = dailyStarts.average().toFloat()
+                                val avgDuration = dailyDurations.average().toFloat()
+                                
+                                val startY = ((avgStartTime - minHourDisplay) / hourRange) * height
+                                val endY = ((avgStartTime + avgDuration - minHourDisplay) / hourRange) * height
+                                
+                                val barColor = when {
+                                    avgDuration < 6.0f -> Color(0xFFEF5350) // Solid Red
+                                    avgDuration <= 8.0f -> primaryColor
+                                    else -> shades[1] // Solid Light Theme Green
+                                }
+                                
+                                drawRoundRect(
+                                    color = barColor,
+                                    topLeft = Offset(x - barWidth/2, startY.coerceAtLeast(0f)),
+                                    size = Size(barWidth, (endY - startY).coerceAtLeast(4f)),
+                                    cornerRadius = CornerRadius(barWidth/2, barWidth/2)
+                                )
+                            }
                         }
                     }
                 }
             }
         }
         
-        // X-Axis Labels (Dates)
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 45.dp, end = 10.dp, top = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            val labelDays = listOf(1, 6, 11, 16, 21, 26, daysInMonth).distinct()
-            labelDays.forEach { day ->
-                Text("$month/$day", fontSize = 11.sp, color = labelColor)
+        // X-Axis Labels
+        if (isMonthly) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(start = 45.dp, end = 10.dp, top = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                val labelDays = listOf(1, 6, 11, 16, 21, 26, daysInMonth).distinct()
+                labelDays.forEach { day ->
+                    Text("$month/$day", fontSize = 11.sp, color = labelColor)
+                }
+            }
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(start = 45.dp, end = 10.dp, top = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                val monthLabels = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12")
+                monthLabels.forEach { label ->
+                    Text(label, fontSize = 11.sp, color = labelColor)
+                }
             }
         }
 
@@ -779,11 +869,21 @@ fun SleepAnalysisChart(
             color = MoonTheme.customColors.logItemBg
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                val totalDays = daysInMonth
-                val reportedDays = sleepData.size
-                SleepLegendItem(color = Color(0xFFEF5350), label = "Less than 6h", value = "${sleepData.count { it.duration < 6.0 }}/$totalDays days")
-                SleepLegendItem(color = primaryColor, label = "6-8h", value = "${sleepData.count { it.duration in 6.0..8.0 }}/$totalDays days")
-                SleepLegendItem(color = shades[1], label = "Over 8h", value = "${sleepData.count { it.duration > 8.0 }}/$totalDays days")
+                val totalDays = if (isMonthly) {
+                    daysInMonth
+                } else {
+                    val isLeap = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
+                    if (isLeap) 366 else 365
+                }
+                
+                val reportedDays = sleepGroups.size
+                val lessThan6 = sleepGroups.values.count { list -> list.sumOf { it.duration } < 6.0 }
+                val between6And8 = sleepGroups.values.count { list -> list.sumOf { it.duration } in 6.0..8.0 }
+                val over8 = sleepGroups.values.count { list -> list.sumOf { it.duration } > 8.0 }
+                
+                SleepLegendItem(color = Color(0xFFEF5350), label = "Less than 6h", value = "$lessThan6/$totalDays days")
+                SleepLegendItem(color = primaryColor, label = "6-8h", value = "$between6And8/$totalDays days")
+                SleepLegendItem(color = shades[1], label = "Over 8h", value = "$over8/$totalDays days")
                 SleepLegendItem(color = Color(0xFFE0E0E0), label = "No record", value = "${totalDays - reportedDays}/$totalDays days")
             }
         }
@@ -835,10 +935,15 @@ private fun SleepLegendItem(color: Color, label: String, value: String) {
 
 private fun parseFlexibleTime(timeStr: String?): java.util.Date? {
     if (timeStr == null || timeStr.isBlank()) return null
+    val normalized = timeStr.uppercase()
+        .replace("SA", "AM")
+        .replace("CH", "PM")
+        .replace("SÁNG", "AM")
+        .replace("CHIỀU", "PM")
     val formats = listOf("hh:mm a", "HH:mm", "HH:mm:ss", "h:mm a")
     for (format in formats) {
         try {
-            return java.text.SimpleDateFormat(format, Locale.ENGLISH).parse(timeStr)
+            return java.text.SimpleDateFormat(format, Locale.ENGLISH).parse(normalized)
         } catch (e: Exception) {
             // Ignore and try next
         }
@@ -847,9 +952,9 @@ private fun parseFlexibleTime(timeStr: String?): java.util.Date? {
 }
 
 private fun parseTimeFromNoon(timeStr: String?): Float {
-    if (timeStr == null || timeStr.isBlank()) return 10f // Default to 10 PM (10 hours after Noon)
+    if (timeStr == null || timeStr.isBlank()) return 12f // Default to 12 AM/midnight (12 hours after Noon)
     try {
-        val date = parseFlexibleTime(timeStr) ?: return 10f
+        val date = parseFlexibleTime(timeStr) ?: return 12f
         
         val cal = Calendar.getInstance().apply { time = date }
         val hours = cal.get(Calendar.HOUR_OF_DAY).toFloat()

@@ -57,27 +57,26 @@ fun StatsAnnualSleepDetailScreen(
                 averageSleepHours = stats?.averageSleepHours ?: 0.0,
                 averageSleepStartTime = stats?.averageSleepStartTime,
                 averageWakeUpTime = uiState.averageWakeUpTime,
-                totalSteps = stats?.totalSteps ?: 0,
-                totalCalories = stats?.totalCalories ?: 0,
-                totalDistance = stats?.totalDistance ?: 0.0
+                avgSteps = stats?.averageSteps?.toInt() ?: 0,
+                avgCalories = stats?.averageCalories?.toInt() ?: 0,
+                avgDistance = stats?.averageDistance ?: 0.0
             )
             
-            StatsCard(title = "Sleep Trends") {
-                Text(
-                    "Annual sleep trends analysis is in development...",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 14.sp
+            StatsCard(title = "Sleep Analysis") {
+                SleepAnalysisChart(
+                    sleepData = stats?.sleepAnalysis ?: emptyList(),
+                    year = uiState.selectedYear,
+                    month = 1,
+                    isMonthly = false,
+                    themeType = uiState.themeType
                 )
             }
             
-            if (uiState.gender != "Male" && uiState.gender != "Nam") {
-                StatsCard(title = "Cycle Trends") {
-                    Text(
-                        "Annual cycle trends analysis is in development...",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 14.sp
-                    )
-                }
+            StatsCard(title = "Moods by Sleep") {
+                SleepMoodCorrelationChart(
+                    sleepData = stats?.sleepAnalysis ?: emptyList(),
+                    themeType = uiState.themeType
+                )
             }
         }
     }

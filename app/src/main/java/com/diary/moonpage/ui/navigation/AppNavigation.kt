@@ -46,11 +46,11 @@ import com.diary.moonpage.ui.screens.store.ThemeDetailRoute
 import com.diary.moonpage.ui.screens.security.CreatePasscodeRoute
 import com.diary.moonpage.ui.screens.security.LockRoute
 import com.diary.moonpage.ui.MainViewModel
-import com.diary.moonpage.ui.tutorial.LocalTutorialController
-import com.diary.moonpage.ui.tutorial.TutorialController
-import com.diary.moonpage.ui.tutorial.TutorialOverlay
-import com.diary.moonpage.ui.tutorial.TutorialViewModel
-import com.diary.moonpage.ui.tutorial.TutorialStep
+import com.diary.moonpage.ui.screens.tutorial.LocalTutorialController
+import com.diary.moonpage.ui.screens.tutorial.TutorialController
+import com.diary.moonpage.ui.screens.tutorial.TutorialOverlay
+import com.diary.moonpage.ui.screens.tutorial.TutorialViewModel
+import com.diary.moonpage.ui.screens.tutorial.TutorialStep
 import kotlinx.coroutines.launch
 
 @Composable
@@ -80,7 +80,7 @@ fun AppNavigation(
             Screen.Profile.route
         )
     }
-    val showBottomBar = currentRoute != null && currentRoute in mainAppRoutes && !isAppLocked
+    val showBottomBar = currentRoute != null && mainAppRoutes.any { currentRoute.startsWith(it) } && !isAppLocked
 
     Scaffold(
         // We keep BottomBar outside AnimatedVisibility for main routes to prevent jitter
@@ -91,13 +91,18 @@ fun AppNavigation(
 
         Box(modifier = Modifier.fillMaxSize()) {
             LaunchedEffect(currentRoute) {
-                if (currentRoute == Screen.Calendar.route || currentRoute == Screen.DailyLog.route) {
+                if (currentRoute != null && (
+                    mainAppRoutes.any { currentRoute.startsWith(it) } ||
+                    currentRoute.startsWith("daily_log_screen") ||
+                    currentRoute.startsWith("stats_mood_detail_screen") ||
+                    currentRoute.startsWith("theme_detail_screen") ||
+                    currentRoute.startsWith("account_screen") ||
+                    currentRoute.startsWith("moment_history")
+                )) {
                     tutorialViewModel.refresh()
                 }
             }
-            LaunchedEffect(currentRoute, tutorialState.step) {
-                tutorialTargetBounds = emptyMap()
-            }
+
             val tutorialController = TutorialController(
                 activeStep = tutorialState.step.takeIf { tutorialState.isVisible },
                 onTargetBoundsChanged = { step, bounds ->
@@ -640,8 +645,6 @@ fun AppNavigation(
                 }
             }
 
-            }
-
             // Fixed Bottom Bar - No more AnimatedVisibility for Tab Switches
             // But we use it here to handle global show/hide (e.g. Loading -> Calendar)
             AnimatedVisibility(
@@ -650,8 +653,11 @@ fun AppNavigation(
                 exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 }),
                 modifier = Modifier.align(Alignment.BottomCenter)
             ) {
+                val activeTabRoute = remember(currentRoute) {
+                    mainAppRoutes.find { currentRoute?.startsWith(it) == true } ?: Screen.Calendar.route
+                }
                 MoonBottomNavBar(
-                    selectedRoute = currentRoute ?: Screen.Calendar.route,
+                    selectedRoute = activeTabRoute,
                     modifier = Modifier.navigationBarsPadding(),
                     onItemSelected = { route ->
                         if (currentRoute != route) {
@@ -673,22 +679,67 @@ fun AppNavigation(
                 )
             }
 
-            if (
-                tutorialState.isVisible &&
-                (currentRoute == Screen.Calendar.route || currentRoute?.startsWith("daily_log_screen") == true)
-            ) {
+            LaunchedEffect(currentRoute) {
+                if (tutorialState.isVisible) {
+                    if (currentRoute?.startsWith("daily_log_screen") == true && tutorialState.step == TutorialStep.HighlightCurrentDay) {
+                        tutorialViewModel.next()
+                    } else if (currentRoute?.startsWith(Screen.Calendar.route) == true && tutorialState.step == TutorialStep.HighlightDoneButton) {
+                        tutorialViewModel.next()
+                    } else if (currentRoute?.startsWith(Screen.Stats.route) == true && tutorialState.step == TutorialStep.HighlightStatsTab) {
+                        tutorialViewModel.next()
+                    } else if (currentRoute?.startsWith("stats_mood_detail_screen") == true && tutorialState.step == TutorialStep.HighlightYearlyReport) {
+                        tutorialViewModel.next()
+                    } else if (currentRoute?.startsWith(Screen.Stats.route) == true && tutorialState.step == TutorialStep.HighlightMoodDetailBackButton) {
+                        tutorialViewModel.next()
+                    } else if (currentRoute?.startsWith(Screen.Camera.route) == true && tutorialState.step == TutorialStep.HighlightMomentTab) {
+                        tutorialViewModel.next()
+                    } else if (currentRoute?.startsWith("moment_history") == true && tutorialState.step == TutorialStep.HighlightMomentHistoryButton) {
+                        tutorialViewModel.next()
+                    } else if (currentRoute?.startsWith(Screen.Store.route) == true && tutorialState.step == TutorialStep.HighlightStoreTab) {
+                        tutorialViewModel.next()
+                    } else if (currentRoute?.startsWith("theme_detail_screen") == true && tutorialState.step == TutorialStep.HighlightStoreThemes) {
+                        tutorialViewModel.next()
+                    } else if (currentRoute?.startsWith(Screen.Store.route) == true && tutorialState.step == TutorialStep.HighlightThemeDetailBackButton) {
+                        tutorialViewModel.next()
+                    } else if (currentRoute?.startsWith(Screen.Profile.route) == true && tutorialState.step == TutorialStep.HighlightProfileTab) {
+                        tutorialViewModel.next()
+                    } else if (currentRoute?.startsWith("account_screen") == true && tutorialState.step == TutorialStep.HighlightProfileSettings) {
+                        tutorialViewModel.next()
+                    } else if (currentRoute?.startsWith(Screen.Profile.route) == true && tutorialState.step == TutorialStep.HighlightAccountBackButton) {
+                        tutorialViewModel.next()
+                    }
+                }
+            }
+
+            val isTutorialRoute = remember(currentRoute) {
+                if (currentRoute == null) false else {
+                    mainAppRoutes.any { currentRoute.startsWith(it) } ||
+                    currentRoute.startsWith("daily_log_screen") ||
+                    currentRoute.startsWith("stats_mood_detail_screen") ||
+                    currentRoute.startsWith("theme_detail_screen") ||
+                    currentRoute.startsWith("account_screen") ||
+                    currentRoute.startsWith("moment_history")
+                }
+            }
+
+            if (tutorialState.isVisible && isTutorialRoute) {
                 TutorialOverlay(
                     step = tutorialState.step,
                     targetBounds = tutorialTargetBounds[tutorialState.step],
                     onSkipStep = {
-                        if (tutorialState.step == TutorialStep.HighlightCurrentDay ||
-                            tutorialState.step == TutorialStep.HighlightDoneButton
-                        ) return@TutorialOverlay
-                        tutorialViewModel.skipStep()
+                        // We are no longer intercepting full-screen clicks.
+                        // Advance will happen via real UI interaction or navigation.
                     },
-                    onSkipTutorial = { tutorialViewModel.complete() },
+                    onSkipTutorial = { 
+                        tutorialViewModel.complete()
+                        navController.popBackStack(Screen.Calendar.route, false)
+                    },
+                    onNextClick = {
+                        tutorialViewModel.next()
+                    },
                     modifier = Modifier.fillMaxSize()
                 )
+            }
             }
         }
     }

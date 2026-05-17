@@ -1,4 +1,4 @@
-package com.diary.moonpage.ui.tutorial
+package com.diary.moonpage.ui.screens.tutorial
 
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier

@@ -36,6 +36,8 @@ import com.diary.moonpage.ui.screens.store.components.CuteBeanIcon
 import com.diary.moonpage.ui.screens.store.components.PurchaseSuccessDialog
 import com.diary.moonpage.ui.screens.store.components.getThemeShades
 import kotlinx.coroutines.delay
+import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
+import com.diary.moonpage.ui.screens.tutorial.TutorialStep
 
 @Composable
 fun ThemeDetailRoute(
@@ -146,7 +148,9 @@ fun ThemeDetailScreen(
             ) {
                 IconButton(
                     onClick = onNavigateBack,
-                    modifier = Modifier.align(Alignment.CenterStart)
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .tutorialTarget(TutorialStep.HighlightThemeDetailBackButton)
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.ArrowBackIosNew,
@@ -248,7 +252,9 @@ fun ThemeDetailScreen(
                         }
                     },
                     containerColor = themePrimaryColor,
-                    modifier = Modifier.padding(horizontal = 12.dp)
+                    modifier = Modifier
+                        .padding(horizontal = 12.dp)
+                        .tutorialTarget(TutorialStep.HighlightThemeDetailApply)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))

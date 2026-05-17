@@ -1,29 +1,17 @@
 package com.diary.moonpage.ui.screens.calendar.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.diary.moonpage.core.theme.MoonTheme
-import com.diary.moonpage.core.theme.getThemeShades
 import com.diary.moonpage.domain.model.DailyLog
 import com.diary.moonpage.ui.screens.calendar.FilterItem
-import com.diary.moonpage.ui.screens.calendar.components.DayItem
 import com.diary.moonpage.core.util.MoonIcons
+import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
+import com.diary.moonpage.ui.screens.tutorial.TutorialStep
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -121,6 +109,7 @@ fun CalendarGrid(
                                 isFiltered = isFiltered,
                                 themeType = themeType,
                                 isActuallyDark = isActuallyDark,
+                                modifier = Modifier.tutorialTarget(TutorialStep.HighlightCurrentDay, enabled = isToday),
                                 onClick = { if (!isReadOnly) onDateSelected(date) }
                             )
                         } else {

@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.ui.screens.stats.components.*
+import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
+import com.diary.moonpage.ui.screens.tutorial.TutorialStep
 
 @Composable
 fun StatsMoodDetailRoute(
@@ -44,7 +46,10 @@ fun StatsMoodDetailScreen(
             TopAppBar(
                 title = { Text("Mood Analysis", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(
+                        onClick = onNavigateBack,
+                        modifier = Modifier.tutorialTarget(TutorialStep.HighlightMoodDetailBackButton)
+                    ) {
                         Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back")
                     }
                 },
@@ -67,15 +72,17 @@ fun StatsMoodDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 val title = "Mood Flow" + if (!isMale) " & Cycle" else ""
-                StatsCard(title = title) {
-                    MoodFlowChart(
-                        moodFlow = stats?.moodFlow ?: emptyList(),
-                        year = uiState.selectedYear,
-                        month = uiState.selectedMonth,
-                        isMonthly = uiState.isMonthly,
-                        themeType = uiState.themeType,
-                        menstruationDates = if (!isMale) stats?.menstruationData ?: emptyList() else emptyList()
-                    )
+                Box(modifier = Modifier.fillMaxWidth().tutorialTarget(TutorialStep.HighlightMoodDetailChart)) {
+                    StatsCard(title = title) {
+                        MoodFlowChart(
+                            moodFlow = stats?.moodFlow ?: emptyList(),
+                            year = uiState.selectedYear,
+                            month = uiState.selectedMonth,
+                            isMonthly = uiState.isMonthly,
+                            themeType = uiState.themeType,
+                            menstruationDates = if (!isMale) stats?.menstruationData ?: emptyList() else emptyList()
+                        )
+                    }
                 }
 
                 StatsCard(title = "Mood Bar") {

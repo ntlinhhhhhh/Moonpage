@@ -20,6 +20,8 @@ import com.diary.moonpage.R
 import com.diary.moonpage.ui.screens.profile.components.*
 import com.diary.moonpage.ui.components.layout.SectionTitle
 import com.diary.moonpage.core.theme.*
+import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
+import com.diary.moonpage.ui.screens.tutorial.TutorialStep
 
 /**
  * Stateful Component for Profile Screen
@@ -106,12 +108,14 @@ fun ProfileScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             SectionTitle(stringResource(R.string.account))
-            UserInfoCard(
-                userId = if (userId.isNotEmpty()) "#$userId" else "",
-                userName = userName,
-                avatarUrl = avatarUrl,
-                onClick = onAccountClick
-            )
+            Box(modifier = Modifier.fillMaxWidth().tutorialTarget(TutorialStep.HighlightProfileSettings)) {
+                UserInfoCard(
+                    userId = if (userId.isNotEmpty()) "#$userId" else "",
+                    userName = userName,
+                    avatarUrl = avatarUrl,
+                    onClick = onAccountClick
+                )
+            }
 
             SectionTitle(stringResource(R.string.my_records))
             Row(

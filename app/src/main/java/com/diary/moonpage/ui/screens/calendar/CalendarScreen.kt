@@ -20,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -32,8 +31,6 @@ import com.diary.moonpage.core.util.MoonIcon
 import com.diary.moonpage.ui.screens.calendar.components.*
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.components.feedback.MoonDeleteConfirmDialog
-import com.diary.moonpage.ui.tutorial.TutorialStep
-import com.diary.moonpage.ui.tutorial.tutorialTarget
 import java.time.LocalDate
 import java.time.YearMonth
 

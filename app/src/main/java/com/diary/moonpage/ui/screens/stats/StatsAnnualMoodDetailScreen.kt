@@ -68,13 +68,6 @@ fun StatsAnnualMoodDetailScreen(
                     themeType = uiState.themeType
                 )
             }
-            StatsCard(title = "Monthly Average") {
-                MonthlyMoodAverageChart(
-                    yearlyMoodGrid = stats?.yearlyMoodGrid ?: emptyList(),
-                    year = uiState.selectedYear,
-                    themeType = uiState.themeType
-                )
-            }
         }
     }
 }

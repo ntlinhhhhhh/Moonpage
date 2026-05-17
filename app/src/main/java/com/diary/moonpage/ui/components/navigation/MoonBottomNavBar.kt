@@ -3,10 +3,8 @@ package com.diary.moonpage.ui.components.navigation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.CalendarMonth
@@ -26,10 +24,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.diary.moonpage.ui.navigation.Screen
 import com.diary.moonpage.core.theme.*
-
-import com.diary.moonpage.core.theme.MoonUnselectedLight
-import com.diary.moonpage.core.theme.MoonBottomNavBgDark
-import com.diary.moonpage.core.theme.MoonUnselectedDark
+import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
+import com.diary.moonpage.ui.screens.tutorial.TutorialStep
 
 @Composable
 fun MoonBottomNavBar(
@@ -77,7 +73,8 @@ fun MoonBottomNavBar(
                 isSelected = selectedRoute == stats,
                 activeColor = activeColor,
                 inactiveColor = inactiveColor,
-                onClick = { onItemSelected(stats) }
+                onClick = { onItemSelected(stats) },
+                modifier = Modifier.tutorialTarget(TutorialStep.HighlightStatsTab)
             )
 
             Box(
@@ -85,7 +82,8 @@ fun MoonBottomNavBar(
                     .size(56.dp)
                     .clip(CircleShape)
                     .background(cameraBgColor)
-                    .clickable { onItemSelected(camera) },
+                    .clickable { onItemSelected(camera) }
+                    .tutorialTarget(TutorialStep.HighlightMomentTab),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -102,7 +100,8 @@ fun MoonBottomNavBar(
                 isSelected = selectedRoute == store,
                 activeColor = activeColor,
                 inactiveColor = inactiveColor,
-                onClick = { onItemSelected(store) }
+                onClick = { onItemSelected(store) },
+                modifier = Modifier.tutorialTarget(TutorialStep.HighlightStoreTab)
             )
 
             NavBarItem(
@@ -111,7 +110,8 @@ fun MoonBottomNavBar(
                 isSelected = selectedRoute == profile,
                 activeColor = activeColor,
                 inactiveColor = inactiveColor,
-                onClick = { onItemSelected(profile) }
+                onClick = { onItemSelected(profile) },
+                modifier = Modifier.tutorialTarget(TutorialStep.HighlightProfileTab)
             )
         }
     }
@@ -124,13 +124,14 @@ private fun NavBarItem(
     isSelected: Boolean,
     activeColor: Color,
     inactiveColor: Color,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     val color = if (isSelected) activeColor else inactiveColor
     val interactionSource = remember { MutableInteractionSource() }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
