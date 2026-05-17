@@ -32,6 +32,7 @@ import com.diary.moonpage.core.util.MoonIcon
 import com.diary.moonpage.ui.screens.calendar.components.*
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.components.feedback.MoonDeleteConfirmDialog
+import com.diary.moonpage.ui.tutorial.LocalTutorialController
 import com.diary.moonpage.ui.tutorial.TutorialStep
 import com.diary.moonpage.ui.tutorial.tutorialTarget
 import java.time.LocalDate
@@ -54,6 +55,7 @@ fun CalendarRoute(
     viewModel: CalendarViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val tutorialController = LocalTutorialController.current
 
     LaunchedEffect(createdLogDate) {
         if (createdLogDate != null) {
@@ -84,7 +86,15 @@ fun CalendarRoute(
         onStreakClick = {
             viewModel.showSnackbar("You've maintained a ${uiState.currentStreak}-day streak!")
         },
-        showSnackbar = viewModel::showSnackbar
+        showSnackbar = viewModel::showSnackbar,
+        onDateSelected = { date ->
+            if (tutorialController.activeStep == TutorialStep.HighlightCurrentDay && date == LocalDate.now()) {
+                tutorialController.onStepCompleted(TutorialStep.HighlightCurrentDay)
+            }
+            if (uiState.dailyLogs[date] == null) {
+                onNavigateToDailyLog(date.toString())
+            }
+        }
     )
 }
 
@@ -101,7 +111,8 @@ fun CalendarScreen(
     onNavigateToShareCalendar: (String) -> Unit,
     onNavigateToThemeCalendar: () -> Unit,
     onStreakClick: () -> Unit,
-    showSnackbar: (String) -> Unit
+    showSnackbar: (String) -> Unit,
+    onDateSelected: (LocalDate) -> Unit = {}
 ) {
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var dateToDelete by remember { mutableStateOf<LocalDate?>(null) }
@@ -210,9 +221,7 @@ fun CalendarScreen(
                                             showSnackbar("You cannot record for a future date!")
                                         } else {
                                             onEvent(CalendarUiEvent.OnDateSelected(date))
-                                            if (uiState.dailyLogs[date] == null) {
-                                                onNavigateToDailyLog(date.toString())
-                                            }
+                                            onDateSelected(date)
                                         }
                                     }
                                 )

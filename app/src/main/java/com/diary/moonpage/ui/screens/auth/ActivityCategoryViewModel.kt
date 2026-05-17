@@ -16,7 +16,8 @@ import javax.inject.Inject
 class ActivityCategoryViewModel @Inject constructor(
     private val activityPreferencesManager: ActivityPreferencesManager,
     private val onboardingPrefsManager: OnboardingPrefsManager,
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val settingsPreferencesManager: com.diary.moonpage.core.util.SettingsPreferencesManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ActivityCategoryUiState())
@@ -63,6 +64,7 @@ class ActivityCategoryViewModel @Inject constructor(
         val userId = tokenManager.getUserId() ?: return
         if (userId.isNotBlank()) {
             onboardingPrefsManager.setOnboardingCompleted(userId)
+            settingsPreferencesManager.setTutorialCompleted(true)
         }
     }
 }

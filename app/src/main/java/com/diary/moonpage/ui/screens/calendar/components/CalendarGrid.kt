@@ -24,6 +24,8 @@ import com.diary.moonpage.domain.model.DailyLog
 import com.diary.moonpage.ui.screens.calendar.FilterItem
 import com.diary.moonpage.ui.screens.calendar.components.DayItem
 import com.diary.moonpage.core.util.MoonIcons
+import com.diary.moonpage.ui.tutorial.TutorialStep
+import com.diary.moonpage.ui.tutorial.tutorialTarget
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -121,6 +123,7 @@ fun CalendarGrid(
                                 isFiltered = isFiltered,
                                 themeType = themeType,
                                 isActuallyDark = isActuallyDark,
+                                modifier = if (isToday) Modifier.tutorialTarget(TutorialStep.HighlightCurrentDay) else Modifier,
                                 onClick = { if (!isReadOnly) onDateSelected(date) }
                             )
                         } else {

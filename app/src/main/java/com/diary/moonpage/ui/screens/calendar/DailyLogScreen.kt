@@ -55,6 +55,9 @@ import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.components.feedback.MoonDeleteConfirmDialog
 import com.diary.moonpage.core.theme.MoonTheme
 import com.diary.moonpage.core.theme.MoonThemeType
+import com.diary.moonpage.ui.tutorial.LocalTutorialController
+import com.diary.moonpage.ui.tutorial.TutorialStep
+import com.diary.moonpage.ui.tutorial.tutorialTarget
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
@@ -85,6 +88,7 @@ fun DailyLogRoute(
     val scope = rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
     var photoToDelete by remember { mutableStateOf<String?>(null) }
+    val tutorialController = LocalTutorialController.current
 
     val locationPermissionState = rememberMultiplePermissionsState(
         permissions = listOf(
@@ -167,13 +171,46 @@ fun DailyLogRoute(
         contract = ActivityResultContracts.PickMultipleVisualMedia(10)
     ) { uris ->
         if (uris.isNotEmpty()) {
+            if (tutorialController.activeStep == TutorialStep.HighlightTodayPhotos) {
+                tutorialController.onStepCompleted(TutorialStep.HighlightTodayPhotos)
+            }
             viewModel.onEvent(DailyLogUiEvent.OnPhotosChanged(uris.map { it.toString() }))
         }
     }
 
     DailyLogScreen(
         uiState = uiState,
-        onEvent = viewModel::onEvent,
+        onEvent = { event ->
+            when (event) {
+                is DailyLogUiEvent.OnMoodSelected -> {
+                    if (tutorialController.activeStep == TutorialStep.HighlightHowWasYourDay) {
+                        tutorialController.onStepCompleted(TutorialStep.HighlightHowWasYourDay)
+                    }
+                }
+                is DailyLogUiEvent.OnCategoryToggle -> {
+                    if (tutorialController.activeStep == TutorialStep.HighlightHobbiesButton) {
+                        tutorialController.onStepCompleted(TutorialStep.HighlightHobbiesButton)
+                    }
+                }
+                is DailyLogUiEvent.OnActivityToggled -> {
+                    if (tutorialController.activeStep == TutorialStep.HighlightFirstHobby) {
+                        tutorialController.onStepCompleted(TutorialStep.HighlightFirstHobby)
+                    }
+                }
+                is DailyLogUiEvent.OnNoteChanged -> {
+                    if (tutorialController.activeStep == TutorialStep.HighlightTodayNotes) {
+                        tutorialController.onStepCompleted(TutorialStep.HighlightTodayNotes)
+                    }
+                }
+                is DailyLogUiEvent.OnSaveClick -> {
+                    if (tutorialController.activeStep == TutorialStep.HighlightDoneButton) {
+                        tutorialController.onStepCompleted(TutorialStep.HighlightDoneButton)
+                    }
+                }
+                else -> {}
+            }
+            viewModel.onEvent(event)
+        },
         onNavigateBack = onNavigateBack,
         onNavigateToMusic = onNavigateToMusic,
         onNavigateToMenstrualCycle = onNavigateToMenstrualCycle,
@@ -189,7 +226,8 @@ fun DailyLogRoute(
         snackbarHostState = snackbarHostState,
         onNavigateToShare = onNavigateToShare,
         onPhotoDeleteRequest = { photoToDelete = it },
-        onPhotoZoomRequest = { url -> viewModel.onEvent(DailyLogUiEvent.OnPhotoZoom(url)) }
+        onPhotoZoomRequest = { url -> viewModel.onEvent(DailyLogUiEvent.OnPhotoZoom(url)) },
+        tutorialStep = tutorialController.activeStep
     )
 
     if (uiState.zoomImageUrl != null) {
@@ -247,7 +285,8 @@ fun DailyLogScreen(
     scope: kotlinx.coroutines.CoroutineScope,
     snackbarHostState: SnackbarHostState,
     onPhotoDeleteRequest: (String) -> Unit,
-    onPhotoZoomRequest: (String) -> Unit
+    onPhotoZoomRequest: (String) -> Unit,
+    tutorialStep: TutorialStep? = null
 ) {
     val isChanged = remember<Boolean>(uiState) {
         val existing = uiState.existingLog
@@ -297,7 +336,8 @@ fun DailyLogScreen(
                 isLoading = uiState.isLoading,
                 onSaveClick = { onEvent(DailyLogUiEvent.OnSaveClick) },
                 enabled = isChanged,
-                themeColor = MaterialTheme.colorScheme.primary
+                themeColor = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.tutorialTarget(TutorialStep.HighlightDoneButton)
             )
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -313,7 +353,8 @@ fun DailyLogScreen(
                 onImportSteps = onImportSteps,
                 onLinkMusicAccount = onLinkMusicAccount,
                 onPhotoDeleteRequest = onPhotoDeleteRequest,
-                onPhotoZoomRequest = onPhotoZoomRequest
+                onPhotoZoomRequest = onPhotoZoomRequest,
+                tutorialStep = tutorialStep
             )
             
             MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
@@ -445,12 +486,13 @@ private fun DailyLogBottomBar(
     isLoading: Boolean,
     onSaveClick: () -> Unit,
     enabled: Boolean,
-    themeColor: Color
+    themeColor: Color,
+    modifier: Modifier = Modifier
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 4.dp,
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {
         Box(
             modifier = Modifier
@@ -493,7 +535,8 @@ private fun DailyLogMainContent(
     onImportSteps: () -> Unit,
     onLinkMusicAccount: () -> Unit,
     onPhotoDeleteRequest: (String) -> Unit,
-    onPhotoZoomRequest: (String) -> Unit
+    onPhotoZoomRequest: (String) -> Unit,
+    tutorialStep: TutorialStep? = null
 ) {
     val themeType = uiState.themeType
 
@@ -526,7 +569,8 @@ private fun DailyLogMainContent(
                     if (onMoodId != 0) {
                         onEvent(DailyLogUiEvent.OnMoodSelected(onMoodId))
                     }
-                }
+                },
+                modifier = Modifier.tutorialTarget(TutorialStep.HighlightHowWasYourDay)
             )
         }
 
@@ -535,7 +579,8 @@ private fun DailyLogMainContent(
             DailyCategoryBar(
                 categories = uiState.enabledCategories,
                 expandedCategories = uiState.expandedCategories,
-                onCategoryClick = { onEvent(DailyLogUiEvent.OnCategoryToggle(it)) }
+                onCategoryClick = { onEvent(DailyLogUiEvent.OnCategoryToggle(it)) },
+                modifier = Modifier.tutorialTarget(TutorialStep.HighlightHobbiesButton)
             )
         }
 
@@ -551,7 +596,8 @@ private fun DailyLogMainContent(
                             items = categoryActivities,
                             selectedIds = uiState.selectedActivities,
                             onItemClick = { onEvent(DailyLogUiEvent.OnActivityToggled(it)) },
-                            isInitiallyCollapsed = false
+                            isInitiallyCollapsed = false,
+                            tutorialStep = tutorialStep
                         )
                     }
                 }
@@ -562,7 +608,8 @@ private fun DailyLogMainContent(
         item {
             DailyNoteSection(
                 noteText = uiState.noteText,
-                onNoteChanged = { onEvent(DailyLogUiEvent.OnNoteChanged(it)) }
+                onNoteChanged = { onEvent(DailyLogUiEvent.OnNoteChanged(it)) },
+                modifier = Modifier.tutorialTarget(TutorialStep.HighlightTodayNotes)
             )
         }
 
@@ -573,7 +620,8 @@ private fun DailyLogMainContent(
                 momentPhotos = uiState.momentPhotos,
                 onPhotoClick = onNavigateToDailyPhoto,
                 onPhotoRemove = onPhotoDeleteRequest,
-                onPhotoZoom = onPhotoZoomRequest
+                onPhotoZoom = onPhotoZoomRequest,
+                modifier = Modifier.tutorialTarget(TutorialStep.HighlightTodayPhotos)
             )
         }
 
@@ -593,7 +641,8 @@ private fun DailyLogMainContent(
                         artist = track.artists.firstOrNull()?.name ?: "Unknown",
                         imageUrl = track.album.images.firstOrNull()?.url ?: ""
                     ))
-                }
+                },
+                modifier = Modifier
             )
         }
 
@@ -605,7 +654,8 @@ private fun DailyLogMainContent(
                 wakeTime = uiState.sleepWakeTime,
                 isImporting = uiState.isImportingHealth,
                 onSleepClick = { onEvent(DailyLogUiEvent.OnSleepRecordClick) },
-                onImportClick = onImportSteps
+                onImportClick = onImportSteps,
+                modifier = Modifier
             )
         }
 
@@ -616,7 +666,8 @@ private fun DailyLogMainContent(
                 calories = uiState.calories,
                 distance = uiState.distance,
                 isImporting = uiState.isImportingHealth,
-                onImportClick = onImportSteps
+                onImportClick = onImportSteps,
+                modifier = Modifier
             )
         }
 
@@ -626,7 +677,8 @@ private fun DailyLogMainContent(
                 DailyMenstruationSection(
                     isMenstruation = uiState.isMenstruation,
                     onToggle = { onEvent(DailyLogUiEvent.OnMenstruationToggled(it)) },
-                    onMenstrualClick = onNavigateToMenstrualCycle
+                    onMenstrualClick = onNavigateToMenstrualCycle,
+                    modifier = Modifier
                 )
             }
         }
@@ -639,10 +691,11 @@ private fun DailyLogMainContent(
 private fun DailyCategoryBar(
     categories: List<String>,
     expandedCategories: Set<String>,
-    onCategoryClick: (String) -> Unit
+    onCategoryClick: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     androidx.compose.foundation.lazy.LazyRow(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        modifier = modifier.fillMaxWidth().padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(categories) { category ->
@@ -668,6 +721,7 @@ private fun DailyCategoryBar(
 
 @Composable
 private fun DailyMoodSection(
+    modifier: Modifier = Modifier,
     selectedMood: Int?,
     themeType: MoonThemeType,
     customMoods: Map<Int, MoonIcon>? = null,
@@ -677,7 +731,7 @@ private fun DailyMoodSection(
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
             if (suggestedWeather != null) {
@@ -740,6 +794,7 @@ private fun DailyMoodSection(
 
 @Composable
 private fun DailyMusicSection(
+    modifier: Modifier = Modifier,
     musicTitle: String?, 
     artistName: String?,
     albumArtUrl: String?,
@@ -749,7 +804,7 @@ private fun DailyMusicSection(
     onLinkAccount: () -> Unit,
     onTrackSelected: (com.diary.moonpage.data.remote.api.SpotifyTrack) -> Unit
 ) {
-    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {
+    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text("Music", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 16.sp)
@@ -847,7 +902,8 @@ fun DailyActivitySection(
     items: List<DailyActivity>,
     selectedIds: List<String>,
     onItemClick: (String) -> Unit,
-    isInitiallyCollapsed: Boolean = true
+    isInitiallyCollapsed: Boolean = true,
+    tutorialStep: TutorialStep? = null
 ) {
     var isCollapsed by remember { mutableStateOf(isInitiallyCollapsed) }
     val rotation by animateFloatAsState(targetValue = if (isCollapsed) -90f else 0f, label = "")
@@ -891,7 +947,7 @@ fun DailyActivitySection(
             ) {
                 Column {
                     Spacer(modifier = Modifier.height(12.dp))
-                    DailyLogGrid(items = items, selectedIds = selectedIds, onItemClick = onItemClick)
+                    DailyLogGrid(items = items, selectedIds = selectedIds, onItemClick = onItemClick, tutorialStep = tutorialStep)
                 }
             }
         }
@@ -902,22 +958,30 @@ fun DailyActivitySection(
 fun DailyLogGrid(
     items: List<DailyActivity>,
     selectedIds: List<String>,
-    onItemClick: (String) -> Unit
+    onItemClick: (String) -> Unit,
+    tutorialStep: TutorialStep? = null
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        items.chunked(4).forEach { rowItems ->
+        items.chunked(4).forEachIndexed { rowIndex, rowItems ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                rowItems.forEach { item ->
+                rowItems.forEachIndexed { itemIndex, item ->
                     val isSelected = selectedIds.contains(item.id)
+                    val isFirstHobby = rowIndex == 0 && itemIndex == 0
+                    
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.width(68.dp)
+                        modifier = Modifier
+                            .width(68.dp)
+                            .then(
+                                if (isFirstHobby) Modifier.tutorialTarget(TutorialStep.HighlightFirstHobby) 
+                                else Modifier
+                            )
                     ) {
                         Box(
                             modifier = Modifier
@@ -978,8 +1042,15 @@ fun DailyLogGrid(
 }
 
 @Composable
-private fun DailyHealthSection(steps: Int, calories: Int, distance: Double, isImporting: Boolean, onImportClick: () -> Unit) {
-    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {
+private fun DailyHealthSection(
+    modifier: Modifier = Modifier,
+    steps: Int,
+    calories: Int,
+    distance: Double,
+    isImporting: Boolean,
+    onImportClick: () -> Unit
+) {
+    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text("Health & Steps", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 16.sp)
@@ -1017,7 +1088,7 @@ private fun DailyHealthSection(steps: Int, calories: Int, distance: Double, isIm
                 HealthStatItem(
                     modifier = Modifier.weight(1f),
                     label = "Distance",
-                    value = String.format(LocalLocale.current.platformLocale, "%.1f km", distance),
+                    value = String.format(androidx.compose.ui.platform.LocalConfiguration.current.locales.get(0), "%.1f km", distance),
                     icon = Icons.Rounded.Route,
                     color = Color(0xFF42A5F5)
                 )
@@ -1028,6 +1099,7 @@ private fun DailyHealthSection(steps: Int, calories: Int, distance: Double, isIm
 
 @Composable
 private fun DailySleepSection(
+    modifier: Modifier = Modifier,
     sleepHours: Float,
     bedTime: LocalTime,
     wakeTime: LocalTime,
@@ -1035,14 +1107,15 @@ private fun DailySleepSection(
     onSleepClick: () -> Unit,
     onImportClick: () -> Unit
 ) {
-    val fmt = DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH)
+    val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales.get(0)
+    val fmt = DateTimeFormatter.ofPattern("hh:mm a", locale)
     val hrs = sleepHours.toInt()
     val mins = ((sleepHours - hrs) * 60).toInt()
     
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {      
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -1147,11 +1220,16 @@ fun HealthStatItem(modifier: Modifier, label: String, value: String, icon: andro
 }
 
 @Composable
-private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean) -> Unit, onMenstrualClick: () -> Unit) {
+private fun DailyMenstruationSection(
+    modifier: Modifier = Modifier,
+    isMenstruation: Boolean, 
+    onToggle: (Boolean) -> Unit, 
+    onMenstrualClick: () -> Unit
+) {
     Card(
         shape = RoundedCornerShape(16.dp), 
         colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), 
-        modifier = Modifier.fillMaxWidth().clickable(
+        modifier = modifier.fillMaxWidth().clickable(
             interactionSource = remember { MutableInteractionSource() },
             indication = null
         ) { onMenstrualClick() }
@@ -1199,8 +1277,12 @@ private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean
 }
 
 @Composable
-private fun DailyNoteSection(noteText: String, onNoteChanged: (String) -> Unit) {
-    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {      
+private fun DailyNoteSection(
+    modifier: Modifier = Modifier,
+    noteText: String, 
+    onNoteChanged: (String) -> Unit
+) {
+    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = modifier.fillMaxWidth()) {      
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Today's note", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
             Spacer(modifier = Modifier.height(12.dp))
@@ -1230,10 +1312,11 @@ private fun DailyPhotoSection(
     momentPhotos: List<String>,
     onPhotoClick: () -> Unit,
     onPhotoRemove: (String) -> Unit,
-    onPhotoZoom: (String) -> Unit
+    onPhotoZoom: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val allPhotos = (logPhotos + momentPhotos).distinct()
-    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {
+    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Today's photo", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
             Spacer(modifier = Modifier.height(12.dp))
