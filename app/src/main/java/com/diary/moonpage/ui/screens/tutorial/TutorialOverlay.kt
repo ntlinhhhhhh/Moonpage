@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -49,7 +50,7 @@ fun TutorialOverlay(
         TutorialStep.HighlightMoodDetailBackButton -> "Tap here to return to the statistics page."
         TutorialStep.HighlightMomentTab -> "Review all the photos you have captured."
         TutorialStep.HighlightCameraCapture -> "Capture a new moment or upload your image."
-        TutorialStep.HighlightMomentHistoryButton -> "Tap here to view your captured photos and history feed."
+        TutorialStep.HighlightMomentHistoryButton -> if (targetBounds == null) "This is your moment history feed. Swipe or tap to view your captured photos." else "Tap here to view your captured photos and history feed."
         TutorialStep.HighlightStoreTab -> "Explore beautiful new themes and icons here."
         TutorialStep.HighlightStoreThemes -> "Discover gorgeous diary themes. Tap a theme to view details."
         TutorialStep.HighlightThemeDetailApply -> "Preview and apply this theme to your diary."
@@ -242,6 +243,19 @@ fun TutorialOverlay(
                 } else {
                     TooltipContent(message = message, showNextButton = showNextButton, onNextClick = onNextClick)
                 }
+            }
+        } else {
+            val tooltipPadding = 24.dp
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(top = 116.dp)
+                    .padding(horizontal = tooltipPadding)
+                    .align(Alignment.TopCenter),
+                contentAlignment = Alignment.Center
+            ) {
+                TooltipContent(message = message, showNextButton = showNextButton, onNextClick = onNextClick)
             }
         }
     }

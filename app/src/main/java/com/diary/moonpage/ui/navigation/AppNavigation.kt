@@ -679,7 +679,7 @@ fun AppNavigation(
                 )
             }
 
-            LaunchedEffect(currentRoute) {
+            LaunchedEffect(currentRoute, tutorialState.step) {
                 if (tutorialState.isVisible) {
                     if (currentRoute?.startsWith("daily_log_screen") == true && tutorialState.step == TutorialStep.HighlightCurrentDay) {
                         tutorialViewModel.next()
@@ -693,8 +693,8 @@ fun AppNavigation(
                         tutorialViewModel.next()
                     } else if (currentRoute?.startsWith(Screen.Camera.route) == true && tutorialState.step == TutorialStep.HighlightMomentTab) {
                         tutorialViewModel.next()
-                    } else if (currentRoute?.startsWith("moment_history") == true && tutorialState.step == TutorialStep.HighlightMomentHistoryButton) {
-                        tutorialViewModel.next()
+                    } else if (currentRoute?.startsWith("moment_history") == true && tutorialState.step == TutorialStep.HighlightStoreTab) {
+                        navController.popBackStack()
                     } else if (currentRoute?.startsWith(Screen.Store.route) == true && tutorialState.step == TutorialStep.HighlightStoreTab) {
                         tutorialViewModel.next()
                     } else if (currentRoute?.startsWith("theme_detail_screen") == true && tutorialState.step == TutorialStep.HighlightStoreThemes) {
