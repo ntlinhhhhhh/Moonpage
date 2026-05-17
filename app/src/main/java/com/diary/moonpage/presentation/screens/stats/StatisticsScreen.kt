@@ -2,6 +2,7 @@ package com.diary.moonpage.presentation.screens.stats
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
@@ -22,13 +23,17 @@ import androidx.compose.ui.res.stringResource
 import com.diary.moonpage.R
 import com.diary.moonpage.presentation.components.calendar.MonthYearPickerDialog
 import com.diary.moonpage.presentation.components.stats.*
-import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
 @Composable
 fun StatisticsScreen(
-    viewModel: StatisticsViewModel = hiltViewModel()
+    viewModel: StatisticsViewModel = hiltViewModel(),
+    onNavigateToMoodDetail: () -> Unit = {},
+    onNavigateToSleepDetail: () -> Unit = {},
+    onNavigateToActivityDetail: () -> Unit = {},
+    onNavigateToInsightsDetail: () -> Unit = {},
+    onNavigateToMusicDetail: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -38,7 +43,12 @@ fun StatisticsScreen(
         onTabChange = viewModel::setMonthly,
         onIconClick = viewModel::onIconClick,
         onShareRecap = viewModel::shareRecapCard,
-        onClearCaptureError = viewModel::clearCaptureError
+        onClearCaptureError = viewModel::clearCaptureError,
+        onNavigateToMoodDetail = onNavigateToMoodDetail,
+        onNavigateToSleepDetail = onNavigateToSleepDetail,
+        onNavigateToActivityDetail = onNavigateToActivityDetail,
+        onNavigateToInsightsDetail = onNavigateToInsightsDetail,
+        onNavigateToMusicDetail = onNavigateToMusicDetail
     )
 }
 
@@ -50,11 +60,16 @@ fun StatisticsScreenContent(
     onTabChange: (Boolean) -> Unit,
     onIconClick: (String?) -> Unit,
     onShareRecap: (android.content.Context, android.graphics.Bitmap) -> Unit,
-    onClearCaptureError: () -> Unit
+    onClearCaptureError: () -> Unit,
+    onNavigateToMoodDetail: () -> Unit = {},
+    onNavigateToSleepDetail: () -> Unit = {},
+    onNavigateToActivityDetail: () -> Unit = {},
+    onNavigateToInsightsDetail: () -> Unit = {},
+    onNavigateToMusicDetail: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     var showDatePicker by remember { mutableStateOf(false) }
-    
+
     val context = androidx.compose.ui.platform.LocalContext.current
     val viewContext = androidx.compose.ui.platform.LocalView.current
 
@@ -72,7 +87,13 @@ fun StatisticsScreenContent(
             ) {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     CenterAlignedTopAppBar(
-                        title = { Text(stringResource(R.string.report), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface) },
+                        title = {
+                            Text(
+                                stringResource(R.string.report),
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        },
                         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
                     )
 
@@ -117,96 +138,61 @@ fun StatisticsScreenContent(
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             if (uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = MaterialTheme.colorScheme.primary)
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = MaterialTheme.colorScheme.primary
+                )
             } else {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .verticalScroll(scrollState)
                         .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     val isMale = uiState.gender == "Male" || uiState.gender == "Nam"
-                    
+
                     if (uiState.isMonthly) {
-                        // --- MONTHLY VIEW ---
-                        
-                        // 0.1 Sleep & Steps Summary
-                        stats?.let { s ->
-                            SleepSummaryView(
-                                averageSleepHours = s.averageSleepHours ?: 0.0,
-                                averageSleepStartTime = s.averageSleepStartTime,
-                                averageWakeUpTime = uiState.averageWakeUpTime,
-                                totalSteps = s.totalSteps ?: 0,
-                                totalCalories = s.totalCalories ?: 0,
-                                totalDistance = s.totalDistance ?: 0.0
-                            )
-                        }
-                        
-                        // 1. Mood Flow & Menstruation
-                        StatsCard(title = stringResource(R.string.mood_flow) + if (!isMale) " & Cycle" else "") {
-                            MoodFlowChart(
-                                moodFlow = stats?.moodFlow ?: emptyList(), 
-                                year = uiState.selectedYear, 
-                                month = uiState.selectedMonth, 
-                                isMonthly = true, 
-                                themeType = uiState.themeType,
-                                menstruationDates = if (!isMale) stats?.menstruationData ?: emptyList() else emptyList()
-                            )
-                        }
+                        // --- MONTHLY DASHBOARD VIEW ---
 
-                        // 2. Sleep Analysis
-                        StatsCard(title = stringResource(R.string.sleep_analysis)) {
-                            SleepAnalysisChart(stats?.sleepAnalysis ?: emptyList(), themeType = uiState.themeType)
-                        }
+                        // 1. Mood Overview Card (full width, bấm → Mood Detail)
+                        MoodOverviewCard(
+                            stats = stats,
+                            themeType = uiState.themeType,
+                            onClick = onNavigateToMoodDetail
+                        )
 
-                        // 3. Moods by Sleep
-                        StatsCard(title = stringResource(R.string.moods_by_sleep)) {
-                            SleepMoodCorrelationChart(stats?.sleepAnalysis ?: emptyList(), uiState.themeType)
-                        }
+                        // 2. Sleep & Physical Row (2 columns, bấm → Sleep Detail)
+                        SleepPhysicalRow(
+                            stats = stats,
+                            onClick = onNavigateToSleepDetail
+                        )
 
-                        // 4. Mood Bar
-                        StatsCard(title = stringResource(R.string.mood_bar)) {
-                            MoodDistributionView(stats?.moodDistribution ?: emptyList(), themeType = uiState.themeType)
-                        }
-                        
-                        // 5. Activity Stats (Frequently Recorded)
-                        StatsCard(title = stringResource(R.string.activity_stats)) {
-                            FrequentlyRecordedView(
-                                activities = frequentlyRecorded,
-                                onIconClick = onIconClick
-                            )
-                        }
+                        // 3. Activity & Habits Card (bấm → Activity Detail)
+                        ActivityHabitsCard(
+                            frequentlyRecorded = frequentlyRecorded,
+                            onClick = onNavigateToActivityDetail
+                        )
 
+                        // 4. Insights & Deep Dive Card (bấm → Insights Detail)
+                        InsightsTeaserCard(
+                            bestActivities = bestActivities,
+                            onClick = onNavigateToInsightsDetail
+                        )
 
-                        // 6. Best & Worst
-                        StatsCard(title = stringResource(R.string.best_worst)) {
-                            BestAndWorstView(bestActivities, worstActivities)
-                        }
-
-                        // 7. Icon Deep Dive
-                        StatsCard(title = stringResource(R.string.icon_deep_dive)) {
-                            IconDeepDiveView(
-                                activityId = uiState.selectedIconId,
-                                allActivities = stats?.bestActivities ?: emptyList(),
-                                themeType = uiState.themeType
-                            )
-                        }
-
-                        // 8. Music Summary
-                        StatsCard(title = stringResource(R.string.top_music)) {
-                            MusicSummaryView(stats?.musicSummary ?: emptyList())
-                        }
+                        // 5. Top Music Card (bấm → Music Detail)
+                        TopMusicCard(
+                            musicSummary = stats?.musicSummary,
+                            onClick = onNavigateToMusicDetail
+                        )
 
                     } else {
-                        // --- ANNUAL VIEW ---
-                        
-                        // 0. Shareable Yearly Recap Card
+                        // --- ANNUAL VIEW (giữ nguyên layout cũ) ---
+
                         StatsCard(
                             title = stringResource(R.string.look_back, uiState.selectedYear.toString()),
                             actionText = "Share",
                             onActionClick = {
-                                // Trigger capture and share
                                 onClearCaptureError()
                                 val view = viewContext
                                 com.diary.moonpage.core.util.ComposeCaptureUtils.captureComposable(
@@ -227,12 +213,8 @@ fun StatisticsScreenContent(
                                         }
                                     },
                                     width = 1080,
-                                    onBitmapCaptured = { bitmap ->
-                                        onShareRecap(context, bitmap)
-                                    },
-                                    onFailure = { error ->
-                                        // Handle failure if needed
-                                    }
+                                    onBitmapCaptured = { bitmap -> onShareRecap(context, bitmap) },
+                                    onFailure = {}
                                 )
                             }
                         ) {
@@ -249,37 +231,29 @@ fun StatisticsScreenContent(
                             )
                         }
 
-                        // 1. Mood Flow (Yearly)
                         StatsCard(title = stringResource(R.string.mood_flow)) {
                             MoodFlowChart(
-                                moodFlow = stats?.moodFlow ?: emptyList(), 
-                                year = uiState.selectedYear, 
-                                month = uiState.selectedMonth, 
-                                isMonthly = false, 
+                                moodFlow = stats?.moodFlow ?: emptyList(),
+                                year = uiState.selectedYear,
+                                month = uiState.selectedMonth,
+                                isMonthly = false,
                                 themeType = uiState.themeType
                             )
                         }
 
-                        // 2. Mood Bar (Yearly)
                         StatsCard(title = stringResource(R.string.mood_bar)) {
                             MoodDistributionView(
-                                distribution = stats?.moodDistribution ?: emptyList(), 
+                                distribution = stats?.moodDistribution ?: emptyList(),
                                 themeType = uiState.themeType
                             )
                         }
 
-                        // 3. Year in Beans
                         StatsCard(title = stringResource(R.string.year_in_beans)) {
                             Column {
                                 Text(
                                     text = buildAnnotatedString {
-                                        append(stringResource(R.string.look_back, "").replace("%1${'$'}s", "").trim() + " ")
-                                        withStyle(
-                                            SpanStyle(
-                                                fontWeight = FontWeight.Bold,
-                                                color = MaterialTheme.colorScheme.primary
-                                            )
-                                        ) {
+                                        append(stringResource(R.string.look_back, "").replace("%1\$s", "").trim() + " ")
+                                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)) {
                                             append("${uiState.selectedYear}.")
                                         }
                                     },
@@ -296,16 +270,14 @@ fun StatisticsScreenContent(
                             }
                         }
 
-                        // 4. Monthly Mood Average
                         StatsCard(title = stringResource(R.string.monthly_average)) {
                             MonthlyMoodAverageChart(
-                                yearlyMoodGrid = stats?.yearlyMoodGrid ?: emptyList(), 
+                                yearlyMoodGrid = stats?.yearlyMoodGrid ?: emptyList(),
                                 year = uiState.selectedYear,
                                 themeType = uiState.themeType
                             )
                         }
 
-                        // 5. Yearly Top Activities
                         StatsCard(title = stringResource(R.string.yearly_top_activities)) {
                             FrequentlyRecordedView(
                                 activities = frequentlyRecorded,
@@ -313,14 +285,13 @@ fun StatisticsScreenContent(
                             )
                         }
 
-                        // 6. Trends
                         if (!isMale) {
                             StatsCard(title = stringResource(R.string.yearly_cycle_trends)) {
                                 Text(stringResource(R.string.avg_cycle, 28), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                                 Text(stringResource(R.string.avg_period, 5), color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
-                        
+
                         StatsCard(title = stringResource(R.string.yearly_sleep_trends)) {
                             Text(stringResource(R.string.avg_sleep, 7.2f), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                             Text(stringResource(R.string.sleep_quality, stringResource(R.string.good)), color = MaterialTheme.colorScheme.onSurfaceVariant)

@@ -1650,3 +1650,343 @@ fun YearInPixelsGrid(yearlyMoodGrid: List<MoodFlowDto>, year: Int, themeType: Mo
         }
     }
 }
+
+// ===========================
+// DASHBOARD WIDGET CARDS
+// ===========================
+
+@Composable
+fun MoodOverviewCard(
+    stats: com.diary.moonpage.data.remote.dto.stats.StatisticsResponse?,
+    themeType: MoonThemeType,
+    onClick: () -> Unit
+) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+
+    val moodDistribution = stats?.moodDistribution ?: emptyList()
+    val dominantDist = moodDistribution.maxByOrNull { it.percentage }
+    val dominantMoodId = dominantDist?.baseMoodId ?: 3
+    val dominantPercent = dominantDist?.percentage?.roundToInt() ?: 0
+    val dominantMoodVisual = MoonIcons.Moods.getMoodVisual(dominantMoodId, themeType)
+
+    val moodText = when (dominantMoodId) {
+        5 -> "Tháng này bạn có vẻ rất vui! 🌟"
+        4 -> "Tháng này bạn khá vui! 😊"
+        3 -> "Tháng này bạn khá ổn định. 😌"
+        2 -> "Tháng này có vẻ hơi khó khăn. 💙"
+        else -> "Tháng này khá nặng nề. 🌙"
+    }
+
+    val moodFlow = stats?.moodFlow ?: emptyList()
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onClick() },
+        shape = RoundedCornerShape(32.dp),
+        colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
+        elevation = CardDefaults.cardElevation(0.dp)
+    ) {
+        Column(modifier = Modifier.padding(24.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Mood Overview",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = onSurfaceVariant.copy(alpha = 0.55f)
+                )
+                Icon(
+                    Icons.Rounded.ChevronRight, contentDescription = null,
+                    tint = onSurfaceVariant.copy(alpha = 0.35f), modifier = Modifier.size(20.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier.size(68.dp).clip(CircleShape)
+                        .background(dominantMoodVisual.color.copy(alpha = 0.18f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (dominantMoodVisual.drawableRes != null) {
+                        Image(
+                            painter = painterResource(id = dominantMoodVisual.drawableRes),
+                            contentDescription = null,
+                            modifier = Modifier.size(42.dp),
+                            colorFilter = ColorFilter.tint(Color.Black.copy(alpha = 0.72f))
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(20.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "$dominantPercent%",
+                        fontSize = 36.sp, fontWeight = FontWeight.Black,
+                        color = onSurface, lineHeight = 36.sp
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(text = moodText, fontSize = 14.sp, color = onSurfaceVariant, lineHeight = 20.sp)
+                }
+            }
+
+            if (moodFlow.size >= 2) {
+                Spacer(modifier = Modifier.height(20.dp))
+                Box(
+                    modifier = Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(12.dp))
+                ) {
+                    MoodSparkline(moodFlow = moodFlow, primaryColor = primaryColor)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MoodSparkline(moodFlow: List<MoodFlowDto>, primaryColor: Color) {
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        val sorted = moodFlow.sortedBy { it.date }
+        if (sorted.size < 2) return@Canvas
+        val maxIdx = (sorted.size - 1).toFloat()
+        val path = Path()
+        sorted.forEachIndexed { index, item ->
+            val x = size.width * index / maxIdx
+            val y = size.height * (5.0 - item.moodId).coerceIn(0.0, 4.0).toFloat() / 4f
+            if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        }
+        val fillPath = Path()
+        fillPath.addPath(path)
+        fillPath.lineTo(size.width, size.height)
+        fillPath.lineTo(0f, size.height)
+        fillPath.close()
+        drawPath(path = fillPath, color = primaryColor.copy(alpha = 0.08f))
+        drawPath(path = path, color = primaryColor.copy(alpha = 0.65f), style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round))
+    }
+}
+
+@Composable
+fun SleepPhysicalRow(
+    stats: com.diary.moonpage.data.remote.dto.stats.StatisticsResponse?,
+    onClick: () -> Unit
+) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        SleepWidgetCard(avgSleepHours = stats?.averageSleepHours ?: 0.0, modifier = Modifier.weight(1f), onClick = onClick)
+        PhysicalWidgetCard(totalSteps = stats?.totalSteps ?: 0, totalCalories = stats?.totalCalories ?: 0, modifier = Modifier.weight(1f), onClick = onClick)
+    }
+}
+
+@Composable
+private fun SleepWidgetCard(avgSleepHours: Double, modifier: Modifier, onClick: () -> Unit) {
+    val primary = MaterialTheme.colorScheme.primary
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+    Card(
+        modifier = modifier.clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onClick() },
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
+        elevation = CardDefaults.cardElevation(0.dp)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
+                Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Rounded.Bedtime, null, tint = primary, modifier = Modifier.size(20.dp))
+                }
+                Icon(Icons.Rounded.ChevronRight, null, tint = onSurfaceVariant.copy(alpha = 0.3f), modifier = Modifier.size(16.dp))
+            }
+            Spacer(modifier = Modifier.height(20.dp))
+            Text("Giấc ngủ", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.55f))
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = if (avgSleepHours > 0) String.format(Locale.ENGLISH, "%.1f", avgSleepHours) else "--",
+                fontSize = 30.sp, fontWeight = FontWeight.Black, color = onSurface, lineHeight = 30.sp
+            )
+            Text("giờ / đêm", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.45f))
+        }
+    }
+}
+
+@Composable
+private fun PhysicalWidgetCard(totalSteps: Int, totalCalories: Int, modifier: Modifier, onClick: () -> Unit) {
+    val primary = MaterialTheme.colorScheme.primary
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+    Card(
+        modifier = modifier.clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onClick() },
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
+        elevation = CardDefaults.cardElevation(0.dp)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
+                Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+                    Icon(Icons.AutoMirrored.Rounded.DirectionsRun, null, tint = primary, modifier = Modifier.size(20.dp))
+                }
+                Icon(Icons.Rounded.ChevronRight, null, tint = onSurfaceVariant.copy(alpha = 0.3f), modifier = Modifier.size(16.dp))
+            }
+            Spacer(modifier = Modifier.height(20.dp))
+            Text("Thể chất", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.55f))
+            Spacer(modifier = Modifier.height(6.dp))
+            if (totalSteps > 0) {
+                Text(String.format(Locale.ENGLISH, "%,d", totalSteps), fontSize = 24.sp, fontWeight = FontWeight.Black, color = onSurface, lineHeight = 24.sp)
+                Text("bước chân", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.45f))
+            } else {
+                Text("--", fontSize = 30.sp, fontWeight = FontWeight.Black, color = onSurface)
+            }
+            if (totalCalories > 0) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Rounded.LocalFireDepartment, null, tint = primary, modifier = Modifier.size(13.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(String.format(Locale.ENGLISH, "%,d kcal", totalCalories), fontSize = 12.sp, color = primary, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ActivityHabitsCard(frequentlyRecorded: List<BestActivityDto>, onClick: () -> Unit) {
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+    Card(
+        modifier = Modifier.fillMaxWidth()
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onClick() },
+        shape = RoundedCornerShape(32.dp),
+        colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
+        elevation = CardDefaults.cardElevation(0.dp)
+    ) {
+        Column(modifier = Modifier.padding(24.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("Activity & Habits", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = onSurfaceVariant.copy(alpha = 0.55f))
+                Icon(Icons.Rounded.ChevronRight, null, tint = onSurfaceVariant.copy(alpha = 0.35f), modifier = Modifier.size(20.dp))
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            if (frequentlyRecorded.isEmpty()) {
+                Text("Chưa có dữ liệu hoạt động.", fontSize = 14.sp, color = onSurfaceVariant.copy(alpha = 0.5f))
+            } else {
+                val top = frequentlyRecorded.first()
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(modifier = Modifier.size(48.dp).clip(CircleShape).background(MoonTheme.customColors.logItemBg), contentAlignment = Alignment.Center) {
+                        MoonActivityIcon(icon = MoonIcons.getIconForActivity(top.activityName), size = 28.dp)
+                    }
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Column {
+                        Text(top.activityName, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = onSurface)
+                        Text("Hoạt động nhiều nhất · ${top.occurrence} lần", fontSize = 13.sp, color = onSurfaceVariant.copy(alpha = 0.6f))
+                    }
+                }
+                if (frequentlyRecorded.size > 1) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        frequentlyRecorded.drop(1).take(2).forEach { activity ->
+                            Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(MoonTheme.customColors.logItemBg), contentAlignment = Alignment.Center) {
+                                MoonActivityIcon(icon = MoonIcons.getIconForActivity(activity.activityName), size = 24.dp)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun InsightsTeaserCard(bestActivities: List<BestActivityDto>, onClick: () -> Unit) {
+    val primary = MaterialTheme.colorScheme.primary
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+    Card(
+        modifier = Modifier.fillMaxWidth()
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onClick() },
+        shape = RoundedCornerShape(32.dp),
+        colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
+        elevation = CardDefaults.cardElevation(0.dp)
+    ) {
+        Column(modifier = Modifier.padding(24.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+                        Icon(Icons.Rounded.AutoAwesome, null, tint = primary, modifier = Modifier.size(18.dp))
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text("Insights & Deep Dive", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = onSurfaceVariant.copy(alpha = 0.55f))
+                }
+                Icon(Icons.Rounded.ChevronRight, null, tint = onSurfaceVariant.copy(alpha = 0.35f), modifier = Modifier.size(20.dp))
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Khám phá xem điều gì đang làm bạn vui lên hoặc buồn đi...",
+                fontSize = 16.sp, color = onSurface, lineHeight = 24.sp, fontWeight = FontWeight.Medium
+            )
+            if (bestActivities.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(14.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    bestActivities.take(2).forEach { a ->
+                        Surface(shape = RoundedCornerShape(20.dp), color = MoonTheme.customColors.successColor.copy(alpha = 0.12f)) {
+                            Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Box(modifier = Modifier.size(16.dp), contentAlignment = Alignment.Center) {
+                                    MoonActivityIcon(MoonIcons.getIconForActivity(a.activityName), 16.dp)
+                                }
+                                Spacer(modifier = Modifier.width(5.dp))
+                                Text(a.activityName, fontSize = 12.sp, color = MoonTheme.customColors.successColor, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TopMusicCard(
+    musicSummary: List<com.diary.moonpage.data.remote.dto.stats.MusicSummaryDto>?,
+    onClick: () -> Unit
+) {
+    val primary = MaterialTheme.colorScheme.primary
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+    val topSong = musicSummary?.firstOrNull()
+    Card(
+        modifier = Modifier.fillMaxWidth()
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onClick() },
+        shape = RoundedCornerShape(32.dp),
+        colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
+        elevation = CardDefaults.cardElevation(0.dp)
+    ) {
+        Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier.size(52.dp).clip(RoundedCornerShape(14.dp)).background(MoonTheme.customColors.logItemBg),
+                contentAlignment = Alignment.Center
+            ) {
+                if (topSong?.albumArtUrl != null) {
+                    coil.compose.AsyncImage(
+                        model = topSong.albumArtUrl, contentDescription = null,
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(14.dp))
+                    )
+                } else {
+                    Icon(Icons.Rounded.MusicNote, null, tint = primary.copy(alpha = 0.5f), modifier = Modifier.size(26.dp))
+                }
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Top Music", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.55f), fontWeight = FontWeight.SemiBold)
+                Spacer(modifier = Modifier.height(4.dp))
+                if (topSong != null) {
+                    Text(topSong.songTitle, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = onSurface, maxLines = 1)
+                    Text(topSong.artistName, fontSize = 12.sp, color = onSurfaceVariant, maxLines = 1)
+                } else {
+                    Text("Chưa có dữ liệu", fontSize = 14.sp, color = onSurfaceVariant.copy(alpha = 0.5f))
+                }
+            }
+            Icon(Icons.Rounded.ChevronRight, null, tint = onSurfaceVariant.copy(alpha = 0.35f), modifier = Modifier.size(20.dp))
+        }
+    }
+}

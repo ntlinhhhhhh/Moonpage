@@ -29,6 +29,12 @@ import com.diary.moonpage.presentation.screens.moment.MomentDetailScreen
 import com.diary.moonpage.presentation.screens.notification.NotificationCenterScreen
 import com.diary.moonpage.presentation.screens.profile.*
 import com.diary.moonpage.presentation.screens.stats.StatisticsScreen
+import com.diary.moonpage.presentation.screens.stats.StatisticsViewModel
+import com.diary.moonpage.presentation.screens.stats.StatsMoodDetailScreen
+import com.diary.moonpage.presentation.screens.stats.StatsSleepDetailScreen
+import com.diary.moonpage.presentation.screens.stats.StatsActivityDetailScreen
+import com.diary.moonpage.presentation.screens.stats.StatsInsightsDetailScreen
+import com.diary.moonpage.presentation.screens.stats.StatsMusicDetailScreen
 import com.diary.moonpage.presentation.screens.store.StoreScreen
 import com.diary.moonpage.presentation.screens.store.StoreViewModel
 import com.diary.moonpage.presentation.screens.store.ThemeDetailScreen
@@ -388,7 +394,53 @@ fun AppNavigation(
 
                 composable(Screen.Stats.route) {
                     ScreenWrapper(Screen.Stats.route, mainAppRoutes, totalBottomPadding, paddingValues) {
-                        StatisticsScreen()
+                        StatisticsScreen(
+                            onNavigateToMoodDetail = { navController.navigate(Screen.StatsMoodDetail.route) },
+                            onNavigateToSleepDetail = { navController.navigate(Screen.StatsSleepDetail.route) },
+                            onNavigateToActivityDetail = { navController.navigate(Screen.StatsActivityDetail.route) },
+                            onNavigateToInsightsDetail = { navController.navigate(Screen.StatsInsightsDetail.route) },
+                            onNavigateToMusicDetail = { navController.navigate(Screen.StatsMusicDetail.route) }
+                        )
+                    }
+                }
+
+                composable(Screen.StatsMoodDetail.route) { backStackEntry ->
+                    val statsEntry = remember(backStackEntry) { navController.getBackStackEntry(Screen.Stats.route) }
+                    val viewModel: StatisticsViewModel = hiltViewModel(statsEntry)
+                    ScreenWrapper(Screen.StatsMoodDetail.route, mainAppRoutes, totalBottomPadding, paddingValues) {
+                        StatsMoodDetailScreen(viewModel = viewModel, onNavigateBack = { navController.popBackStack() })
+                    }
+                }
+
+                composable(Screen.StatsSleepDetail.route) { backStackEntry ->
+                    val statsEntry = remember(backStackEntry) { navController.getBackStackEntry(Screen.Stats.route) }
+                    val viewModel: StatisticsViewModel = hiltViewModel(statsEntry)
+                    ScreenWrapper(Screen.StatsSleepDetail.route, mainAppRoutes, totalBottomPadding, paddingValues) {
+                        StatsSleepDetailScreen(viewModel = viewModel, onNavigateBack = { navController.popBackStack() })
+                    }
+                }
+
+                composable(Screen.StatsActivityDetail.route) { backStackEntry ->
+                    val statsEntry = remember(backStackEntry) { navController.getBackStackEntry(Screen.Stats.route) }
+                    val viewModel: StatisticsViewModel = hiltViewModel(statsEntry)
+                    ScreenWrapper(Screen.StatsActivityDetail.route, mainAppRoutes, totalBottomPadding, paddingValues) {
+                        StatsActivityDetailScreen(viewModel = viewModel, onNavigateBack = { navController.popBackStack() })
+                    }
+                }
+
+                composable(Screen.StatsInsightsDetail.route) { backStackEntry ->
+                    val statsEntry = remember(backStackEntry) { navController.getBackStackEntry(Screen.Stats.route) }
+                    val viewModel: StatisticsViewModel = hiltViewModel(statsEntry)
+                    ScreenWrapper(Screen.StatsInsightsDetail.route, mainAppRoutes, totalBottomPadding, paddingValues) {
+                        StatsInsightsDetailScreen(viewModel = viewModel, onNavigateBack = { navController.popBackStack() })
+                    }
+                }
+
+                composable(Screen.StatsMusicDetail.route) { backStackEntry ->
+                    val statsEntry = remember(backStackEntry) { navController.getBackStackEntry(Screen.Stats.route) }
+                    val viewModel: StatisticsViewModel = hiltViewModel(statsEntry)
+                    ScreenWrapper(Screen.StatsMusicDetail.route, mainAppRoutes, totalBottomPadding, paddingValues) {
+                        StatsMusicDetailScreen(viewModel = viewModel, onNavigateBack = { navController.popBackStack() })
                     }
                 }
 
