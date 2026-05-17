@@ -21,6 +21,7 @@ fun ActionCard(
     title: String,
     value: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector = Icons.Rounded.PhotoLibrary,
+    iconRes: Int? = null,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
@@ -77,12 +78,20 @@ fun ActionCard(
                         .background(iconBgColor, RoundedCornerShape(10.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = iconColor,
-                        modifier = Modifier.size(24.dp)
-                    )
+                    if (iconRes != null) {
+                        androidx.compose.foundation.Image(
+                            painter = androidx.compose.ui.res.painterResource(id = iconRes),
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = iconColor,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.width(18.dp))

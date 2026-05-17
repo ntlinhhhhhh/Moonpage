@@ -16,6 +16,11 @@ sealed class StoreUiEvent {
     object ConfirmActivation : StoreUiEvent()
     object CancelActivation : StoreUiEvent()
     object DismissDialog : StoreUiEvent()
+    
+    // Streak Freeze
+    object InitiateFreezePurchase : StoreUiEvent()
+    object BuyStreakFreeze : StoreUiEvent()
+    object CancelFreezePurchase : StoreUiEvent()
 }
 
 /**

@@ -193,6 +193,14 @@
     <string name="login_information">Thông tin đăng nhập</string>
     <string name="my_social_account">Tài khoản xã hội</string>
     <string name="change_social_account">Đổi tài khoản xã hội</string>
+    <string name="change_password">Đổi mật khẩu</string>
+    <string name="confirm_password">Xác nhận mật khẩu</string>
+    <string name="old_password">Mật khẩu cũ</string>
+    <string name="new_password">Mật khẩu mới (tối thiểu 6 ký tự)</string>
+    <string name="confirm_new_password">Xác nhận mật khẩu mới</string>
+    <string name="passwords_do_not_match">Mật khẩu xác nhận không khớp</string>
+    <string name="password_changed_successfully">Đổi mật khẩu thành công!</string>
+    <string name="change_password_failed">Đổi mật khẩu thất bại</string>
     <string name="not_specified">Chưa xác định</string>
     <string name="current_passcode">Mã PIN hiện tại</string>
     <string name="wrong_passcode_try_again">Sai mã PIN. Vui lòng thử lại.</string>

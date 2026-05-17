@@ -48,6 +48,7 @@ fun CalendarRoute(
     onNavigateToShareLog: (String) -> Unit,
     onNavigateToShareCalendar: (String) -> Unit,
     onNavigateToThemeCalendar: () -> Unit = {},
+    onNavigateToStreakStats: () -> Unit = {},
     viewModel: CalendarViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -78,9 +79,7 @@ fun CalendarRoute(
         onNavigateToShareLog = onNavigateToShareLog,
         onNavigateToShareCalendar = onNavigateToShareCalendar,
         onNavigateToThemeCalendar = onNavigateToThemeCalendar,
-        onStreakClick = {
-            viewModel.showSnackbar("You've maintained a ${uiState.currentStreak}-day streak!")
-        },
+        onStreakClick = onNavigateToStreakStats,
         showSnackbar = viewModel::showSnackbar
     )
 }

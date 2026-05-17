@@ -20,6 +20,7 @@ import com.diary.moonpage.R
 import com.diary.moonpage.ui.screens.profile.components.*
 import com.diary.moonpage.ui.components.layout.SectionTitle
 import com.diary.moonpage.core.theme.*
+import com.diary.moonpage.core.util.StreakFreezeIcon
 import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
 import com.diary.moonpage.ui.screens.tutorial.TutorialStep
 
@@ -36,7 +37,9 @@ fun ProfileRoute(
     onNavigateToThemeCalendar: () -> Unit,
     onNavigateToWidgets: () -> Unit,
     onNavigateToInviteFriend: () -> Unit,
-    onNavigateToStats: () -> Unit
+    onNavigateToStats: () -> Unit,
+    onNavigateToStreakStats: () -> Unit,
+    onNavigateToStore: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -57,6 +60,9 @@ fun ProfileRoute(
             avatarUrl = uiState.user?.avatarUrl,
             recordedDays = uiState.totalLogs.toString(),
             photoCount = uiState.totalPhotos.toString(),
+            currentStreak = uiState.currentStreak.toString(),
+            longestStreak = uiState.longestStreak.toString(),
+            streakFreezeCount = uiState.streakFreezeCount.toString(),
             onNotificationClick = onNavigateToNotifications,
             onSettingsClick = onNavigateToSettings,
             onAccountClick = onNavigateToAccount,
@@ -64,7 +70,9 @@ fun ProfileRoute(
             onThemeCalendarClick = onNavigateToThemeCalendar,
             onWidgetsClick = onNavigateToWidgets,
             onInviteFriendClick = onNavigateToInviteFriend,
-            onStatsClick = onNavigateToStats
+            onStatsClick = onNavigateToStats,
+            onStreakClick = onNavigateToStreakStats,
+            onStreakFreezesClick = onNavigateToStore
         )
     }
 }
@@ -79,6 +87,9 @@ fun ProfileScreen(
     avatarUrl: String?,
     recordedDays: String,
     photoCount: String,
+    currentStreak: String,
+    longestStreak: String,
+    streakFreezeCount: String,
     onNotificationClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onAccountClick: () -> Unit,
@@ -86,7 +97,9 @@ fun ProfileScreen(
     onThemeCalendarClick: () -> Unit,
     onWidgetsClick: () -> Unit,
     onInviteFriendClick: () -> Unit,
-    onStatsClick: () -> Unit
+    onStatsClick: () -> Unit,
+    onStreakClick: () -> Unit,
+    onStreakFreezesClick: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
 
@@ -134,6 +147,28 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                ActionCard(
+                    title = stringResource(R.string.streak),
+                    value = currentStreak,
+                    icon = Icons.Rounded.Whatshot,
+                    modifier = Modifier.weight(1f),
+                    onClick = onStreakClick
+                )
+                ActionCard(
+                    title = stringResource(R.string.streak_freezes),
+                    value = streakFreezeCount,
+                    icon = StreakFreezeIcon,
+                    modifier = Modifier.weight(1f),
+                    onClick = onStreakFreezesClick
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             ProfileMenuItem(title = stringResource(R.string.theme_calendar), icon = Icons.Rounded.CalendarMonth, onClick = onThemeCalendarClick)
 
             SectionTitle(stringResource(R.string.more))
@@ -159,6 +194,9 @@ fun ProfileScreenPreview() {
             avatarUrl = null,
             recordedDays = "8",
             photoCount = "3",
+            currentStreak = "5",
+            longestStreak = "12",
+            streakFreezeCount = "2",
             onNotificationClick = {},
             onSettingsClick = {},
             onAccountClick = {},
@@ -166,7 +204,9 @@ fun ProfileScreenPreview() {
             onThemeCalendarClick = {},
             onWidgetsClick = {},
             onInviteFriendClick = {},
-            onStatsClick = {}
+            onStatsClick = {},
+            onStreakClick = {},
+            onStreakFreezesClick = {}
         )
     }
 }

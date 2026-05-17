@@ -23,6 +23,7 @@ fun NavGraphBuilder.calendarScreen(
     onNavigateToShareLog: (String) -> Unit,
     onNavigateToShareCalendar: (String) -> Unit,
     onNavigateToThemeCalendar: () -> Unit,
+    onNavigateToStreakStats: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
     composable(route = Screen.Calendar.route) { backStackEntry ->
@@ -41,7 +42,8 @@ fun NavGraphBuilder.calendarScreen(
             onNavigateToDailyLog = onNavigateToDailyLog,
             onNavigateToShareLog = onNavigateToShareLog,
             onNavigateToShareCalendar = onNavigateToShareCalendar,
-            onNavigateToThemeCalendar = onNavigateToThemeCalendar
+            onNavigateToThemeCalendar = onNavigateToThemeCalendar,
+            onNavigateToStreakStats = onNavigateToStreakStats
         )
     }
 

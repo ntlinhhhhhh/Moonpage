@@ -138,7 +138,27 @@ class StoreViewModel @Inject constructor(
                 _uiState.update { it.copy(showConfirmActivationDialog = false, temporarySelectedThemeId = null) }
             }
             StoreUiEvent.DismissDialog -> {
-                _uiState.update { it.copy(showPurchaseSuccessDialog = false, showConfirmActivationDialog = false, activationSuccess = false) }
+                _uiState.update { it.copy(showPurchaseSuccessDialog = false, showConfirmActivationDialog = false, activationSuccess = false, showConfirmFreezePurchaseDialog = false, freezePurchaseSuccess = false) }
+            }
+            StoreUiEvent.InitiateFreezePurchase -> {
+                _uiState.update { it.copy(showConfirmFreezePurchaseDialog = true) }
+            }
+            StoreUiEvent.BuyStreakFreeze -> performBuyStreakFreeze()
+            StoreUiEvent.CancelFreezePurchase -> {
+                _uiState.update { it.copy(showConfirmFreezePurchaseDialog = false) }
+            }
+        }
+    }
+
+    private fun performBuyStreakFreeze() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, showConfirmFreezePurchaseDialog = false) }
+            userRepository.buyStreakFreeze().onSuccess {
+                _uiState.update { it.copy(isLoading = false, freezePurchaseSuccess = true) }
+                _uiEffect.emit(StoreUiEffect.PurchaseSuccess)
+            }.onFailure { error ->
+                _uiState.update { it.copy(isLoading = false) }
+                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Purchase failed"))
             }
         }
     }

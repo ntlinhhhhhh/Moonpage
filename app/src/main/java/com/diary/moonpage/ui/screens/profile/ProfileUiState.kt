@@ -12,5 +12,8 @@ data class ProfileUiState(
     val isUpdating: Boolean = false,
     val error: String? = null,
     val totalLogs: Int = 0,
-    val totalPhotos: Int = 0
+    val totalPhotos: Int = 0,
+    val currentStreak: Int = 0,
+    val longestStreak: Int = 0,
+    val streakFreezeCount: Int = 0
 )

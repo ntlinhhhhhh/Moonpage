@@ -21,18 +21,22 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AcUnit
+import androidx.compose.material.icons.rounded.Savings
+import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.GridView
+import androidx.compose.material.icons.rounded.Snowboarding
 import com.diary.moonpage.R
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.domain.model.ThemeType
+import com.diary.moonpage.core.theme.MoonTheme
+import com.diary.moonpage.ui.components.layout.SectionTitle
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
-import com.diary.moonpage.ui.screens.store.components.ConfirmActivationDialog
-import com.diary.moonpage.ui.screens.store.components.CurrentThemeCard
-import com.diary.moonpage.ui.screens.store.components.ExploreMoreCard
-import com.diary.moonpage.ui.screens.store.components.IconPackCard
-import com.diary.moonpage.ui.screens.store.components.PurchaseSuccessDialog
-import com.diary.moonpage.ui.screens.store.components.StoreTopBar
-import com.diary.moonpage.ui.screens.store.components.ThemeCard
-import com.diary.moonpage.ui.screens.store.components.getThemeShades
+import com.diary.moonpage.ui.screens.store.components.*
 import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
 import com.diary.moonpage.ui.screens.tutorial.TutorialStep
 
@@ -79,7 +83,10 @@ fun StoreRoute(
         onViewAllClick = { viewModel.onTabSelected(2) },
         onConfirmActivation = viewModel::confirmActivation,
         onCancelActivation = viewModel::cancelActivation,
-        onDismissDialog = viewModel::dismissDialog
+        onDismissDialog = viewModel::dismissDialog,
+        onInitiateFreezePurchase = { viewModel.onEvent(StoreUiEvent.InitiateFreezePurchase) },
+        onConfirmFreezePurchase = { viewModel.onEvent(StoreUiEvent.BuyStreakFreeze) },
+        onCancelFreezePurchase = { viewModel.onEvent(StoreUiEvent.CancelFreezePurchase) }
     )
 }
 
@@ -96,7 +103,10 @@ fun StoreScreen(
     onViewAllClick: () -> Unit,
     onConfirmActivation: () -> Unit,
     onCancelActivation: () -> Unit,
-    onDismissDialog: () -> Unit
+    onDismissDialog: () -> Unit,
+    onInitiateFreezePurchase: () -> Unit,
+    onConfirmFreezePurchase: () -> Unit,
+    onCancelFreezePurchase: () -> Unit
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -134,7 +144,8 @@ fun StoreScreen(
                             selectedCategory = uiState.selectedCategory,
                             onCategoryClick = onCategorySelected,
                             onThemeClick = onThemeClick,
-                            onViewAllClick = onViewAllClick
+                            onViewAllClick = onViewAllClick,
+                            onFreezeBuyClick = onInitiateFreezePurchase
                         )
                         1 -> MyThemeTabContent(
                             ownedThemes = uiState.ownedThemes,
@@ -172,11 +183,153 @@ fun StoreScreen(
                 )
             }
             
-            if (uiState.showPurchaseSuccessDialog && uiState.purchasedTheme != null) {
+            if (uiState.showConfirmFreezePurchaseDialog) {
+                ConfirmFreezePurchaseDialog(
+                    onConfirm = onConfirmFreezePurchase,
+                    onDismiss = onCancelFreezePurchase
+                )
+            }
+            
+            if (uiState.showPurchaseSuccessDialog && (uiState.purchasedTheme != null || uiState.freezePurchaseSuccess)) {
                 PurchaseSuccessDialog(
-                    themeName = uiState.purchasedTheme?.name ?: "",
+                    themeName = if (uiState.freezePurchaseSuccess) "Streak Freeze" else uiState.purchasedTheme?.name ?: "",
                     onDismiss = onDismissDialog
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun ConfirmFreezePurchaseDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Snowboarding,
+                    contentDescription = null,
+                    tint = colorScheme.primary,
+                    modifier = Modifier.size(48.dp)
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text(
+                    text = "Get Streak Freeze",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Text(
+                    text = "A Streak Freeze protects your daily progress. If you forget to log your day, a freeze will be used automatically to keep your streak alive!",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colorScheme.onSurface.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center
+                )
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnBgColor,
+                            contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor
+                        ),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                    
+                    Button(
+                        onClick = onConfirm,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Text("Buy for 500")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun FreezePurchaseItem(
+    onBuyClick: () -> Unit
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp)),
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(colorScheme.primary.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.AcUnit,
+                    contentDescription = null,
+                    tint = colorScheme.primary,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Streak Freeze",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                )
+                Text(
+                    text = "Protect your streak if you miss a day.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
+            
+            Button(
+                onClick = onBuyClick,
+                shape = RoundedCornerShape(12.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary)
+            ) {
+                Icon(
+                    androidx.compose.material.icons.Icons.Rounded.Savings, 
+                    contentDescription = null, 
+                    modifier = Modifier.size(16.dp),
+                    tint = Color.White
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("500", fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -234,7 +387,8 @@ fun HomeTabContent(
     selectedCategory: String,
     onCategoryClick: (String) -> Unit,
     onThemeClick: (Theme) -> Unit,
-    onViewAllClick: () -> Unit
+    onViewAllClick: () -> Unit,
+    onFreezeBuyClick: () -> Unit
 ) {
     val filteredThemes = remember(themes, selectedCategory) {
         when (selectedCategory) {
@@ -250,6 +404,10 @@ fun HomeTabContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        item {
+            FreezePurchaseItem(onBuyClick = onFreezeBuyClick)
+        }
+
         item {
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),

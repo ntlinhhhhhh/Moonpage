@@ -299,6 +299,7 @@ fun AppNavigation(
                     onNavigateToShareLog = { dateStr -> navController.navigate("share_log_screen/$dateStr") },
                     onNavigateToShareCalendar = { yearMonth -> navController.navigate("share_calendar_screen/$yearMonth") },
                     onNavigateToThemeCalendar = { navController.navigate(Screen.ThemeCalendar.route) },
+                    onNavigateToStreakStats = { navController.navigate(Screen.StreakStats.route) },
                     onNavigateBack = { navController.popBackStack() }
                 )
 
@@ -547,7 +548,19 @@ fun AppNavigation(
                             onNavigateToThemeCalendar = { navController.navigate(Screen.ThemeCalendar.route) },
                             onNavigateToWidgets = { navController.navigate(Screen.Widgets.route) },
                             onNavigateToInviteFriend = { navController.navigate(Screen.InviteFriend.route) },
-                            onNavigateToStats = { navController.navigate(Screen.Stats.route) }
+                            onNavigateToStats = { navController.navigate(Screen.Stats.route) },
+                            onNavigateToStreakStats = { navController.navigate(Screen.StreakStats.route) },
+                            onNavigateToStore = { navController.navigate(Screen.Store.route) }
+                        )
+                    }
+                }
+
+                composable(Screen.StreakStats.route) {
+                    val statisticsViewModel: com.diary.moonpage.ui.screens.stats.StatisticsViewModel = hiltViewModel()
+                    ScreenWrapper(Screen.StreakStats.route, mainAppRoutes, totalBottomPadding, paddingValues) {
+                        com.diary.moonpage.ui.screens.stats.StreakStatsScreen(
+                            viewModel = statisticsViewModel,
+                            onNavigateBack = { navController.popBackStack() }
                         )
                     }
                 }
@@ -773,3 +786,4 @@ private fun ScreenWrapper(
         content()
     }
 }
+

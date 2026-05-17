@@ -31,6 +31,7 @@ fun NavController.navigateToChangeAvatar(navOptions: NavOptions? = null) {
 fun NavGraphBuilder.profileScreen(
     navController: NavController,
     onLogout: () -> Unit,
+    onNavigateToStore: () -> Unit,
     screenWrapper: @Composable (String, @Composable () -> Unit) -> Unit
 ) {
     composable(Screen.Profile.route) {
@@ -43,7 +44,9 @@ fun NavGraphBuilder.profileScreen(
                 onNavigateToThemeCalendar = { navController.navigateToThemeCalendar() },
                 onNavigateToWidgets = { navController.navigate(Screen.Widgets.route) },
                 onNavigateToInviteFriend = { navController.navigate(Screen.InviteFriend.route) },
-                onNavigateToStats = { navController.navigate(Screen.Stats.route) }
+                onNavigateToStats = { navController.navigate(Screen.Stats.route) },
+                onNavigateToStreakStats = { navController.navigate(Screen.StreakStats.route) },
+                onNavigateToStore = onNavigateToStore
             )
         }
     }

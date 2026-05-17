@@ -17,5 +17,7 @@ data class StoreUiState(
     val selectedCategory: String = "ALL",
     val temporarySelectedThemeId: String? = null,
     val showConfirmActivationDialog: Boolean = false,
-    val activationSuccess: Boolean = false
+    val activationSuccess: Boolean = false,
+    val showConfirmFreezePurchaseDialog: Boolean = false,
+    val freezePurchaseSuccess: Boolean = false
 )
