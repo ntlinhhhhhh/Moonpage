@@ -440,6 +440,7 @@ class DailyLogViewModel @Inject constructor(
                                     steps = data.steps,
                                     calories = data.calories,
                                     distance = data.distance,
+                                    sleepHours = if (data.sleepHours > 0) data.sleepHours.toFloat() else state.sleepHours,
                                     sleepBedTime = data.sleepStartTime?.let { timeStr -> try { java.time.LocalTime.parse(timeStr) } catch(e: Exception) { state.sleepBedTime } } ?: state.sleepBedTime,
                                     sleepWakeTime = data.sleepWakeTime?.let { timeStr -> try { java.time.LocalTime.parse(timeStr) } catch(e: Exception) { state.sleepWakeTime } } ?: state.sleepWakeTime,
                                 ) }

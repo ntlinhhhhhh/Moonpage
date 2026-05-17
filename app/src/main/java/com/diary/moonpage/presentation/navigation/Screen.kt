@@ -57,4 +57,11 @@ sealed class Screen (val route: String) {
     object StatsActivityDetail: Screen("stats_activity_detail_screen")
     object StatsInsightsDetail: Screen("stats_insights_detail_screen")
     object StatsMusicDetail: Screen("stats_music_detail_screen")
+    
+    // Annual Stats Detail Screens
+    object StatsAnnualMoodDetail: Screen("stats_annual_mood_detail_screen")
+    object StatsAnnualSleepDetail: Screen("stats_annual_sleep_detail_screen")
+    object StatsAnnualActivityDetail: Screen("stats_annual_activity_detail_screen")
+    object StatsAnnualBeansDetail: Screen("stats_annual_beans_detail_screen")
+    object StatsAnnualMusicDetail: Screen("stats_annual_music_detail_screen")
 }

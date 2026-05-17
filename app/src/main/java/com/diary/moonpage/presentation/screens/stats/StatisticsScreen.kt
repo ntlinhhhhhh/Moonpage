@@ -2,6 +2,7 @@ package com.diary.moonpage.presentation.screens.stats
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
@@ -21,6 +22,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.res.stringResource
 import com.diary.moonpage.R
+import com.diary.moonpage.core.theme.MoonTheme
 import com.diary.moonpage.presentation.components.calendar.MonthYearPickerDialog
 import com.diary.moonpage.presentation.components.stats.*
 import java.time.YearMonth
@@ -33,7 +35,12 @@ fun StatisticsScreen(
     onNavigateToSleepDetail: () -> Unit = {},
     onNavigateToActivityDetail: () -> Unit = {},
     onNavigateToInsightsDetail: () -> Unit = {},
-    onNavigateToMusicDetail: () -> Unit = {}
+    onNavigateToMusicDetail: () -> Unit = {},
+    onNavigateToAnnualMoodDetail: () -> Unit = {},
+    onNavigateToAnnualSleepDetail: () -> Unit = {},
+    onNavigateToAnnualActivityDetail: () -> Unit = {},
+    onNavigateToAnnualBeansDetail: () -> Unit = {},
+    onNavigateToAnnualMusicDetail: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -48,7 +55,12 @@ fun StatisticsScreen(
         onNavigateToSleepDetail = onNavigateToSleepDetail,
         onNavigateToActivityDetail = onNavigateToActivityDetail,
         onNavigateToInsightsDetail = onNavigateToInsightsDetail,
-        onNavigateToMusicDetail = onNavigateToMusicDetail
+        onNavigateToMusicDetail = onNavigateToMusicDetail,
+        onNavigateToAnnualMoodDetail = onNavigateToAnnualMoodDetail,
+        onNavigateToAnnualSleepDetail = onNavigateToAnnualSleepDetail,
+        onNavigateToAnnualActivityDetail = onNavigateToAnnualActivityDetail,
+        onNavigateToAnnualBeansDetail = onNavigateToAnnualBeansDetail,
+        onNavigateToAnnualMusicDetail = onNavigateToAnnualMusicDetail
     )
 }
 
@@ -65,7 +77,12 @@ fun StatisticsScreenContent(
     onNavigateToSleepDetail: () -> Unit = {},
     onNavigateToActivityDetail: () -> Unit = {},
     onNavigateToInsightsDetail: () -> Unit = {},
-    onNavigateToMusicDetail: () -> Unit = {}
+    onNavigateToMusicDetail: () -> Unit = {},
+    onNavigateToAnnualMoodDetail: () -> Unit = {},
+    onNavigateToAnnualSleepDetail: () -> Unit = {},
+    onNavigateToAnnualActivityDetail: () -> Unit = {},
+    onNavigateToAnnualBeansDetail: () -> Unit = {},
+    onNavigateToAnnualMusicDetail: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     var showDatePicker by remember { mutableStateOf(false) }
@@ -187,115 +204,58 @@ fun StatisticsScreenContent(
                         )
 
                     } else {
-                        // --- ANNUAL VIEW (giữ nguyên layout cũ) ---
+                        // --- ANNUAL DASHBOARD VIEW ---
+                        
+                        // 1. Annual Mood Overview Card
+                        MoodOverviewCard(
+                            stats = stats,
+                            themeType = uiState.themeType,
+                            onClick = onNavigateToAnnualMoodDetail
+                        )
 
-                        StatsCard(
-                            title = stringResource(R.string.look_back, uiState.selectedYear.toString()),
-                            actionText = "Share",
-                            onActionClick = {
-                                onClearCaptureError()
-                                val view = viewContext
-                                com.diary.moonpage.core.util.ComposeCaptureUtils.captureComposable(
-                                    view = view,
-                                    content = {
-                                        com.diary.moonpage.core.theme.MoonPageTheme {
-                                            YearlyRecapCard(
-                                                year = uiState.selectedYear,
-                                                totalLogs = stats?.totalLogs ?: 0,
-                                                totalPhotos = stats?.totalPhotos ?: 0,
-                                                yearlyMoodGrid = stats?.yearlyMoodGrid ?: emptyList(),
-                                                themeType = uiState.themeType,
-                                                bestActivities = stats?.bestActivities ?: emptyList(),
-                                                totalDistance = stats?.totalDistance ?: 0.0,
-                                                totalSteps = stats?.totalSteps ?: 0,
-                                                longestStreak = stats?.longestStreak ?: 0
-                                            )
-                                        }
-                                    },
-                                    width = 1080,
-                                    onBitmapCaptured = { bitmap -> onShareRecap(context, bitmap) },
-                                    onFailure = {}
-                                )
-                            }
+                        // 2. Annual Sleep & Physical Row
+                        SleepPhysicalRow(
+                            stats = stats,
+                            onClick = onNavigateToAnnualSleepDetail
+                        )
+
+                        // 3. Annual Activity & Habits Card
+                        ActivityHabitsCard(
+                            frequentlyRecorded = frequentlyRecorded,
+                            onClick = onNavigateToAnnualActivityDetail
+                        )
+
+                        // 4. Year in Beans (Overview) Card
+                        Surface(
+                            modifier = Modifier.fillMaxWidth().clickable { onNavigateToAnnualBeansDetail() },
+                            shape = RoundedCornerShape(24.dp),
+                            color = MoonTheme.customColors.logItemBg.copy(alpha = 0.6f),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
                         ) {
-                            YearlyRecapCard(
-                                year = uiState.selectedYear,
-                                totalLogs = stats?.totalLogs ?: 0,
-                                totalPhotos = stats?.totalPhotos ?: 0,
-                                yearlyMoodGrid = stats?.yearlyMoodGrid ?: emptyList(),
-                                themeType = uiState.themeType,
-                                bestActivities = stats?.bestActivities ?: emptyList(),
-                                totalDistance = stats?.totalDistance ?: 0.0,
-                                totalSteps = stats?.totalSteps ?: 0,
-                                longestStreak = stats?.longestStreak ?: 0
-                            )
-                        }
-
-                        StatsCard(title = stringResource(R.string.mood_flow)) {
-                            MoodFlowChart(
-                                moodFlow = stats?.moodFlow ?: emptyList(),
-                                year = uiState.selectedYear,
-                                month = uiState.selectedMonth,
-                                isMonthly = false,
-                                themeType = uiState.themeType
-                            )
-                        }
-
-                        StatsCard(title = stringResource(R.string.mood_bar)) {
-                            MoodDistributionView(
-                                distribution = stats?.moodDistribution ?: emptyList(),
-                                themeType = uiState.themeType
-                            )
-                        }
-
-                        StatsCard(title = stringResource(R.string.year_in_beans)) {
-                            Column {
-                                Text(
-                                    text = buildAnnotatedString {
-                                        append(stringResource(R.string.look_back, "").replace("%1\$s", "").trim() + " ")
-                                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)) {
-                                            append("${uiState.selectedYear}.")
+                            Column(modifier = Modifier.padding(20.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)), contentAlignment = Alignment.Center) {
+                                            Icon(Icons.Rounded.GridView, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                                         }
-                                    },
-                                    fontSize = 16.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(bottom = 16.dp)
-                                )
-                                YearlyGridChart(
-                                    yearlyMoodGrid = stats?.yearlyMoodGrid ?: emptyList(),
-                                    year = uiState.selectedYear,
-                                    menstruationDates = if (!isMale) stats?.menstruationData ?: emptyList() else emptyList(),
-                                    themeType = uiState.themeType
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text("Year in Beans", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                    }
+                                    Icon(Icons.Rounded.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f), modifier = Modifier.size(20.dp))
+                                }
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = "See your complete emotional journey for the entire year...",
+                                    fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface, lineHeight = 24.sp, fontWeight = FontWeight.Medium
                                 )
                             }
                         }
 
-                        StatsCard(title = stringResource(R.string.monthly_average)) {
-                            MonthlyMoodAverageChart(
-                                yearlyMoodGrid = stats?.yearlyMoodGrid ?: emptyList(),
-                                year = uiState.selectedYear,
-                                themeType = uiState.themeType
-                            )
-                        }
-
-                        StatsCard(title = stringResource(R.string.yearly_top_activities)) {
-                            FrequentlyRecordedView(
-                                activities = frequentlyRecorded,
-                                onIconClick = onIconClick
-                            )
-                        }
-
-                        if (!isMale) {
-                            StatsCard(title = stringResource(R.string.yearly_cycle_trends)) {
-                                Text(stringResource(R.string.avg_cycle, 28), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                                Text(stringResource(R.string.avg_period, 5), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
-
-                        StatsCard(title = stringResource(R.string.yearly_sleep_trends)) {
-                            Text(stringResource(R.string.avg_sleep, 7.2f), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                            Text(stringResource(R.string.sleep_quality, stringResource(R.string.good)), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                        // 5. Annual Top Music Card
+                        TopMusicCard(
+                            musicSummary = stats?.musicSummary,
+                            onClick = onNavigateToAnnualMusicDetail
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(32.dp))

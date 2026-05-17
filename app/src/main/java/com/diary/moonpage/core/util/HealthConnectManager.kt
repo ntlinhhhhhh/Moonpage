@@ -62,6 +62,10 @@ class HealthConnectManager @Inject constructor(
         val startOfDay = date.atStartOfDay(ZoneId.systemDefault()).toInstant()
         val endOfDay = date.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant()
         val timeRangeFilter = TimeRangeFilter.between(startOfDay, endOfDay)
+        
+        val sleepStart = date.minusDays(1).atTime(18, 0).atZone(ZoneId.systemDefault()).toInstant()
+        val sleepEnd = date.atTime(14, 0).atZone(ZoneId.systemDefault()).toInstant()
+        val sleepTimeRangeFilter = TimeRangeFilter.between(sleepStart, sleepEnd)
 
         try {
             val response = client.aggregate(
@@ -83,7 +87,7 @@ class HealthConnectManager @Inject constructor(
             // Read sleep sessions separately as they are read via ReadRecordsRequest
             val sleepRequest = ReadRecordsRequest(
                 recordType = SleepSessionRecord::class,
-                timeRangeFilter = timeRangeFilter
+                timeRangeFilter = sleepTimeRangeFilter
             )
             val sleepRecords = client.readRecords(sleepRequest).records
             val totalSleepMinutes = sleepRecords.sumOf { Duration.between(it.startTime, it.endTime).toMinutes() }

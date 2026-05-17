@@ -663,13 +663,37 @@ fun SleepAnalysisChart(
         Spacer(modifier = Modifier.height(24.dp))
 
         // Chart Area
+        // Dynamic bounds
+        var minHourFromNoon = 6f  // Default 6 PM
+        var maxHourFromNoon = 20f // Default 8 AM
+        if (sleepData.isNotEmpty()) {
+            val allStarts = sleepData.filter { it.duration > 0 }.map { parseTimeFromNoon(it.startTime?.ifBlank { null }) }
+            val allEnds = sleepData.filter { it.duration > 0 }.map { parseTimeFromNoon(it.startTime?.ifBlank { null }) + it.duration.toFloat() }
+            if (allStarts.isNotEmpty()) {
+                minHourFromNoon = allStarts.minOrNull() ?: 6f
+                maxHourFromNoon = allEnds.maxOrNull() ?: 20f
+            }
+        }
+        val minHourDisplay = kotlin.math.floor(minHourFromNoon / 2f).toInt() * 2
+        val maxHourDisplay = kotlin.math.ceil(maxHourFromNoon / 2f).toInt() * 2
+        val hourRange = (maxHourDisplay - minHourDisplay).coerceAtLeast(4)
+        
+        val labels = mutableListOf<String>()
+        for (i in minHourDisplay..maxHourDisplay step 2) {
+            val absHour = (i + 12) % 24
+            val amPm = if (absHour < 12) "AM" else "PM"
+            val displayHour = if (absHour % 12 == 0) 12 else absHour % 12
+            labels.add("${displayHour}$amPm")
+        }
+        val gridLineCount = labels.size - 1
+
         Box(modifier = Modifier.fillMaxWidth().height(250.dp)) {
             // Y-Axis Labels
             Column(
                 modifier = Modifier.fillMaxHeight().width(40.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                listOf("6PM", "10PM", "2AM", "6AM", "10AM", "2PM", "6PM").forEach {
+                labels.forEach {
                     Text(it, fontSize = 11.sp, color = labelColor)
                 }
             }
@@ -682,8 +706,8 @@ fun SleepAnalysisChart(
                     val gridColor = onSurfaceVariant.copy(alpha = 0.1f)
                     
                     // Horizontal Grid Lines
-                    for (i in 0..6) {
-                        val y = height * i / 6f
+                    for (i in 0..gridLineCount) {
+                        val y = height * i / gridLineCount.toFloat()
                         drawLine(
                             color = gridColor,
                             start = Offset(0f, y),
@@ -704,12 +728,11 @@ fun SleepAnalysisChart(
                         if (data != null && data.duration > 0) {
                             val x = (day - 1) * spacing + spacing / 2f
                             
-                            // Parse Start Time to Float (Hours from 6PM)
-                            val startTimeFloat = parseTimeToFloat(data.startTime?.ifBlank { null })
+                            val startTimeFloat = parseTimeFromNoon(data.startTime?.ifBlank { null })
                             val duration = data.duration.toFloat()
                             
-                            val startY = (startTimeFloat / 24f) * height
-                            val endY = ((startTimeFloat + duration) / 24f) * height
+                            val startY = ((startTimeFloat - minHourDisplay) / hourRange) * height
+                            val endY = ((startTimeFloat + duration - minHourDisplay) / hourRange) * height
                             
                             val barColor = when {
                                 duration < 6.0f -> Color(0xFFEF5350) // Solid Red
@@ -719,7 +742,7 @@ fun SleepAnalysisChart(
                             
                             drawRoundRect(
                                 color = barColor,
-                                topLeft = Offset(x - barWidth/2, startY),
+                                topLeft = Offset(x - barWidth/2, startY.coerceAtLeast(0f)),
                                 size = Size(barWidth, (endY - startY).coerceAtLeast(4f)),
                                 cornerRadius = CornerRadius(barWidth/2, barWidth/2)
                             )
@@ -803,8 +826,8 @@ private fun SleepLegendItem(color: Color, label: String, value: String) {
     }
 }
 
-private fun parseTimeToFloat(timeStr: String?): Float {
-    if (timeStr == null || timeStr.isBlank()) return 6f // Default to Midnight (6 hours after 6PM)
+private fun parseTimeFromNoon(timeStr: String?): Float {
+    if (timeStr == null || timeStr.isBlank()) return 10f // Default to 10 PM (10 hours after Noon)
     try {
         val date = try {
             java.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH).parse(timeStr)
@@ -818,21 +841,20 @@ private fun parseTimeToFloat(timeStr: String?): Float {
                     null
                 }
             }
-        } ?: return 6f
+        } ?: return 10f
         
         val cal = Calendar.getInstance().apply { time = date }
         val hours = cal.get(Calendar.HOUR_OF_DAY).toFloat()
         val minutes = cal.get(Calendar.MINUTE).toFloat()
-        val totalHoursFromMidnight = hours + minutes / 60f
+        val absoluteHours = hours + minutes / 60f
         
-        // Offset so 6PM is 0
-        var offset = totalHoursFromMidnight + 6f
-        if (totalHoursFromMidnight >= 18f) {
-            offset = totalHoursFromMidnight - 18f
+        return if (absoluteHours >= 12f) {
+            absoluteHours - 12f
+        } else {
+            absoluteHours + 12f
         }
-        return offset
     } catch (e: Exception) {
-        return 6f
+        return 10f
     }
 }
 
@@ -1400,6 +1422,7 @@ fun YearlyRecapCard(
     totalPhotos: Int,
     yearlyMoodGrid: List<MoodFlowDto>,
     themeType: MoonThemeType,
+    modifier: Modifier = Modifier,
     bestActivities: List<BestActivityDto> = emptyList(),
     totalDistance: Double = 0.0,
     totalSteps: Int = 0,
@@ -1439,7 +1462,7 @@ fun YearlyRecapCard(
     } else "N/A"
 
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(32.dp),
         color = MoonTheme.customColors.logCardBg
     ) {
@@ -1668,15 +1691,15 @@ fun MoodOverviewCard(
     val moodDistribution = stats?.moodDistribution ?: emptyList()
     val dominantDist = moodDistribution.maxByOrNull { it.percentage }
     val dominantMoodId = dominantDist?.baseMoodId ?: 3
-    val dominantPercent = dominantDist?.percentage?.roundToInt() ?: 0
+    val dominantMoodPercent = dominantDist?.percentage?.roundToInt() ?: 0
     val dominantMoodVisual = MoonIcons.Moods.getMoodVisual(dominantMoodId, themeType)
 
     val moodText = when (dominantMoodId) {
-        5 -> "Tháng này bạn có vẻ rất vui! 🌟"
-        4 -> "Tháng này bạn khá vui! 😊"
-        3 -> "Tháng này bạn khá ổn định. 😌"
-        2 -> "Tháng này có vẻ hơi khó khăn. 💙"
-        else -> "Tháng này khá nặng nề. 🌙"
+        5 -> "This month looks great! 🌟"
+        4 -> "This month has been pretty good! 😊"
+        3 -> "This month has been stable. 😌"
+        2 -> "This month has been a bit tough. 💙"
+        else -> "This month has been quite heavy. 🌙"
     }
 
     val moodFlow = stats?.moodFlow ?: emptyList()
@@ -1727,7 +1750,7 @@ fun MoodOverviewCard(
                 Spacer(modifier = Modifier.width(20.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "$dominantPercent%",
+                        text = "$dominantMoodPercent%",
                         fontSize = 36.sp, fontWeight = FontWeight.Black,
                         color = onSurface, lineHeight = 36.sp
                     )
@@ -1775,9 +1798,9 @@ fun SleepPhysicalRow(
     stats: com.diary.moonpage.data.remote.dto.stats.StatisticsResponse?,
     onClick: () -> Unit
 ) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        SleepWidgetCard(avgSleepHours = stats?.averageSleepHours ?: 0.0, modifier = Modifier.weight(1f), onClick = onClick)
-        PhysicalWidgetCard(totalSteps = stats?.totalSteps ?: 0, totalCalories = stats?.totalCalories ?: 0, modifier = Modifier.weight(1f), onClick = onClick)
+    Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        SleepWidgetCard(avgSleepHours = stats?.averageSleepHours ?: 0.0, modifier = Modifier.weight(1f).fillMaxHeight(), onClick = onClick)
+        PhysicalWidgetCard(totalSteps = stats?.totalSteps ?: 0, totalCalories = stats?.totalCalories ?: 0, modifier = Modifier.weight(1f).fillMaxHeight(), onClick = onClick)
     }
 }
 
@@ -1800,13 +1823,16 @@ private fun SleepWidgetCard(avgSleepHours: Double, modifier: Modifier, onClick: 
                 Icon(Icons.Rounded.ChevronRight, null, tint = onSurfaceVariant.copy(alpha = 0.3f), modifier = Modifier.size(16.dp))
             }
             Spacer(modifier = Modifier.height(20.dp))
-            Text("Giấc ngủ", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.55f))
+            Text("Sleep", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.55f))
             Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = if (avgSleepHours > 0) String.format(Locale.ENGLISH, "%.1f", avgSleepHours) else "--",
-                fontSize = 30.sp, fontWeight = FontWeight.Black, color = onSurface, lineHeight = 30.sp
-            )
-            Text("giờ / đêm", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.45f))
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(
+                    text = if (avgSleepHours > 0) String.format(Locale.ENGLISH, "%.1f", avgSleepHours) else "--",
+                    fontSize = 30.sp, fontWeight = FontWeight.Black, color = onSurface, modifier = Modifier.alignByBaseline()
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("h/night", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.45f), modifier = Modifier.alignByBaseline())
+            }
         }
     }
 }
@@ -1830,11 +1856,14 @@ private fun PhysicalWidgetCard(totalSteps: Int, totalCalories: Int, modifier: Mo
                 Icon(Icons.Rounded.ChevronRight, null, tint = onSurfaceVariant.copy(alpha = 0.3f), modifier = Modifier.size(16.dp))
             }
             Spacer(modifier = Modifier.height(20.dp))
-            Text("Thể chất", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.55f))
+            Text("Health & Steps", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.55f))
             Spacer(modifier = Modifier.height(6.dp))
             if (totalSteps > 0) {
-                Text(String.format(Locale.ENGLISH, "%,d", totalSteps), fontSize = 24.sp, fontWeight = FontWeight.Black, color = onSurface, lineHeight = 24.sp)
-                Text("bước chân", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.45f))
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(String.format(Locale.ENGLISH, "%,d", totalSteps), fontSize = 24.sp, fontWeight = FontWeight.Black, color = onSurface, modifier = Modifier.alignByBaseline())
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("steps", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.45f), modifier = Modifier.alignByBaseline())
+                }
             } else {
                 Text("--", fontSize = 30.sp, fontWeight = FontWeight.Black, color = onSurface)
             }
@@ -1868,7 +1897,7 @@ fun ActivityHabitsCard(frequentlyRecorded: List<BestActivityDto>, onClick: () ->
             }
             Spacer(modifier = Modifier.height(16.dp))
             if (frequentlyRecorded.isEmpty()) {
-                Text("Chưa có dữ liệu hoạt động.", fontSize = 14.sp, color = onSurfaceVariant.copy(alpha = 0.5f))
+                Text("No activity data available.", fontSize = 14.sp, color = onSurfaceVariant.copy(alpha = 0.5f))
             } else {
                 val top = frequentlyRecorded.first()
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1878,7 +1907,7 @@ fun ActivityHabitsCard(frequentlyRecorded: List<BestActivityDto>, onClick: () ->
                     Spacer(modifier = Modifier.width(14.dp))
                     Column {
                         Text(top.activityName, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = onSurface)
-                        Text("Hoạt động nhiều nhất · ${top.occurrence} lần", fontSize = 13.sp, color = onSurfaceVariant.copy(alpha = 0.6f))
+                        Text("Most recorded activity · ${top.occurrence} times", fontSize = 13.sp, color = onSurfaceVariant.copy(alpha = 0.6f))
                     }
                 }
                 if (frequentlyRecorded.size > 1) {
@@ -1921,7 +1950,7 @@ fun InsightsTeaserCard(bestActivities: List<BestActivityDto>, onClick: () -> Uni
             }
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Khám phá xem điều gì đang làm bạn vui lên hoặc buồn đi...",
+                text = "Discover what sparks joy or weighs you down...",
                 fontSize = 16.sp, color = onSurface, lineHeight = 24.sp, fontWeight = FontWeight.Medium
             )
             if (bestActivities.isNotEmpty()) {
@@ -1983,7 +2012,7 @@ fun TopMusicCard(
                     Text(topSong.songTitle, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = onSurface, maxLines = 1)
                     Text(topSong.artistName, fontSize = 12.sp, color = onSurfaceVariant, maxLines = 1)
                 } else {
-                    Text("Chưa có dữ liệu", fontSize = 14.sp, color = onSurfaceVariant.copy(alpha = 0.5f))
+                    Text("No data available", fontSize = 14.sp, color = onSurfaceVariant.copy(alpha = 0.5f))
                 }
             }
             Icon(Icons.Rounded.ChevronRight, null, tint = onSurfaceVariant.copy(alpha = 0.35f), modifier = Modifier.size(20.dp))
