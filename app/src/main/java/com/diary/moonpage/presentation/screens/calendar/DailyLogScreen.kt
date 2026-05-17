@@ -109,6 +109,7 @@ fun DailyLogScreen(
     }
 
     val snackbarHostState = remember { SnackbarHostState() }
+    var showLocationWarningDialog by remember { mutableStateOf(false) }
 
     // Auto-trigger weather fetch for any selected date if it's a new log
     LaunchedEffect(uiState.isInitialized, uiState.date, uiState.existingLog) {
@@ -116,8 +117,14 @@ fun DailyLogScreen(
             if (locationPermissionState.allPermissionsGranted) {
                 viewModel.onEvent(DailyLogUiEvent.OnLocationPermissionGranted)
             } else {
-                locationPermissionState.launchMultiplePermissionRequest()
+                showLocationWarningDialog = true
             }
+        }
+    }
+
+    LaunchedEffect(locationPermissionState.allPermissionsGranted) {
+        if (locationPermissionState.allPermissionsGranted && uiState.isInitialized && uiState.existingLog == null) {
+            viewModel.onEvent(DailyLogUiEvent.OnLocationPermissionGranted)
         }
     }
 
@@ -206,6 +213,16 @@ fun DailyLogScreen(
                 photoToDelete = null
             },
             onDismiss = { photoToDelete = null }
+        )
+    }
+
+    if (showLocationWarningDialog) {
+        DailyLogLocationPermissionDialog(
+            onDismiss = { showLocationWarningDialog = false },
+            onConfirm = {
+                showLocationWarningDialog = false
+                locationPermissionState.launchMultiplePermissionRequest()
+            }
         )
     }
 }
@@ -362,6 +379,16 @@ fun DailyLogScreenContent(
             onDismiss = { onEvent(DailyLogUiEvent.OnSleepDialogDismiss) },
             onConfirm = { bed, wake ->
                 onEvent(DailyLogUiEvent.OnSleepTimeConfirmed(bed, wake))
+            }
+        )
+    }
+
+    if (false) {
+        DailyLogLocationPermissionDialog(
+            onDismiss = { },
+            onConfirm = {
+                // showLocationWarningDialog = false
+                // locationPermissionState.launchMultiplePermissionRequest()
             }
         )
     }
@@ -1662,6 +1689,79 @@ fun SpotifyAuthDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
                         )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DailyLogLocationPermissionDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = MoonTheme.customColors.popupBgColor,
+            modifier = Modifier.fillMaxWidth(0.88f).wrapContentHeight(),
+            tonalElevation = 0.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(28.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Quyền truy cập vị trí",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "MoonPage cần quyền truy cập vị trí để tự động cập nhật thời tiết và gợi ý các hoạt động cho nhật ký hôm nay.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colorScheme.onSurface.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Transparent,
+                            contentColor = MoonTheme.customColors.cancelBtnTextColor
+                        ),
+                        border = BorderStroke(1.dp, colorScheme.outline.copy(alpha = 0.3f)),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Bỏ qua", fontWeight = FontWeight.SemiBold)
+                    }
+
+                    Button(
+                        onClick = onConfirm,
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colorScheme.primary,
+                            contentColor = colorScheme.onPrimary
+                        ),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text("Đồng ý", fontWeight = FontWeight.SemiBold)
                     }
                 }
             }

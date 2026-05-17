@@ -267,6 +267,7 @@ fun MomentCameraScreenContent(
             pendingLocationRequest = false
             if (isGpsEnabled(context)) {
                 fetchLocationFast()
+                onEvent(MomentUiEvent.RefreshWeather)
             } else {
                 showGpsDialog = true
             }
@@ -349,7 +350,14 @@ fun MomentCameraScreenContent(
                     },
                     userWeather = userWeather,
                     onWeatherClick = {
-                        onEvent(MomentUiEvent.RefreshWeather)
+                        if (!locationPermissionState.allPermissionsGranted) {
+                            pendingLocationRequest = true
+                            locationPermissionState.launchMultiplePermissionRequest()
+                        } else if (!isGpsEnabled(context)) {
+                            showGpsDialog = true
+                        } else {
+                            onEvent(MomentUiEvent.RefreshWeather)
+                        }
                     },
                     isLoading = uiState.isUploading,
                     isSuccess = isSuccess,

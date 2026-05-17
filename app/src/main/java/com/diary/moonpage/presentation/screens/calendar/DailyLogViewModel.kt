@@ -564,7 +564,15 @@ class DailyLogViewModel @Inject constructor(
                 delay(500)
                 _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Updating weather conditions..."))
                 
-                val weatherResult = weatherRepository.getWeatherConditions(location.latitude, location.longitude, date)
+                val cached = weatherRepository.getCachedWeather(date)
+                val weatherResult = if (cached != null) {
+                    Result.success(cached)
+                } else {
+                    val res = weatherRepository.getWeatherConditions(location.latitude, location.longitude, date)
+                    res.onSuccess { weatherRepository.setCachedWeather(date, it) }
+                    res
+                }
+                
                 weatherResult.onSuccess { result ->
                     val weatherNames = result.conditions
                     val temp = result.averageTemp

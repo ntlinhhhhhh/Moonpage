@@ -24,7 +24,9 @@ class CalendarViewModel @Inject constructor(
     private val momentRepository: com.diary.moonpage.domain.repository.MomentRepository,
     private val activityPreferencesManager: ActivityPreferencesManager,
     private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager,
-    private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository
+    private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository,
+    private val locationTracker: com.diary.moonpage.core.util.LocationTracker,
+    private val weatherRepository: com.diary.moonpage.domain.repository.WeatherRepository
 ) : ViewModel() {
 
     private val BASE_URL = "https://hieu-wikipedia.io.vn/"
@@ -44,6 +46,23 @@ class CalendarViewModel @Inject constructor(
         viewModelScope.launch {
             themePreferencesManager.themeType.collect { themeType ->
                 _uiState.update { it.copy(themeType = themeType) }
+            }
+        }
+        
+        // Auto background weather prefetch if location permission exists
+        viewModelScope.launch {
+            try {
+                val location = locationTracker.getCurrentLocation()
+                if (location != null) {
+                    val today = LocalDate.now()
+                    val result = weatherRepository.getWeatherConditions(location.latitude, location.longitude, today)
+                    result.onSuccess { weatherResult ->
+                        weatherRepository.setCachedWeather(today, weatherResult)
+                        android.util.Log.d("CalendarVM", "Auto background weather fetched and cached: ${weatherResult.conditions}")
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("CalendarVM", "Auto background weather fetch failed", e)
             }
         }
         
