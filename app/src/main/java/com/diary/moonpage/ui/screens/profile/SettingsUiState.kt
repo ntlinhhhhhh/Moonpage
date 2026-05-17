@@ -11,6 +11,8 @@ data class SettingsUiState(
     val reminderTime: String = "21:00",
     val isReminderEnabled: Boolean = false,
     val isDeleteAccountDialogShown: Boolean = false,
+    val isPasswordConfirmationDialogShown: Boolean = false,
     val isLoading: Boolean = false,
+    val authProvider: String = "Password",
     val error: String? = null
 )

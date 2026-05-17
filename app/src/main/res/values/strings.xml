@@ -177,7 +177,6 @@
     <string name="strength_training">Strength Training %1$dm</string>
     <string name="not_started">Not started</string>
     <string name="on_day_x">On day %1$d</string>
-    <string name="streak">Streak</string>
     <string name="back">Back</string>
     <string name="theme_detail">Theme Detail</string>
     <string name="theme_description_default">Experience the beauty of this unique set.</string>
@@ -195,7 +194,27 @@
     <string name="login_information">Login Information</string>
     <string name="my_social_account">My social account</string>
     <string name="change_social_account">Change social account</string>
+    <string name="change_password">Change Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="old_password">Old Password</string>
+    <string name="new_password">New Password</string>
+    <string name="confirm_new_password">Confirm New Password</string>
+    <string name="passwords_do_not_match">Passwords do not match</string>
+    <string name="password_changed_successfully">Password changed successfully!</string>
+    <string name="change_password_failed">Failed to change password</string>
+    <string name="confirm">Confirm</string>
     <string name="not_specified">Not specified</string>
+    <string name="streak">Streak</string>
+    <string name="streak_freeze">Streak Freeze</string>
+    <string name="streak_freezes">Streak Freezes</string>
+    <string name="streak_protection">Streak Protection</string>
+    <string name="current_streak">Current Streak</string>
+    <string name="longest_streak">Longest Streak</string>
+    <string name="how_it_works">How it works</string>
+    <string name="streak_info_desc">Your streak increases every day you record your mood and activities. Keep it going to build a consistent journaling habit!</string>
+    <string name="streak_freeze_desc">Life gets busy. A Streak Freeze protects your streak if you miss a day. It activates automatically when you forget to log.</string>
+    <string name="streak_freeze_store_desc">Protect your streak if you miss a day.</string>
+    <string name="buy_for_streak_freeze">Buy for %1$s</string>
     <string name="current_passcode">Current Passcode</string>
     <string name="wrong_passcode_try_again">Wrong Passcode. Try again.</string>
 

@@ -42,7 +42,7 @@ import com.diary.moonpage.ui.screens.tutorial.TutorialStep
 /**
  * BottomSheet type management
  */
-enum class BottomSheetType { NONE, BIRTHDAY, GENDER, USERNAME }
+enum class BottomSheetType { NONE, BIRTHDAY, GENDER, USERNAME, CHANGE_PASSWORD }
 
 /**
  * Stateful Screen for Account
@@ -126,6 +126,7 @@ fun AccountRoute(
             birthday = user?.birthday ?: stringResource(R.string.not_specified),
             userIdFull = user?.userId ?: "",
             email = user?.email ?: "",
+            authProvider = user?.authProvider ?: "Password",
             avatarUrl = user?.avatarUrl,
             localAvatarPath = uiState.localAvatarPath,
             tempAvatarPath = uiState.tempAvatarPath,
@@ -135,6 +136,7 @@ fun AccountRoute(
             onGenderClick = { currentBottomSheet = BottomSheetType.GENDER },
             onAvatarEditClick = { avatarLauncher.launch("image/*") },
             onUsernameEditClick = { currentBottomSheet = BottomSheetType.USERNAME },
+            onChangePasswordClick = { currentBottomSheet = BottomSheetType.CHANGE_PASSWORD },
             snackbarHostState = snackbarHostState
         )
 
@@ -210,6 +212,16 @@ fun AccountRoute(
                                     birthday = user?.birthday
                                 )
                                 hideBottomSheet()
+                            },
+                            onClose = { hideBottomSheet() }
+                        )
+                    }
+                    BottomSheetType.CHANGE_PASSWORD -> {
+                        ChangePasswordBottomSheetContent(
+                            onConfirm = { old, new ->
+                                viewModel.changePassword(old, new) {
+                                    hideBottomSheet()
+                                }
                             },
                             onClose = { hideBottomSheet() }
                         )
@@ -340,6 +352,7 @@ fun AccountScreen(
     birthday: String,
     userIdFull: String,
     email: String,
+    authProvider: String,
     avatarUrl: String? = null,
     localAvatarPath: String? = null,
     tempAvatarPath: String? = null,
@@ -349,6 +362,7 @@ fun AccountScreen(
     onGenderClick: () -> Unit,
     onAvatarEditClick: () -> Unit,
     onUsernameEditClick: () -> Unit,
+    onChangePasswordClick: () -> Unit,
     snackbarHostState: SnackbarHostState
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -500,6 +514,16 @@ fun AccountScreen(
                     }
                 }
             )
+
+            if (!authProvider.equals("Google", ignoreCase = true)) {
+                AccountInfoRow(
+                    label = stringResource(R.string.change_password),
+                    value = "",
+                    icon = Icons.Rounded.Lock,
+                    showArrow = true,
+                    onClick = onChangePasswordClick
+                )
+            }
 
             Spacer(modifier = Modifier.height(40.dp))
 

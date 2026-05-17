@@ -36,7 +36,10 @@ class ProfileViewModel @Inject constructor(
         // Observe cache changes from repository
         viewModelScope.launch {
             userRepository.currentUser.collectLatest { user ->
-                _uiState.update { it.copy(user = user) }
+                _uiState.update { it.copy(
+                    user = user,
+                    streakFreezeCount = user?.streakFreezeCount ?: 0
+                ) }
             }
         }
 
@@ -62,6 +65,8 @@ class ProfileViewModel @Inject constructor(
                     _uiState.update { it.copy(
                         totalLogs = stats.totalLogs,
                         totalPhotos = stats.totalPhotos,
+                        currentStreak = stats.currentStreak,
+                        longestStreak = stats.longestStreak,
                         isLoading = false
                     ) }
                 } else {
@@ -180,6 +185,22 @@ class ProfileViewModel @Inject constructor(
                 }
                 .onFailure { e ->
                     _uiEvent.emit(ProfileUiEffect.ShowSnackBar(e.message ?: "Delete failed"))
+                }
+        }
+    }
+
+    fun changePassword(old: String, new: String, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isUpdating = true) }
+            userRepository.changePassword(old, new)
+                .onSuccess {
+                    _uiState.update { it.copy(isUpdating = false) }
+                    _uiEvent.emit(ProfileUiEffect.ShowSnackBar("Password changed successfully"))
+                    onSuccess()
+                }
+                .onFailure { e ->
+                    _uiState.update { it.copy(isUpdating = false) }
+                    _uiEvent.emit(ProfileUiEffect.ShowSnackBar(e.message ?: "Failed to change password"))
                 }
         }
     }

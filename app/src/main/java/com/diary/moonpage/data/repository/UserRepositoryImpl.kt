@@ -166,4 +166,51 @@ class UserRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun changePassword(old: String, new: String): Result<Unit> {
+        return try {
+            val request = com.diary.moonpage.data.remote.dto.auth.ChangePasswordRequestDTO(old, new)
+            val response = userApi.changePassword(request)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Failed to change password: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun confirmPassword(password: String?, googleIdToken: String?): Result<Unit> {
+        return try {
+            val request = com.diary.moonpage.data.remote.dto.auth.ConfirmPasswordRequestDTO(
+                password = password,
+                googleIdToken = googleIdToken
+            )
+            val response = userApi.confirmPassword(request)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                val errorMsg = response.errorBody()?.string() ?: "Confirmation failed"
+                Result.failure(Exception(errorMsg))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun buyStreakFreeze(): Result<Unit> {
+        return try {
+            val response = userApi.buyStreakFreeze()
+            if (response.isSuccessful) {
+                // Refresh user profile after purchase to update coins and freeze count
+                getCurrentUser()
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Purchase failed: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

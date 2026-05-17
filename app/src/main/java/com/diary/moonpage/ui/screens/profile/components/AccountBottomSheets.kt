@@ -27,6 +27,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import java.time.YearMonth
+import com.diary.moonpage.R
+import com.diary.moonpage.ui.components.inputs.MoonTextField
+import com.diary.moonpage.core.util.UiText
+import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.ui.focus.FocusDirection
 
 private const val INFINITE_MULTIPLIER = 1000
 
@@ -320,6 +329,101 @@ fun BirthdayBottomSheetContent(
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
         ) {
             Text("Done", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        }
+    }
+}
+
+@Composable
+fun ChangePasswordBottomSheetContent(
+    onConfirm: (String, String) -> Unit,
+    onClose: () -> Unit
+) {
+    var oldPassword by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+    val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+    
+    val isEnabled = oldPassword.isNotBlank() && 
+                    newPassword.isNotBlank() && 
+                    newPassword == confirmPassword && 
+                    newPassword.length >= 6
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = { focusManager.clearFocus() })
+            }
+            .navigationBarsPadding()
+            .imePadding()
+            .padding(bottom = 24.dp)
+    ) {
+        BottomSheetHeader(title = stringResource(R.string.change_password), onClose = onClose)
+
+        Column(
+            modifier = Modifier.padding(horizontal = 24.dp)
+        ) {
+            MoonTextField(
+                value = oldPassword,
+                onValueChange = { oldPassword = it },
+                label = stringResource(R.string.old_password),
+                placeholderText = stringResource(R.string.placeholder_password),
+                iconVector = Icons.Outlined.Lock,
+                isPassword = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                )
+            )
+
+            MoonTextField(
+                value = newPassword,
+                onValueChange = { newPassword = it },
+                label = stringResource(R.string.new_password),
+                placeholderText = stringResource(R.string.placeholder_password),
+                iconVector = Icons.Outlined.Lock,
+                isPassword = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                )
+            )
+
+            val isError = confirmPassword.isNotBlank() && confirmPassword != newPassword
+            MoonTextField(
+                value = confirmPassword,
+                onValueChange = { confirmPassword = it },
+                label = stringResource(R.string.confirm_new_password),
+                placeholderText = stringResource(R.string.placeholder_confirm_password),
+                iconVector = Icons.Outlined.Lock,
+                isPassword = true,
+                errorText = if (isError) UiText.StringResource(R.string.passwords_do_not_match) else null,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        keyboardController?.hide()
+                        if (isEnabled) {
+                            onConfirm(oldPassword, newPassword)
+                        }
+                    }
+                )
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Button(
+            onClick = { onConfirm(oldPassword, newPassword) },
+            enabled = isEnabled,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .height(54.dp),
+            shape = RoundedCornerShape(20.dp),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+        ) {
+            Text(stringResource(R.string.confirm), fontWeight = FontWeight.Bold, fontSize = 16.sp)
         }
     }
 }

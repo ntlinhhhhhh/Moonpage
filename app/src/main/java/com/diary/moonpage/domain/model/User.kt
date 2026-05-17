@@ -11,7 +11,9 @@ data class User(
     val avatarUrl: String?,
     val gender: String?,
     val birthday: String?,
-    val coinBalance: Int = 0
+    val coinBalance: Int = 0,
+    val authProvider: String? = "Password",
+    val streakFreezeCount: Int = 0
 ) {
     // Alias for UI compatibility if needed
     val id: String get() = userId

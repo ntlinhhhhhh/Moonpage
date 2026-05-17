@@ -9,7 +9,9 @@ data class UserResponseDto(
     val avatarUrl: String?,
     val gender: String?,
     val birthday: String?,
-    val coinBalance: Int? = 0
+    val coinBalance: Int? = 0,
+    val authProvider: String? = null,
+    val streakFreezeCount: Int? = 0
 ) {
     fun toDomain(token: String = ""): User {
         return User(
@@ -20,7 +22,9 @@ data class UserResponseDto(
             avatarUrl = avatarUrl,
             gender = gender,
             birthday = birthday,
-            coinBalance = coinBalance ?: 0
+            coinBalance = coinBalance ?: 0,
+            authProvider = authProvider ?: "Password",
+            streakFreezeCount = streakFreezeCount ?: 0
         )
     }
 }

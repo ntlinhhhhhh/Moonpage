@@ -27,6 +27,12 @@ class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
+    init {
+        viewModelScope.launch {
+            userRepository.getCurrentUser()
+        }
+    }
+
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = combine(
         combine(
@@ -48,8 +54,9 @@ class SettingsViewModel @Inject constructor(
                 params[6] as String
             )
         },
+        userRepository.currentUser,
         _uiState
-    ) { params, currentState ->
+    ) { params, currentUser, currentState ->
         currentState.copy(
             language = params.language,
             themeType = params.themeType,
@@ -57,7 +64,8 @@ class SettingsViewModel @Inject constructor(
             isPasscodeEnabled = params.isPasscodeEnabled,
             isBiometricEnabled = params.isBiometricEnabled,
             isReminderEnabled = params.isReminderEnabled,
-            reminderTime = params.reminderTime
+            reminderTime = params.reminderTime,
+            authProvider = currentUser?.authProvider ?: "Password"
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 
@@ -158,6 +166,56 @@ class SettingsViewModel @Inject constructor(
 
     fun dismissDeleteAccountDialog() {
         _uiState.update { it.copy(isDeleteAccountDialogShown = false) }
+    }
+
+    fun showPasswordConfirmationDialog() {
+        _uiState.update { it.copy(isDeleteAccountDialogShown = false, isPasswordConfirmationDialogShown = true) }
+    }
+
+    fun dismissPasswordConfirmationDialog() {
+        _uiState.update { it.copy(isPasswordConfirmationDialogShown = false) }
+    }
+
+    fun confirmPasswordAndDelete(password: String, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            val confirmResult = userRepository.confirmPassword(password)
+            if (confirmResult.isSuccess) {
+                _uiState.update { it.copy(isPasswordConfirmationDialogShown = false) }
+                deleteUserAccount(onSuccess)
+            } else {
+                _uiState.update { it.copy(isLoading = false, error = "Incorrect password") }
+            }
+        }
+    }
+
+    fun confirmGoogleAndDelete(googleIdToken: String, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            val confirmResult = userRepository.confirmPassword(googleIdToken = googleIdToken)
+            if (confirmResult.isSuccess) {
+                deleteUserAccount(onSuccess)
+            } else {
+                _uiState.update { it.copy(isLoading = false, error = "Google confirmation failed") }
+            }
+        }
+    }
+
+    fun changePassword(old: String, new: String, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            val result = userRepository.changePassword(old, new)
+            if (result.isSuccess) {
+                _uiState.update { it.copy(isLoading = false) }
+                onSuccess()
+            } else {
+                _uiState.update { it.copy(isLoading = false, error = result.exceptionOrNull()?.message ?: "Failed to change password") }
+            }
+        }
+    }
+
+    fun setError(message: String) {
+        _uiState.update { it.copy(error = message) }
     }
 
     fun deleteUserAccount(onSuccess: () -> Unit) {

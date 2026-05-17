@@ -24,6 +24,7 @@ import com.diary.moonpage.core.util.LocaleUtils
 import com.diary.moonpage.ui.screens.profile.components.*
 import com.diary.moonpage.ui.components.layout.SectionTitle
 import com.diary.moonpage.core.theme.*
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsRoute(
@@ -34,8 +35,10 @@ fun SettingsRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     var showLanguageDialog by remember { mutableStateOf(false) }
+    var showChangePasswordDialog by remember { mutableStateOf(false) }
 
     SettingsScreen(
         uiState = uiState,
@@ -49,6 +52,7 @@ fun SettingsRoute(
         onBiometricToggle = { viewModel.toggleBiometric(it) },
         onReminderToggle = { viewModel.toggleReminder(it) },
         onReminderTimeClick = { hour, minute -> viewModel.updateReminderTime(hour, minute) },
+        onChangePasswordClick = { showChangePasswordDialog = true },
         onDeleteAccountClick = { viewModel.showDeleteAccountDialog() }
     )
 
@@ -66,11 +70,64 @@ fun SettingsRoute(
         )
     }
 
+    if (showChangePasswordDialog) {
+        ChangePasswordDialog(
+            onDismiss = { showChangePasswordDialog = false },
+            onConfirm = { old, new ->
+                viewModel.changePassword(old, new) {
+                    showChangePasswordDialog = false
+                    android.widget.Toast.makeText(context, "Password changed successfully", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+        )
+    }
+
     if (uiState.isDeleteAccountDialogShown) {
         DeleteAccountConfirmationDialog(
             onDismiss = { viewModel.dismissDeleteAccountDialog() },
             onConfirm = {
-                viewModel.deleteUserAccount {
+                if (!uiState.authProvider.equals("Google", ignoreCase = true)) {
+                    viewModel.showPasswordConfirmationDialog()
+                } else if (uiState.authProvider.equals("Google", ignoreCase = true)) {
+                    viewModel.dismissDeleteAccountDialog()
+                    val googleWebClientId = context.getString(R.string.google_web_client_id)
+                    scope.launch {
+                        try {
+                            val credentialManager = androidx.credentials.CredentialManager.create(context)
+                            val googleIdOption = com.google.android.libraries.identity.googleid.GetGoogleIdOption.Builder()
+                                .setFilterByAuthorizedAccounts(false)
+                                .setServerClientId(googleWebClientId)
+                                .setAutoSelectEnabled(false)
+                                .build()
+                            val request = androidx.credentials.GetCredentialRequest.Builder()
+                                .addCredentialOption(googleIdOption)
+                                .build()
+                            val result = credentialManager.getCredential(context, request)
+                            val credential = result.credential
+                            if (credential.type == com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                                val googleIdToken = com.google.android.libraries.identity.googleid.GoogleIdTokenCredential.createFrom(credential.data)
+                                viewModel.confirmGoogleAndDelete(googleIdToken.idToken) {
+                                    onNavigateToLogin()
+                                }
+                            }
+                        } catch (e: androidx.credentials.exceptions.GetCredentialCancellationException) {
+                            // User cancelled
+                        } catch (e: androidx.credentials.exceptions.NoCredentialException) {
+                            viewModel.setError("Please sign in to a Google account to confirm account deletion.")
+                        } catch (e: Exception) {
+                            viewModel.setError(e.message ?: "Google confirmation failed.")
+                        }
+                    }
+                }
+            }
+        )
+    }
+
+    if (uiState.isPasswordConfirmationDialogShown) {
+        ConfirmPasswordDialog(
+            onDismiss = { viewModel.dismissPasswordConfirmationDialog() },
+            onConfirm = { password ->
+                viewModel.confirmPasswordAndDelete(password) {
                     onNavigateToLogin()
                 }
             }
@@ -79,7 +136,7 @@ fun SettingsRoute(
 
     uiState.error?.let { error ->
         LaunchedEffect(error) {
-            // In a real app, show a snackbar or toast
+            android.widget.Toast.makeText(context, error, android.widget.Toast.LENGTH_LONG).show()
             viewModel.clearError()
         }
     }
@@ -96,6 +153,7 @@ fun SettingsScreen(
     onBiometricToggle: (Boolean) -> Unit,
     onReminderToggle: (Boolean) -> Unit,
     onReminderTimeClick: (Int, Int) -> Unit,
+    onChangePasswordClick: () -> Unit,
     onDeleteAccountClick: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -128,7 +186,7 @@ fun SettingsScreen(
 
             SettingsMenuItem(
                 title = stringResource(R.string.language),
-                value = if (uiState.language == "vi") "Tiếng Việt" else "English",
+                value = if (uiState.language == "en") "English" else "Vietnamese",
                 icon = Icons.Rounded.Language,
                 onClick = onLanguageClick
             )
@@ -157,6 +215,14 @@ fun SettingsScreen(
             }
 
             SectionTitle(stringResource(R.string.security))
+
+            if (!uiState.authProvider.equals("Google", ignoreCase = true)) {
+                SettingsMenuItem(
+                    title = stringResource(R.string.change_password),
+                    icon = Icons.Rounded.LockOpen,
+                    onClick = onChangePasswordClick
+                )
+            }
 
             SwitchSettingItem(
                 title = stringResource(R.string.passcode_lock),

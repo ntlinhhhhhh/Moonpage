@@ -46,6 +46,16 @@ interface UserApi {
     suspend fun updateLanguage(
         @Body request: LanguageRequest
     ): Response<Unit>
+
+    @POST("api/users/me/change-password")
+    suspend fun changePassword(
+        @Body request: com.diary.moonpage.data.remote.dto.auth.ChangePasswordRequestDTO
+    ): Response<Unit>
+
+    @POST("api/users/me/confirm-password")
+    suspend fun confirmPassword(
+        @Body request: com.diary.moonpage.data.remote.dto.auth.ConfirmPasswordRequestDTO
+    ): Response<Unit>
 }
 
 data class LanguageRequest(
