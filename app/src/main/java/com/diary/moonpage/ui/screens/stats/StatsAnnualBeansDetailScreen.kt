@@ -35,31 +35,43 @@ fun StatsAnnualBeansDetailRoute(
     val viewContext = LocalView.current
     
     val flatGridList = uiState.stats?.yearlyMoodGrid ?: uiState.stats?.moodFlow ?: emptyList()
+
+    val captureContent: @Composable () -> Unit = {
+        com.diary.moonpage.core.theme.MoonPageTheme {
+            YearlyRecapCard(
+                year = uiState.selectedYear,
+                totalLogs = uiState.stats?.totalLogs ?: 0,
+                totalPhotos = uiState.stats?.totalPhotos ?: 0,
+                yearlyMoodGrid = flatGridList,
+                themeType = uiState.themeType,
+                bestActivities = uiState.stats?.bestActivities ?: emptyList(),
+                averageDistance = uiState.stats?.averageDistance ?: 0.0,
+                averageSteps = uiState.stats?.averageSteps?.toInt() ?: 0,
+                longestStreak = uiState.stats?.longestStreak ?: 0
+            )
+        }
+    }
     
     StatsAnnualBeansDetailScreen(
         uiState = uiState,
         onBack = onBack,
+        onDownloadRecap = {
+            viewModel.clearCaptureError()
+            com.diary.moonpage.core.util.ComposeCaptureUtils.captureComposable(
+                view = viewContext,
+                content = captureContent,
+                width = 1080,
+                onBitmapCaptured = { bitmap -> viewModel.downloadRecapCard(context, bitmap) },
+                onFailure = {}
+            )
+        },
         onShareRecap = {
             viewModel.clearCaptureError()
             com.diary.moonpage.core.util.ComposeCaptureUtils.captureComposable(
                 view = viewContext,
-                content = {
-                    com.diary.moonpage.core.theme.MoonPageTheme {
-                        YearlyRecapCard(
-                            year = uiState.selectedYear,
-                            totalLogs = uiState.stats?.totalLogs ?: 0,
-                            totalPhotos = uiState.stats?.totalPhotos ?: 0,
-                            yearlyMoodGrid = flatGridList,
-                            themeType = uiState.themeType,
-                            bestActivities = uiState.stats?.bestActivities ?: emptyList(),
-                            averageDistance = uiState.stats?.averageDistance ?: 0.0,
-                            averageSteps = uiState.stats?.averageSteps?.toInt() ?: 0,
-                            longestStreak = uiState.stats?.longestStreak ?: 0
-                        )
-                    }
-                },
+                content = captureContent,
                 width = 1080,
-                onBitmapCaptured = { bitmap -> viewModel.saveRecapToGallery(context, bitmap) },
+                onBitmapCaptured = { bitmap -> viewModel.shareRecapCard(context, bitmap) },
                 onFailure = {}
             )
         }
@@ -71,6 +83,7 @@ fun StatsAnnualBeansDetailRoute(
 fun StatsAnnualBeansDetailScreen(
     uiState: StatisticsUiState,
     onBack: () -> Unit,
+    onDownloadRecap: () -> Unit,
     onShareRecap: () -> Unit
 ) {
     val stats = uiState.stats
@@ -107,8 +120,8 @@ fun StatsAnnualBeansDetailScreen(
                 },
                 actions = {
                     if (showRecapDetail) {
-                        IconButton(onClick = onShareRecap) {
-                            Icon(androidx.compose.material.icons.Icons.Rounded.Download, contentDescription = "Download & Share")
+                        IconButton(onClick = onDownloadRecap) {
+                            Icon(androidx.compose.material.icons.Icons.Rounded.Download, contentDescription = "Download Recap")
                         }
                     }
                 },
@@ -163,9 +176,9 @@ fun StatsAnnualBeansDetailScreen(
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Icon(androidx.compose.material.icons.Icons.Rounded.Download, contentDescription = "Download & Share", tint = Color.White)
+                    Icon(androidx.compose.material.icons.Icons.Rounded.Share, contentDescription = "Share", tint = Color.White)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Download & Share Recap", fontWeight = FontWeight.Bold, color = Color.White)
+                    Text("Share Recap", fontWeight = FontWeight.Bold, color = Color.White)
                 }
             }
         }

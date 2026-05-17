@@ -118,6 +118,19 @@ class StatisticsViewModel @Inject constructor(
         }
     }
 
+    fun downloadRecapCard(context: android.content.Context, bitmap: android.graphics.Bitmap) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isCapturing = true) }
+            try {
+                com.diary.moonpage.core.util.ImageUtils.saveBitmapToGallery(context, bitmap)
+            } catch (e: Exception) {
+                _uiState.update { it.copy(captureError = "Failed to download: ${e.message}") }
+            } finally {
+                _uiState.update { it.copy(isCapturing = false) }
+            }
+        }
+    }
+
     fun saveRecapToGallery(context: android.content.Context, bitmap: android.graphics.Bitmap) {
         viewModelScope.launch {
             _uiState.update { it.copy(isCapturing = true) }
