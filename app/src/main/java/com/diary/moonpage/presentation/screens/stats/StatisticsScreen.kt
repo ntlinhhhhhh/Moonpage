@@ -176,6 +176,9 @@ fun StatisticsScreenContent(
                         MoodOverviewCard(
                             stats = stats,
                             themeType = uiState.themeType,
+                            isMonthly = true,
+                            year = uiState.selectedYear,
+                            month = uiState.selectedMonth,
                             onClick = onNavigateToMoodDetail
                         )
 
@@ -210,6 +213,8 @@ fun StatisticsScreenContent(
                         MoodOverviewCard(
                             stats = stats,
                             themeType = uiState.themeType,
+                            isMonthly = false,
+                            year = uiState.selectedYear,
                             onClick = onNavigateToAnnualMoodDetail
                         )
 

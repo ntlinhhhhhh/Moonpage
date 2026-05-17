@@ -485,27 +485,42 @@ fun YearlyGridChart(
                             textAlign = TextAlign.Start
                         )
                         (1..12).forEach { month ->
-                            val dateStr = String.format(Locale.ENGLISH, "%04d-%02d-%02d", year, month, day)
-                            val mood = moodMap[dateStr]
-                            val isPeriod = periodSet.contains(dateStr)
-                            
-                            val color = if (mood != null) {
-                                MoonIcons.Moods.getMoodColor(mood.moodId.toInt(), themeType)
-                            } else {
-                                gridColor
+                            val isValid = try {
+                                java.time.LocalDate.of(year, month, day)
+                                true
+                            } catch (e: Exception) {
+                                false
                             }
-                            
-                            Box(
-                                modifier = Modifier
-                                    .padding(horizontal = 2.dp)
-                                    .size(24.dp)
-                                    .clip(CircleShape)
-                                    .background(color),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (isPeriod) {
-                                    Box(modifier = Modifier.size(4.dp).background(Color.White, CircleShape))
+
+                            if (isValid) {
+                                val dateStr = String.format(Locale.ENGLISH, "%04d-%02d-%02d", year, month, day)
+                                val mood = moodMap[dateStr]
+                                val isPeriod = periodSet.contains(dateStr)
+                                
+                                val color = if (mood != null) {
+                                    MoonIcons.Moods.getMoodColor(mood.moodId.toInt(), themeType)
+                                } else {
+                                    gridColor
                                 }
+                                
+                                Box(
+                                    modifier = Modifier
+                                        .padding(horizontal = 2.dp)
+                                        .size(24.dp)
+                                        .clip(CircleShape)
+                                        .background(color),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (isPeriod) {
+                                        Box(modifier = Modifier.size(4.dp).background(Color.White, CircleShape))
+                                    }
+                                }
+                            } else {
+                                Spacer(
+                                    modifier = Modifier
+                                        .padding(horizontal = 2.dp)
+                                        .size(24.dp)
+                                )
                             }
                         }
                     }
@@ -1634,15 +1649,58 @@ private fun RecapStatItem(label: String, value: String, modifier: Modifier = Mod
 fun YearInPixelsGrid(yearlyMoodGrid: List<MoodFlowDto>, year: Int, themeType: MoonThemeType) {
     val moodMap = remember(yearlyMoodGrid) { yearlyMoodGrid.associateBy { it.date } }
     val emptyColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f)
-    
-    // We use a LazyVerticalGrid-like approach but since this might be rendered off-screen for capture,
-    // a standard Column/Row structure is safer and more reliable for Canvas drawing.
-    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceEvenly) {
-        for (month in 1..12) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                val daysInMonth = java.time.YearMonth.of(year, month).lengthOfMonth()
-                for (day in 1..31) {
-                    if (day <= daysInMonth) {
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.Center
+    ) {
+        // Leading Column: Days 1 to 31
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(end = 6.dp)
+        ) {
+            // Spacer to align with month headers
+            Spacer(modifier = Modifier.height(18.dp))
+            (1..31).forEach { day ->
+                Text(
+                    text = if (day % 5 == 0 || day == 1) "$day" else "",
+                    fontSize = 10.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                    modifier = Modifier.size(12.dp),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+
+        // Columns for Months 1 to 12
+        (1..12).forEach { month ->
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(horizontal = 2.dp)
+            ) {
+                // Month Header
+                Text(
+                    text = "$month",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    modifier = Modifier.height(18.dp),
+                    textAlign = TextAlign.Center
+                )
+
+                (1..31).forEach { day ->
+                    val isValid = try {
+                        java.time.LocalDate.of(year, month, day)
+                        true
+                    } catch (e: Exception) {
+                        false
+                    }
+
+                    if (isValid) {
                         val dateStr = String.format(Locale.ENGLISH, "%04d-%02d-%02d", year, month, day)
                         val mood = moodMap[dateStr]
                         val cellColor = if (mood != null) {
@@ -1650,16 +1708,16 @@ fun YearInPixelsGrid(yearlyMoodGrid: List<MoodFlowDto>, year: Int, themeType: Mo
                         } else {
                             emptyColor
                         }
+
                         Box(
                             modifier = Modifier
-                                .weight(1f)
-                                .aspectRatio(1f)
-                                .padding(0.5.dp)
-                                .clip(RoundedCornerShape(2.dp))
+                                .size(12.dp)
+                                .clip(CircleShape)
                                 .background(cellColor)
                         )
                     } else {
-                        Spacer(modifier = Modifier.weight(1f).aspectRatio(1f).padding(0.5.dp))
+                        // Invisible placeholder for invalid days
+                        Spacer(modifier = Modifier.size(12.dp))
                     }
                 }
             }
@@ -1675,6 +1733,9 @@ fun YearInPixelsGrid(yearlyMoodGrid: List<MoodFlowDto>, year: Int, themeType: Mo
 fun MoodOverviewCard(
     stats: com.diary.moonpage.data.remote.dto.stats.StatisticsResponse?,
     themeType: MoonThemeType,
+    isMonthly: Boolean = true,
+    year: Int = java.time.LocalDate.now().year,
+    month: Int = java.time.LocalDate.now().monthValue,
     onClick: () -> Unit
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
@@ -1688,14 +1749,31 @@ fun MoodOverviewCard(
     val dominantMoodVisual = MoonIcons.Moods.getMoodVisual(dominantMoodId, themeType)
 
     val moodText = when (dominantMoodId) {
-        5 -> "This month looks great! 🌟"
-        4 -> "This month has been pretty good! 😊"
-        3 -> "This month has been stable. 😌"
-        2 -> "This month has been a bit tough. 💙"
-        else -> "This month has been quite heavy. 🌙"
+        5 -> if (isMonthly) "This month looks great! 🌟" else "This year looks great! 🌟"
+        4 -> if (isMonthly) "This month has been pretty good! 😊" else "This year has been pretty good! 😊"
+        3 -> if (isMonthly) "This month has been stable. 😌" else "This year has been stable. 😌"
+        2 -> if (isMonthly) "This month has been a bit tough. 💙" else "This year has been a bit tough. 💙"
+        else -> if (isMonthly) "This month has been quite heavy. 🌙" else "This year has been quite heavy. 🌙"
     }
 
     val moodFlow = stats?.moodFlow ?: emptyList()
+    val processedMoodFlow = remember(moodFlow, isMonthly, year) {
+        if (isMonthly) {
+            moodFlow
+        } else {
+            // Aggregate by month for Annual View
+            val yearStr = year.toString()
+            val yearLogs = moodFlow.filter { it.date.startsWith(yearStr) }
+            (1..12).mapNotNull { m ->
+                val mStr = String.format(Locale.ENGLISH, "%s-%02d", yearStr, m)
+                val monthLogs = yearLogs.filter { it.date.startsWith(mStr) }
+                if (monthLogs.isNotEmpty()) {
+                    val avgMood = monthLogs.map { it.moodId }.average()
+                    MoodFlowDto(date = "$mStr-01", moodId = avgMood)
+                } else null
+            }
+        }
+    }
 
     Card(
         modifier = Modifier
@@ -1752,12 +1830,18 @@ fun MoodOverviewCard(
                 }
             }
 
-            if (moodFlow.size >= 2) {
+            if (processedMoodFlow.size >= 2) {
                 Spacer(modifier = Modifier.height(20.dp))
                 Box(
                     modifier = Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(12.dp))
                 ) {
-                    MoodSparkline(moodFlow = moodFlow, primaryColor = primaryColor)
+                    MoodSparkline(
+                        moodFlow = processedMoodFlow,
+                        primaryColor = primaryColor,
+                        isMonthly = isMonthly,
+                        year = year,
+                        month = month
+                    )
                 }
             }
         }
@@ -1765,24 +1849,63 @@ fun MoodOverviewCard(
 }
 
 @Composable
-private fun MoodSparkline(moodFlow: List<MoodFlowDto>, primaryColor: Color) {
+private fun MoodSparkline(
+    moodFlow: List<MoodFlowDto>,
+    primaryColor: Color,
+    isMonthly: Boolean,
+    year: Int,
+    month: Int
+) {
     Canvas(modifier = Modifier.fillMaxSize()) {
         val sorted = moodFlow.sortedBy { it.date }
-        if (sorted.size < 2) return@Canvas
-        val maxIdx = (sorted.size - 1).toFloat()
+        if (sorted.isEmpty()) return@Canvas
+
+        val maxSlots = if (isMonthly) {
+            java.time.YearMonth.of(year, month).lengthOfMonth() - 1
+        } else {
+            11
+        }
+
+        val dx = if (maxSlots > 0) size.width / maxSlots else 0f
         val path = Path()
+
+        // Find the last logged date's index in the total slots
+        var lastIndex = 0
+
         sorted.forEachIndexed { index, item ->
-            val x = size.width * index / maxIdx
+            val timeIndex = try {
+                val parts = item.date.split("-")
+                if (isMonthly) {
+                    parts.last().toInt() - 1
+                } else {
+                    parts[1].toInt() - 1
+                }
+            } catch (e: Exception) {
+                index
+            }
+
+            if (timeIndex > lastIndex) {
+                lastIndex = timeIndex
+            }
+
+            val x = (timeIndex * dx).coerceIn(0f, size.width)
             val y = size.height * (5.0 - item.moodId).coerceIn(0.0, 4.0).toFloat() / 4f
+
             if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
         }
-        val fillPath = Path()
-        fillPath.addPath(path)
-        fillPath.lineTo(size.width, size.height)
-        fillPath.lineTo(0f, size.height)
-        fillPath.close()
-        drawPath(path = fillPath, color = primaryColor.copy(alpha = 0.08f))
-        drawPath(path = path, color = primaryColor.copy(alpha = 0.65f), style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round))
+
+        val lastLoggedX = (lastIndex * dx).coerceIn(0f, size.width)
+
+        if (sorted.size >= 2) {
+            val fillPath = Path()
+            fillPath.addPath(path)
+            fillPath.lineTo(lastLoggedX, size.height)
+            fillPath.lineTo(0f, size.height)
+            fillPath.close()
+
+            drawPath(path = fillPath, color = primaryColor.copy(alpha = 0.08f))
+            drawPath(path = path, color = primaryColor.copy(alpha = 0.65f), style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round))
+        }
     }
 }
 
