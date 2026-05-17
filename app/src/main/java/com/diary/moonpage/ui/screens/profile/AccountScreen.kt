@@ -130,6 +130,9 @@ fun AccountRoute(
             avatarUrl = user?.avatarUrl,
             localAvatarPath = uiState.localAvatarPath,
             tempAvatarPath = uiState.tempAvatarPath,
+            currentStreak = uiState.currentStreak,
+            longestStreak = uiState.longestStreak,
+            streakFreezeCount = uiState.streakFreezeCount,
             onNavigateBack = onNavigateBack,
             onLogoutClick = { showLogoutDialog = true },
             onBirthdayClick = { currentBottomSheet = BottomSheetType.BIRTHDAY },
@@ -356,6 +359,9 @@ fun AccountScreen(
     avatarUrl: String? = null,
     localAvatarPath: String? = null,
     tempAvatarPath: String? = null,
+    currentStreak: Int = 0,
+    longestStreak: Int = 0,
+    streakFreezeCount: Int = 0,
     onNavigateBack: () -> Unit,
     onLogoutClick: () -> Unit,
     onBirthdayClick: () -> Unit,
@@ -481,6 +487,39 @@ fun AccountScreen(
                 showArrow = true,
                 icon = Icons.Rounded.Wc,
                 onClick = onGenderClick
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = stringResource(R.string.streak_protection),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = colorScheme.onBackground,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            AccountInfoRow(
+                label = stringResource(R.string.current_streak),
+                value = "$currentStreak ${stringResource(R.string.days_label)}",
+                icon = Icons.Rounded.Whatshot,
+                onClick = {}
+            )
+
+            AccountInfoRow(
+                label = stringResource(R.string.longest_streak),
+                value = "$longestStreak ${stringResource(R.string.days_label)}",
+                icon = Icons.Rounded.Star,
+                onClick = {}
+            )
+
+            AccountInfoRow(
+                label = stringResource(R.string.streak_freezes),
+                value = streakFreezeCount.toString(),
+                icon = com.diary.moonpage.core.util.StreakFreezeIcon,
+                onClick = {}
             )
 
             Spacer(modifier = Modifier.height(24.dp))

@@ -231,7 +231,13 @@ fun StatisticsScreen(
                             onClick = onNavigateToAnnualActivityDetail
                         )
 
-                        // 4. Year in Beans (Overview) Card
+                        // 3.5. Annual Insights & Deep Dive Card (bấm → Insights Detail)
+                        InsightsTeaserCard(
+                            bestActivities = bestActivities,
+                            onClick = onNavigateToInsightsDetail
+                        )
+
+                        // 4. Year in Moonpage (Overview) Card
                         Surface(
                             modifier = Modifier.fillMaxWidth().clickable { onNavigateToAnnualBeansDetail() },
                             shape = RoundedCornerShape(24.dp),
@@ -245,7 +251,7 @@ fun StatisticsScreen(
                                             Icon(Icons.Rounded.GridView, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                                         }
                                         Spacer(modifier = Modifier.width(12.dp))
-                                        Text("Year in Beans", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                        Text(stringResource(R.string.year_in_beans), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                                     }
                                     Icon(Icons.Rounded.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f), modifier = Modifier.size(20.dp))
                                 }

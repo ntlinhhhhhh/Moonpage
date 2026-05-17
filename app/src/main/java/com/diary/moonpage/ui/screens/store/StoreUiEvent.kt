@@ -21,6 +21,7 @@ sealed class StoreUiEvent {
     object InitiateFreezePurchase : StoreUiEvent()
     object BuyStreakFreeze : StoreUiEvent()
     object CancelFreezePurchase : StoreUiEvent()
+    object RecoverStreak : StoreUiEvent()
 }
 
 /**
@@ -29,6 +30,7 @@ sealed class StoreUiEvent {
 sealed class StoreUiEffect {
     data class ShowSnackBar(val message: String) : StoreUiEffect()
     object PurchaseSuccess : StoreUiEffect()
+    object RecoverSuccess : StoreUiEffect()
     data class ThemeActivated(val message: String? = null) : StoreUiEffect()
     object NavigateBack : StoreUiEffect()
 }

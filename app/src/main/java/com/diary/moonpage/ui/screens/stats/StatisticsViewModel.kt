@@ -118,6 +118,20 @@ class StatisticsViewModel @Inject constructor(
         }
     }
 
+    fun saveRecapToGallery(context: android.content.Context, bitmap: android.graphics.Bitmap) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isCapturing = true) }
+            try {
+                com.diary.moonpage.core.util.ImageUtils.saveBitmapToGallery(context, bitmap)
+                com.diary.moonpage.core.util.ImageUtils.shareImage(context, bitmap, "My Year in Beans")
+            } catch (e: Exception) {
+                _uiState.update { it.copy(captureError = "Failed to save: ${e.message}") }
+            } finally {
+                _uiState.update { it.copy(isCapturing = false) }
+            }
+        }
+    }
+
     fun clearCaptureError() {
         _uiState.update { it.copy(captureError = null) }
     }

@@ -96,7 +96,8 @@
     <string name="best_worst">Best &amp; Worst</string>
     <string name="icon_deep_dive">Icon Deep Dive</string>
     <string name="top_music">Top Music</string>
-    <string name="year_in_beans">Year in Beans</string>
+    <string name="year_in_beans">Year in Moonpage</string>
+    <string name="view_details">View Details</string>
     <string name="monthly_average">Monthly Average</string>
     <string name="yearly_top_activities">Yearly Top Activities</string>
     <string name="trends">Trends</string>

@@ -44,12 +44,6 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.text.style.TextAlign
 import com.diary.moonpage.core.theme.MoonTheme
 
-import androidx.compose.ui.draw.shadow
-import com.diary.moonpage.ui.screens.calendar.components.CalendarGrid
-
-/**
- * Stateful Component
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShareCalendarRoute(
@@ -62,6 +56,8 @@ fun ShareCalendarRoute(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     val graphicsLayer = rememberGraphicsLayer()
+    
+    var selectedRatio by remember { mutableStateOf("1:1") }
 
     val yearMonth = remember(yearMonthString) {
         try {
@@ -76,40 +72,6 @@ fun ShareCalendarRoute(
         viewModel.onEvent(CalendarUiEvent.OnMonthChanged(yearMonth))
     }
 
-    ShareCalendarScreen(
-        uiState = uiState,
-        yearMonth = yearMonth,
-        snackbarHostState = snackbarHostState,
-        graphicsLayer = graphicsLayer,
-        onSaveClick = {
-            scope.launch {
-                try {
-                    val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
-                    ImageUtils.saveBitmapToGallery(context, bitmap)
-                    snackbarHostState.showSnackbar("Saved to gallery!")
-                } catch (e: Exception) {
-                    snackbarHostState.showSnackbar("Save failed: ${e.message}")
-                }
-            }
-        },
-        onNavigateBack = onNavigateBack
-    )
-}
-
-/**
- * Stateless Component
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ShareCalendarScreen(
-    uiState: CalendarUiState,
-    yearMonth: YearMonth,
-    snackbarHostState: SnackbarHostState,
-    graphicsLayer: androidx.compose.ui.graphics.layer.GraphicsLayer,
-    onSaveClick: () -> Unit,
-    onNavigateBack: () -> Unit
-) {
-    var selectedRatio by remember { mutableStateOf("1:1") }
     val themeColor = MaterialTheme.colorScheme.primary
 
     Scaffold(
@@ -131,147 +93,299 @@ fun ShareCalendarScreen(
                 actions = {
                     IconButton(
                         enabled = !uiState.isLoading,
-                        onClick = onSaveClick
+                        onClick = {
+                            scope.launch {
+                                try {
+                                    val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
+                                    ImageUtils.saveBitmapToGallery(context, bitmap)
+                                    snackbarHostState.showSnackbar("Saved to gallery!")
+                                } catch (e: Exception) {
+                                    snackbarHostState.showSnackbar("Save failed: ${e.message}")
+                                }
+                            }
+                        }
                     ) {
-                        Icon(Icons.Rounded.Download, "Save", modifier = Modifier.size(24.dp), tint = themeColor)
+                        Icon(Icons.Rounded.Download, "Download", tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.Transparent
+                )
             )
         },
+        bottomBar = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.Transparent)
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Button(
+                    enabled = !uiState.isLoading,
+                    onClick = {
+                        scope.launch {
+                            try {
+                                val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
+                                ImageUtils.shareImage(context, bitmap, "My Moon Calendar")
+                            } catch (e: Exception) {
+                                snackbarHostState.showSnackbar("Share failed: ${e.message}")
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(64.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(4.dp)
+                ) {
+                    Text("Share", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                }
+            }
+        },
+        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Ratio Selector
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(24.dp)
             ) {
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Capture Area
-                Box(
-                    modifier = Modifier
-                        .then(if (selectedRatio == "1:1") Modifier.size(340.dp) else Modifier.width(340.dp).aspectRatio(9f/16f))
-                        .drawWithContent {
-                            graphicsLayer.record {
-                                this@drawWithContent.drawContent()
-                            }
-                            drawLayer(graphicsLayer)
-                        }
-                        .background(Color.White, RoundedCornerShape(32.dp))
-                        .clip(RoundedCornerShape(32.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    ShareCalendarCardContent(uiState, yearMonth)
-                }
-
-                Spacer(modifier = Modifier.height(40.dp))
-
-                // Ratio Selector
-                Row(
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), CircleShape)
-                        .padding(4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    RatioButton("1:1", selectedRatio == "1:1") { selectedRatio = "1:1" }
-                    RatioButton("9:16", selectedRatio == "9:16") { selectedRatio = "9:16" }
-                }
-
-                Spacer(modifier = Modifier.height(40.dp))
-
-                // Social Actions
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    ShareSocialButton(Icons.Rounded.ContentCopy, "Copy")
-                    ShareSocialButton(Icons.Rounded.Camera, "Stories")
-                    ShareSocialButton(Icons.Rounded.MoreHoriz, "More")
-                }
-
-                Spacer(modifier = Modifier.height(48.dp))
+                Text("Ratio", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, fontSize = 16.sp)
+                
+                RatioToggleItem(
+                    label = "1:1",
+                    isSelected = selectedRatio == "1:1",
+                    onClick = { selectedRatio = "1:1" },
+                    themeColor = themeColor
+                )
+                
+                RatioToggleItem(
+                    label = "9:16",
+                    isSelected = selectedRatio == "9:16",
+                    onClick = { selectedRatio = "9:16" },
+                    themeColor = themeColor
+                )
             }
 
-            MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // The Card Wrapper - matches the background color and shadow from images
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = 24.dp)
+                    .fillMaxWidth()
+                    .aspectRatio(if (selectedRatio == "1:1") 1f else 9f/16f)
+                    .clip(RoundedCornerShape(32.dp))
+                    .background(if (MoonTheme.customColors.isDark) Color(0xFF2C2C2C) else Color(0xFFF1F1ED)) // Lighter dark gray for card in Dark Mode
+                    .drawWithContent {
+                        graphicsLayer.record {
+                            this@drawWithContent.drawContent()
+                        }
+                        drawLayer(graphicsLayer)
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                ShareCalendarContent(
+                    yearMonth = yearMonth,
+                    dailyLogs = uiState.dailyLogs,
+                    themeType = uiState.themeType,
+                    isSquare = selectedRatio == "1:1"
+                )
+            }
+
+            Spacer(modifier = Modifier.height(40.dp))
         }
     }
 }
 
 @Composable
-private fun ShareCalendarCardContent(uiState: CalendarUiState, yearMonth: YearMonth) {
-    // Implement the actual UI previously in ShareCalendarScreen
-    // Keeping it brief for this refactor pass
+fun RatioToggleItem(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    themeColor: Color
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.clickable { onClick() },
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(20.dp)
+                .clip(CircleShape)
+                .background(if (isSelected) themeColor else Color(0xFFF0F0F0))
+                .padding(4.dp)
+        ) {
+            if (isSelected) {
+                Box(modifier = Modifier.fillMaxSize().background(if (MoonTheme.customColors.isDark) Color.Black else Color.White, CircleShape))
+            }
+        }
+        Text(
+            text = label,
+            fontSize = 15.sp,
+            color = if (isSelected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+fun ShareCalendarContent(
+    yearMonth: YearMonth,
+    dailyLogs: Map<LocalDate, com.diary.moonpage.domain.model.DailyLog>,
+    themeType: MoonThemeType,
+    isSquare: Boolean
+) {
+    val monthName = yearMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH))
+    val themeColor = MaterialTheme.colorScheme.primary
+    val isDark = MoonTheme.customColors.isDark
+    
+    val textColor = if (isDark) Color(0xFFEEEEEE) else Color(0xFF424242)
+    val secondaryTextColor = if (isDark) Color(0xFFAAAAAA) else Color(0xFF9E9E9E)
+    val headerColor = if (isDark) Color(0xFF888888) else Color(0xFFBDBDBD)
+    val emptyCellColor = if (isDark) Color(0xFF505457) else Color(0xFFEDEDE9).copy(alpha = 0.6f)
+
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(if (isSquare) 20.dp else 24.dp), // Slightly reduced padding to give more space
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = yearMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH)).uppercase(),
-            style = MaterialTheme.typography.titleMedium,
+            text = monthName,
             fontWeight = FontWeight.Bold,
-            color = Color.DarkGray,
-            letterSpacing = 2.sp
+            fontSize = 20.sp,
+            color = textColor
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(if (isSquare) 12.dp else 24.dp))
         
-        // Miniature Calendar Grid
-        com.diary.moonpage.ui.screens.calendar.components.CalendarGrid(
-            pageYearMonth = yearMonth,
-            selectedDate = null,
-            dailyLogs = uiState.dailyLogs,
-            selectedFilter = null,
-            dynamicActivities = emptyList(),
-            themeType = uiState.themeType,
-            onDateSelected = {},
-            isReadOnly = true
-        )
-        
-        Spacer(modifier = Modifier.weight(1f))
-        
-        // Brand
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Rounded.WbTwilight, null, modifier = Modifier.size(16.dp), tint = Color.LightGray)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("MOONPAGE", style = MaterialTheme.typography.labelSmall, color = Color.LightGray, letterSpacing = 2.sp)
-        }
-    }
-}
-
-@Composable
-private fun RatioButton(text: String, isSelected: Boolean, onClick: () -> Unit) {
-    Surface(
-        onClick = onClick,
-        shape = CircleShape,
-        color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-        contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-    ) {
-        Text(
-            text = text,
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-@Composable
-private fun ShareSocialButton(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Surface(
-            shape = CircleShape,
-            color = Color.White,
-            modifier = Modifier.size(56.dp).shadow(2.dp, CircleShape)
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(icon, null, modifier = Modifier.size(24.dp), tint = Color(0xFF424242))
+        // Days of week header
+        Row(modifier = Modifier.fillMaxWidth()) {
+            val days = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+            days.forEach { day ->
+                Text(
+                    text = day,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center,
+                    fontSize = 12.sp,
+                    color = headerColor,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(label, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+        
+        Spacer(modifier = Modifier.height(if (isSquare) 4.dp else 12.dp))
+        
+        // Calendar Grid
+        val daysInMonth = yearMonth.lengthOfMonth()
+        val firstDayOfMonth = yearMonth.atDay(1)
+        val firstDayOffset = firstDayOfMonth.dayOfWeek.value % 7
+        val totalCells = firstDayOffset + daysInMonth
+        val rows = 6 // Standardized to 6 rows
+
+        Column(verticalArrangement = Arrangement.spacedBy(if (isSquare) 0.dp else 8.dp)) {
+            for (rowIndex in 0 until rows) {
+                Row(modifier = Modifier.fillMaxWidth().height(if (isSquare) 40.dp else 50.dp)) {
+                    for (colIndex in 0 until 7) {
+                        val cellIndex = rowIndex * 7 + colIndex
+                        Box(
+                            modifier = Modifier.weight(1f).aspectRatio(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (cellIndex in firstDayOffset until totalCells) {
+                                val dayNum = cellIndex - firstDayOffset + 1
+                                val date = yearMonth.atDay(dayNum)
+                                val log = dailyLogs[date]
+                                
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    // Mood Circle
+                                    Box(
+                                        modifier = Modifier
+                                            .size(if (isSquare) 28.dp else 32.dp) // Reduced size from 36/44
+                                            .clip(CircleShape)
+                                            .background(if (log != null) {
+                                                val mv = MoonIcons.Moods.getMoodVisual(log.baseMoodId, themeType)
+                                                mv.color
+                                            } else {
+                                                emptyCellColor
+                                            }),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        if (log != null) {
+                                            val mv = MoonIcons.Moods.getMoodVisual(log.baseMoodId, themeType)
+                                            if (mv.drawableRes != null) {
+                                                Image(
+                                                    painter = painterResource(id = mv.drawableRes),
+                                                    contentDescription = null,
+                                                    modifier = Modifier.fillMaxSize(0.65f)
+                                                )
+                                            }
+                                        }
+                                    }
+                                    
+                                    if (!isSquare) {
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        
+                                        // Day number - only shown in 9:16
+                                        Text(
+                                            text = dayNum.toString(),
+                                            fontSize = 9.sp,
+                                            color = secondaryTextColor,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (!isSquare) {
+            Spacer(modifier = Modifier.weight(1f))
+        } else {
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+        
+        // Footer Logo - matching DailyBean style
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = null,
+                modifier = Modifier.size(28.dp).clip(RoundedCornerShape(8.dp))
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(
+                "MoonPage",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = themeColor
+            )
+        }
     }
 }

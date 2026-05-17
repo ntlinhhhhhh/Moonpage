@@ -27,13 +27,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AcUnit
 import androidx.compose.material.icons.rounded.Savings
-import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.Snowboarding
+import androidx.compose.material.icons.rounded.Whatshot
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.diary.moonpage.R
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.domain.model.ThemeType
-import com.diary.moonpage.core.theme.MoonTheme
 import com.diary.moonpage.ui.components.layout.SectionTitle
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.screens.store.components.*
@@ -86,7 +87,8 @@ fun StoreRoute(
         onDismissDialog = viewModel::dismissDialog,
         onInitiateFreezePurchase = { viewModel.onEvent(StoreUiEvent.InitiateFreezePurchase) },
         onConfirmFreezePurchase = { viewModel.onEvent(StoreUiEvent.BuyStreakFreeze) },
-        onCancelFreezePurchase = { viewModel.onEvent(StoreUiEvent.CancelFreezePurchase) }
+        onCancelFreezePurchase = { viewModel.onEvent(StoreUiEvent.CancelFreezePurchase) },
+        onRecoverStreak = { viewModel.onEvent(StoreUiEvent.RecoverStreak) }
     )
 }
 
@@ -106,7 +108,8 @@ fun StoreScreen(
     onDismissDialog: () -> Unit,
     onInitiateFreezePurchase: () -> Unit,
     onConfirmFreezePurchase: () -> Unit,
-    onCancelFreezePurchase: () -> Unit
+    onCancelFreezePurchase: () -> Unit,
+    onRecoverStreak: () -> Unit
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -157,6 +160,11 @@ fun StoreScreen(
                             themes = uiState.themes,
                             onThemeClick = onThemeClick
                         )
+                        3 -> StreakFreezeTabContent(
+                            freezeCount = uiState.streakFreezeCount,
+                            onBuyClick = onInitiateFreezePurchase,
+                            onRecoverClick = onRecoverStreak
+                        )
                     }
                 }
             }
@@ -195,6 +203,65 @@ fun StoreScreen(
                     themeName = if (uiState.freezePurchaseSuccess) "Streak Freeze" else uiState.purchasedTheme?.name ?: "",
                     onDismiss = onDismissDialog
                 )
+            }
+
+            if (uiState.showRecoverySuccessDialog) {
+                RecoverySuccessDialog(
+                    message = uiState.recoveryMessage,
+                    onDismiss = onDismissDialog
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun RecoverySuccessDialog(
+    message: String,
+    onDismiss: () -> Unit
+) {
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Whatshot,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(64.dp)
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text(
+                    text = "Success!",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Text("Great!")
+                }
             }
         }
     }
@@ -263,7 +330,7 @@ fun ConfirmFreezePurchaseDialog(
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(14.dp)
                     ) {
-                        Text("Buy for 500")
+                        Text("Buy for 200")
                     }
                 }
             }
@@ -329,7 +396,7 @@ fun FreezePurchaseItem(
                     tint = Color.White
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("500", fontWeight = FontWeight.Bold)
+                Text("200", fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -340,17 +407,188 @@ fun StoreTabs(
     selectedIndex: Int,
     onTabSelected: (Int) -> Unit
 ) {
+    ScrollableTabRow(
+        selectedTabIndex = selectedIndex,
+        containerColor = Color.Transparent,
+        contentColor = MaterialTheme.colorScheme.onBackground,
+        edgePadding = 16.dp,
+        divider = {},
+        indicator = { tabPositions ->
+            if (selectedIndex < tabPositions.size) {
+                TabRowDefaults.SecondaryIndicator(
+                    Modifier.tabIndicatorOffset(tabPositions[selectedIndex]),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+        }
+    ) {
+        Tab(
+            selected = selectedIndex == 0,
+            onClick = { onTabSelected(0) },
+            text = { Text(stringResource(R.string.home)) }
+        )
+        Tab(
+            selected = selectedIndex == 1,
+            onClick = { onTabSelected(1) },
+            text = { Text(stringResource(R.string.my_theme)) }
+        )
+        Tab(
+            selected = selectedIndex == 2,
+            onClick = { onTabSelected(2) },
+            text = { Text(stringResource(R.string.collections)) }
+        )
+        Tab(
+            selected = selectedIndex == 3,
+            onClick = { onTabSelected(3) },
+            text = { Text(stringResource(R.string.streak_freeze)) }
+        )
+    }
+}
+
+@Composable
+fun StreakFreezeTabContent(
+    freezeCount: Int,
+    onBuyClick: () -> Unit,
+    onRecoverClick: () -> Unit
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = colorScheme.primaryContainer.copy(alpha = 0.4f))
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.AcUnit,
+                        contentDescription = null,
+                        tint = colorScheme.primary,
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "You have $freezeCount Freezes",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Use them to protect or recover your streak",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+            }
+        }
+
+        item {
+            SectionTitle(stringResource(R.string.theme_store))
+            FreezePurchaseItem(onBuyClick = onBuyClick)
+        }
+
+        item {
+            SectionTitle("Recover Streak")
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Manually Recover",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "If your streak was broken yesterday and you have a freeze, you can manually restore it.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = onRecoverClick,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = freezeCount > 0
+                    ) {
+                        Text("Use 1 Freeze to Recover")
+                    }
+                }
+            }
+        }
+
+        item {
+            SectionTitle(stringResource(R.string.how_it_works))
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                HelpInfoItem(
+                    title = "Automatic Protection",
+                    description = stringResource(R.string.streak_freeze_desc),
+                    icon = Icons.Rounded.Snowboarding
+                )
+                HelpInfoItem(
+                    title = "Manual Recovery",
+                    description = "If you missed multiple days, use the manual recovery button to restore your longest possible streak.",
+                    icon = Icons.Rounded.Whatshot
+                )
+                HelpInfoItem(
+                    title = "Applying Themes",
+                    description = "Go to 'My Theme' tab, tap on any owned theme, and click 'Apply' to change your app's appearance.",
+                    icon = Icons.Rounded.GridView
+                )
+                HelpInfoItem(
+                    title = "Icon Packs",
+                    description = "Some themes include custom icons. These are automatically applied when you activate the theme.",
+                    icon = Icons.Rounded.AcUnit
+                )
+            }
+        }
+        
+        item { Spacer(modifier = Modifier.height(32.dp)) }
+    }
+}
+
+@Composable
+fun HelpInfoItem(
+    title: String,
+    description: String,
+    icon: ImageVector
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.Start
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+            .padding(16.dp),
+        verticalAlignment = Alignment.Top
     ) {
-        TabItem(stringResource(R.string.home), selectedIndex == 0) { onTabSelected(0) }
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(24.dp)
+        )
         Spacer(modifier = Modifier.width(16.dp))
-        TabItem(stringResource(R.string.my_theme), selectedIndex == 1) { onTabSelected(1) }
-        Spacer(modifier = Modifier.width(16.dp))
-        TabItem(stringResource(R.string.collections), selectedIndex == 2) { onTabSelected(2) }
+        Column {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )
+        }
     }
 }
 

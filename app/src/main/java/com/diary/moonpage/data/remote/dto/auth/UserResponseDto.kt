@@ -1,6 +1,7 @@
 package com.diary.moonpage.data.remote.dto.auth
 
 import com.diary.moonpage.domain.model.User
+import com.google.gson.annotations.SerializedName
 
 data class UserResponseDto(
     val id: String,
@@ -11,7 +12,9 @@ data class UserResponseDto(
     val birthday: String?,
     val coinBalance: Int? = 0,
     val authProvider: String? = null,
-    val streakFreezeCount: Int? = 0
+    @SerializedName("streakFreezes") val streakFreezeCount: Int? = 0,
+    val currentStreak: Int? = 0,
+    val longestStreak: Int? = 0
 ) {
     fun toDomain(token: String = ""): User {
         return User(
@@ -24,7 +27,9 @@ data class UserResponseDto(
             birthday = birthday,
             coinBalance = coinBalance ?: 0,
             authProvider = authProvider ?: "Password",
-            streakFreezeCount = streakFreezeCount ?: 0
+            streakFreezeCount = streakFreezeCount ?: 0,
+            currentStreak = currentStreak ?: 0,
+            longestStreak = longestStreak ?: 0
         )
     }
 }

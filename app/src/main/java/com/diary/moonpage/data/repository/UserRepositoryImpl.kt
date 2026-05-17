@@ -213,4 +213,19 @@ class UserRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun recoverStreak(): Result<Unit> {
+        return try {
+            val response = userApi.recoverStreak()
+            if (response.isSuccessful) {
+                // Refresh user profile after recovery to update streak and freeze count
+                getCurrentUser()
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Recovery failed: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

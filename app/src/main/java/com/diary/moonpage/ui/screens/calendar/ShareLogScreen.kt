@@ -47,13 +47,6 @@ import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.*
 
-import androidx.compose.ui.draw.shadow
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.material3.Divider
-
-/**
- * Stateful Component
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShareLogRoute(
@@ -64,7 +57,10 @@ fun ShareLogRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val view = LocalView.current
+    val compositionContext = rememberCompositionContext()
     val snackbarHostState = remember { SnackbarHostState() }
+    val density = androidx.compose.ui.platform.LocalDensity.current
     val graphicsLayer = rememberGraphicsLayer()
 
     LaunchedEffect(dateString) {
@@ -72,41 +68,6 @@ fun ShareLogRoute(
     }
 
     val moodVisual = MoonIcons.Moods.getMoodVisual(uiState.selectedMood ?: 3, uiState.themeType, uiState.customMoods)
-
-    ShareLogScreen(
-        uiState = uiState,
-        moodVisual = moodVisual,
-        snackbarHostState = snackbarHostState,
-        graphicsLayer = graphicsLayer,
-        onSaveClick = {
-            scope.launch {
-                try {
-                    val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
-                    ImageUtils.saveBitmapToGallery(context, bitmap)
-                    snackbarHostState.showSnackbar("Saved to gallery!")
-                } catch (e: Exception) {
-                    snackbarHostState.showSnackbar("Save failed: ${e.message}")
-                }
-            }
-        },
-        onNavigateBack = onNavigateBack
-    )
-}
-
-/**
- * Stateless Component
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ShareLogScreen(
-    uiState: DailyLogUiState,
-    moodVisual: com.diary.moonpage.core.util.MoonIcon,
-    snackbarHostState: SnackbarHostState,
-    graphicsLayer: androidx.compose.ui.graphics.layer.GraphicsLayer,
-    onSaveClick: () -> Unit,
-    onNavigateBack: () -> Unit
-) {
-    val context = LocalContext.current
     val themeColor = moodVisual.color
 
     Scaffold(
@@ -128,17 +89,74 @@ fun ShareLogScreen(
                 actions = {
                     IconButton(
                         enabled = !uiState.isLoading,
-                        onClick = onSaveClick
+                        onClick = {
+                            scope.launch {
+                                try {
+                                    val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
+                                    ImageUtils.saveBitmapToGallery(context, bitmap)
+                                    snackbarHostState.showSnackbar("Saved to gallery!")
+                                } catch (e: Exception) {
+                                    snackbarHostState.showSnackbar("Save failed: ${e.message}")
+                                }
+                            }
+                        }
                     ) {
-                        Icon(Icons.Rounded.Download, "Save", modifier = Modifier.size(24.dp), tint = themeColor)
+                        Icon(Icons.Rounded.Download, "Download", tint = Color(0xFF757575))
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.Transparent
+                )
             )
         },
-        containerColor = Color(0xFFF8F8F8)
+        bottomBar = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.Transparent)
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                // Large Share Button (No icon)
+                Button(
+                    enabled = !uiState.isLoading,
+                    onClick = {
+                        scope.launch {
+                            try {
+                                val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
+                                ImageUtils.shareImage(context, bitmap, "My Mood Page")
+                            } catch (e: Exception) {
+                                snackbarHostState.showSnackbar("Share failed: ${e.message}")
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(64.dp), // Larger height
+                    shape = RoundedCornerShape(18.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(4.dp)
+                ) {
+                    Text("Share", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                }
+            }
+        },
+        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize()) {
+        if (uiState.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            }
+        } else {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -148,189 +166,293 @@ fun ShareLogScreen(
             ) {
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Capture Area
-                Card(
+                // Preview of the card
+                Box(
                     modifier = Modifier
-                        .width(340.dp)
+                        .padding(horizontal = 16.dp)
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                         .drawWithContent {
                             graphicsLayer.record {
                                 this@drawWithContent.drawContent()
                             }
                             drawLayer(graphicsLayer)
-                        },
-                    shape = RoundedCornerShape(32.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                        }
                 ) {
-                    ShareCardContent(uiState, moodVisual)
+                    ShareLogCard(uiState = uiState)
                 }
 
                 Spacer(modifier = Modifier.height(40.dp))
-                
-                // Share options
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    ShareActionButton(Icons.Rounded.ContentCopy, "Copy") {
-                         // TODO: Implement copy to clipboard
-                    }
-                    ShareActionButton(Icons.Rounded.Share, "Share") {
-                         // TODO: Implement native share
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(48.dp))
             }
-
-            MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ShareCardContent(uiState: DailyLogUiState, moodVisual: com.diary.moonpage.core.util.MoonIcon) {
+fun ShareLogCard(uiState: DailyLogUiState) {
     val date = uiState.date
-    val themeColor = moodVisual.color
+    val themeType = uiState.themeType
+
+    // Formatting date: Monday, May 4
+    val dayOfWeek = date.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, Locale.ENGLISH)
+    val monthName = date.month.getDisplayName(java.time.format.TextStyle.FULL, Locale.ENGLISH)
+    val dayOfMonth = date.dayOfMonth
+    val dateText = "$dayOfWeek, $monthName $dayOfMonth"
+
+    val moodVisual = MoonIcons.Moods.getMoodVisual(uiState.selectedMood ?: 3, themeType, uiState.customMoods)
+    val themeColor = MaterialTheme.colorScheme.primary
     
+    val isDark = MoonTheme.customColors.isDark
+    val cardBg = if (isDark) Color(0xFF2C2C2C) else Color(0xFFF1F1ED)
+    val textColor = if (isDark) Color(0xFFEEEEEE) else Color(0xFF424242)
+    val secondaryTextColor = if (isDark) Color(0xFFAAAAAA) else Color(0xFF9E9E9E)
+    val pillBg = if (isDark) Color.White.copy(alpha = 0.15f) else Color.White.copy(alpha = 0.6f)
+    val pillText = if (isDark) Color(0xFFDDDDDD) else Color(0xFF616161)
+    val dividerColor = if (isDark) Color(0xFF444444) else Color(0xFFD1D1CB)
+    val musicCardBg = if (isDark) Color.White.copy(alpha = 0.1f) else Color.White.copy(alpha = 0.8f)
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(cardBg)
+            .padding(24.dp),
+        horizontalAlignment = Alignment.Start 
     ) {
-        // Date Header
-        Text(
-            text = date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH).uppercase(),
-            style = MaterialTheme.typography.labelLarge,
-            color = themeColor,
-            letterSpacing = 2.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = date.format(DateTimeFormatter.ofPattern("dd MMMM yyyy", Locale.ENGLISH)),
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.Gray
-        )
+        // Header with Logo
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = null,
+                modifier = Modifier.size(28.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                "MoonPage",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = themeColor
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = date.format(DateTimeFormatter.ofPattern("yyyy")),
+                fontSize = 14.sp,
+                color = secondaryTextColor,
+                fontWeight = FontWeight.Medium
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
 
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Mood Icon
+        // Mood Icon (Centered)
         Box(
             modifier = Modifier
-                .size(120.dp)
-                .background(themeColor.copy(alpha = 0.1f), CircleShape),
+                .size(72.dp)
+                .clip(CircleShape)
+                .background(moodVisual.color.copy(alpha = 0.8f))
+                .align(Alignment.CenterHorizontally),
             contentAlignment = Alignment.Center
         ) {
             if (moodVisual.drawableRes != null) {
                 Image(
-                    painter = painterResource(moodVisual.drawableRes),
+                    painter = painterResource(id = moodVisual.drawableRes),
                     contentDescription = null,
-                    modifier = Modifier.size(72.dp)
-                )
-            } else if (moodVisual.vector != null) {
-                Icon(
-                    imageVector = moodVisual.vector,
-                    contentDescription = null,
-                    tint = themeColor,
-                    modifier = Modifier.size(72.dp)
+                    modifier = Modifier.size(48.dp)
                 )
             }
         }
-
+        
         Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "Feeling ${moodVisual.name}",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF424242)
+        
+        // Date Pill (Centered)
+        Surface(
+            color = pillBg,
+            shape = RoundedCornerShape(10.dp),
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        ) {
+            Text(
+                text = dateText,
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                fontSize = 14.sp,
+                color = pillText,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Dashed Line Divider
+        com.diary.moonpage.ui.screens.moment.components.DashedDivider(
+            color = dividerColor,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
         )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Activities
-        if (uiState.selectedActivities.isNotEmpty()) {
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                maxItemsInEachRow = 3
-            ) {
-                uiState.selectedActivities.forEach { id ->
-                    val activity = uiState.dynamicActivities.find { it.id == id }
-                    if (activity != null) {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = Color(0xFFF5F5F5),
-                            modifier = Modifier.padding(horizontal = 4.dp)
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Content Section (Activities, Note, Photos, Music)
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.Start // Left aligned content
+        ) {
+            // Activities (Max 6, Left Aligned)
+            val activities = uiState.selectedActivities.mapNotNull { id ->
+                uiState.dynamicActivities.find { it.id == id }
+            }.take(6)
+            
+            if (activities.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    activities.forEachIndexed { index, activity ->
+                        val icon = MoonIcons.getIconForActivity(activity.name)
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(icon.color.copy(alpha = 0.1f)),
+                            contentAlignment = Alignment.Center
                         ) {
+                            if (icon.drawableRes != null) {
+                                Image(painterResource(id = icon.drawableRes), null, modifier = Modifier.size(22.dp))
+                            } else {
+                                Icon(icon.vector!!, null, modifier = Modifier.size(20.dp), tint = icon.color)
+                            }
+                        }
+                        if (index < activities.size - 1) Spacer(modifier = Modifier.width(10.dp))
+                    }
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            // Note Text (Left Aligned)
+            if (!uiState.noteText.isNullOrBlank()) {
+                Text(
+                    text = uiState.noteText,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp),
+                    fontSize = 15.sp,
+                    color = textColor,
+                    textAlign = TextAlign.Start,
+                    lineHeight = 22.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            // Music Card (Left Aligned, below Note)
+            if (!uiState.musicTitle.isNullOrBlank()) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = musicCardBg
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (uiState.albumArtUrl != null) {
+                            AsyncImage(
+                                model = uiState.albumArtUrl,
+                                contentDescription = null,
+                                modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier.size(48.dp).background(Color(0xFFE0E0E0), RoundedCornerShape(8.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Rounded.MusicNote, null, tint = Color.Gray, modifier = Modifier.size(24.dp))
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.width(16.dp))
+                        
+                        Column {
                             Text(
-                                text = activity.name,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = Color(0xFF616161)
+                                text = uiState.musicTitle,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = textColor,
+                                maxLines = 1
+                            )
+                            Text(
+                                text = uiState.artistName ?: "Unknown Artist",
+                                fontSize = 12.sp,
+                                color = secondaryTextColor,
+                                maxLines = 1
                             )
                         }
                     }
                 }
+                Spacer(modifier = Modifier.height(24.dp))
             }
-            Spacer(modifier = Modifier.height(24.dp))
-        }
 
-        // Note
-        if (uiState.noteText.isNotBlank()) {
-            Text(
-                text = "“${uiState.noteText}”",
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-                color = Color(0xFF757575),
-                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
-            )
-            Spacer(modifier = Modifier.height(24.dp))
+            // Photos Grid (Max 3 per row, Left Aligned, below Music)
+            if (uiState.dailyPhotos.isNotEmpty()) {
+                val photos = uiState.dailyPhotos
+                photos.chunked(3).forEachIndexed { rowIndex, chunk ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Start
+                    ) {
+                        chunk.forEachIndexed { colIndex, photoUrl ->
+                            AsyncImage(
+                                model = photoUrl,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(96.dp)
+                                    .clip(RoundedCornerShape(12.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                            if (colIndex < chunk.size - 1) Spacer(modifier = Modifier.width(8.dp))
+                        }
+                    }
+                    if (rowIndex < (photos.size - 1) / 3) Spacer(modifier = Modifier.height(8.dp))
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+            }
         }
-
-        // Photo
-        if (!uiState.dailyPhotos.isNullOrEmpty()) {
-            AsyncImage(
-                model = uiState.dailyPhotos.first(),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1.2f)
-                    .clip(RoundedCornerShape(20.dp)),
-                contentScale = ContentScale.Crop
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 24.dp), color = Color(0xFFEEEEEE))
-        Spacer(modifier = Modifier.height(16.dp))
         
-        // Brand
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Rounded.WbTwilight, null, modifier = Modifier.size(16.dp), tint = Color.LightGray)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("MOONPAGE", style = MaterialTheme.typography.labelSmall, color = Color.LightGray, letterSpacing = 2.sp)
-        }
-    }
-}
-
-@Composable
-private fun ShareActionButton(icon: ImageVector, label: String, onClick: () -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Surface(
-            onClick = onClick,
-            shape = CircleShape,
-            color = Color.White,
-            modifier = Modifier.size(56.dp).shadow(2.dp, CircleShape)
+        // Another Dashed Divider
+        com.diary.moonpage.ui.screens.moment.components.DashedDivider(
+            color = dividerColor,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Footer Info
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(icon, null, modifier = Modifier.size(24.dp), tint = Color(0xFF424242))
+            Column {
+                Text(
+                    "MoonPage Daily Log",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = themeColor
+                )
+                Text(
+                    text = "REF: ${System.currentTimeMillis() / 1000}",
+                    fontSize = 10.sp,
+                    color = secondaryTextColor
+                )
             }
+            
+            Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = null,
+                modifier = Modifier.size(36.dp).alpha(0.4f)
+            )
         }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(label, style = MaterialTheme.typography.labelMedium, color = Color(0xFF757575))
     }
 }

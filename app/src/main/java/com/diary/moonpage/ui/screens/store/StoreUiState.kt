@@ -19,5 +19,8 @@ data class StoreUiState(
     val showConfirmActivationDialog: Boolean = false,
     val activationSuccess: Boolean = false,
     val showConfirmFreezePurchaseDialog: Boolean = false,
-    val freezePurchaseSuccess: Boolean = false
+    val freezePurchaseSuccess: Boolean = false,
+    val streakFreezeCount: Int = 0,
+    val showRecoverySuccessDialog: Boolean = false,
+    val recoveryMessage: String = ""
 )

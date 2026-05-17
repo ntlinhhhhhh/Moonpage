@@ -42,7 +42,10 @@ class StoreViewModel @Inject constructor(
     private fun observeUser() {
         viewModelScope.launch {
             userRepository.currentUser.collect { user ->
-                _uiState.update { it.copy(userCoins = user?.coinBalance ?: 0) }
+                _uiState.update { it.copy(
+                    userCoins = user?.coinBalance ?: 0,
+                    streakFreezeCount = user?.streakFreezeCount ?: 0
+                ) }
             }
         }
         
@@ -138,7 +141,14 @@ class StoreViewModel @Inject constructor(
                 _uiState.update { it.copy(showConfirmActivationDialog = false, temporarySelectedThemeId = null) }
             }
             StoreUiEvent.DismissDialog -> {
-                _uiState.update { it.copy(showPurchaseSuccessDialog = false, showConfirmActivationDialog = false, activationSuccess = false, showConfirmFreezePurchaseDialog = false, freezePurchaseSuccess = false) }
+                _uiState.update { it.copy(
+                    showPurchaseSuccessDialog = false, 
+                    showConfirmActivationDialog = false, 
+                    activationSuccess = false, 
+                    showConfirmFreezePurchaseDialog = false, 
+                    freezePurchaseSuccess = false,
+                    showRecoverySuccessDialog = false
+                ) }
             }
             StoreUiEvent.InitiateFreezePurchase -> {
                 _uiState.update { it.copy(showConfirmFreezePurchaseDialog = true) }
@@ -146,6 +156,24 @@ class StoreViewModel @Inject constructor(
             StoreUiEvent.BuyStreakFreeze -> performBuyStreakFreeze()
             StoreUiEvent.CancelFreezePurchase -> {
                 _uiState.update { it.copy(showConfirmFreezePurchaseDialog = false) }
+            }
+            StoreUiEvent.RecoverStreak -> performRecoverStreak()
+        }
+    }
+
+    private fun performRecoverStreak() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            userRepository.recoverStreak().onSuccess {
+                _uiState.update { it.copy(
+                    isLoading = false, 
+                    showRecoverySuccessDialog = true,
+                    recoveryMessage = "Streak recovered successfully!"
+                ) }
+                _uiEffect.emit(StoreUiEffect.RecoverSuccess)
+            }.onFailure { error ->
+                _uiState.update { it.copy(isLoading = false) }
+                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Recovery failed"))
             }
         }
     }

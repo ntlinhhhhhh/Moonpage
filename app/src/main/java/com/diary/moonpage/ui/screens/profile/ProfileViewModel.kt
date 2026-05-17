@@ -38,7 +38,9 @@ class ProfileViewModel @Inject constructor(
             userRepository.currentUser.collectLatest { user ->
                 _uiState.update { it.copy(
                     user = user,
-                    streakFreezeCount = user?.streakFreezeCount ?: 0
+                    streakFreezeCount = user?.streakFreezeCount ?: 0,
+                    currentStreak = user?.currentStreak ?: it.currentStreak,
+                    longestStreak = user?.longestStreak ?: it.longestStreak
                 ) }
             }
         }

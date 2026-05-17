@@ -1754,11 +1754,7 @@ fun SpotifyAuthDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
                         shape = RoundedCornerShape(14.dp),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
                     ) {
-                        Text(
-                            "Allow Access",
-                            fontWeight = FontWeight.SemiBold,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
+                        Text("Allow Access", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyLarge)
                     }
                 }
             }

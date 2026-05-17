@@ -1539,7 +1539,8 @@ fun YearlyRecapCard(
     bestActivities: List<BestActivityDto> = emptyList(),
     averageDistance: Double = 0.0,
     averageSteps: Int = 0,
-    longestStreak: Int = 0
+    longestStreak: Int = 0,
+    isLarger: Boolean = false
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
     val onSurface = MaterialTheme.colorScheme.onSurface
@@ -1623,7 +1624,7 @@ fun YearlyRecapCard(
                     .background(MoonTheme.customColors.logItemBg.copy(alpha = 0.5f))
                     .padding(8.dp)
             ) {
-                YearInPixelsGrid(yearlyMoodGrid, year, themeType)
+                YearInPixelsGrid(yearlyMoodGrid, year, themeType, isLarger = isLarger)
             }
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -1751,9 +1752,20 @@ private fun RecapStatItem(label: String, value: String, modifier: Modifier = Mod
 }
 
 @Composable
-fun YearInPixelsGrid(yearlyMoodGrid: List<MoodFlowDto>, year: Int, themeType: MoonThemeType) {
+fun YearInPixelsGrid(
+    yearlyMoodGrid: List<MoodFlowDto>, 
+    year: Int, 
+    themeType: MoonThemeType,
+    isLarger: Boolean = false
+) {
     val moodMap = remember(yearlyMoodGrid) { yearlyMoodGrid.associateBy { it.date } }
     val emptyColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f)
+
+    val cellSize = if (isLarger) 18.dp else 12.dp
+    val spacing = if (isLarger) 6.dp else 4.dp
+    val textHeight = if (isLarger) 24.dp else 18.dp
+    val textSize = if (isLarger) 12.sp else 10.sp
+    val horizontalSpacing = if (isLarger) 4.dp else 2.dp
 
     Row(
         modifier = Modifier
@@ -1763,18 +1775,18 @@ fun YearInPixelsGrid(yearlyMoodGrid: List<MoodFlowDto>, year: Int, themeType: Mo
     ) {
         // Leading Column: Days 1 to 31
         Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(spacing),
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(end = 6.dp)
+            modifier = Modifier.padding(end = if (isLarger) 10.dp else 6.dp)
         ) {
             // Spacer to align with month headers
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(textHeight))
             (1..31).forEach { day ->
                 Text(
                     text = if (day % 5 == 0 || day == 1) "$day" else "",
-                    fontSize = 10.sp,
+                    fontSize = textSize,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                    modifier = Modifier.size(12.dp),
+                    modifier = Modifier.size(cellSize),
                     textAlign = TextAlign.Center
                 )
             }
@@ -1783,17 +1795,17 @@ fun YearInPixelsGrid(yearlyMoodGrid: List<MoodFlowDto>, year: Int, themeType: Mo
         // Columns for Months 1 to 12
         (1..12).forEach { month ->
             Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(spacing),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(horizontal = 2.dp)
+                modifier = Modifier.padding(horizontal = horizontalSpacing)
             ) {
                 // Month Header
                 Text(
                     text = "$month",
-                    fontSize = 10.sp,
+                    fontSize = textSize,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                    modifier = Modifier.height(18.dp),
+                    modifier = Modifier.height(textHeight),
                     textAlign = TextAlign.Center
                 )
 
@@ -1816,13 +1828,13 @@ fun YearInPixelsGrid(yearlyMoodGrid: List<MoodFlowDto>, year: Int, themeType: Mo
 
                         Box(
                             modifier = Modifier
-                                .size(12.dp)
+                                .size(cellSize)
                                 .clip(CircleShape)
                                 .background(cellColor)
                         )
                     } else {
                         // Invisible placeholder for invalid days
-                        Spacer(modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.size(cellSize))
                     }
                 }
             }
@@ -2237,6 +2249,162 @@ fun TopMusicCard(
                 }
             }
             Icon(Icons.Rounded.ChevronRight, null, tint = onSurfaceVariant.copy(alpha = 0.35f), modifier = Modifier.size(20.dp))
+        }
+    }
+}
+
+@Composable
+fun ShowcaseThemeGrid(shades: List<Color>, modifier: Modifier = Modifier) {
+    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+    val dividerColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.15f)
+    
+    Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        // Month headers (1 to 12)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Spacer(modifier = Modifier.width(30.dp)) // Spacer for y-axis labels
+            (1..12).forEach { month ->
+                Text(
+                    text = "$month",
+                    fontSize = 11.sp,
+                    color = labelColor,
+                    modifier = Modifier.width(20.dp),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // Horizontal divider line
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Spacer(modifier = Modifier.width(24.dp))
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(1.dp)
+                    .background(dividerColor)
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // Grid Rows
+        (1..5).forEach { row ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(vertical = 3.dp)
+            ) {
+                // Row Label (1 to 5)
+                Text(
+                    text = "$row",
+                    fontSize = 11.sp,
+                    color = labelColor,
+                    modifier = Modifier.width(24.dp),
+                    textAlign = TextAlign.Center
+                )
+                
+                // Vertical divider line (drawn once for first column)
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .height(18.dp)
+                        .background(dividerColor)
+                )
+                
+                Spacer(modifier = Modifier.width(5.dp))
+                
+                // Dots for columns 1..12
+                val dotColor = when (row) {
+                    1 -> shades[0]
+                    2 -> shades[1]
+                    3 -> shades[2]
+                    4 -> shades[3]
+                    else -> shades[4]
+                }
+                
+                (1..12).forEach { _ ->
+                    Box(
+                        modifier = Modifier
+                            .padding(horizontal = 3.dp)
+                            .size(14.dp)
+                            .clip(CircleShape)
+                            .background(dotColor)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun YearInMoonpageMiniatureCard(
+    year: Int,
+    themeType: MoonThemeType,
+    onDetailClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val shades = getThemeShades(themeType)
+    
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(32.dp),
+        colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
+        elevation = CardDefaults.cardElevation(0.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Title
+            Text(
+                text = "Year in Moonpage",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.align(Alignment.Start)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Subtitle: "Look back on your 2026."
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start
+            ) {
+                Text(
+                    text = "Look back on your ",
+                    fontSize = 15.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "$year.",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = primaryColor
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Showcase Grid
+            ShowcaseThemeGrid(shades = shades)
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            
+            // Button: "View Details" (always in English as per requested preference "default ngôn ngữ để tiếng anh nên xem chi tiết để tiếng anh")
+            Button(
+                onClick = onDetailClick,
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
+            ) {
+                Text(
+                    text = androidx.compose.ui.res.stringResource(id = com.diary.moonpage.R.string.view_details),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
         }
     }
 }
