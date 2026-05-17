@@ -1,0 +1,66 @@
+package com.diary.moonpage.ui.screens.calendar
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ArrowBackIosNew
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+
+/**
+ * Stateful Component
+ */
+@Composable
+fun DailyPhotoRoute(
+    onNavigateBack: () -> Unit
+) {
+    DailyPhotoScreen(
+        onNavigateBack = onNavigateBack
+    )
+}
+
+/**
+ * Stateless Component
+ */
+@Composable
+fun DailyPhotoScreen(
+    onNavigateBack: () -> Unit
+) {
+    Scaffold(
+        topBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onNavigateBack) {
+                    Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back")
+                }
+                Text(
+                    "Today's Photo",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text("Daily Photo Screen", style = MaterialTheme.typography.bodyLarge)
+        }
+    }
+}

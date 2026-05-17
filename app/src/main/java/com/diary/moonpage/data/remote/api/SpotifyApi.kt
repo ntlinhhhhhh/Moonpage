@@ -106,13 +106,18 @@ data class SpotifyTracks(
     val items: List<SpotifyTrack>
 )
 
+data class SpotifyExternalUrls(
+    val spotify: String
+)
+
 data class SpotifyTrack(
     val id: String,
     val name: String,
     val artists: List<SpotifyArtist>,
     val album: SpotifyAlbum,
     val duration_ms: Long,
-    val preview_url: String?
+    val preview_url: String?,
+    @com.google.gson.annotations.SerializedName("external_urls") val externalUrls: SpotifyExternalUrls
 )
 
 data class SpotifyArtist(

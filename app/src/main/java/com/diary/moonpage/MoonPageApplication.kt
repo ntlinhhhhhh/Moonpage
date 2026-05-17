@@ -1,10 +1,8 @@
 package com.diary.moonpage
 
 import android.app.Application
-import android.content.Context
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.*
-import com.diary.moonpage.core.util.LocaleUtils
 import com.diary.moonpage.service.WeatherWorker
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject

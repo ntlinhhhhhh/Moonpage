@@ -7,7 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import com.diary.moonpage.MainActivity
+import com.diary.moonpage.ui.MainActivity
 import com.diary.moonpage.R
 import com.diary.moonpage.data.remote.dto.notification.CreateNotificationRequest
 import com.diary.moonpage.data.remote.dto.notification.NotificationType
