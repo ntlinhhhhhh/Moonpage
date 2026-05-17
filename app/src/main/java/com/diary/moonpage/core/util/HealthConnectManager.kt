@@ -101,8 +101,6 @@ class HealthConnectManager @Inject constructor(
             // Get earliest sleep start and latest wake up time
             val sleepStartStr = sleepRecords.minByOrNull { it.startTime }?.startTime?.atZone(ZoneId.systemDefault())?.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
             val sleepWakeStr = sleepRecords.maxByOrNull { it.endTime }?.endTime?.atZone(ZoneId.systemDefault())?.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
-
-            val stepsCount = response[StepsRecord.COUNT_TOTAL]?.toInt() ?: 0
             val distanceInKm = (response[DistanceRecord.DISTANCE_TOTAL]?.inMeters ?: (stepsCount * 0.762)) / 1000.0
 
             HealthData(
