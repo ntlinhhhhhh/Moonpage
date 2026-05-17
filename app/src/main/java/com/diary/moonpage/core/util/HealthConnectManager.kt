@@ -82,7 +82,12 @@ class HealthConnectManager @Inject constructor(
             
             val totalCalories = response[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories?.toInt() ?: 0
             val activeCalories = response[ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL]?.inKilocalories?.toInt() ?: 0
-            val finalCalories = if (activeCalories > totalCalories) activeCalories else totalCalories
+            
+            val stepsCount = response[StepsRecord.COUNT_TOTAL]?.toInt() ?: 0
+            
+            // Prefer Active Calories (calories burned from movement/exercise).
+            // If activeCalories is 0, estimate it from steps (~0.04 kcal per step).
+            val finalCalories = if (activeCalories > 0) activeCalories else (stepsCount * 0.04).toInt()
 
             // Read sleep sessions separately as they are read via ReadRecordsRequest
             val sleepRequest = ReadRecordsRequest(
@@ -97,10 +102,13 @@ class HealthConnectManager @Inject constructor(
             val sleepStartStr = sleepRecords.minByOrNull { it.startTime }?.startTime?.atZone(ZoneId.systemDefault())?.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
             val sleepWakeStr = sleepRecords.maxByOrNull { it.endTime }?.endTime?.atZone(ZoneId.systemDefault())?.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
 
+            val stepsCount = response[StepsRecord.COUNT_TOTAL]?.toInt() ?: 0
+            val distanceInKm = (response[DistanceRecord.DISTANCE_TOTAL]?.inMeters ?: (stepsCount * 0.762)) / 1000.0
+
             HealthData(
-                steps = response[StepsRecord.COUNT_TOTAL]?.toInt() ?: 0,
+                steps = stepsCount,
                 calories = finalCalories,
-                distance = (response[DistanceRecord.DISTANCE_TOTAL]?.inMeters ?: 0.0) / 1000.0,
+                distance = distanceInKm,
                 sleepHours = sleepHours,
                 sleepStartTime = sleepStartStr,
                 sleepWakeTime = sleepWakeStr

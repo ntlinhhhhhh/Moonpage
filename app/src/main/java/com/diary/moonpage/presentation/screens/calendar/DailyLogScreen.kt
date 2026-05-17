@@ -246,8 +246,11 @@ fun DailyLogScreenContent(
             val menstruationChanged = uiState.isMenstruation != existing.isMenstruation
             val photosChanged = uiState.dailyPhotos != (existing.dailyPhotos ?: emptyList<String>())
             val musicChanged = uiState.musicTitle != existing.musicRecord
+            val stepsChanged = uiState.steps != (existing.steps ?: 0)
+            val caloriesChanged = uiState.calories != (existing.calories ?: 0)
+            val distanceChanged = kotlin.math.abs(uiState.distance - (existing.distance ?: 0.0)) > 0.01
 
-            moodChanged || activitiesChanged || noteChanged || sleepChanged || menstruationChanged || photosChanged || musicChanged
+            moodChanged || activitiesChanged || noteChanged || sleepChanged || menstruationChanged || photosChanged || musicChanged || stepsChanged || caloriesChanged || distanceChanged
         }
     }
 
@@ -980,7 +983,7 @@ private fun DailyHealthSection(steps: Int, calories: Int, distance: Double, isIm
                 HealthStatItem(
                     modifier = Modifier.weight(1f),
                     label = "Calories",
-                    value = "$calories kcal",
+                    value = calories.toString(),
                     icon = Icons.Rounded.LocalFireDepartment,
                     color = Color(0xFFEF5350)
                 )

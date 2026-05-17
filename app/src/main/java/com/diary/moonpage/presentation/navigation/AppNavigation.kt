@@ -166,10 +166,8 @@ fun AppNavigation(
                                 }
                                 
                                 scope.launch {
-                                    val isTutorialCompleted = authViewModel.checkTutorialCompleted()
                                     val isReminderSet = onboardingViewModel.isReminderSet()
                                     val nextDestination = when {
-                                        !isTutorialCompleted -> Screen.Tutorial.route
                                         !isLoggedIn      -> Screen.Landing.route
                                         needsOnboarding  -> Screen.OnboardingBirthday.route
                                         !isReminderSet   -> Screen.OnboardingReminder.route
@@ -178,18 +176,6 @@ fun AppNavigation(
                                     navController.navigate(nextDestination) {
                                         popUpTo(Screen.Loading.route) { inclusive = true }
                                     }
-                                }
-                            }
-                        )
-                    }
-                }
-
-                composable(Screen.Tutorial.route) {
-                    ScreenWrapper(Screen.Tutorial.route, mainAppRoutes, totalBottomPadding, paddingValues) {
-                        TutorialScreen(
-                            onFinish = {
-                                navController.navigate(Screen.Landing.route) {
-                                    popUpTo(Screen.Tutorial.route) { inclusive = true }
                                 }
                             }
                         )
