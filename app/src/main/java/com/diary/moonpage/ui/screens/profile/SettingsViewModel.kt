@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.core.theme.MoonThemeType
 import com.diary.moonpage.core.util.SettingsPreferencesManager
 import com.diary.moonpage.core.util.ThemePreferencesManager
-import com.diary.moonpage.domain.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
@@ -18,7 +17,6 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val settingsPreferencesManager: SettingsPreferencesManager,
     private val themePreferencesManager: ThemePreferencesManager,
-    private val authRepository: AuthRepository,
     private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
     private val reminderManager: com.diary.moonpage.core.util.ReminderManager,
     private val tokenManager: com.diary.moonpage.core.util.TokenManager,
@@ -74,28 +72,23 @@ class SettingsViewModel @Inject constructor(
     )
 
     fun setLanguage(lang: String, onLanguageChanged: () -> Unit) {
-        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+        viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            val result = userRepository.updateLanguage(lang)
-            if (result.isSuccess) {
-                settingsPreferencesManager.setLanguage(lang)
-                
-                // Update app-wide locale using AppCompatDelegate
-                val appLocale: androidx.core.os.LocaleListCompat = androidx.core.os.LocaleListCompat.forLanguageTags(lang)
-                androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(appLocale)
-                
-                _uiState.update { it.copy(isLoading = false) }
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                    onLanguageChanged()
-                }
-            } else {
-                _uiState.update { 
-                    it.copy(
-                        isLoading = false,
-                        error = result.exceptionOrNull()?.message ?: "Failed to sync language"
-                    )
-                }
+            
+            // 1. Update local preference
+            settingsPreferencesManager.setLanguage(lang)
+            
+            // 2. Update app-wide locale using AppCompatDelegate (triggers recreation)
+            val appLocale: androidx.core.os.LocaleListCompat = androidx.core.os.LocaleListCompat.forLanguageTags(lang)
+            androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(appLocale)
+            
+            // 3. Sync with server (best effort)
+            viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                userRepository.updateLanguage(lang)
             }
+            
+            _uiState.update { it.copy(isLoading = false) }
+            onLanguageChanged()
         }
     }
 
@@ -172,7 +165,7 @@ class SettingsViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true, error = null) }
             
             // 1. Call API to delete account on server
-            val result = authRepository.deleteAccount()
+            val result = userRepository.deleteMyAccount()
             
             if (result.isSuccess) {
                 // 2. Clear all local data securely

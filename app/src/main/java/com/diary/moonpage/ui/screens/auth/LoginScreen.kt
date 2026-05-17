@@ -175,7 +175,7 @@ fun LoginScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         AuthHeader(
-                            title = "Welcome Back",
+                            title = stringResource(R.string.sign_in),
                             subtitle = "Continue your journey of self-\nreflection and mindful awareness."
                         )
 
@@ -183,7 +183,7 @@ fun LoginScreen(
                             value = uiState.emailInput,
                             onValueChange = onEmailChange,
                             label = "Email address",
-                            placeholderText = "Enter your email",
+                            placeholderText = stringResource(R.string.placeholder_email),
                             iconVector = Icons.Outlined.Email,
                             errorText = uiState.emailError,
                             keyboardOptions = KeyboardOptions(
@@ -200,8 +200,8 @@ fun LoginScreen(
                             onValueChange = onPasswordChange,
                             label = "Password",
                             isPassword = true,
-                            trailingLabel = "Forgot Password?",
-                            placeholderText = "Enter your password",
+                            trailingLabel = stringResource(R.string.forgot_password_label),
+                            placeholderText = stringResource(R.string.placeholder_password),
                             errorText = uiState.passwordError,
                             onTrailingClick = { onNavigateToForgotPassword() },
                             keyboardOptions = KeyboardOptions(
@@ -219,7 +219,7 @@ fun LoginScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         MoonPrimaryButton(
-                            text = "Login",
+                            text = stringResource(R.string.login),
                             enabled = !uiState.isLoading,
                             onClick = {
                                 keyboardController?.hide()
@@ -229,12 +229,12 @@ fun LoginScreen(
 
                         Spacer(modifier = Modifier.height(32.dp))
 
-                        MoonDivider(text = "OR CONTINUE WITH")
+                        MoonDivider(text = stringResource(R.string.or_continue_with))
 
                         Spacer(modifier = Modifier.height(32.dp))
 
                         SocialLoginButton(
-                            text = "Login with Google",
+                            text = stringResource(R.string.login_with_google),
                             iconResId = R.drawable.ic_google,
                             onClick = {
                                 scope.launch {
@@ -272,8 +272,8 @@ fun LoginScreen(
                         Spacer(modifier = Modifier.height(32.dp))
 
                         AuthFooter(
-                            questionText = "Don't have an account? ",
-                            actionText = "Sign up for free",
+                            questionText = stringResource(R.string.dont_have_account),
+                            actionText = stringResource(R.string.sign_up_free),
                             onActionClick = onNavigateToRegister
                         )
                     }

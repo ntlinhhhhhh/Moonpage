@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.diary.moonpage.core.util.ReminderManager
+import androidx.compose.ui.res.stringResource
+import com.diary.moonpage.R
 
 /**
  * Stateful Component
@@ -147,7 +149,7 @@ fun OnboardingReminderScreen(
 
         // Header
         Text(
-            text = "Daily Reflection",
+            text = stringResource(R.string.daily_reflection_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
@@ -156,7 +158,7 @@ fun OnboardingReminderScreen(
         Spacer(modifier = Modifier.height(12.dp))
         
         Text(
-            text = "What time should we remind you\nto write down your day?",
+            text = stringResource(R.string.reminder_question),
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
@@ -202,7 +204,7 @@ fun OnboardingReminderScreen(
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
         ) {
             Text(
-                text = "Get Started",
+                text = stringResource(R.string.get_started),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )

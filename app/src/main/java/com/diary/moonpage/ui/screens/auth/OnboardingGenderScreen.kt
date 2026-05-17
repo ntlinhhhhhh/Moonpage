@@ -22,6 +22,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.res.stringResource
+import com.diary.moonpage.R
 
 private data class GenderOption(
     val label: String,
@@ -117,14 +119,14 @@ fun OnboardingGenderScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "What is your gender?",
+                    text = stringResource(R.string.what_gender),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onBackground
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "We use this for personalization.",
+                    text = stringResource(R.string.gender_personalization),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colorScheme.onBackground.copy(alpha = 0.6f),
                     textAlign = TextAlign.Center
@@ -163,7 +165,7 @@ fun OnboardingGenderScreen(
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
                 ) {
                     Text(
-                        text = "Finish Onboarding",
+                        text = stringResource(R.string.finish_onboarding),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )

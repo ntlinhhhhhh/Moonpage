@@ -2,6 +2,10 @@
     <string name="app_name">Moon Page</string>
     <string name="google_web_client_id">511455154390-m8jmplb158akjj874288pipkt3emset0.apps.googleusercontent.com</string>
 
+    <!-- Common -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+
     <!-- Validation Errors -->
     <string name="error_email_empty">Email cannot be empty.</string>
     <string name="error_invalid_email">Invalid email format.</string>
@@ -37,8 +41,6 @@
     <string name="system">System</string>
     <string name="delete_account_confirmation">Are you sure you want to delete your account? This action cannot be undone.</string>
     <string name="delete">Delete</string>
-    <string name="cancel">Cancel</string>
-    <string name="ok">OK</string>
 
     <!-- Calendar & Stats -->
     <string name="report">Report</string>
@@ -234,4 +236,135 @@
     
     <string name="noti_memory_title">Time machine starting 🕰️</string>
     <string name="noti_memory_body">Exactly 1 year ago, you saved a moment here. Want to go back in time a bit?</string>
+
+    <!-- Auth Screens -->
+    <string name="sign_in">Sign In</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="login">Login</string>
+    <string name="login_with_google">Login with Google</string>
+    <string name="sign_up_with_google">Sign up with Google</string>
+    <string name="get_started">Get Started</string>
+    <string name="continue_btn">Continue</string>
+    <string name="skip">Skip</string>
+    <string name="or_continue_with">OR CONTINUE WITH</string>
+    <string name="or_sign_up_with">OR SIGN UP WITH</string>
+    <string name="dont_have_account">Don\'t have an account? </string>
+    <string name="already_have_account">Already have an account? </string>
+    <string name="sign_up_free">Sign up for free</string>
+    <string name="login_here">Login here</string>
+    <string name="forgot_password_label">Forgot Password?</string>
+    <string name="send_otp">Send OTP</string>
+    <string name="reset_password_btn">Reset Password</string>
+    <string name="verify_and_continue">Verify &amp; Continue</string>
+    <string name="didnt_receive_code">Didn\'t receive code? </string>
+    <string name="resend_now">Resend Now</string>
+    <string name="go_back_to">Go back to </string>
+    <string name="suddenly_remembered">Suddenly remembered? </string>
+
+    <!-- Onboarding -->
+    <string name="no_pressure">No pressure, you can always edit this later.</string>
+    <string name="top_picks_for_you">Top picks for you! 🎉</string>
+    <string name="edit_list_hint">Edit the list to keep only what you want!</string>
+    <string name="what_am_i_choosing">What am I choosing?</string>
+    <string name="happy_birthday">Happy Birthday! 🎂🎉</string>
+    <string name="when_born">When did you enter this world?</string>
+    <string name="what_gender">What is your gender?</string>
+    <string name="gender_personalization">We use this for personalization.</string>
+    <string name="daily_reflection_title">Daily Reflection</string>
+    <string name="reminder_question">What time should we remind you\nto write down your day?</string>
+    <string name="finish_onboarding">Finish Onboarding</string>
+
+    <!-- Placeholders -->
+    <string name="placeholder_email">Enter your email</string>
+    <string name="placeholder_password">Enter your password</string>
+    <string name="placeholder_username">Enter your username</string>
+    <string name="placeholder_confirm_password">Confirm your password</string>
+    <string name="placeholder_at_least_8">At least 8 characters</string>
+    <string name="placeholder_repeat_password">Repeat new password</string>
+    <string name="placeholder_email_example">name@example.com</string>
+
+    <!-- Daily Log Dialogs -->
+    <string name="changes_not_saved">Changes have not been saved.</string>
+    <string name="discard_exit_confirmation">Do you want to discard your changes and exit?</string>
+    <string name="data_exists">Data already exists</string>
+    <string name="overwrite_record_msg">There is already a record for this day. Do you want to overwrite it?</string>
+    <string name="which_day_record">Which day is this record for?</string>
+    <string name="overwrite">Overwrite</string>
+    <string name="location_permission_title">Location Access</string>
+    <string name="location_permission_desc">MoonPage needs location access to automatically update weather and provide personalized experience.</string>
+
+    <!-- Spotify -->
+    <string name="connect_to_spotify">Connect to Spotify</string>
+    <string name="spotify_permission_desc">MoonPage wants to access your Spotify account to search and add music to your diary.</string>
+
+    <!-- Calendar/Log extra -->
+    <string name="when_did_i_record">When did I record…</string>
+    <string name="feeling_mood">Feeling %1$s</string>
+
+    <!-- Stats -->
+    <string name="overview">Overview</string>
+    <string name="mood_overview">Mood Overview</string>
+    <string name="health_data">Health Data</string>
+    <string name="steps">Steps</string>
+    <string name="calories">Calories</string>
+    <string name="distance">Distance</string>
+    <string name="sleep_label">Sleep</string>
+    <string name="no_data">No data</string>
+    <string name="days_label">Days</string>
+    <string name="entries_label">entries</string>
+    <string name="all_moods">All Moods</string>
+    <string name="total">Total</string>
+    <string name="most_common">Most Common</string>
+    <string name="avg_mood">Avg Mood</string>
+    <string name="year_label">Year</string>
+
+    <!-- Store -->
+    <string name="free">Free</string>
+    <string name="beans_label">beans</string>
+    <string name="owned">Owned</string>
+    <string name="applied">Applied</string>
+    <string name="my_themes">My Themes</string>
+    <string name="premium_themes">Premium Themes</string>
+
+    <!-- Profile / Premium -->
+    <string name="premium_upgrade_title">Upgrade to Premium</string>
+    <string name="premium_subtitle">Unlock all themes &amp; features</string>
+    <string name="premium_cta">Get Premium</string>
+    <string name="moonpage_app_url">moonpage.app</string>
+
+    <!-- Moment -->
+    <string name="add_photo">Add Photo</string>
+    <string name="no_moments_yet">No moments yet</string>
+    <string name="capture_first_moment">Capture your first moment!</string>
+
+    <!-- Notifications -->
+    <string name="no_notifications">No notifications yet</string>
+    <string name="all_caught_up">You\'re all caught up!</string>
+
+    <!-- Tutorial -->
+    <string name="tutorial_skip">Skip</string>
+    <string name="tutorial_continue">Continue</string>
+    <string name="tutorial_start_log">Start logging your day today!</string>
+    <string name="tutorial_select_mood">How are you feeling today? Select a mood.</string>
+    <string name="tutorial_activity_category">Select an activity category to open the list.</string>
+    <string name="tutorial_activity_selection">What did you do today? Select an activity.</string>
+    <string name="tutorial_sleep_selection">How long did you sleep? Select your sleep hours.</string>
+    <string name="tutorial_done_button">Once finished, tap here to save your log.</string>
+    <string name="tutorial_streak">Wonderful! You\'ve completed your first log entry.</string>
+    <string name="tutorial_stats_tab">View detailed statistics of your mood and habits.</string>
+    <string name="tutorial_yearly_report">Explore your monthly mood trends. Tap here to view details.</string>
+    <string name="tutorial_mood_detail_chart">This is your detailed monthly mood analysis chart.</string>
+    <string name="tutorial_mood_detail_back">Tap here to return to the statistics page.</string>
+    <string name="tutorial_moment_tab">Review all the photos you have captured.</string>
+    <string name="tutorial_camera_capture">Capture a new moment or upload your image.</string>
+    <string name="tutorial_history_button">Tap here to view your captured photos and history feed.</string>
+    <string name="tutorial_history_feed">This is your moment history feed. Swipe or tap to view your captured photos.</string>
+    <string name="tutorial_store_tab">Explore beautiful new themes and icons here.</string>
+    <string name="tutorial_store_themes">Discover gorgeous diary themes. Tap a theme to view details.</string>
+    <string name="tutorial_theme_apply">Preview and apply this theme to your diary.</string>
+    <string name="tutorial_theme_back">Tap here to return to the store.</string>
+    <string name="tutorial_profile_tab">Manage your account and settings.</string>
+    <string name="tutorial_profile_settings">Manage your account info. Tap here to open account settings.</string>
+    <string name="tutorial_account_info">Here is where you can change your avatar and username.</string>
+    <string name="tutorial_account_back">Tap here to complete the tutorial.</string>
 </resources>

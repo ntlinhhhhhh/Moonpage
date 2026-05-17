@@ -153,4 +153,17 @@ class UserRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun deleteMyAccount(): Result<Unit> {
+        return try {
+            val response = userApi.deleteMe()
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Failed to delete account"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

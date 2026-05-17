@@ -451,6 +451,23 @@ class AuthViewModel @Inject constructor (
         }
     }
 
+    fun setLanguage(lang: String) {
+        viewModelScope.launch {
+            // 1. Update local preference
+            settingsPreferencesManager.setLanguage(lang)
+            
+            // 2. Sync with server if logged in
+            tokenManager.getUserId()?.first()?.let {
+                userRepository.updateLanguage(lang)
+            }
+            
+            // 3. Update app-wide locale using AppCompatDelegate
+            val appLocale: androidx.core.os.LocaleListCompat = 
+                androidx.core.os.LocaleListCompat.forLanguageTags(lang)
+            androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(appLocale)
+        }
+    }
+
     private fun handleAuthError(message: String?) {
         val error = message ?: "An unknown error occurred"
 

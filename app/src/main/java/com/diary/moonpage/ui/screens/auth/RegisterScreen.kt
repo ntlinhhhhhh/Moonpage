@@ -44,6 +44,7 @@ import com.diary.moonpage.ui.components.buttons.MoonPrimaryButton
 import com.diary.moonpage.ui.components.inputs.MoonTextField
 import com.diary.moonpage.ui.components.layout.MoonDivider
 import com.diary.moonpage.core.theme.*
+import androidx.compose.ui.res.stringResource
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.flow.Flow
@@ -185,7 +186,7 @@ fun RegisterScreen(
                         MoonTextField(
                             value = uiState.usernameInput ?: "",
                             onValueChange = onUsernameChange,
-                            placeholderText = "Enter your username",
+                            placeholderText = stringResource(R.string.placeholder_username),
                             label = "Username",
                             iconVector = Icons.Outlined.Person,
                             errorText = uiState.usernameError,
@@ -202,7 +203,7 @@ fun RegisterScreen(
                             value = uiState.emailInput,
                             onValueChange = onEmailChange,
                             label = "Email address",
-                            placeholderText = "Enter your email",
+                            placeholderText = stringResource(R.string.placeholder_email),
                             iconVector = Icons.Outlined.Email,
                             errorText = uiState.emailError,
                             keyboardOptions = KeyboardOptions(
@@ -218,7 +219,7 @@ fun RegisterScreen(
                             value = uiState.passwordInput,
                             onValueChange = onPasswordChange,
                             label = "Password",
-                            placeholderText = "Enter your password",
+                            placeholderText = stringResource(R.string.placeholder_password),
                             isPassword = true,
                             errorText = uiState.passwordError,
                             keyboardOptions = KeyboardOptions(
@@ -234,7 +235,7 @@ fun RegisterScreen(
                             value = uiState.confirmPasswordInput,
                             onValueChange = onConfirmPasswordChange,
                             label = "Confirm Password",
-                            placeholderText = "Confirm your password",
+                            placeholderText = stringResource(R.string.placeholder_confirm_password),
                             isPassword = true,
                             errorText = uiState.confirmPasswordError,
                             keyboardOptions = KeyboardOptions(
@@ -252,7 +253,7 @@ fun RegisterScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         MoonPrimaryButton(
-                            text = "Sign Up",
+                            text = stringResource(R.string.sign_up),
                             enabled = !uiState.isLoading,
                             onClick = {
                                 keyboardController?.hide()
@@ -262,12 +263,12 @@ fun RegisterScreen(
 
                         Spacer(modifier = Modifier.height(32.dp))
 
-                        MoonDivider(text = "OR SIGN UP WITH")
+                        MoonDivider(text = stringResource(R.string.or_sign_up_with))
 
                         Spacer(modifier = Modifier.height(32.dp))
 
                         SocialLoginButton(
-                            text = "Sign up with Google",
+                            text = stringResource(R.string.sign_up_with_google),
                             iconResId = R.drawable.ic_google,
                             onClick = {
                                 scope.launch {
@@ -312,8 +313,8 @@ fun RegisterScreen(
                         Spacer(modifier = Modifier.height(32.dp))
 
                         AuthFooter(
-                            questionText = "Already have an account? ",
-                            actionText = "Login here",
+                            questionText = stringResource(R.string.already_have_account),
+                            actionText = stringResource(R.string.login_here),
                             onActionClick = onNavigateToLogin
                         )
                     }

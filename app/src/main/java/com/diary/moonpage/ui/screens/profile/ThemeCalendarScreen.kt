@@ -26,9 +26,11 @@ import com.diary.moonpage.ui.MainViewModel
 import com.diary.moonpage.core.util.ThemeConstants
 import com.diary.moonpage.core.theme.MoonThemeType
 import com.diary.moonpage.ui.screens.store.components.ConfirmActivationDialog
+import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
+import kotlinx.coroutines.launch
 
 /**
- * Stateful Component
+ * Stateful Route Component
  */
 @Composable
 fun ThemeCalendarRoute(
@@ -91,217 +93,251 @@ fun ThemeCalendarRoute(
         }
     }
 
-    ThemeCalendarScreen(
+    ThemePickerContent(
         availableThemes = allSelectableThemes,
         currentThemeType = currentThemeType,
         isDarkMode = isDarkModePref,
-        hasChanges = hasChanges,
         onThemeSelected = { type ->
             val theme = if (type == MoonThemeType.DEFAULT) {
                 uiState.ownedThemes.find { it.id == ThemeConstants.DEFAULT_THEME_ID }
             } else {
                 uiState.ownedThemes.find { it.decoration.toMoonThemeType() == type }
             }
-            if (theme != null) {
-                storeViewModel.activateTheme(theme.id)
-            }
+            theme?.let { storeViewModel.activateTheme(it.id) }
         },
-        onDarkModeChange = { isDark -> mainViewModel.setDarkMode(isDark) },
+        onDarkModeToggled = { mainViewModel.setDarkMode(it) },
+        onApply = onActivated,
         onNavigateBack = onNavigateBack,
-        onActivated = onActivated,
-        snackbarHostState = snackbarHostState
+        isLoading = uiState.isLoading,
+        snackbarHostState = snackbarHostState,
+        showConfirmActivation = uiState.showConfirmActivationDialog,
+        temporarySelectedThemeId = uiState.temporarySelectedThemeId,
+        onConfirmActivation = { storeViewModel.confirmActivation() },
+        onCancelActivation = { storeViewModel.cancelActivation() },
+        isDoneEnabled = hasChanges
     )
 }
 
 /**
- * Stateless Component
+ * Stateless Component representing the "Themes & Styles" Picker UI
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ThemeCalendarScreen(
+fun ThemePickerContent(
     availableThemes: List<Triple<MoonThemeType, String, Color>>,
     currentThemeType: MoonThemeType,
     isDarkMode: Boolean?,
-    hasChanges: Boolean,
     onThemeSelected: (MoonThemeType) -> Unit,
-    onDarkModeChange: (Boolean?) -> Unit,
+    onDarkModeToggled: (Boolean?) -> Unit,
+    onApply: () -> Unit,
     onNavigateBack: () -> Unit,
-    onActivated: () -> Unit,
-    snackbarHostState: SnackbarHostState
+    isLoading: Boolean = false,
+    snackbarHostState: SnackbarHostState,
+    showConfirmActivation: Boolean = false,
+    temporarySelectedThemeId: String? = null,
+    onConfirmActivation: () -> Unit = {},
+    onCancelActivation: () -> Unit = {},
+    isDoneEnabled: Boolean = true
 ) {
-    val colorScheme = MaterialTheme.colorScheme
-
     Scaffold(
-        containerColor = colorScheme.background,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("App Theme", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back", modifier = Modifier.size(20.dp))
-                    }
-                },
-                actions = {
-                    TextButton(
-                        onClick = onActivated,
-                        enabled = hasChanges
-                    ) {
-                        Text("Done", fontWeight = FontWeight.Bold, color = if (hasChanges) colorScheme.primary else colorScheme.onSurface.copy(alpha = 0.3f))
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = colorScheme.background)
-            )
+            // Static Top Bar to avoid any Material3 animations or flickering
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .height(64.dp)
+                    .background(MaterialTheme.colorScheme.background),
+                contentAlignment = Alignment.Center
+            ) {
+                IconButton(
+                    onClick = onNavigateBack,
+                    modifier = Modifier.align(Alignment.CenterStart)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.ArrowBackIosNew,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+                Text(
+                    text = "Themes & Styles",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+        },
+        bottomBar = {
+            Surface(color = MaterialTheme.colorScheme.background, shadowElevation = 12.dp) {
+                Button(
+                    onClick = onApply,
+                    enabled = isDoneEnabled,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .height(52.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                    )
+                ) {
+                    Text(
+                        text = "Done",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = if (isDoneEnabled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f)
+                    )
+                }
+            }
         }
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+                contentPadding = PaddingValues(vertical = 16.dp)
             ) {
-                // Appearance Section
+                // Section 1: Dark Mode Toggle
                 item {
-                    Text("Appearance", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "Appearance",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+                    )
                     Spacer(modifier = Modifier.height(12.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        AppearanceOption(
-                            label = "Light",
-                            isSelected = isDarkMode == false,
-                            onClick = { onDarkModeChange(false) },
-                            modifier = Modifier.weight(1f)
+                        val modes = listOf(
+                            Triple("System", Icons.Rounded.Settings, null as Boolean?),
+                            Triple("Light", Icons.Rounded.LightMode, false as Boolean?),
+                            Triple("Dark", Icons.Rounded.DarkMode, true as Boolean?)
                         )
-                        AppearanceOption(
-                            label = "Dark",
-                            isSelected = isDarkMode == true,
-                            onClick = { onDarkModeChange(true) },
-                            modifier = Modifier.weight(1f)
-                        )
-                        AppearanceOption(
-                            label = "System",
-                            isSelected = isDarkMode == null,
-                            onClick = { onDarkModeChange(null) },
-                            modifier = Modifier.weight(1f)
-                        )
+
+                        modes.forEach { (name, icon, value) ->
+                            val isSelected = isDarkMode == value
+                            AppThemeItem(
+                                name = name,
+                                icon = icon,
+                                isSelected = isSelected,
+                                modifier = Modifier.weight(1f),
+                                onClick = { onDarkModeToggled(value) }
+                            )
+                        }
                     }
                 }
 
-                // Themes Section
+                // Section 2: My Themes
                 item {
-                    Text("Color Themes", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "My Themes",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
+                    )
                 }
 
-                items(availableThemes.chunked(2)) { row ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                items(availableThemes) { (type, name, color) ->
+                    val isSelected = currentThemeType == type
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(20.dp))
+                            .clickable { onThemeSelected(type) },
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isSelected) color.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                        ),
+                        border = if (isSelected) BorderStroke(2.dp, color) else null
                     ) {
-                        row.forEach { theme ->
-                            ThemeOptionCard(
-                                type = theme.first,
-                                name = theme.second,
-                                primaryColor = theme.third,
-                                isSelected = currentThemeType == theme.first,
-                                onClick = { onThemeSelected(theme.first) },
-                                modifier = Modifier.weight(1f)
-                            )
+                        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .background(color.copy(alpha = 0.2f), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Rounded.Circle, null, tint = color, modifier = Modifier.size(24.dp))
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
+                                Text(
+                                    text = if (type == MoonThemeType.DEFAULT) "Classic moon beans" else "Custom colored beans",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                )
+                            }
+                            if (isSelected) {
+                                Icon(Icons.Rounded.CheckCircle, null, tint = color)
+                            }
                         }
-                        if (row.size == 1) Spacer(modifier = Modifier.weight(1f))
                     }
                 }
             }
-            
-            com.diary.moonpage.ui.components.feedback.MoonSnackbarHost(
+
+            // Snackbar at top
+            MoonSnackbarHost(
                 hostState = snackbarHostState,
-                modifier = Modifier.align(Alignment.BottomCenter)
+                modifier = Modifier.align(Alignment.TopCenter),
+                topPadding = 45.dp
             )
+
+            if (showConfirmActivation) {
+                val themeData = availableThemes.find { it.first == temporarySelectedThemeId?.toMoonThemeType() }
+                ConfirmActivationDialog(
+                    themeName = themeData?.second ?: "this theme",
+                    onConfirm = onConfirmActivation,
+                    onCancel = onCancelActivation,
+                    primaryColor = themeData?.third
+                )
+            }
         }
     }
 }
 
-@Composable
-private fun AppearanceOption(
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val colorScheme = MaterialTheme.colorScheme
-    Surface(
-        modifier = modifier
-            .height(48.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick),
-        color = if (isSelected) colorScheme.primary else colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelLarge,
-                color = if (isSelected) colorScheme.onPrimary else colorScheme.onSurfaceVariant
-            )
-        }
+private fun String.toMoonThemeType(): MoonThemeType {
+    if (this == ThemeConstants.DEFAULT_THEME_ID) return MoonThemeType.DEFAULT
+    return try {
+        // Try mapping decoration name to MoonThemeType
+        val decoration = if (this.startsWith("theme_")) this.substringAfter("theme_") else this
+        MoonThemeType.valueOf(decoration.uppercase())
+    } catch (e: Exception) {
+        MoonThemeType.DEFAULT
     }
 }
 
 @Composable
-private fun ThemeOptionCard(
-    type: MoonThemeType,
+fun AppThemeItem(
     name: String,
-    primaryColor: Color,
+    icon: ImageVector,
     isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick),
+            .background(if (isSelected) colorScheme.primary.copy(alpha = 0.1f) else colorScheme.surfaceVariant.copy(alpha = 0.3f))
+            .border(
+                width = if (isSelected) 2.dp else 0.dp,
+                color = if (isSelected) colorScheme.primary else Color.Transparent,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .clickable { onClick() }
+            .padding(vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1.2f)
-                .background(
-                    if (isSelected) primaryColor.copy(alpha = 0.1f) else colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                    RoundedCornerShape(16.dp)
-                )
-                .border(
-                    if (isSelected) 2.dp else 1.dp,
-                    if (isSelected) primaryColor else colorScheme.onSurface.copy(alpha = 0.1f),
-                    RoundedCornerShape(16.dp)
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            // Mock UI preview inside
-            Column(
-                modifier = Modifier.padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Box(modifier = Modifier.size(24.dp).background(primaryColor, CircleShape))
-                Box(modifier = Modifier.fillMaxWidth().height(8.dp).background(primaryColor.copy(alpha = 0.3f), RoundedCornerShape(4.dp)))
-                Box(modifier = Modifier.width(40.dp).height(8.dp).background(primaryColor.copy(alpha = 0.3f), RoundedCornerShape(4.dp)))
-            }
-            
-            if (isSelected) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp)
-                        .size(20.dp)
-                        .background(primaryColor, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Rounded.Check, null, modifier = Modifier.size(14.dp), tint = Color.White)
-                }
-            }
-        }
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = if (isSelected) colorScheme.primary else colorScheme.onSurface.copy(alpha = 0.5f),
+            modifier = Modifier.size(28.dp)
+        )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = name,
@@ -309,14 +345,5 @@ private fun ThemeOptionCard(
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
             color = if (isSelected) colorScheme.primary else colorScheme.onSurface.copy(alpha = 0.7f)
         )
-    }
-}
-
-private fun String.toMoonThemeType(): MoonThemeType {
-    if (this == ThemeConstants.DEFAULT_THEME_ID) return MoonThemeType.DEFAULT
-    return try {
-        MoonThemeType.valueOf(this.uppercase())
-    } catch (e: Exception) {
-        MoonThemeType.DEFAULT
     }
 }

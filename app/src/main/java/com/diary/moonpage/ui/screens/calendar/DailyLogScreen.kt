@@ -67,6 +67,8 @@ import com.diary.moonpage.ui.screens.tutorial.LocalTutorialController
 
 import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
 import com.diary.moonpage.ui.screens.tutorial.TutorialStep
+import androidx.compose.ui.res.stringResource
+import com.diary.moonpage.R
 
 /**
  * Stateful Component
@@ -1430,7 +1432,7 @@ private fun DailyLogExitDialog(onDismiss: () -> Unit, onExit: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Changes have not been saved.",
+                    text = stringResource(R.string.changes_not_saved),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
@@ -1440,7 +1442,7 @@ private fun DailyLogExitDialog(onDismiss: () -> Unit, onExit: () -> Unit) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Do you want to discard your changes and exit?",
+                    text = stringResource(R.string.discard_exit_confirmation),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colorScheme.onSurface.copy(alpha = 0.8f),
                     textAlign = TextAlign.Center
@@ -1517,7 +1519,7 @@ private fun DailyLogOverwriteDialog(onDismiss: () -> Unit, onConfirm: () -> Unit
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Data already exists",
+                    text = stringResource(R.string.data_exists),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
@@ -1527,7 +1529,7 @@ private fun DailyLogOverwriteDialog(onDismiss: () -> Unit, onConfirm: () -> Unit
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "There is already a record for this day. Do you want to overwrite it?",
+                    text = stringResource(R.string.overwrite_record_msg),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colorScheme.onSurface.copy(alpha = 0.8f),
                     textAlign = TextAlign.Center
@@ -1550,7 +1552,7 @@ private fun DailyLogOverwriteDialog(onDismiss: () -> Unit, onConfirm: () -> Unit
                         elevation = ButtonDefaults.buttonElevation(0.dp)
                     ) {
                         Text(
-                            "Cancel",
+                            stringResource(R.string.cancel),
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
                         )
@@ -1566,7 +1568,7 @@ private fun DailyLogOverwriteDialog(onDismiss: () -> Unit, onConfirm: () -> Unit
                         elevation = ButtonDefaults.buttonElevation(0.dp)
                     ) {
                         Text(
-                            "Overwrite",
+                            stringResource(R.string.overwrite),
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
                         )
@@ -1591,7 +1593,7 @@ fun DailyLogDatePickerDialog(initialDate: LocalDate, onDateSelected: (LocalDate)
         Surface(shape = RoundedCornerShape(28.dp), color = MoonTheme.customColors.popupBgColor, modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
             Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "Which day is this record for?",
+                    text = stringResource(R.string.which_day_record),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -1704,7 +1706,7 @@ fun SpotifyAuthDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Connect to Spotify",
+                    text = stringResource(R.string.connect_to_spotify),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
@@ -1714,7 +1716,7 @@ fun SpotifyAuthDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "MoonPage wants to access your Spotify account to search and add music to your logs.",
+                    text = stringResource(R.string.spotify_permission_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colorScheme.onSurface.copy(alpha = 0.8f),
                     textAlign = TextAlign.Center
@@ -1785,7 +1787,7 @@ private fun DailyLogLocationPermissionDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Quyền truy cập vị trí",
+                    text = stringResource(R.string.location_permission_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
@@ -1795,7 +1797,7 @@ private fun DailyLogLocationPermissionDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "MoonPage cần quyền truy cập vị trí để tự động cập nhật thời tiết và gợi ý các hoạt động cho nhật ký hôm nay.",
+                    text = stringResource(R.string.location_permission_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colorScheme.onSurface.copy(alpha = 0.8f),
                     textAlign = TextAlign.Center
@@ -1817,7 +1819,7 @@ private fun DailyLogLocationPermissionDialog(
                         border = BorderStroke(1.dp, colorScheme.outline.copy(alpha = 0.3f)),
                         shape = RoundedCornerShape(10.dp)
                     ) {
-                        Text("Bỏ qua", fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.skip), fontWeight = FontWeight.SemiBold)
                     }
 
                     Button(
@@ -1829,7 +1831,7 @@ private fun DailyLogLocationPermissionDialog(
                         ),
                         shape = RoundedCornerShape(10.dp)
                     ) {
-                        Text("Đồng ý", fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.ok), fontWeight = FontWeight.SemiBold)
                     }
                 }
             }

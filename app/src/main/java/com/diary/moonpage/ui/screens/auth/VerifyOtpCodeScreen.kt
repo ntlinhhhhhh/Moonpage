@@ -37,6 +37,7 @@ import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.components.inputs.MoonOtpField
 import com.diary.moonpage.ui.components.navigation.TopCircularIcon
 import com.diary.moonpage.core.theme.*
+import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -181,7 +182,7 @@ fun VerifyOtpCodeScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     MoonPrimaryButton(
-                        text = "Verify & Continue",
+                        text = stringResource(R.string.verify_and_continue),
                         enabled = !uiState.isLoading,
                         onClick = {
                             keyboardController?.hide()
@@ -194,8 +195,8 @@ fun VerifyOtpCodeScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             AuthFooter(
-                questionText = "Didn't receive code? ",
-                actionText = "Resend Now",
+                questionText = stringResource(R.string.didnt_receive_code),
+                actionText = stringResource(R.string.resend_now),
                 onActionClick = onResendOtpClick
             )
 

@@ -191,7 +191,8 @@ fun AppNavigation(
                     ScreenWrapper(Screen.Landing.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         LandingScreen(
                             onNavigateToLogin = { navController.navigate(Screen.Login.route) },
-                            onNavigateToRegister = { navController.navigate(Screen.Register.route) }
+                            onNavigateToRegister = { navController.navigate(Screen.Register.route) },
+                            onLanguageChange = { lang -> authViewModel.setLanguage(lang) }
                         )
                     }
                 }
@@ -313,11 +314,11 @@ fun AppNavigation(
                 composable(Screen.DailyLog.route) { backStackEntry ->
                     val dateStr = backStackEntry.arguments?.getString("date") ?: ""
                     val savedStateHandle = backStackEntry.savedStateHandle
-                    
+
                     val selectedSongTitle = savedStateHandle.get<String>("selected_song_title")
                     val selectedSongArtist = savedStateHandle.get<String>("selected_song_artist")
                     val selectedSongUrl = savedStateHandle.get<String>("selected_song_url")
-                    
+
                     ScreenWrapper(Screen.DailyLog.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         DailyLogRoute(
                             dateString = dateStr,
@@ -334,7 +335,7 @@ fun AppNavigation(
                                 navController.popBackStack()
                             }
                         )
-                        
+
                         val viewModel: com.diary.moonpage.ui.screens.calendar.DailyLogViewModel = hiltViewModel()
                         LaunchedEffect(selectedSongTitle) {
                             if (selectedSongTitle != null) {
@@ -377,7 +378,7 @@ fun AppNavigation(
                         DailyPhotoRoute(onNavigateBack = { navController.popBackStack() })
                     }
                 }
-                
+
                 composable(Screen.ShareLog.route) { backStackEntry ->
                     val dateStr = backStackEntry.arguments?.getString("date") ?: ""
                     ScreenWrapper(Screen.ShareLog.route, mainAppRoutes, totalBottomPadding, paddingValues) {
@@ -444,7 +445,7 @@ fun AppNavigation(
                         StatsMusicDetailRoute(viewModel = viewModel, onNavigateBack = { navController.popBackStack() })
                     }
                 }
-                
+
                 // --- ANNUAL STATS DETAILS ---
                 composable(Screen.StatsAnnualMoodDetail.route) { backStackEntry ->
                     val statsEntry = remember(backStackEntry) { navController.getBackStackEntry(Screen.Stats.route) }
@@ -453,7 +454,7 @@ fun AppNavigation(
                         StatsAnnualMoodDetailRoute(viewModel = viewModel, onBack = { navController.popBackStack() })
                     }
                 }
-                
+
                 composable(Screen.StatsAnnualSleepDetail.route) { backStackEntry ->
                     val statsEntry = remember(backStackEntry) { navController.getBackStackEntry(Screen.Stats.route) }
                     val viewModel: StatisticsViewModel = hiltViewModel(statsEntry)
@@ -461,7 +462,7 @@ fun AppNavigation(
                         StatsAnnualSleepDetailRoute(viewModel = viewModel, onBack = { navController.popBackStack() })
                     }
                 }
-                
+
                 composable(Screen.StatsAnnualActivityDetail.route) { backStackEntry ->
                     val statsEntry = remember(backStackEntry) { navController.getBackStackEntry(Screen.Stats.route) }
                     val viewModel: StatisticsViewModel = hiltViewModel(statsEntry)
@@ -469,7 +470,7 @@ fun AppNavigation(
                         StatsAnnualActivityDetailRoute(viewModel = viewModel, onBack = { navController.popBackStack() })
                     }
                 }
-                
+
                 composable(Screen.StatsAnnualBeansDetail.route) { backStackEntry ->
                     val statsEntry = remember(backStackEntry) { navController.getBackStackEntry(Screen.Stats.route) }
                     val viewModel: StatisticsViewModel = hiltViewModel(statsEntry)
@@ -477,7 +478,7 @@ fun AppNavigation(
                         StatsAnnualBeansDetailRoute(viewModel = viewModel, onBack = { navController.popBackStack() })
                     }
                 }
-                
+
                 composable(Screen.StatsAnnualMusicDetail.route) { backStackEntry ->
                     val statsEntry = remember(backStackEntry) { navController.getBackStackEntry(Screen.Stats.route) }
                     val viewModel: StatisticsViewModel = hiltViewModel(statsEntry)
@@ -513,7 +514,7 @@ fun AppNavigation(
                         StoreRoute(
                             viewModel = storeViewModel,
                             onNavigateToDetail = { navController.navigate(Screen.ThemeDetail.route) },
-                            onNavigateBack = { 
+                            onNavigateBack = {
                                 navController.navigate(Screen.Calendar.route) {
                                     popUpTo(0) { inclusive = true }
                                 }
@@ -730,7 +731,7 @@ fun AppNavigation(
                         // We are no longer intercepting full-screen clicks.
                         // Advance will happen via real UI interaction or navigation.
                     },
-                    onSkipTutorial = { 
+                    onSkipTutorial = {
                         tutorialViewModel.complete()
                         navController.popBackStack(Screen.Calendar.route, false)
                     },
@@ -755,8 +756,8 @@ private fun ScreenWrapper(
 ) {
     val isMainRoute = route in mainAppRoutes
     // Screens that handle their own status bar padding for a more custom layout
-    val isEdgeToEdge = route == Screen.Store.route || 
-                       route == Screen.ThemeDetail.route || 
+    val isEdgeToEdge = route == Screen.Store.route ||
+                       route == Screen.ThemeDetail.route ||
                        route.startsWith("daily_log_screen")
 
     Box(

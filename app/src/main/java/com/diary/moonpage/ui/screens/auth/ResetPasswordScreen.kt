@@ -39,6 +39,7 @@ import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.components.inputs.MoonTextField
 import com.diary.moonpage.ui.components.navigation.TopCircularIcon
 import com.diary.moonpage.core.theme.*
+import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
@@ -164,7 +165,7 @@ fun ResetPasswordScreen(
                         value = uiState.passwordInput,
                         onValueChange = onPasswordChange,
                         label = "New Password",
-                        placeholderText = "At least 8 characters",
+                        placeholderText = stringResource(R.string.placeholder_at_least_8),
                         isPassword = true,
                         errorText = uiState.passwordError,
                         keyboardOptions = KeyboardOptions(
@@ -182,7 +183,7 @@ fun ResetPasswordScreen(
                         value = uiState.confirmPasswordInput,
                         onValueChange = onConfirmPasswordChange,
                         label = "Confirm Password",
-                        placeholderText = "Repeat new password",
+                        placeholderText = stringResource(R.string.placeholder_repeat_password),
                         isPassword = true,
                         errorText = uiState.confirmPasswordError,
                         keyboardOptions = KeyboardOptions(
@@ -200,7 +201,7 @@ fun ResetPasswordScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     MoonPrimaryButton(
-                        text = "Reset Password",
+                        text = stringResource(R.string.reset_password_btn),
                         enabled = !uiState.isLoading,
                         onClick = {
                             keyboardController?.hide()
@@ -213,8 +214,8 @@ fun ResetPasswordScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             AuthFooter(
-                questionText = "Go back to ",
-                actionText = "Sign In",
+                questionText = stringResource(R.string.go_back_to),
+                actionText = stringResource(R.string.sign_in),
                 onActionClick = onNavigateToLogin
             )
 

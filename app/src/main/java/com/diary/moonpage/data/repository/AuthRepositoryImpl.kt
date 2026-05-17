@@ -98,20 +98,6 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun deleteAccount(): Result<Unit> {
-        return try {
-            val response = api.deleteAccount()
-            if (response.isSuccessful) {
-                Result.success(Unit)
-            } else {
-                val errorMsg = parseErrorResponse(response.errorBody()?.string())
-                Result.failure(Exception(errorMsg))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
     private fun parseErrorResponse(errorBody: String?): String {
         if (errorBody.isNullOrBlank()) return "An unknown error occurred"
         return try {

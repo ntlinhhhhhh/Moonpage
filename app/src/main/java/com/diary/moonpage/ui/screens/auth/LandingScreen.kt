@@ -26,17 +26,20 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.diary.moonpage.core.theme.MoonPageTheme
 import com.diary.moonpage.ui.components.buttons.MoonPrimaryButton
 import com.diary.moonpage.ui.components.layout.MoonPageIndicator
+import com.diary.moonpage.R
+import com.diary.moonpage.ui.screens.auth.AuthViewModel
+import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
 fun LandingScreen(
     onNavigateToLogin: () -> Unit,
-    onNavigateToRegister: () -> Unit
+    onNavigateToRegister: () -> Unit,
+    onLanguageChange: (String) -> Unit
 ) {
     val pagerState = rememberPagerState(pageCount = { 4 })
     val scope = rememberCoroutineScope()
@@ -62,7 +65,7 @@ fun LandingScreen(
         Spacer(modifier = Modifier.height(24.dp))
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "Moonpage",
+                text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.displayLarge.copy(
                     shadow = Shadow(color = Color(0x33000000), offset = Offset(0f, 4f), blurRadius = 8f)
                 ),
@@ -130,7 +133,7 @@ fun LandingScreen(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "English",
+                        text = if (androidx.appcompat.app.AppCompatDelegate.getApplicationLocales().toLanguageTags().startsWith("vi")) "Tiếng Việt" else "English",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
                     )
@@ -147,11 +150,17 @@ fun LandingScreen(
                     ) {
                         DropdownMenuItem(
                             text = { Text("English") },
-                            onClick = { showLanguageMenu = false }
+                            onClick = { 
+                                onLanguageChange("en")
+                                showLanguageMenu = false 
+                            }
                         )
                         DropdownMenuItem(
                             text = { Text("Tiếng Việt") },
-                            onClick = { showLanguageMenu = false }
+                            onClick = { 
+                                onLanguageChange("vi")
+                                showLanguageMenu = false 
+                            }
                         )
                     }
                 }
@@ -176,7 +185,7 @@ fun LandingScreen(
 
             // Wide Next Button
             MoonPrimaryButton(
-                text = if (pagerState.currentPage == 3) "Get started" else "Next",
+                text = if (pagerState.currentPage == 3) stringResource(R.string.get_started) else stringResource(R.string.continue_btn),
                 onClick = {
                     if (pagerState.currentPage < 3) {
                         scope.launch {
@@ -199,12 +208,12 @@ fun LandingScreen(
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Already have an account? ",
+                    text = stringResource(R.string.already_have_account),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 )
                 Text(
-                    text = "Login",
+                    text = stringResource(R.string.login),
                     style = MaterialTheme.typography.bodySmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -224,7 +233,8 @@ fun LandingScreenPreview() {
     MoonPageTheme {
         LandingScreen(
             onNavigateToLogin = {},
-            onNavigateToRegister = {}
+            onNavigateToRegister = {},
+            onLanguageChange = {}
         )
     }
 }
@@ -238,8 +248,8 @@ fun LandingScreenPreviewDarkMode() {
     MoonPageTheme {
         LandingScreen(
             onNavigateToLogin = {},
-            onNavigateToRegister = {}
+            onNavigateToRegister = {},
+            onLanguageChange = {}
         )
     }
 }
-

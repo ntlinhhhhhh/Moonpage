@@ -39,6 +39,7 @@ import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.components.inputs.MoonTextField
 import com.diary.moonpage.ui.components.navigation.TopCircularIcon
 import com.diary.moonpage.core.theme.*
+import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -176,7 +177,7 @@ fun ForgotPasswordScreen(
                         value = uiState.emailInput,
                         onValueChange = onEmailChange,
                         label = "Email Address",
-                        placeholderText = "name@example.com",
+                        placeholderText = stringResource(R.string.placeholder_email_example),
                         iconVector = Icons.Outlined.Email,
                         errorText = uiState.emailError,
                         keyboardOptions = KeyboardOptions(
@@ -194,7 +195,7 @@ fun ForgotPasswordScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     MoonPrimaryButton(
-                        text = "Send OTP",
+                        text = stringResource(R.string.send_otp),
                         enabled = !uiState.isLoading,
                         onClick = {
                             keyboardController?.hide()
@@ -207,8 +208,8 @@ fun ForgotPasswordScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             AuthFooter(
-                questionText = "Suddenly remembered? ",
-                actionText = "Sign In",
+                questionText = stringResource(R.string.suddenly_remembered),
+                actionText = stringResource(R.string.sign_in),
                 onActionClick = onNavigateBack
             )
 

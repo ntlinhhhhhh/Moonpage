@@ -234,4 +234,135 @@
     
     <string name="noti_memory_title">Cỗ máy thời gian khởi động 🕰️</string>
     <string name="noti_memory_body">Đúng ngày này 1 năm trước, bạn đã lưu lại một khoảnh khắc ở đây. Có muốn quay về quá khứ một chút không?</string>
+
+    <!-- Auth Screens -->
+    <string name="sign_in">Đăng nhập</string>
+    <string name="sign_up">Đăng ký</string>
+    <string name="login">Đăng nhập</string>
+    <string name="login_with_google">Đăng nhập bằng Google</string>
+    <string name="sign_up_with_google">Đăng ký bằng Google</string>
+    <string name="get_started">Bắt đầu</string>
+    <string name="continue_btn">Tiếp tục</string>
+    <string name="skip">Bỏ qua</string>
+    <string name="or_continue_with">HOẶC TIẾP TỤC VỚI</string>
+    <string name="or_sign_up_with">HOẶC ĐĂNG KÝ VỚI</string>
+    <string name="dont_have_account">Chưa có tài khoản? </string>
+    <string name="already_have_account">Đã có tài khoản? </string>
+    <string name="sign_up_free">Đăng ký miễn phí</string>
+    <string name="login_here">Đăng nhập tại đây</string>
+    <string name="forgot_password_label">Quên mật khẩu?</string>
+    <string name="send_otp">Gửi OTP</string>
+    <string name="reset_password_btn">Đặt lại mật khẩu</string>
+    <string name="verify_and_continue">Xác nhận &amp; Tiếp tục</string>
+    <string name="didnt_receive_code">Chưa nhận được mã? </string>
+    <string name="resend_now">Gửi lại ngay</string>
+    <string name="go_back_to">Quay lại </string>
+    <string name="suddenly_remembered">Nhớ ra rồi? </string>
+
+    <!-- Onboarding -->
+    <string name="no_pressure">Không vội, bạn có thể chỉnh sửa sau.</string>
+    <string name="top_picks_for_you">Lựa chọn hàng đầu cho bạn! 🎉</string>
+    <string name="edit_list_hint">Chỉnh sửa danh sách để giữ những gì bạn muốn!</string>
+    <string name="what_am_i_choosing">Tôi đang chọn gì vậy?</string>
+    <string name="happy_birthday">Chúc mừng sinh nhật! 🎂🎉</string>
+    <string name="when_born">Bạn chào đời khi nào?</string>
+    <string name="what_gender">Giới tính của bạn là gì?</string>
+    <string name="gender_personalization">Chúng tôi dùng điều này để cá nhân hóa.</string>
+    <string name="daily_reflection_title">Nhật ký hàng ngày</string>
+    <string name="reminder_question">Mấy giờ bạn muốn chúng tôi nhắc nhở\nbạn ghi lại ngày hôm nay?</string>
+    <string name="finish_onboarding">Hoàn thành cài đặt</string>
+
+    <!-- Placeholders -->
+    <string name="placeholder_email">Nhập email của bạn</string>
+    <string name="placeholder_password">Nhập mật khẩu của bạn</string>
+    <string name="placeholder_username">Nhập tên người dùng</string>
+    <string name="placeholder_confirm_password">Xác nhận mật khẩu</string>
+    <string name="placeholder_at_least_8">Ít nhất 8 ký tự</string>
+    <string name="placeholder_repeat_password">Nhập lại mật khẩu mới</string>
+    <string name="placeholder_email_example">ten@email.com</string>
+
+    <!-- Daily Log Dialogs -->
+    <string name="changes_not_saved">Thay đổi chưa được lưu.</string>
+    <string name="discard_exit_confirmation">Bạn có muốn hủy thay đổi và thoát?</string>
+    <string name="data_exists">Dữ liệu đã tồn tại</string>
+    <string name="overwrite_record_msg">Đã có bản ghi cho ngày này. Bạn có muốn ghi đè không?</string>
+    <string name="which_day_record">Bản ghi này dành cho ngày nào?</string>
+    <string name="overwrite">Ghi đè</string>
+    <string name="location_permission_title">Quyền truy cập vị trí</string>
+    <string name="location_permission_desc">MoonPage cần quyền truy cập vị trí để tự động cập nhật thời tiết và cung cấp trải nghiệm cá nhân hóa.</string>
+
+    <!-- Spotify -->
+    <string name="connect_to_spotify">Kết nối Spotify</string>
+    <string name="spotify_permission_desc">MoonPage muốn truy cập tài khoản Spotify để tìm kiếm và thêm nhạc vào nhật ký.</string>
+
+    <!-- Calendar/Log extra -->
+    <string name="when_did_i_record">Khi nào tôi đã ghi…</string>
+    <string name="feeling_mood">Cảm giác %1$s</string>
+
+    <!-- Stats -->
+    <string name="overview">Tổng quan</string>
+    <string name="mood_overview">Tổng quan cảm xúc</string>
+    <string name="health_data">Dữ liệu sức khỏe</string>
+    <string name="steps">Bước chân</string>
+    <string name="calories">Calo</string>
+    <string name="distance">Khoảng cách</string>
+    <string name="sleep_label">Giấc ngủ</string>
+    <string name="no_data">Không có dữ liệu</string>
+    <string name="days_label">Ngày</string>
+    <string name="entries_label">mục</string>
+    <string name="all_moods">Tất cả cảm xúc</string>
+    <string name="total">Tổng</string>
+    <string name="most_common">Phổ biến nhất</string>
+    <string name="avg_mood">Cảm xúc TB</string>
+    <string name="year_label">Năm</string>
+
+    <!-- Store -->
+    <string name="free">Miễn phí</string>
+    <string name="beans_label">đậu</string>
+    <string name="owned">Đã sở hữu</string>
+    <string name="applied">Đang dùng</string>
+    <string name="my_themes">Giao diện của tôi</string>
+    <string name="premium_themes">Giao diện Premium</string>
+
+    <!-- Profile / Premium -->
+    <string name="premium_upgrade_title">Nâng cấp Premium</string>
+    <string name="premium_subtitle">Mở khóa tất cả giao diện &amp; tính năng</string>
+    <string name="premium_cta">Dùng thử Premium</string>
+    <string name="moonpage_app_url">moonpage.app</string>
+
+    <!-- Moment -->
+    <string name="add_photo">Thêm ảnh</string>
+    <string name="no_moments_yet">Chưa có khoảnh khắc nào</string>
+    <string name="capture_first_moment">Chụp khoảnh khắc đầu tiên!</string>
+
+    <!-- Notifications -->
+    <string name="no_notifications">Chưa có thông báo nào</string>
+    <string name="all_caught_up">Bạn đã xem hết rồi!</string>
+
+    <!-- Tutorial -->
+    <string name="tutorial_skip">Bỏ qua</string>
+    <string name="tutorial_continue">Tiếp tục</string>
+    <string name="tutorial_start_log">Bắt đầu ghi lại ngày hôm nay!</string>
+    <string name="tutorial_select_mood">Hôm nay bạn cảm thấy thế nào? Chọn cảm xúc nhé.</string>
+    <string name="tutorial_activity_category">Chọn danh mục hoạt động để xem danh sách.</string>
+    <string name="tutorial_activity_selection">Hôm nay bạn đã làm gì? Chọn một hoạt động.</string>
+    <string name="tutorial_sleep_selection">Bạn đã ngủ bao lâu? Chọn số giờ ngủ của bạn.</string>
+    <string name="tutorial_done_button">Khi hoàn thành, nhấn vào đây để lưu nhật ký.</string>
+    <string name="tutorial_streak">Tuyệt vời! Bạn đã hoàn thành lần ghi đầu tiên.</string>
+    <string name="tutorial_stats_tab">Xem thống kê chi tiết về cảm xúc và thói quen.</string>
+    <string name="tutorial_yearly_report">Khám phá xu hướng cảm xúc hàng tháng. Nhấn vào đây để xem chi tiết.</string>
+    <string name="tutorial_mood_detail_chart">Đây là biểu đồ phân tích cảm xúc chi tiết theo tháng.</string>
+    <string name="tutorial_mood_detail_back">Nhấn vào đây để quay lại trang thống kê.</string>
+    <string name="tutorial_moment_tab">Xem lại tất cả ảnh bạn đã chụp.</string>
+    <string name="tutorial_camera_capture">Chụp một khoảnh khắc mới hoặc tải ảnh lên.</string>
+    <string name="tutorial_history_button">Nhấn vào đây để xem ảnh và lịch sử khoảnh khắc.</string>
+    <string name="tutorial_history_feed">Đây là nguồn cấp lịch sử khoảnh khắc. Vuốt hoặc nhấn để xem ảnh.</string>
+    <string name="tutorial_store_tab">Khám phá các giao diện và biểu tượng đẹp mắt tại đây.</string>
+    <string name="tutorial_store_themes">Khám phá các giao diện nhật ký tuyệt đẹp. Nhấn vào giao diện để xem chi tiết.</string>
+    <string name="tutorial_theme_apply">Xem trước và áp dụng giao diện này cho nhật ký.</string>
+    <string name="tutorial_theme_back">Nhấn vào đây để quay lại cửa hàng.</string>
+    <string name="tutorial_profile_tab">Quản lý tài khoản và cài đặt của bạn.</string>
+    <string name="tutorial_profile_settings">Quản lý thông tin tài khoản. Nhấn vào đây để mở cài đặt tài khoản.</string>
+    <string name="tutorial_account_info">Đây là nơi bạn có thể thay đổi ảnh đại diện và tên người dùng.</string>
+    <string name="tutorial_account_back">Nhấn vào đây để hoàn thành hướng dẫn.</string>
 </resources>

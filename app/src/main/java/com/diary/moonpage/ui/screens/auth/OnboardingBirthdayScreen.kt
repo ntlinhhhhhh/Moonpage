@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.res.stringResource
+import com.diary.moonpage.R
 import kotlinx.coroutines.launch
 import java.time.YearMonth
 
@@ -149,14 +151,14 @@ fun OnboardingBirthdayScreen(
                     .padding(horizontal = 24.dp)
             ) {
                 Text(
-                    text = "Happy Birthday! 🎂",
+                    text = stringResource(R.string.happy_birthday),
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.ExtraBold,
                     color = colorScheme.onBackground
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "When did you enter this world?",
+                    text = stringResource(R.string.when_born),
                     style = MaterialTheme.typography.bodyLarge,
                     color = colorScheme.onBackground.copy(alpha = 0.6f)
                 )
@@ -235,7 +237,7 @@ fun OnboardingBirthdayScreen(
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
             ) {
                 Text(
-                    text = "Continue",
+                    text = stringResource(R.string.continue_btn),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
