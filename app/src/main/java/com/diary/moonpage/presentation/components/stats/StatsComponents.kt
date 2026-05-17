@@ -641,15 +641,7 @@ fun SleepAnalysisChart(
             val wakeUpTime = if (latestSleep != null) {
                 try {
                     val startTime = latestSleep.startTime?.ifBlank { null } ?: "12:00 AM"
-                    val date = try {
-                        java.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH).parse(startTime)
-                    } catch (e: Exception) {
-                        try {
-                            java.text.SimpleDateFormat("HH:mm", Locale.ENGLISH).parse(startTime)
-                        } catch(e: Exception) {
-                            java.text.SimpleDateFormat("HH:mm:ss", Locale.ENGLISH).parse(startTime)
-                        }
-                    }
+                    val date = parseFlexibleTime(startTime)
                     if (date != null) {
                         val cal = Calendar.getInstance().apply { time = date }
                         cal.add(Calendar.MINUTE, (latestSleep.duration * 60).toInt())
@@ -826,22 +818,23 @@ private fun SleepLegendItem(color: Color, label: String, value: String) {
     }
 }
 
+private fun parseFlexibleTime(timeStr: String?): java.util.Date? {
+    if (timeStr == null || timeStr.isBlank()) return null
+    val formats = listOf("hh:mm a", "HH:mm", "HH:mm:ss", "h:mm a")
+    for (format in formats) {
+        try {
+            return java.text.SimpleDateFormat(format, Locale.ENGLISH).parse(timeStr)
+        } catch (e: Exception) {
+            // Ignore and try next
+        }
+    }
+    return null
+}
+
 private fun parseTimeFromNoon(timeStr: String?): Float {
     if (timeStr == null || timeStr.isBlank()) return 10f // Default to 10 PM (10 hours after Noon)
     try {
-        val date = try {
-            java.text.SimpleDateFormat("hh:mm a", Locale.ENGLISH).parse(timeStr)
-        } catch (e: Exception) {
-            try {
-                java.text.SimpleDateFormat("HH:mm", Locale.ENGLISH).parse(timeStr)
-            } catch (e: Exception) {
-                try {
-                    java.text.SimpleDateFormat("HH:mm:ss", Locale.ENGLISH).parse(timeStr)
-                } catch (e: Exception) {
-                    null
-                }
-            }
-        } ?: return 10f
+        val date = parseFlexibleTime(timeStr) ?: return 10f
         
         val cal = Calendar.getInstance().apply { time = date }
         val hours = cal.get(Calendar.HOUR_OF_DAY).toFloat()

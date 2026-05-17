@@ -27,7 +27,7 @@ data class StatisticsResponse(
 
 data class SleepAnalysisDto(
     @SerializedName("date") val date: String,
-    @SerializedName("startTime") val startTime: String? = null,
+    @SerializedName(value = "startTime", alternate = ["sleepStartTime", "SleepStartTime", "start_time"]) val startTime: String? = null,
     @SerializedName("duration") val duration: Double,
     @SerializedName("moodId") val moodId: Int
 )
