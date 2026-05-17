@@ -126,6 +126,7 @@ fun NotificationItem(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
             .clickable { onClick() },
         shape = RoundedCornerShape(24.dp),
         color = if (notification.isRead) 

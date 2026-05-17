@@ -1,6 +1,13 @@
 package com.diary.moonpage.domain.usecase.notification
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import com.diary.moonpage.MainActivity
 import com.diary.moonpage.R
 import com.diary.moonpage.data.remote.dto.notification.CreateNotificationRequest
 import com.diary.moonpage.data.remote.dto.notification.NotificationType
@@ -8,20 +15,24 @@ import com.diary.moonpage.domain.repository.*
 import com.diary.moonpage.core.util.UserManager
 import com.diary.moonpage.core.util.SettingsPreferencesManager
 import com.diary.moonpage.core.util.LocaleUtils
+import com.diary.moonpage.core.util.ThemePreferencesManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import java.time.LocalDate
-import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
+import kotlin.random.Random
 
 class CheckAndTriggerNotificationsUseCase @Inject constructor(
     private val notificationRepository: NotificationRepository,
     private val statsRepository: StatisticsRepository,
     private val dailyLogRepository: DailyLogRepository,
+    private val weatherRepository: WeatherRepository,
+    private val locationTracker: com.diary.moonpage.core.util.LocationTracker,
     private val userManager: UserManager,
     private val settingsPreferencesManager: SettingsPreferencesManager,
+    private val themePreferencesManager: ThemePreferencesManager,
     @ApplicationContext private val context: Context
 ) {
     suspend operator fun invoke() {
@@ -51,7 +62,7 @@ class CheckAndTriggerNotificationsUseCase @Inject constructor(
         // 5. Monthly Report
         checkMonthlyReport(userId, localizedContext)
 
-        // 6. Weather Check (Morning)
+        // 6. Weather Check
         checkWeather(userId, localizedContext)
     }
 
@@ -147,24 +158,76 @@ class CheckAndTriggerNotificationsUseCase @Inject constructor(
     }
 
     private suspend fun checkWeather(userId: String, context: Context) {
-        val now = LocalTime.now()
-        if (now.hour in 7..8) {
-            // Simulate weather based on month (Winter/Rainy)
-            val month = LocalDate.now().monthValue
-            val (titleRes, bodyRes) = if (month in 5..10) {
-                R.string.noti_weather_rainy_title to R.string.noti_weather_rainy_body
-            } else {
-                R.string.noti_weather_sunny_title to R.string.noti_weather_sunny_body
+        try {
+            // Deduplication: Only notify once per day for weather
+            val lastWeatherNotiDate = themePreferencesManager.lastWeatherNotificationDate.first()
+            val todayStr = LocalDate.now().toString()
+            if (lastWeatherNotiDate == todayStr) {
+                android.util.Log.d("TriggerNotify", "Weather notification already sent today")
+                return
             }
 
-            notificationRepository.createNotification(
-                CreateNotificationRequest(
-                    userId = userId,
-                    title = context.getString(titleRes),
-                    message = context.getString(bodyRes),
-                    type = NotificationType.WEATHER
-                )
-            )
+            val location = locationTracker.getCurrentLocation()
+            if (location != null) {
+                val today = LocalDate.now()
+                weatherRepository.getWeatherConditions(location.latitude, location.longitude, today).onSuccess { result ->
+                    val isRainy = result.conditions.any { it.contains("Rain", ignoreCase = true) }
+                    
+                    if (isRainy) {
+                        val title = context.getString(R.string.noti_weather_rainy_title)
+                        val message = context.getString(R.string.noti_weather_rainy_body)
+                        
+                        notificationRepository.createNotification(
+                            CreateNotificationRequest(
+                                userId = userId,
+                                title = title,
+                                message = message,
+                                type = NotificationType.WEATHER
+                            )
+                        )
+                        showSystemNotification(title, message, NotificationType.WEATHER)
+                        themePreferencesManager.setLastWeatherNotificationDate(todayStr)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("TriggerNotify", "Weather check error", e)
         }
+    }
+
+    private fun showSystemNotification(title: String, message: String, type: String) {
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val channelId = "moonpage_notification_channel"
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "Moonpage Notifications",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Weather and daily reminders"
+            }
+            manager.createNotificationChannel(channel)
+        }
+
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("notification_type", type)
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context, Random.nextInt(), intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(R.drawable.logo)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        manager.notify(Random.nextInt(), notification)
     }
 }
