@@ -38,7 +38,6 @@ import com.diary.moonpage.ui.screens.stats.StatsMusicDetailRoute
 import com.diary.moonpage.ui.screens.stats.StatsAnnualMoodDetailRoute
 import com.diary.moonpage.ui.screens.stats.StatsAnnualSleepDetailRoute
 import com.diary.moonpage.ui.screens.stats.StatsAnnualActivityDetailRoute
-import com.diary.moonpage.ui.screens.stats.StatsAnnualBeansDetailRoute
 import com.diary.moonpage.ui.screens.stats.StatsAnnualMusicDetailRoute
 import com.diary.moonpage.ui.screens.store.StoreRoute
 import com.diary.moonpage.ui.screens.store.StoreViewModel
@@ -46,6 +45,7 @@ import com.diary.moonpage.ui.screens.store.ThemeDetailRoute
 import com.diary.moonpage.ui.screens.security.CreatePasscodeRoute
 import com.diary.moonpage.ui.screens.security.LockRoute
 import com.diary.moonpage.ui.MainViewModel
+import com.diary.moonpage.ui.screens.stats.StatsAnnualBeansDetailRoute
 import com.diary.moonpage.ui.screens.tutorial.LocalTutorialController
 import com.diary.moonpage.ui.screens.tutorial.TutorialController
 import com.diary.moonpage.ui.screens.tutorial.TutorialOverlay
@@ -786,4 +786,3 @@ private fun ScreenWrapper(
         content()
     }
 }
-

@@ -9,7 +9,6 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -23,6 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.core.theme.MoonPageTheme
+import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.navigation.AppNavigation
 
 /**
@@ -91,9 +91,9 @@ fun MoonPageAppContent(
                         AppNavigation()
                     }
                     
-                    SnackbarHost(
+                    MoonSnackbarHost(
                         hostState = snackbarHostState,
-                        modifier = Modifier.align(Alignment.BottomCenter)
+                        modifier = Modifier.align(Alignment.TopCenter)
                     )
                 }
             }

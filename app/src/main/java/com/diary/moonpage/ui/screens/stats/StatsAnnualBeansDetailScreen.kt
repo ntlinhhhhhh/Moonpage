@@ -6,18 +6,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Download
-import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -25,56 +24,26 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.ui.screens.stats.components.*
 
+// Imports for graphicsLayer capture & saving
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
+import com.diary.moonpage.core.util.ImageUtils
+import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
+import kotlinx.coroutines.launch
+
 @Composable
 fun StatsAnnualBeansDetailRoute(
     viewModel: StatisticsViewModel,
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-    val viewContext = LocalView.current
-    
-    val flatGridList = uiState.stats?.yearlyMoodGrid ?: uiState.stats?.moodFlow ?: emptyList()
-
-    val captureContent: @Composable () -> Unit = {
-        com.diary.moonpage.core.theme.MoonPageTheme {
-            YearlyRecapCard(
-                year = uiState.selectedYear,
-                totalLogs = uiState.stats?.totalLogs ?: 0,
-                totalPhotos = uiState.stats?.totalPhotos ?: 0,
-                yearlyMoodGrid = flatGridList,
-                themeType = uiState.themeType,
-                bestActivities = uiState.stats?.bestActivities ?: emptyList(),
-                averageDistance = uiState.stats?.averageDistance ?: 0.0,
-                averageSteps = uiState.stats?.averageSteps?.toInt() ?: 0,
-                longestStreak = uiState.stats?.longestStreak ?: 0
-            )
-        }
-    }
     
     StatsAnnualBeansDetailScreen(
         uiState = uiState,
-        onBack = onBack,
-        onDownloadRecap = {
-            viewModel.clearCaptureError()
-            com.diary.moonpage.core.util.ComposeCaptureUtils.captureComposable(
-                view = viewContext,
-                content = captureContent,
-                width = 1080,
-                onBitmapCaptured = { bitmap -> viewModel.downloadRecapCard(context, bitmap) },
-                onFailure = {}
-            )
-        },
-        onShareRecap = {
-            viewModel.clearCaptureError()
-            com.diary.moonpage.core.util.ComposeCaptureUtils.captureComposable(
-                view = viewContext,
-                content = captureContent,
-                width = 1080,
-                onBitmapCaptured = { bitmap -> viewModel.shareRecapCard(context, bitmap) },
-                onFailure = {}
-            )
-        }
+        onBack = onBack
     )
 }
 
@@ -82,14 +51,17 @@ fun StatsAnnualBeansDetailRoute(
 @Composable
 fun StatsAnnualBeansDetailScreen(
     uiState: StatisticsUiState,
-    onBack: () -> Unit,
-    onDownloadRecap: () -> Unit,
-    onShareRecap: () -> Unit
+    onBack: () -> Unit
 ) {
     val stats = uiState.stats
     val flatGridList = stats?.yearlyMoodGrid ?: stats?.moodFlow ?: emptyList()
     
     var showRecapDetail by remember { mutableStateOf(false) }
+
+    val graphicsLayer = rememberGraphicsLayer()
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
         topBar = {
@@ -120,14 +92,62 @@ fun StatsAnnualBeansDetailScreen(
                 },
                 actions = {
                     if (showRecapDetail) {
-                        IconButton(onClick = onDownloadRecap) {
-                            Icon(androidx.compose.material.icons.Icons.Rounded.Download, contentDescription = "Download Recap")
+                        IconButton(
+                            onClick = {
+                                scope.launch {
+                                    try {
+                                        val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
+                                        ImageUtils.saveBitmapToGallery(context, bitmap)
+                                        snackbarHostState.showSnackbar("Saved to gallery!")
+                                    } catch (e: Exception) {
+                                        snackbarHostState.showSnackbar("Save failed: ${e.message}")
+                                    }
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Rounded.Download, "Download", tint = Color(0xFF757575))
                         }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
+        bottomBar = {
+            if (showRecapDetail) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.Transparent)
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                try {
+                                    val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
+                                    ImageUtils.shareImage(context, bitmap, "My Yearly Recap")
+                                } catch (e: Exception) {
+                                    snackbarHostState.showSnackbar("Share failed: ${e.message}")
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(64.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(4.dp)
+                    ) {
+                        Text("Share", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    }
+                }
+            }
+        },
+        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         if (!showRecapDetail) {
@@ -137,7 +157,7 @@ fun StatsAnnualBeansDetailScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(padding)
                     .padding(16.dp),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.TopCenter
             ) {
                 YearInMoonpageMiniatureCard(
                     year = uiState.selectedYear,
@@ -152,34 +172,40 @@ fun StatsAnnualBeansDetailScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(padding)
                     .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                YearlyRecapCard(
-                    year = uiState.selectedYear,
-                    totalLogs = stats?.totalLogs ?: 0,
-                    totalPhotos = stats?.totalPhotos ?: 0,
-                    yearlyMoodGrid = flatGridList,
-                    themeType = uiState.themeType,
-                    bestActivities = stats?.bestActivities ?: emptyList(),
-                    averageDistance = stats?.averageDistance ?: 0.0,
-                    averageSteps = stats?.averageSteps?.toInt() ?: 0,
-                    longestStreak = stats?.longestStreak ?: 0,
-                    isLarger = true,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
+                Spacer(modifier = Modifier.height(24.dp))
                 
-                Button(
-                    onClick = onShareRecap,
+                // Capture Area for the YearlyRecapCard
+                Box(
                     modifier = Modifier
+                        .padding(horizontal = 16.dp)
                         .fillMaxWidth()
-                        .height(48.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        .drawWithContent {
+                            graphicsLayer.record {
+                                this@drawWithContent.drawContent()
+                            }
+                            drawLayer(graphicsLayer)
+                        }
                 ) {
-                    Icon(androidx.compose.material.icons.Icons.Rounded.Share, contentDescription = "Share", tint = Color.White)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Share Recap", fontWeight = FontWeight.Bold, color = Color.White)
+                    YearlyRecapCard(
+                        year = uiState.selectedYear,
+                        totalLogs = stats?.totalLogs ?: 0,
+                        totalPhotos = stats?.totalPhotos ?: 0,
+                        yearlyMoodGrid = flatGridList,
+                        themeType = uiState.themeType,
+                        bestActivities = stats?.bestActivities ?: emptyList(),
+                        averageDistance = stats?.averageDistance ?: 0.0,
+                        averageSteps = stats?.averageSteps?.toInt() ?: 0,
+                        longestStreak = stats?.longestStreak ?: 0,
+                        isLarger = true,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
                 }
+
+                Spacer(modifier = Modifier.height(48.dp))
             }
         }
     }

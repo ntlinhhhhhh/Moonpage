@@ -1,6 +1,5 @@
 package com.diary.moonpage.ui.screens.auth
 
-import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -28,7 +27,6 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
@@ -45,11 +43,10 @@ import com.diary.moonpage.ui.components.inputs.MoonTextField
 import com.diary.moonpage.ui.components.layout.MoonDivider
 import com.diary.moonpage.core.theme.*
 import androidx.compose.ui.res.stringResource
+import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import java.security.MessageDigest
 import java.util.UUID
@@ -124,7 +121,6 @@ fun RegisterScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
         containerColor = screenBgColor,
         contentWindowInsets = WindowInsets.systemBars
     ) { paddingValues ->
@@ -333,25 +329,11 @@ fun RegisterScreen(
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
                 }
             }
-        }
-    }
-}
 
-@Preview(showBackground = true)
-@Composable
-fun RegisterScreenPreview() {
-    MoonPageTheme {
-        RegisterScreen(
-            uiState = AuthUiState(),
-            uiEvent = MutableSharedFlow<AuthUiEvent>().asSharedFlow(),
-            onUsernameChange = {},
-            onEmailChange = {},
-            onPasswordChange = {},
-            onConfirmPasswordChange = {},
-            onSignUpClick = {},
-            onGoogleLoginClick = {},
-            onNavigateBack = {},
-            onNavigateToLogin = {}
-        )
+            MoonSnackbarHost(
+                hostState = snackBarHostState,
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
+        }
     }
 }
