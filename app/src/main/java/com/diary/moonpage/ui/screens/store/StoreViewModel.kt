@@ -2,6 +2,7 @@ package com.diary.moonpage.ui.screens.store
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.diary.moonpage.R
 import com.diary.moonpage.core.util.ThemeConstants
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.domain.model.ThemeType
@@ -168,7 +169,7 @@ class StoreViewModel @Inject constructor(
                 _uiState.update { it.copy(
                     isLoading = false, 
                     showRecoverySuccessDialog = true,
-                    recoveryMessage = "Streak recovered successfully!"
+                    recoveryMessageRes = R.string.store_streak_recovered_success
                 ) }
                 _uiEffect.emit(StoreUiEffect.RecoverSuccess)
             }.onFailure { error ->

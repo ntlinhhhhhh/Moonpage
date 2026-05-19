@@ -18,10 +18,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.diary.moonpage.R
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import kotlinx.coroutines.launch
 
@@ -36,6 +38,11 @@ fun InviteFriendScreen(
     val clipboardManager = LocalClipboardManager.current
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
+    val backText = stringResource(R.string.back)
+    val copiedText = stringResource(R.string.invite_referral_copied)
+    val shareSubject = stringResource(R.string.invite_share_subject)
+    val shareText = stringResource(R.string.invite_share_text, referralCode)
+    val chooserTitle = stringResource(R.string.invite_share_chooser_title)
 
     Scaffold(
         containerColor = colorScheme.background,
@@ -43,14 +50,14 @@ fun InviteFriendScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        "Invite a Friend",
+                        stringResource(R.string.invite_a_friend),
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleLarge
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back")
+                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = backText)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -78,7 +85,7 @@ fun InviteFriendScreen(
                 Spacer(modifier = Modifier.height(32.dp))
                 
                 Text(
-                    "Share the Joy of Journaling",
+                    stringResource(R.string.invite_share_joy_title),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.ExtraBold,
                     color = colorScheme.onBackground
@@ -87,7 +94,7 @@ fun InviteFriendScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
-                    "Invite your friends to MoonPage and help them start their mindfulness journey. Share your unique referral code below!",
+                    stringResource(R.string.invite_share_joy_desc),
                     style = MaterialTheme.typography.bodyLarge,
                     color = colorScheme.onSurfaceVariant,
                     lineHeight = 24.sp,
@@ -97,7 +104,7 @@ fun InviteFriendScreen(
                 Spacer(modifier = Modifier.height(48.dp))
                 
                 Text(
-                    "YOUR REFERRAL CODE",
+                    stringResource(R.string.invite_referral_code_label),
                     style = MaterialTheme.typography.labelLarge,
                     color = colorScheme.primary,
                     fontWeight = FontWeight.Bold
@@ -125,10 +132,10 @@ fun InviteFriendScreen(
                     IconButton(onClick = { 
                         clipboardManager.setText(AnnotatedString(referralCode))
                         coroutineScope.launch {
-                            snackbarHostState.showSnackbar("Referral code copied to clipboard!")
+                            snackbarHostState.showSnackbar(copiedText)
                         }
                     }) {
-                        Icon(Icons.Rounded.ContentCopy, contentDescription = "Copy", tint = colorScheme.primary)
+                        Icon(Icons.Rounded.ContentCopy, contentDescription = stringResource(R.string.copy), tint = colorScheme.primary)
                     }
                 }
                 
@@ -138,16 +145,16 @@ fun InviteFriendScreen(
                     onClick = { 
                         val shareIntent = Intent(Intent.ACTION_SEND).apply {
                             type = "text/plain"
-                            putExtra(Intent.EXTRA_SUBJECT, "Join me on MoonPage!")
-                            putExtra(Intent.EXTRA_TEXT, "Hey! I'm using MoonPage to track my moods and write my diary. Join me and use my referral code: $referralCode. Download now: https://moonpage.diary/invite")
+                            putExtra(Intent.EXTRA_SUBJECT, shareSubject)
+                            putExtra(Intent.EXTRA_TEXT, shareText)
                         }
-                        context.startActivity(Intent.createChooser(shareIntent, "Share Invitation"))
+                        context.startActivity(Intent.createChooser(shareIntent, chooserTitle))
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     contentPadding = PaddingValues(16.dp)
                 ) {
-                    Text("Share Invitation", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.invite_share_invitation), style = MaterialTheme.typography.titleMedium)
                 }
             }
             

@@ -10,10 +10,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.diary.moonpage.R
 import com.diary.moonpage.ui.screens.stats.components.*
 
 @Composable
@@ -38,14 +40,15 @@ fun StatsActivityDetailScreen(
     onIconClick: (String?) -> Unit
 ) {
     val scrollState = rememberScrollState()
+    val backText = stringResource(R.string.back)
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Activities & Habits", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+                title = { Text(stringResource(R.string.stats_activities_habits), fontWeight = FontWeight.Bold, fontSize = 18.sp) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back")
+                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = backText)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -66,7 +69,7 @@ fun StatsActivityDetailScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                StatsCard(title = "Activity Stats") {
+                StatsCard(title = stringResource(R.string.activity_stats)) {
                     FrequentlyRecordedView(
                         activities = uiState.frequentlyRecorded,
                         onIconClick = onIconClick

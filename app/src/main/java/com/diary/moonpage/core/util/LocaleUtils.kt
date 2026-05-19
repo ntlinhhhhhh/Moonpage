@@ -1,14 +1,18 @@
 package com.diary.moonpage.core.util
 
 import android.content.Context
+import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatDelegate
 import java.util.Locale
 
 object LocaleUtils {
-    // This is no longer needed with AppCompatDelegate, but we keep it for backwards compatibility 
-    // if any external library calls it, returning the context unchanged.
     fun applyLocale(context: Context, languageCode: String): Context {
-        return context
+        val locale = Locale(languageCode)
+        Locale.setDefault(locale)
+        val configuration = Configuration(context.resources.configuration)
+        configuration.setLocale(locale)
+        configuration.setLocales(android.os.LocaleList(locale))
+        return context.createConfigurationContext(configuration)
     }
 
     /**
@@ -20,8 +24,7 @@ object LocaleUtils {
         return if (!locales.isEmpty) {
             locales.get(0)?.language ?: "en"
         } else {
-            // Fallback to system default if no per-app preference is set
-            Locale.getDefault().language
+            "en"
         }
     }
 

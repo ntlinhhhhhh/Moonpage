@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,6 +57,8 @@ fun ShareCalendarRoute(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     val graphicsLayer = rememberGraphicsLayer()
+    val savedToGalleryMessage = stringResource(R.string.share_saved_to_gallery)
+    val calendarImageTitle = stringResource(R.string.share_calendar_image_title)
     
     var selectedRatio by remember { mutableStateOf("1:1") }
 
@@ -79,7 +82,7 @@ fun ShareCalendarRoute(
             CenterAlignedTopAppBar(
                 title = { 
                     Text(
-                        "Share", 
+                        stringResource(R.string.share_calendar_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
@@ -87,7 +90,7 @@ fun ShareCalendarRoute(
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Rounded.ArrowBackIosNew, "Back", modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
+                        Icon(Icons.Rounded.ArrowBackIosNew, stringResource(R.string.back), modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
                     }
                 },
                 actions = {
@@ -98,14 +101,14 @@ fun ShareCalendarRoute(
                                 try {
                                     val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
                                     ImageUtils.saveBitmapToGallery(context, bitmap)
-                                    snackbarHostState.showSnackbar("Saved to gallery!")
+                                    snackbarHostState.showSnackbar(savedToGalleryMessage)
                                 } catch (e: Exception) {
-                                    snackbarHostState.showSnackbar("Save failed: ${e.message}")
+                                    snackbarHostState.showSnackbar(context.getString(R.string.share_save_failed, e.message ?: ""))
                                 }
                             }
                         }
                     ) {
-                        Icon(Icons.Rounded.Download, "Download", tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
+                        Icon(Icons.Rounded.Download, stringResource(R.string.share_download), tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -127,9 +130,9 @@ fun ShareCalendarRoute(
                         scope.launch {
                             try {
                                 val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
-                                ImageUtils.shareImage(context, bitmap, "My Moon Calendar")
+                                ImageUtils.shareImage(context, bitmap, calendarImageTitle)
                             } catch (e: Exception) {
-                                snackbarHostState.showSnackbar("Share failed: ${e.message}")
+                                snackbarHostState.showSnackbar(context.getString(R.string.share_failed, e.message ?: ""))
                             }
                         }
                     },
@@ -143,7 +146,7 @@ fun ShareCalendarRoute(
                     ),
                     elevation = ButtonDefaults.buttonElevation(4.dp)
                 ) {
-                    Text("Share", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text(stringResource(R.string.share), fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 }
             }
         },
@@ -165,7 +168,7 @@ fun ShareCalendarRoute(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(24.dp)
             ) {
-                Text("Ratio", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, fontSize = 16.sp)
+                Text(stringResource(R.string.share_ratio), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, fontSize = 16.sp)
                 
                 RatioToggleItem(
                     label = "1:1",

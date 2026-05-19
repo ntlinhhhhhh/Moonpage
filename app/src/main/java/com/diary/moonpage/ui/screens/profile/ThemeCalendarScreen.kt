@@ -18,9 +18,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.diary.moonpage.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.diary.moonpage.ui.MainViewModel
 import com.diary.moonpage.core.util.ThemeConstants
@@ -43,6 +45,8 @@ fun ThemeCalendarRoute(
     val mainUiState by mainViewModel.uiState.collectAsState()
     val currentThemeType = mainUiState.themeType
     val isDarkModePref = mainUiState.isDarkMode
+    val defaultThemeName = stringResource(R.string.theme_calendar_classic_yellow)
+    val themeUpdatedMessage = stringResource(R.string.theme_updated_success)
 
     // Track initial values to enable/disable Done button
     val initialThemeType = remember { currentThemeType }
@@ -51,7 +55,7 @@ fun ThemeCalendarRoute(
 
     // 1. Define Local Default Themes
     val systemThemes = listOf(
-        Triple(MoonThemeType.DEFAULT, "Classic Yellow", Color(0xFFFFC547))
+        Triple(MoonThemeType.DEFAULT, defaultThemeName, Color(0xFFFFC547))
     )
 
     // 2. Map API Owned Themes (Purchased)
@@ -83,7 +87,7 @@ fun ThemeCalendarRoute(
                     snackbarHostState.showSnackbar(effect.message)
                 }
                 is com.diary.moonpage.ui.screens.store.StoreUiEffect.ThemeActivated -> {
-                    snackbarHostState.showSnackbar("Theme updated successfully!")
+                    snackbarHostState.showSnackbar(themeUpdatedMessage)
                 }
                 is com.diary.moonpage.ui.screens.store.StoreUiEffect.NavigateBack -> {
                     onNavigateBack()
@@ -139,6 +143,14 @@ fun ThemePickerContent(
     onCancelActivation: () -> Unit = {},
     isDoneEnabled: Boolean = true
 ) {
+    val backText = stringResource(R.string.back)
+    val systemText = stringResource(R.string.system)
+    val lightText = stringResource(R.string.light)
+    val darkText = stringResource(R.string.dark)
+    val classicMoonBeansText = stringResource(R.string.theme_calendar_classic_moon_beans)
+    val customColoredBeansText = stringResource(R.string.theme_calendar_custom_colored_beans)
+    val fallbackThemeText = stringResource(R.string.theme_calendar_this_theme)
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
@@ -157,12 +169,12 @@ fun ThemePickerContent(
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.ArrowBackIosNew,
-                        contentDescription = "Back",
+                        contentDescription = backText,
                         tint = MaterialTheme.colorScheme.onBackground
                     )
                 }
                 Text(
-                    text = "Themes & Styles",
+                    text = stringResource(R.string.theme_calendar_themes_styles),
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
                     color = MaterialTheme.colorScheme.onBackground
@@ -203,7 +215,7 @@ fun ThemePickerContent(
                 // Section 1: Dark Mode Toggle
                 item {
                     Text(
-                        text = "Appearance",
+                        text = stringResource(R.string.theme_calendar_appearance),
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                     )
@@ -213,9 +225,9 @@ fun ThemePickerContent(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         val modes = listOf(
-                            Triple("System", Icons.Rounded.Settings, null as Boolean?),
-                            Triple("Light", Icons.Rounded.LightMode, false as Boolean?),
-                            Triple("Dark", Icons.Rounded.DarkMode, true as Boolean?)
+                            Triple(systemText, Icons.Rounded.Settings, null as Boolean?),
+                            Triple(lightText, Icons.Rounded.LightMode, false as Boolean?),
+                            Triple(darkText, Icons.Rounded.DarkMode, true as Boolean?)
                         )
 
                         modes.forEach { (name, icon, value) ->
@@ -234,7 +246,7 @@ fun ThemePickerContent(
                 // Section 2: My Themes
                 item {
                     Text(
-                        text = "My Themes",
+                        text = stringResource(R.string.my_themes),
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                     )
@@ -266,7 +278,7 @@ fun ThemePickerContent(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
                                 Text(
-                                    text = if (type == MoonThemeType.DEFAULT) "Classic moon beans" else "Custom colored beans",
+                                    text = if (type == MoonThemeType.DEFAULT) classicMoonBeansText else customColoredBeansText,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
@@ -289,7 +301,7 @@ fun ThemePickerContent(
             if (showConfirmActivation) {
                 val themeData = availableThemes.find { it.first == temporarySelectedThemeId?.toMoonThemeType() }
                 ConfirmActivationDialog(
-                    themeName = themeData?.second ?: "this theme",
+                    themeName = themeData?.second ?: fallbackThemeText,
                     onConfirm = onConfirmActivation,
                     onCancel = onCancelActivation,
                     primaryColor = themeData?.third

@@ -32,6 +32,7 @@ fun StreakStatsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val colorScheme = MaterialTheme.colorScheme
+    val backText = stringResource(R.string.back)
 
     Scaffold(
         topBar = {
@@ -39,7 +40,7 @@ fun StreakStatsScreen(
                 title = { Text(stringResource(R.string.streak), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Rounded.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Rounded.ArrowBack, contentDescription = backText)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -60,7 +61,7 @@ fun StreakStatsScreen(
 
             // Current Streak Card
             StreakBigCard(
-                title = "Current Streak",
+                title = stringResource(R.string.current_streak),
                 value = uiState.stats?.currentStreak?.toString() ?: "0",
                 icon = Icons.Rounded.Whatshot,
                 color = Color(0xFFFF9800)
@@ -73,13 +74,13 @@ fun StreakStatsScreen(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 StreakSmallCard(
-                    title = "Longest Streak",
+                    title = stringResource(R.string.longest_streak),
                     value = uiState.stats?.longestStreak?.toString() ?: "0",
                     icon = Icons.Rounded.EmojiEvents,
                     modifier = Modifier.weight(1f)
                 )
                 StreakSmallCard(
-                    title = "Total Days",
+                    title = stringResource(R.string.streak_total_days),
                     value = uiState.stats?.totalLogs?.toString() ?: "0",
                     icon = Icons.Rounded.CalendarToday,
                     modifier = Modifier.weight(1f)
@@ -88,23 +89,23 @@ fun StreakStatsScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            SectionTitle("How it works")
+            SectionTitle(stringResource(R.string.how_it_works))
             
             StreakInfoItem(
-                title = "What is a Streak?",
-                description = "Your streak increases every day you record your mood and activities. Keep it going to build a consistent journaling habit!",
+                title = stringResource(R.string.streak_what_is_title),
+                description = stringResource(R.string.streak_info_desc),
                 icon = Icons.Rounded.Info
             )
 
             StreakInfoItem(
-                title = "Streak Freeze",
-                description = "Life gets busy. A Streak Freeze protects your streak if you miss a day. It activates automatically when you forget to log.",
+                title = stringResource(R.string.streak_freeze),
+                description = stringResource(R.string.streak_freeze_desc),
                 icon = Icons.Rounded.Snowboarding
             )
 
             StreakInfoItem(
-                title = "Where to get Freezes?",
-                description = "You can purchase Streak Freezes in the Store using your Beans. Keep a few in stock for those extra busy days!",
+                title = stringResource(R.string.streak_where_to_get_freezes),
+                description = stringResource(R.string.streak_where_to_get_freezes_desc),
                 icon = Icons.Rounded.Storefront
             )
 
@@ -159,7 +160,7 @@ fun StreakBigCard(
             )
 
             Text(
-                text = "DAYS",
+                text = stringResource(R.string.days_label).uppercase(),
                 style = MaterialTheme.typography.labelLarge.copy(
                     letterSpacing = 2.sp,
                     fontWeight = FontWeight.Bold

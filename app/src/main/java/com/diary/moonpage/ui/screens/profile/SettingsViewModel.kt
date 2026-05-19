@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.biometric.BiometricManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.diary.moonpage.R
 import com.diary.moonpage.core.theme.MoonThemeType
 import com.diary.moonpage.core.util.SettingsPreferencesManager
 import com.diary.moonpage.core.util.ThemePreferencesManager
@@ -130,7 +131,7 @@ class SettingsViewModel @Inject constructor(
                 if (support == BiometricManager.BIOMETRIC_SUCCESS) {
                     settingsPreferencesManager.setBiometricEnabled(true)
                 } else {
-                    _uiState.update { it.copy(error = "Biometric not supported or not set up") }
+                    _uiState.update { it.copy(errorResId = R.string.biometric_not_supported) }
                 }
             } else {
                 settingsPreferencesManager.setBiometricEnabled(false)
@@ -184,7 +185,7 @@ class SettingsViewModel @Inject constructor(
                 _uiState.update { it.copy(isPasswordConfirmationDialogShown = false) }
                 deleteUserAccount(onSuccess)
             } else {
-                _uiState.update { it.copy(isLoading = false, error = "Incorrect password") }
+                _uiState.update { it.copy(isLoading = false, errorResId = R.string.incorrect_password) }
             }
         }
     }
@@ -196,7 +197,7 @@ class SettingsViewModel @Inject constructor(
             if (confirmResult.isSuccess) {
                 deleteUserAccount(onSuccess)
             } else {
-                _uiState.update { it.copy(isLoading = false, error = "Google confirmation failed") }
+                _uiState.update { it.copy(isLoading = false, errorResId = R.string.google_confirmation_failed) }
             }
         }
     }
@@ -209,13 +210,23 @@ class SettingsViewModel @Inject constructor(
                 _uiState.update { it.copy(isLoading = false) }
                 onSuccess()
             } else {
-                _uiState.update { it.copy(isLoading = false, error = result.exceptionOrNull()?.message ?: "Failed to change password") }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = result.exceptionOrNull()?.message,
+                        errorResId = if (result.exceptionOrNull()?.message == null) R.string.change_password_failed else null
+                    )
+                }
             }
         }
     }
 
     fun setError(message: String) {
         _uiState.update { it.copy(error = message) }
+    }
+
+    fun setErrorRes(resId: Int) {
+        _uiState.update { it.copy(errorResId = resId) }
     }
 
     fun deleteUserAccount(onSuccess: () -> Unit) {
@@ -251,7 +262,7 @@ class SettingsViewModel @Inject constructor(
                     _uiState.update { 
                         it.copy(
                             isLoading = false, 
-                            error = "Account deleted on server, but local cleanup failed: ${e.message}"
+                            errorResId = R.string.account_cleanup_failed
                         ) 
                     }
                 }
@@ -259,7 +270,8 @@ class SettingsViewModel @Inject constructor(
                 _uiState.update { 
                     it.copy(
                         isLoading = false, 
-                        error = result.exceptionOrNull()?.message ?: "Failed to delete account"
+                        error = result.exceptionOrNull()?.message,
+                        errorResId = if (result.exceptionOrNull()?.message == null) R.string.delete_account_failed else null
                     ) 
                 }
             }
@@ -267,6 +279,6 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun clearError() {
-        _uiState.update { it.copy(error = null) }
+        _uiState.update { it.copy(error = null, errorResId = null) }
     }
 }

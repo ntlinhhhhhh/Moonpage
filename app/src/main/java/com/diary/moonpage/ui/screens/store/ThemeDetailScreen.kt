@@ -27,7 +27,6 @@ import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.ui.components.buttons.MoonPrimaryButton
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.ui.screens.store.components.ConfirmActivationDialog
@@ -47,8 +46,8 @@ fun ThemeDetailRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val theme = uiState.selectedThemeDetail
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
+    val themeUpdatedMessage = stringResource(R.string.theme_updated_success)
 
     if (theme == null) {
         LaunchedEffect(Unit) {
@@ -64,7 +63,7 @@ fun ThemeDetailRoute(
                     snackbarHostState.showSnackbar(effect.message)
                 }
                 is StoreUiEffect.ThemeActivated -> {
-                    val msg = effect.message ?: context.getString(R.string.theme_updated_success)
+                    val msg = effect.message ?: themeUpdatedMessage
                     snackbarHostState.showSnackbar(msg)
                 }
                 is StoreUiEffect.NavigateBack -> {

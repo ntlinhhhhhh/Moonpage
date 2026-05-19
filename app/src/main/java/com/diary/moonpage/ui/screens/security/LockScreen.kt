@@ -37,6 +37,10 @@ fun LockRoute(
     val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
     val latestOnUnlockSuccess by rememberUpdatedState(onUnlockSuccess)
+    val unlockAppText = stringResource(R.string.unlock_app)
+    val useBiometricText = stringResource(R.string.use_biometric)
+    val cancelText = stringResource(R.string.cancel)
+    val wrongPasscodeText = stringResource(R.string.wrong_passcode)
     var passcode by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isBiometricPromptShowing by remember { mutableStateOf(false) }
@@ -78,9 +82,9 @@ fun LockRoute(
         )
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle(context.getString(R.string.unlock_app))
-            .setSubtitle(context.getString(R.string.use_biometric))
-            .setNegativeButtonText(context.getString(R.string.cancel))
+            .setTitle(unlockAppText)
+            .setSubtitle(useBiometricText)
+            .setNegativeButtonText(cancelText)
             .build()
 
         biometricPrompt.authenticate(promptInfo)
@@ -97,7 +101,7 @@ fun LockRoute(
                         latestOnUnlockSuccess()
                     }
                 } else {
-                    errorMessage = context.getString(R.string.wrong_passcode)
+                    errorMessage = wrongPasscodeText
                     passcode = ""
                 }
             }

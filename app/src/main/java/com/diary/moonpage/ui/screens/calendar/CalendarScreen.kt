@@ -31,6 +31,8 @@ import com.diary.moonpage.core.util.MoonIcon
 import com.diary.moonpage.ui.screens.calendar.components.*
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.components.feedback.MoonDeleteConfirmDialog
+import androidx.compose.ui.res.stringResource
+import com.diary.moonpage.R
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -358,7 +360,7 @@ fun CalendarMonthHeader(
         ) {
             Icon(
                 imageVector = Icons.Rounded.IosShare,
-                contentDescription = "Share",
+                contentDescription = stringResource(R.string.share),
                 tint = headerColor
             )
         }
@@ -394,13 +396,13 @@ fun CalendarSelectedLogDetail(
 
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 IconButton(onClick = onShareClick) {
-                    Icon(Icons.Rounded.IosShare, contentDescription = "Share", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp))
+                    Icon(Icons.Rounded.IosShare, contentDescription = stringResource(R.string.share), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp))
                 }
                 IconButton(onClick = { onEditLog(date) }) {
-                    Icon(Icons.Rounded.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp))   
+                    Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.edit), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp))   
                 }
                 IconButton(onClick = { onDeleteLog(date) }) {
-                    Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp))
+                    Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.delete), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp))
                 }
             }
         }
@@ -476,7 +478,11 @@ fun TimelineView(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = if (selectedFilter != null) "No matching entries" else "No entries yet",
+                    text = if (selectedFilter != null) {
+                        stringResource(R.string.calendar_no_matching_entries)
+                    } else {
+                        stringResource(R.string.calendar_no_entries_yet)
+                    },
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                 )
@@ -486,7 +492,7 @@ fun TimelineView(
                         onClick = { onAddLog(LocalDate.now()) },
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("Write first entry")
+                        Text(stringResource(R.string.calendar_write_first_entry))
                     }
                 }
             }
@@ -558,13 +564,13 @@ fun TimelineItem(
 
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 IconButton(onClick = onShare, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Rounded.IosShare, contentDescription = "Share", tint = cs.onSurface.copy(alpha = 0.3f), modifier = Modifier.size(18.dp))
+                    Icon(Icons.Rounded.IosShare, contentDescription = stringResource(R.string.share), tint = cs.onSurface.copy(alpha = 0.3f), modifier = Modifier.size(18.dp))
                 }
                 IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Rounded.Edit, contentDescription = "Edit", tint = cs.onSurface.copy(alpha = 0.3f), modifier = Modifier.size(18.dp))
+                    Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.edit), tint = cs.onSurface.copy(alpha = 0.3f), modifier = Modifier.size(18.dp))
                 }
                 IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = cs.onSurface.copy(alpha = 0.3f), modifier = Modifier.size(18.dp))
+                    Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.delete), tint = cs.onSurface.copy(alpha = 0.3f), modifier = Modifier.size(18.dp))
                 }
             }
         }

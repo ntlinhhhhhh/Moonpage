@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,6 +30,7 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.size.Scale
 import coil.size.Size
+import com.diary.moonpage.R
 import com.diary.moonpage.ui.screens.moment.MomentViewModel
 import com.diary.moonpage.domain.model.Moment
 import com.diary.moonpage.ui.screens.moment.MomentUiState
@@ -64,6 +66,7 @@ fun GalleryScreenContent(
     val colorScheme = MaterialTheme.colorScheme
     val moments = uiState.moments
     val isLoading = uiState.isLoading
+    val backText = stringResource(R.string.back)
 
     // Sort moments by capturedAt descending (newest first)
     val sortedMoments = remember(moments) {
@@ -76,7 +79,7 @@ fun GalleryScreenContent(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        "Photo Gallery",
+                        stringResource(R.string.gallery_photo_gallery),
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
                         color = colorScheme.onBackground
@@ -86,7 +89,7 @@ fun GalleryScreenContent(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             Icons.Rounded.ArrowBackIosNew,
-                            contentDescription = "Back",
+                            contentDescription = backText,
                             tint = colorScheme.onBackground
                         )
                     }
@@ -111,12 +114,12 @@ fun GalleryScreenContent(
                             modifier = Modifier.size(72.dp)
                         )
                         Text(
-                            "No photos yet",
+                            stringResource(R.string.no_moments_yet),
                             style = MaterialTheme.typography.titleMedium,
                             color = colorScheme.onBackground.copy(alpha = 0.55f)
                         )
                         Text(
-                            "Capture your first moment to see it here",
+                            stringResource(R.string.gallery_capture_first_moment_hint),
                             style = MaterialTheme.typography.bodySmall,
                             color = colorScheme.onBackground.copy(alpha = 0.35f)
                         )
@@ -210,7 +213,7 @@ fun GalleryItem(
         if (isError) {
             Icon(
                 imageVector = Icons.Rounded.BrokenImage,
-                contentDescription = "Error",
+                contentDescription = stringResource(R.string.error_unknown),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
             )
         }

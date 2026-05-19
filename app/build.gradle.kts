@@ -19,6 +19,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Keep packaged locale resources constrained to Moonpage's supported languages.
         resourceConfigurations.addAll(listOf("en", "vi"))
     }
 

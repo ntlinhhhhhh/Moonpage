@@ -14,10 +14,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.diary.moonpage.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,6 +27,7 @@ fun WidgetsScreen(
     onNavigateBack: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
+    val backText = stringResource(R.string.back)
 
     Scaffold(
         containerColor = colorScheme.background,
@@ -32,14 +35,14 @@ fun WidgetsScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        "Widgets",
+                        stringResource(R.string.widgets),
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleLarge
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back")
+                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = backText)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -68,13 +71,13 @@ fun WidgetsScreen(
             Spacer(modifier = Modifier.height(16.dp))
             
             Text(
-                "MoonPage Widgets",
+                stringResource(R.string.widgets_moonpage_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
             
             Text(
-                "Access your diary and track your mood directly from your home screen.",
+                stringResource(R.string.widgets_moonpage_desc),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -85,22 +88,22 @@ fun WidgetsScreen(
             
             WidgetInstructionStep(
                 stepNumber = 1,
-                instruction = "Long press on an empty space on your home screen."
+                instruction = stringResource(R.string.widgets_instruction_1)
             )
             
             WidgetInstructionStep(
                 stepNumber = 2,
-                instruction = "Select 'Widgets' from the menu."
+                instruction = stringResource(R.string.widgets_instruction_2)
             )
             
             WidgetInstructionStep(
                 stepNumber = 3,
-                instruction = "Find 'MoonPage' and choose your favorite widget style."
+                instruction = stringResource(R.string.widgets_instruction_3)
             )
             
             WidgetInstructionStep(
                 stepNumber = 4,
-                instruction = "Drag it to your home screen and enjoy!"
+                instruction = stringResource(R.string.widgets_instruction_4)
             )
             
             Spacer(modifier = Modifier.height(48.dp))
@@ -110,7 +113,7 @@ fun WidgetsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Got it", modifier = Modifier.padding(vertical = 4.dp))
+                Text(stringResource(R.string.got_it), modifier = Modifier.padding(vertical = 4.dp))
             }
 
             Spacer(modifier = Modifier.height(32.dp))

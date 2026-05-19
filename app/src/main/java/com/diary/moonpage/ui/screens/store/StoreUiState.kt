@@ -1,5 +1,6 @@
 package com.diary.moonpage.ui.screens.store
 
+import androidx.annotation.StringRes
 import com.diary.moonpage.domain.model.Theme
 
 data class StoreUiState(
@@ -22,5 +23,5 @@ data class StoreUiState(
     val freezePurchaseSuccess: Boolean = false,
     val streakFreezeCount: Int = 0,
     val showRecoverySuccessDialog: Boolean = false,
-    val recoveryMessage: String = ""
+    @StringRes val recoveryMessageRes: Int? = null
 )

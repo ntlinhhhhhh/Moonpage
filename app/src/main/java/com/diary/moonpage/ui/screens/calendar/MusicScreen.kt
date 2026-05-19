@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.diary.moonpage.R
 import com.diary.moonpage.data.remote.api.SpotifyTrack
 import kotlinx.coroutines.launch
 
@@ -52,7 +54,7 @@ fun MusicRoute(
             }
         },
         onSongClick = { track ->
-            onSongSelected(track.name, track.artists.firstOrNull()?.name ?: "Unknown", track.externalUrls.spotify)
+            onSongSelected(track.name, track.artists.firstOrNull()?.name ?: "", track.externalUrls.spotify)
             onNavigateBack()
         },
         onNavigateBack = onNavigateBack
@@ -83,10 +85,10 @@ fun MusicScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back")
+                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = stringResource(R.string.back))
                     }
                     Text(
-                        "Select Music",
+                        stringResource(R.string.music_select_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -106,7 +108,7 @@ fun MusicScreen(
                 value = uiState.searchQuery,
                 onValueChange = onSearchQueryChanged,
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Search songs or artists...") },
+                placeholder = { Text(stringResource(R.string.music_search_placeholder)) },
                 leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
@@ -131,12 +133,12 @@ fun MusicScreen(
                         Icon(Icons.Rounded.MusicNote, contentDescription = null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            "Connect Spotify",
+                            stringResource(R.string.music_connect_spotify),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            "Link your account to search and add music to your logs.",
+                            stringResource(R.string.music_connect_spotify_desc),
                             style = MaterialTheme.typography.bodyMedium,
                             textAlign = TextAlign.Center,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
@@ -147,7 +149,7 @@ fun MusicScreen(
                             onClick = onLinkClick,
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text("Link Spotify")
+                            Text(stringResource(R.string.music_link_spotify))
                         }
                     }
                 }
@@ -160,7 +162,7 @@ fun MusicScreen(
                 
                 if (displayTracks.isEmpty() && uiState.searchQuery.isNotBlank()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No songs found", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                        Text(stringResource(R.string.music_no_songs_found), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                     }
                 } else {
                     LazyColumn(
@@ -171,7 +173,7 @@ fun MusicScreen(
                         if (uiState.searchQuery.isBlank() && uiState.suggestions.isNotEmpty()) {
                             item {
                                 Text(
-                                    "Recently Played",
+                                    stringResource(R.string.daily_log_recently_played),
                                     style = MaterialTheme.typography.titleSmall,
                                     modifier = Modifier.padding(vertical = 8.dp),
                                     color = MaterialTheme.colorScheme.primary

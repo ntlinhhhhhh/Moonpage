@@ -1,5 +1,6 @@
 package com.diary.moonpage.ui.screens.calendar
 
+import androidx.annotation.StringRes
 import com.diary.moonpage.domain.model.DailyLog
 import com.diary.moonpage.domain.model.Activity
 import com.diary.moonpage.core.theme.MoonThemeType
@@ -9,7 +10,7 @@ import java.time.YearMonth
 sealed class FilterItem {
     data class Mood(val id: Int) : FilterItem()
     data class Activity(val id: String, val name: String) : FilterItem()
-    data class Special(val id: String, val name: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) : FilterItem()
+    data class Special(val id: String, @StringRes val nameRes: Int, val icon: androidx.compose.ui.graphics.vector.ImageVector) : FilterItem()
 }
 
 enum class CalendarViewMode {

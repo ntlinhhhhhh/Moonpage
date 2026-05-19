@@ -19,36 +19,39 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.annotation.StringRes
+import com.diary.moonpage.R
 import com.diary.moonpage.core.util.MoonIcon
 import com.diary.moonpage.core.util.MoonIcons
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 // ── Category data ─────────────────────────────────────────────────────────────
 
 data class ActivityCategoryInfo(
     val key: String,
-    val displayName: String,
-    val subtitle: String,
+    @StringRes val displayNameRes: Int,
+    @StringRes val subtitleRes: Int,
     val previewIcons: List<MoonIcon>
 )
 
 val ALL_ACTIVITY_CATEGORIES = listOf(
-    ActivityCategoryInfo("Hobbies",      "Hobbies",      "exercise, movie, reading, ...",     listOf(MoonIcons.Hobbies.Exercise,      MoonIcons.Hobbies.Movie,          MoonIcons.Hobbies.Gaming)),
-    ActivityCategoryInfo("Emotions",     "Emotions",     "happy, proud, anxious, ...",        listOf(MoonIcons.Emotions.Happy,        MoonIcons.Emotions.Proud,         MoonIcons.Emotions.Anxious)),
-    ActivityCategoryInfo("Meals",        "Meals",        "breakfast, lunch, dinner, ...",     listOf(MoonIcons.Meals.Breakfast,       MoonIcons.Meals.Lunch,            MoonIcons.Meals.Dinner)),
-    ActivityCategoryInfo("SelfCare",     "Self-Care",    "shower, brush teeth, ...",          listOf(MoonIcons.SelfCare.Shower,       MoonIcons.SelfCare.BrushTeeth,    MoonIcons.SelfCare.WashFace)),
-    ActivityCategoryInfo("Chores",       "Chores",       "cleaning, laundry, dishes, ...",    listOf(MoonIcons.Chores.Cleaning,       MoonIcons.Chores.Cooking,         MoonIcons.Chores.Laundry)),
-    ActivityCategoryInfo("Events",       "Events",       "stay home, cafe, travel, ...",      listOf(MoonIcons.Events.StayHome,       MoonIcons.Events.Cafe,            MoonIcons.Events.Travel)),
-    ActivityCategoryInfo("People",       "People",       "friends, family, partner, ...",     listOf(MoonIcons.People.Friends,        MoonIcons.People.Family,          MoonIcons.People.Partner)),
-    ActivityCategoryInfo("Beauty",       "Beauty",       "hair, nails, skincare, ...",        listOf(MoonIcons.Beauty.Hair,           MoonIcons.Beauty.Nails,           MoonIcons.Beauty.Skincare)),
-    ActivityCategoryInfo("Weather",      "Weather",      "sunny, cloudy, rainy, ...",         listOf(MoonIcons.Weather.Sunny,         MoonIcons.Weather.Cloudy,         MoonIcons.Weather.Rainy)),
-    ActivityCategoryInfo("Health",       "Health",       "sick, hospital, medicine, ...",     listOf(MoonIcons.Health.Sick,           MoonIcons.Health.Hospital,        MoonIcons.Health.Medicine)),
-    ActivityCategoryInfo("Work",         "Work",         "overtime, vacation, ...",           listOf(MoonIcons.Work.Work,             MoonIcons.Work.Overtime,          MoonIcons.Work.Vacation)),
-    ActivityCategoryInfo("Other",        "Other",        "snack, coffee, tea, ...",           listOf(MoonIcons.Other.Snack,           MoonIcons.Other.Coffee,           MoonIcons.Other.Tea)),
-    ActivityCategoryInfo("School",       "School",       "class, homework, exam, ...",        listOf(MoonIcons.School.Class,          MoonIcons.School.Study,           MoonIcons.School.Exam)),
-    ActivityCategoryInfo("Relationship", "Relationship", "date, anniversary, gift, ...",      listOf(MoonIcons.Relationship.Date,     MoonIcons.Relationship.Anniversary, MoonIcons.Relationship.Gift))
+    ActivityCategoryInfo("Hobbies",      R.string.activity_category_hobbies,      R.string.activity_category_hobbies_subtitle,      listOf(MoonIcons.Hobbies.Exercise,      MoonIcons.Hobbies.Movie,          MoonIcons.Hobbies.Gaming)),
+    ActivityCategoryInfo("Emotions",     R.string.activity_category_emotions,     R.string.activity_category_emotions_subtitle,     listOf(MoonIcons.Emotions.Happy,        MoonIcons.Emotions.Proud,         MoonIcons.Emotions.Anxious)),
+    ActivityCategoryInfo("Meals",        R.string.activity_category_meals,        R.string.activity_category_meals_subtitle,        listOf(MoonIcons.Meals.Breakfast,       MoonIcons.Meals.Lunch,            MoonIcons.Meals.Dinner)),
+    ActivityCategoryInfo("SelfCare",     R.string.activity_category_self_care,    R.string.activity_category_self_care_subtitle,    listOf(MoonIcons.SelfCare.Shower,       MoonIcons.SelfCare.BrushTeeth,    MoonIcons.SelfCare.WashFace)),
+    ActivityCategoryInfo("Chores",       R.string.activity_category_chores,       R.string.activity_category_chores_subtitle,       listOf(MoonIcons.Chores.Cleaning,       MoonIcons.Chores.Cooking,         MoonIcons.Chores.Laundry)),
+    ActivityCategoryInfo("Events",       R.string.activity_category_events,       R.string.activity_category_events_subtitle,       listOf(MoonIcons.Events.StayHome,       MoonIcons.Events.Cafe,            MoonIcons.Events.Travel)),
+    ActivityCategoryInfo("People",       R.string.activity_category_people,       R.string.activity_category_people_subtitle,       listOf(MoonIcons.People.Friends,        MoonIcons.People.Family,          MoonIcons.People.Partner)),
+    ActivityCategoryInfo("Beauty",       R.string.activity_category_beauty,       R.string.activity_category_beauty_subtitle,       listOf(MoonIcons.Beauty.Hair,           MoonIcons.Beauty.Nails,           MoonIcons.Beauty.Skincare)),
+    ActivityCategoryInfo("Weather",      R.string.activity_category_weather,      R.string.activity_category_weather_subtitle,      listOf(MoonIcons.Weather.Sunny,         MoonIcons.Weather.Cloudy,         MoonIcons.Weather.Rainy)),
+    ActivityCategoryInfo("Health",       R.string.activity_category_health,       R.string.activity_category_health_subtitle,       listOf(MoonIcons.Health.Sick,           MoonIcons.Health.Hospital,        MoonIcons.Health.Medicine)),
+    ActivityCategoryInfo("Work",         R.string.activity_category_work,         R.string.activity_category_work_subtitle,         listOf(MoonIcons.Work.Work,             MoonIcons.Work.Overtime,          MoonIcons.Work.Vacation)),
+    ActivityCategoryInfo("Other",        R.string.activity_category_other,        R.string.activity_category_other_subtitle,        listOf(MoonIcons.Other.Snack,           MoonIcons.Other.Coffee,           MoonIcons.Other.Tea)),
+    ActivityCategoryInfo("School",       R.string.activity_category_school,       R.string.activity_category_school_subtitle,       listOf(MoonIcons.School.Class,          MoonIcons.School.Study,           MoonIcons.School.Exam)),
+    ActivityCategoryInfo("Relationship", R.string.activity_category_relationship, R.string.activity_category_relationship_subtitle, listOf(MoonIcons.Relationship.Date,     MoonIcons.Relationship.Anniversary, MoonIcons.Relationship.Gift))
 )
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -95,7 +98,7 @@ fun ActivityCategorySelectionScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "No pressure, you can always edit this later.",
+                    text = stringResource(R.string.no_pressure),
                     style = MaterialTheme.typography.bodySmall,
                     color = colorScheme.onBackground.copy(alpha = 0.45f)
                 )
@@ -114,7 +117,7 @@ fun ActivityCategorySelectionScreen(
                     if (uiState.isLoading) {
                         CircularProgressIndicator(modifier = Modifier.size(24.dp), color = colorScheme.onPrimary, strokeWidth = 2.dp)
                     } else {
-                        Text("Next", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(R.string.next), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                     }
                 }
 
@@ -124,7 +127,7 @@ fun ActivityCategorySelectionScreen(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !uiState.isLoading
                 ) {
-                    Text("Skip for now", color = colorScheme.onBackground.copy(alpha = 0.45f), style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(R.string.skip_for_now), color = colorScheme.onBackground.copy(alpha = 0.45f), style = MaterialTheme.typography.bodySmall)
                 }
             }
         }
@@ -145,21 +148,21 @@ fun ActivityCategorySelectionScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Top picks for you! ✨",
+                        text = stringResource(R.string.top_picks_for_you),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = colorScheme.onBackground
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Edit the list to keep only what you want!",
+                        text = stringResource(R.string.edit_list_hint),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colorScheme.onBackground.copy(alpha = 0.55f)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     TextButton(onClick = {}) {
                         Text(
-                            text = "What am I choosing?",
+                            text = stringResource(R.string.what_am_i_choosing),
                             style = MaterialTheme.typography.bodyMedium,
                             color = colorScheme.onBackground.copy(alpha = 0.55f),
                             fontSize = 13.sp
@@ -246,13 +249,13 @@ private fun ActivityCategoryCard(
             // Text
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = category.displayName,
+                    text = stringResource(category.displayNameRes),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = colorScheme.onSurface
                 )
                 Text(
-                    text = category.subtitle,
+                    text = stringResource(category.subtitleRes),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (isSelected) colorScheme.primary else colorScheme.onSurface.copy(alpha = 0.45f),
                     fontSize = 12.sp

@@ -9,8 +9,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.diary.moonpage.R
 
 /**
  * Stateful Component
@@ -40,10 +42,10 @@ fun MenstrualCycleScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onNavigateBack) {
-                    Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back")
+                    Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = stringResource(R.string.back))
                 }
                 Text(
-                    "Menstrual Cycle",
+                    stringResource(R.string.menstrual_cycle_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -59,7 +61,7 @@ fun MenstrualCycleScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text("Menstrual Cycle Tracking Screen", style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(R.string.menstrual_cycle_placeholder), style = MaterialTheme.typography.bodyLarge)
         }
     }
 }

@@ -10,10 +10,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.diary.moonpage.R
 import com.diary.moonpage.ui.screens.stats.components.*
 
 @Composable
@@ -37,14 +39,15 @@ fun StatsInsightsDetailScreen(
 ) {
     val stats = uiState.stats
     val scrollState = rememberScrollState()
+    val backText = stringResource(R.string.back)
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Insights ✨", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+                title = { Text(stringResource(R.string.stats_insights_title), fontWeight = FontWeight.Bold, fontSize = 18.sp) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back")
+                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = backText)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -66,7 +69,7 @@ fun StatsInsightsDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 // Best & Worst section
-                StatsCard(title = "Best & Worst") {
+                StatsCard(title = stringResource(R.string.best_worst)) {
                     BestAndWorstView(
                         best = uiState.bestActivities,
                         worst = uiState.worstActivities
@@ -74,7 +77,7 @@ fun StatsInsightsDetailScreen(
                 }
 
                 // Icon Deep Dive
-                StatsCard(title = "Icon Deep Dive") {
+                StatsCard(title = stringResource(R.string.icon_deep_dive)) {
                     IconDeepDiveView(
                         activityId = uiState.selectedIconId,
                         allActivities = stats?.bestActivities ?: emptyList(),

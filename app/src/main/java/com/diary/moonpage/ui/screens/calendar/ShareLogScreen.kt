@@ -27,6 +27,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -62,6 +63,8 @@ fun ShareLogRoute(
     val snackbarHostState = remember { SnackbarHostState() }
     val density = androidx.compose.ui.platform.LocalDensity.current
     val graphicsLayer = rememberGraphicsLayer()
+    val savedToGalleryMessage = stringResource(R.string.share_saved_to_gallery)
+    val logImageTitle = stringResource(R.string.share_log_image_title)
 
     LaunchedEffect(dateString) {
         viewModel.setInitialDate(LocalDate.parse(dateString))
@@ -75,7 +78,7 @@ fun ShareLogRoute(
             CenterAlignedTopAppBar(
                 title = { 
                     Text(
-                        "Share Log", 
+                        stringResource(R.string.share_log_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF424242)
@@ -83,7 +86,7 @@ fun ShareLogRoute(
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Rounded.ArrowBackIosNew, "Back", modifier = Modifier.size(20.dp), tint = Color(0xFF757575))
+                        Icon(Icons.Rounded.ArrowBackIosNew, stringResource(R.string.back), modifier = Modifier.size(20.dp), tint = Color(0xFF757575))
                     }
                 },
                 actions = {
@@ -94,14 +97,14 @@ fun ShareLogRoute(
                                 try {
                                     val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
                                     ImageUtils.saveBitmapToGallery(context, bitmap)
-                                    snackbarHostState.showSnackbar("Saved to gallery!")
+                                    snackbarHostState.showSnackbar(savedToGalleryMessage)
                                 } catch (e: Exception) {
-                                    snackbarHostState.showSnackbar("Save failed: ${e.message}")
+                                    snackbarHostState.showSnackbar(context.getString(R.string.share_save_failed, e.message ?: ""))
                                 }
                             }
                         }
                     ) {
-                        Icon(Icons.Rounded.Download, "Download", tint = Color(0xFF757575))
+                        Icon(Icons.Rounded.Download, stringResource(R.string.share_download), tint = Color(0xFF757575))
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -124,9 +127,9 @@ fun ShareLogRoute(
                         scope.launch {
                             try {
                                 val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
-                                ImageUtils.shareImage(context, bitmap, "My Mood Page")
+                                ImageUtils.shareImage(context, bitmap, logImageTitle)
                             } catch (e: Exception) {
-                                snackbarHostState.showSnackbar("Share failed: ${e.message}")
+                                snackbarHostState.showSnackbar(context.getString(R.string.share_failed, e.message ?: ""))
                             }
                         }
                     },
@@ -140,7 +143,7 @@ fun ShareLogRoute(
                     ),
                     elevation = ButtonDefaults.buttonElevation(4.dp)
                 ) {
-                    Text("Share", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text(stringResource(R.string.share), fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 }
             }
         },
@@ -211,6 +214,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
     val pillText = if (isDark) Color(0xFFDDDDDD) else Color(0xFF616161)
     val dividerColor = if (isDark) Color(0xFF444444) else Color(0xFFD1D1CB)
     val musicCardBg = if (isDark) Color.White.copy(alpha = 0.1f) else Color.White.copy(alpha = 0.8f)
+    val unknownArtist = stringResource(R.string.daily_log_unknown_artist)
 
     Column(
         modifier = Modifier
@@ -383,7 +387,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                                 maxLines = 1
                             )
                             Text(
-                                text = uiState.artistName ?: "Unknown Artist",
+                                text = uiState.artistName ?: unknownArtist,
                                 fontSize = 12.sp,
                                 color = secondaryTextColor,
                                 maxLines = 1
@@ -436,13 +440,13 @@ fun ShareLogCard(uiState: DailyLogUiState) {
         ) {
             Column {
                 Text(
-                    "MoonPage Daily Log",
+                    stringResource(R.string.share_log_footer),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = themeColor
                 )
                 Text(
-                    text = "REF: ${System.currentTimeMillis() / 1000}",
+                    text = stringResource(R.string.share_log_reference, System.currentTimeMillis() / 1000),
                     fontSize = 10.sp,
                     color = secondaryTextColor
                 )

@@ -10,10 +10,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.diary.moonpage.R
 import com.diary.moonpage.ui.screens.stats.components.*
 import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
 import com.diary.moonpage.ui.screens.tutorial.TutorialStep
@@ -40,17 +42,18 @@ fun StatsMoodDetailScreen(
     val stats = uiState.stats
     val isMale = uiState.gender == "Male" || uiState.gender == "Nam"
     val scrollState = rememberScrollState()
+    val backText = stringResource(R.string.back)
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mood Analysis", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+                title = { Text(stringResource(R.string.stats_mood_analysis), fontWeight = FontWeight.Bold, fontSize = 18.sp) },
                 navigationIcon = {
                     IconButton(
                         onClick = onNavigateBack,
                         modifier = Modifier.tutorialTarget(TutorialStep.HighlightMoodDetailBackButton)
                     ) {
-                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back")
+                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = backText)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -71,7 +74,7 @@ fun StatsMoodDetailScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                val title = "Mood Flow" + if (!isMale) " & Cycle" else ""
+                val title = if (!isMale) stringResource(R.string.mood_flow_cycle) else stringResource(R.string.mood_flow)
                 Box(modifier = Modifier.fillMaxWidth().tutorialTarget(TutorialStep.HighlightMoodDetailChart)) {
                     StatsCard(title = title) {
                         MoodFlowChart(
@@ -85,7 +88,7 @@ fun StatsMoodDetailScreen(
                     }
                 }
 
-                StatsCard(title = "Mood Bar") {
+                StatsCard(title = stringResource(R.string.mood_bar)) {
                     MoodDistributionView(
                         distribution = stats?.moodDistribution ?: emptyList(),
                         themeType = uiState.themeType

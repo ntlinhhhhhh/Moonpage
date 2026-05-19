@@ -24,10 +24,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.diary.moonpage.R
 import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.core.theme.MoonTheme
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -82,7 +84,7 @@ fun FilterScreen(
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = "When did I record...",
+                text = stringResource(R.string.when_did_i_record),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = textColor,
@@ -92,7 +94,7 @@ fun FilterScreen(
                 onClick = onDismiss,
                 modifier = Modifier.align(Alignment.CenterEnd)
             ) {
-                Icon(Icons.Rounded.Close, contentDescription = "Close", tint = closeIconTint)
+                Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.close), tint = closeIconTint)
             }
         }
 
@@ -128,7 +130,7 @@ fun FilterScreen(
         ) {
             item {
                 // Mood Section
-                FilterSectionTitle("Mood")
+                FilterSectionTitle(stringResource(R.string.filter_mood))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -154,7 +156,7 @@ fun FilterScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
                     groupedActivities.forEach { (category, activities) ->
                         Column {
-                            FilterSectionTitle(category.ifBlank { "Activities" })
+                            FilterSectionTitle(category.ifBlank { stringResource(R.string.filter_activities) })
                             val activityItems = activities.map { 
                                 FilterItem.Activity(it.id, it.name)
                             }
@@ -173,12 +175,12 @@ fun FilterScreen(
 
             item {
                 // Special Section
-                FilterSectionTitle("Special")
+                FilterSectionTitle(stringResource(R.string.filter_special))
                 val specials = listOf(
-                    FilterItem.Special("music", "Music", Icons.Rounded.MusicNote),
-                    FilterItem.Special("sleep", "Sleep", Icons.Rounded.Bedtime),
-                    FilterItem.Special("sleep_long", "6-8h of sleep", Icons.Rounded.Timer),
-                    FilterItem.Special("menstruation", "Menstruation", Icons.Rounded.WaterDrop)
+                    FilterItem.Special("music", R.string.filter_music, Icons.Rounded.MusicNote),
+                    FilterItem.Special("sleep", R.string.filter_sleep, Icons.Rounded.Bedtime),
+                    FilterItem.Special("sleep_long", R.string.filter_sleep_six_to_eight_hours, Icons.Rounded.Timer),
+                    FilterItem.Special("menstruation", R.string.filter_menstruation, Icons.Rounded.WaterDrop)
                 )
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
@@ -217,7 +219,7 @@ fun FilterScreen(
                 shape = RoundedCornerShape(16.dp),
                 elevation = ButtonDefaults.buttonElevation(0.dp)
             ) {
-                Text("Reset", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.filter_reset), fontWeight = FontWeight.Bold)
             }
             Button(
                 onClick = { onSeeResults(selectedItem) },
@@ -229,7 +231,7 @@ fun FilterScreen(
                 shape = RoundedCornerShape(16.dp),
                 elevation = ButtonDefaults.buttonElevation(0.dp)
             ) {
-                Text("See results", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.filter_see_results), fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -295,7 +297,7 @@ fun SelectedItemDisplay(item: FilterItem, themeType: com.diary.moonpage.core.the
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
-            Text(item.name, color = textColor, fontWeight = FontWeight.Bold)
+            Text(stringResource(item.nameRes), color = textColor, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -387,12 +389,12 @@ fun SpecialFilterItem(
     ) {
         Icon(
             item.icon,
-            contentDescription = item.name,
+            contentDescription = stringResource(item.nameRes),
             tint = if (isActuallyDark && isSelected) Color.White else iconTint,
             modifier = Modifier.size(20.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
-        Text(item.name, color = if (isActuallyDark && isSelected) Color.White else textTint, fontWeight = FontWeight.Medium, fontSize = 14.sp)
+        Text(stringResource(item.nameRes), color = if (isActuallyDark && isSelected) Color.White else textTint, fontWeight = FontWeight.Medium, fontSize = 14.sp)
     }
 }
 

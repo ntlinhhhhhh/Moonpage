@@ -9,8 +9,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.diary.moonpage.R
 
 /**
  * Stateful Component
@@ -41,10 +43,10 @@ fun DailyPhotoScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onNavigateBack) {
-                    Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back")
+                    Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = stringResource(R.string.back))
                 }
                 Text(
-                    "Today's Photo",
+                    stringResource(R.string.daily_photo_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -60,7 +62,7 @@ fun DailyPhotoScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text("Daily Photo Screen", style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(R.string.daily_photo_placeholder), style = MaterialTheme.typography.bodyLarge)
         }
     }
 }

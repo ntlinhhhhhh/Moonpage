@@ -115,7 +115,7 @@ fun CalendarTopBar(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Rounded.LocalFireDepartment,
-                        contentDescription = "Streak",
+                        contentDescription = stringResource(R.string.calendar_streak),
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(28.dp)
                     )
@@ -155,7 +155,7 @@ fun CalendarTopBar(
             ) {
                 Icon(
                     imageVector = if (viewMode == CalendarViewMode.CALENDAR) Icons.Rounded.ViewHeadline else Icons.Rounded.CalendarMonth,
-                    contentDescription = "Switch View",
+                    contentDescription = stringResource(R.string.calendar_switch_view),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(28.dp)
                 )
@@ -493,7 +493,7 @@ fun DayDetailArea(
                             val mins = ((sleepHours - hrs) * 60).toInt()
                             if (mins == 0) "${hrs}h" else "${hrs}h ${mins}m"
                         } else {
-                            "No data"
+                            stringResource(R.string.no_data)
                         }
                         Text(sleepText, color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
                     }
@@ -512,7 +512,7 @@ fun DayDetailArea(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Rounded.DirectionsWalk, contentDescription = null, tint = Color(0xFF64B5F6), modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(12.dp))
-                            Text(String.format(Locale.ENGLISH, "%,d steps", steps), color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
+                            Text(stringResource(R.string.calendar_steps_count, steps), color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
                         }
                     }
                 }

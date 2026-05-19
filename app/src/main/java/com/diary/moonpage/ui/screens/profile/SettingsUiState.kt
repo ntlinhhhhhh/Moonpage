@@ -14,5 +14,6 @@ data class SettingsUiState(
     val isPasswordConfirmationDialogShown: Boolean = false,
     val isLoading: Boolean = false,
     val authProvider: String = "Password",
-    val error: String? = null
+    val error: String? = null,
+    val errorResId: Int? = null
 )

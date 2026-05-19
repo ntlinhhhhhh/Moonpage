@@ -16,7 +16,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,7 +51,7 @@ fun StoreRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
+    val themeUpdatedMessage = stringResource(R.string.theme_updated_success)
 
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
@@ -61,7 +60,7 @@ fun StoreRoute(
                     snackbarHostState.showSnackbar(effect.message)
                 }
                 is StoreUiEffect.ThemeActivated -> {
-                    val msg = effect.message ?: context.getString(R.string.theme_updated_success)
+                    val msg = effect.message ?: themeUpdatedMessage
                     snackbarHostState.showSnackbar(msg)
                 }
                 is StoreUiEffect.NavigateBack -> {
@@ -200,14 +199,14 @@ fun StoreScreen(
             
             if (uiState.showPurchaseSuccessDialog && (uiState.purchasedTheme != null || uiState.freezePurchaseSuccess)) {
                 PurchaseSuccessDialog(
-                    themeName = if (uiState.freezePurchaseSuccess) "Streak Freeze" else uiState.purchasedTheme?.name ?: "",
+                    themeName = if (uiState.freezePurchaseSuccess) stringResource(R.string.streak_freeze) else uiState.purchasedTheme?.name ?: "",
                     onDismiss = onDismissDialog
                 )
             }
 
             if (uiState.showRecoverySuccessDialog) {
                 RecoverySuccessDialog(
-                    message = uiState.recoveryMessage,
+                    message = uiState.recoveryMessageRes?.let { stringResource(it) }.orEmpty(),
                     onDismiss = onDismissDialog
                 )
             }
@@ -239,7 +238,7 @@ fun RecoverySuccessDialog(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
-                    text = "Success!",
+                    text = stringResource(R.string.success),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -260,7 +259,7 @@ fun RecoverySuccessDialog(
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    Text("Great!")
+                    Text(stringResource(R.string.great))
                 }
             }
         }
@@ -292,7 +291,7 @@ fun ConfirmFreezePurchaseDialog(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
-                    text = "Get Streak Freeze",
+                    text = stringResource(R.string.store_get_streak_freeze),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
@@ -301,7 +300,7 @@ fun ConfirmFreezePurchaseDialog(
                 Spacer(modifier = Modifier.height(12.dp))
                 
                 Text(
-                    text = "A Streak Freeze protects your daily progress. If you forget to log your day, a freeze will be used automatically to keep your streak alive!",
+                    text = stringResource(R.string.store_streak_freeze_purchase_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colorScheme.onSurface.copy(alpha = 0.7f),
                     textAlign = TextAlign.Center
@@ -330,7 +329,7 @@ fun ConfirmFreezePurchaseDialog(
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(14.dp)
                     ) {
-                        Text("Buy for 200")
+                        Text(stringResource(R.string.store_buy_for_200))
                     }
                 }
             }
@@ -373,11 +372,11 @@ fun FreezePurchaseItem(
             
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Streak Freeze",
+                    text = stringResource(R.string.streak_freeze),
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                 )
                 Text(
-                    text = "Protect your streak if you miss a day.",
+                    text = stringResource(R.string.streak_freeze_store_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = colorScheme.onSurface.copy(alpha = 0.6f)
                 )
@@ -476,12 +475,12 @@ fun StreakFreezeTabContent(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "You have $freezeCount Freezes",
+                        text = stringResource(R.string.store_freeze_count, freezeCount),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Use them to protect or recover your streak",
+                        text = stringResource(R.string.store_freeze_count_desc),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colorScheme.onSurface.copy(alpha = 0.6f)
                     )
@@ -495,7 +494,7 @@ fun StreakFreezeTabContent(
         }
 
         item {
-            SectionTitle("Recover Streak")
+            SectionTitle(stringResource(R.string.store_recover_streak))
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
@@ -503,12 +502,12 @@ fun StreakFreezeTabContent(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Manually Recover",
+                        text = stringResource(R.string.store_manual_recover),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "If your streak was broken yesterday and you have a freeze, you can manually restore it.",
+                        text = stringResource(R.string.store_manual_recover_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = colorScheme.onSurface.copy(alpha = 0.6f)
                     )
@@ -519,7 +518,7 @@ fun StreakFreezeTabContent(
                         shape = RoundedCornerShape(12.dp),
                         enabled = freezeCount > 0
                     ) {
-                        Text("Use 1 Freeze to Recover")
+                        Text(stringResource(R.string.store_use_freeze_to_recover))
                     }
                 }
             }
@@ -529,23 +528,23 @@ fun StreakFreezeTabContent(
             SectionTitle(stringResource(R.string.how_it_works))
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 HelpInfoItem(
-                    title = "Automatic Protection",
+                    title = stringResource(R.string.store_automatic_protection),
                     description = stringResource(R.string.streak_freeze_desc),
                     icon = Icons.Rounded.Snowboarding
                 )
                 HelpInfoItem(
-                    title = "Manual Recovery",
-                    description = "If you missed multiple days, use the manual recovery button to restore your longest possible streak.",
+                    title = stringResource(R.string.store_manual_recovery),
+                    description = stringResource(R.string.store_manual_recovery_desc),
                     icon = Icons.Rounded.Whatshot
                 )
                 HelpInfoItem(
-                    title = "Applying Themes",
-                    description = "Go to 'My Theme' tab, tap on any owned theme, and click 'Apply' to change your app's appearance.",
+                    title = stringResource(R.string.store_applying_themes),
+                    description = stringResource(R.string.store_applying_themes_desc),
                     icon = Icons.Rounded.GridView
                 )
                 HelpInfoItem(
-                    title = "Icon Packs",
-                    description = "Some themes include custom icons. These are automatically applied when you activate the theme.",
+                    title = stringResource(R.string.store_icon_packs),
+                    description = stringResource(R.string.store_icon_packs_desc),
                     icon = Icons.Rounded.AcUnit
                 )
             }

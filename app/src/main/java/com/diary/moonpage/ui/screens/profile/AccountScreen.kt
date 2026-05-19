@@ -458,6 +458,7 @@ fun AccountScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
+            val userIdCopiedMessage = stringResource(R.string.user_id_copied)
             AccountInfoRow(
                 label = stringResource(R.string.user_id),
                 value = userIdFull,
@@ -468,7 +469,7 @@ fun AccountScreen(
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     clipboardManager.setText(AnnotatedString(userIdFull))
                     coroutineScope.launch {
-                        snackbarHostState.showSnackbar(context.getString(R.string.user_id_copied))
+                        snackbarHostState.showSnackbar(userIdCopiedMessage)
                     }
                 }
             )

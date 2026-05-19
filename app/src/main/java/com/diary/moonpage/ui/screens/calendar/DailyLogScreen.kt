@@ -435,7 +435,7 @@ private fun DailyLogTopBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBackClick) {
-                Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface)
+                Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = stringResource(R.string.back), tint = MaterialTheme.colorScheme.onSurface)
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -457,7 +457,7 @@ private fun DailyLogTopBar(
                 Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             }
             IconButton(onClick = {}) {
-                Icon(Icons.Rounded.Settings, contentDescription = "Settings", tint = MaterialTheme.colorScheme.onSurface)
+                Icon(Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings), tint = MaterialTheme.colorScheme.onSurface)
             }
         }
     }
@@ -499,7 +499,7 @@ private fun DailyLogBottomBar(
                 if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 3.dp)
                 } else {
-                    Text("Done", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(stringResource(R.string.done), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             }
         }
@@ -520,6 +520,7 @@ private fun DailyLogMainContent(
     onPhotoZoomRequest: (String) -> Unit
 ) {
     val themeType = uiState.themeType
+    val unknownArtist = stringResource(R.string.daily_log_unknown_artist)
 
     val activitiesByCategory = remember(uiState.dynamicActivities) {
         uiState.dynamicActivities.groupBy {
@@ -648,7 +649,7 @@ private fun DailyLogMainContent(
                 onTrackSelected = { track ->
                     onEvent(DailyLogUiEvent.OnMusicSelected(
                         title = track.name,
-                        artist = track.artists.firstOrNull()?.name ?: "Unknown",
+                        artist = track.artists.firstOrNull()?.name ?: unknownArtist,
                         imageUrl = track.album.images.firstOrNull()?.url ?: ""
                     ))
                 }
@@ -764,7 +765,7 @@ private fun DailyMoodSection(
                 }
             }
 
-            Text("How was your day?", color = MoonTheme.customColors.logCardOnBg, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
+        Text(stringResource(R.string.daily_log_how_was_your_day), color = MoonTheme.customColors.logCardOnBg, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 16.dp))
             Row(
                 modifier = Modifier.fillMaxWidth().tutorialTarget(TutorialStep.HighlightMoodSelection), 
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -813,13 +814,15 @@ private fun DailyMusicSection(
     onLinkAccount: () -> Unit,
     onTrackSelected: (com.diary.moonpage.data.remote.api.SpotifyTrack) -> Unit
 ) {
+    val unknownArtist = stringResource(R.string.daily_log_unknown_artist)
+
     Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Music", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 16.sp)
+                Text(stringResource(R.string.daily_log_music_title), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 16.sp)
                 if (!isLinked) {
                     Text(
-                        "Link account", 
+                        stringResource(R.string.daily_log_link_account),
                         fontSize = 11.sp, 
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.clickable(
@@ -831,7 +834,7 @@ private fun DailyMusicSection(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Rounded.CheckCircle, null, tint = MoonTheme.customColors.successColor, modifier = Modifier.size(14.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Spotify Linked", fontSize = 11.sp, color = MoonTheme.customColors.successColor)
+                        Text(stringResource(R.string.daily_log_spotify_linked), fontSize = 11.sp, color = MoonTheme.customColors.successColor)
                     }
                 }
             }
@@ -859,7 +862,7 @@ private fun DailyMusicSection(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(musicTitle, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, maxLines = 1)
-                            Text(artistName ?: "Unknown Artist", fontSize = 12.sp, color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.6f), maxLines = 1)
+                            Text(artistName ?: unknownArtist, fontSize = 12.sp, color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.6f), maxLines = 1)
                         }
                         Icon(Icons.Rounded.MusicNote, null, tint = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.4f))
                     }
@@ -871,14 +874,14 @@ private fun DailyMusicSection(
                     ) {
                         Icon(Icons.Rounded.MusicNote, contentDescription = null, modifier = Modifier.size(20.dp), tint = MoonTheme.customColors.logCardOnBg)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Add a song", fontSize = 14.sp, color = MoonTheme.customColors.logCardOnBg)
+                        Text(stringResource(R.string.daily_log_add_song), fontSize = 14.sp, color = MoonTheme.customColors.logCardOnBg)
                     }
                 }
             }
 
             if (musicTitle == null && recentTracks.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(16.dp))
-                Text("Recently Played", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), modifier = Modifier.padding(bottom = 8.dp))
+                Text(stringResource(R.string.daily_log_recently_played), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), modifier = Modifier.padding(bottom = 8.dp))
                 androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(recentTracks) { track ->
                         Card(
@@ -1049,12 +1052,12 @@ private fun DailyHealthSection(steps: Int, calories: Int, distance: Double, isIm
     Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Health & Steps", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 16.sp)
+                Text(stringResource(R.string.daily_log_health_steps), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 16.sp)
                 if (isImporting) {
                     CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                 } else {
                     Text(
-                        "Import",
+                        stringResource(R.string.daily_log_import),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.clickable(
@@ -1069,21 +1072,21 @@ private fun DailyHealthSection(steps: Int, calories: Int, distance: Double, isIm
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 HealthStatItem(
                     modifier = Modifier.weight(1f),
-                    label = "Steps",
+                    label = stringResource(R.string.steps),
                     value = steps.toString(),
                     icon = Icons.AutoMirrored.Rounded.DirectionsWalk,
                     color = Color(0xFF66BB6A)
                 )
                 HealthStatItem(
                     modifier = Modifier.weight(1f),
-                    label = "Calories",
+                    label = stringResource(R.string.calories),
                     value = calories.toString(),
                     icon = Icons.Rounded.LocalFireDepartment,
                     color = Color(0xFFEF5350)
                 )
                 HealthStatItem(
                     modifier = Modifier.weight(1f),
-                    label = "Distance",
+                    label = stringResource(R.string.distance),
                     value = String.format(LocalLocale.current.platformLocale, "%.1f km", distance),
                     icon = Icons.Rounded.Route,
                     color = Color(0xFF42A5F5)
@@ -1113,12 +1116,12 @@ private fun DailySleepSection(
     ) {      
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Sleep", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
+                Text(stringResource(R.string.sleep_label), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
                 if (isImporting) {
                     CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                 } else {
                     Text(
-                        "Import",
+                        stringResource(R.string.daily_log_import),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.clickable(
@@ -1153,7 +1156,7 @@ private fun DailySleepSection(
                             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
                         )
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text("Record sleep", color = MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
+                        Text(stringResource(R.string.daily_log_record_sleep), color = MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
                     }
                 } else {
                     Row(
@@ -1169,7 +1172,7 @@ private fun DailySleepSection(
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(0.25f)) {
                             Text(bedTime.format(fmt), fontWeight = FontWeight.Bold, color = if (sleepHours > 0) MaterialTheme.colorScheme.primary else MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
-                            Text("Went to bed", color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
+                            Text(stringResource(R.string.daily_log_went_to_bed), color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
                         }
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(0.26f)) {
@@ -1179,12 +1182,12 @@ private fun DailySleepSection(
                                 color = MaterialTheme.colorScheme.primary,
                                 fontSize = 16.sp
                             )
-                            Text("Asleep", color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
+                            Text(stringResource(R.string.daily_log_asleep), color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
                         }
 
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(0.25f)) {
                             Text(wakeTime.format(fmt), fontWeight = FontWeight.Bold, color = if (sleepHours > 0) MaterialTheme.colorScheme.primary else MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
-                            Text("Woke up", color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
+                            Text(stringResource(R.string.daily_log_woke_up), color = if (sleepHours > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 10.sp)
                         }
 
                         Icon(
@@ -1227,7 +1230,7 @@ private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean
         ) { onMenstrualClick() }
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Menstruation", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
+            Text(stringResource(R.string.daily_log_menstruation), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
             Spacer(modifier = Modifier.height(16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.CenterVertically) {
                 repeat(5) { i ->
@@ -1262,7 +1265,7 @@ private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Rounded.WaterDrop, contentDescription = null, modifier = Modifier.size(14.dp), tint = MoonTheme.customColors.logCardOnBg)
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Menstrual tracking enabled", fontSize = 12.sp, color = MoonTheme.customColors.logCardOnBg)
+                Text(stringResource(R.string.daily_log_menstrual_tracking_enabled), fontSize = 12.sp, color = MoonTheme.customColors.logCardOnBg)
             }
         }
     }
@@ -1272,12 +1275,12 @@ private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean
 private fun DailyNoteSection(noteText: String, onNoteChanged: (String) -> Unit) {
     Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {      
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Today's note", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
+            Text(stringResource(R.string.daily_log_todays_note), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
             Spacer(modifier = Modifier.height(12.dp))
             Surface(color = MoonTheme.customColors.logItemBg, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = noteText, onValueChange = onNoteChanged, modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
-                    placeholder = { Text("Write here...", color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 14.sp) },
+                    placeholder = { Text(stringResource(R.string.daily_log_note_placeholder), color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 14.sp) },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent,
@@ -1305,7 +1308,7 @@ private fun DailyPhotoSection(
     val allPhotos = (logPhotos + momentPhotos).distinct()
     Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Today's photo", fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
+            Text(stringResource(R.string.daily_log_todays_photo), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
             Spacer(modifier = Modifier.height(12.dp))
             
             if (allPhotos.isEmpty()) {
@@ -1320,7 +1323,7 @@ private fun DailyPhotoSection(
                     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Rounded.CameraAlt, contentDescription = null, modifier = Modifier.size(48.dp), tint = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.4f)) 
                         Spacer(modifier = Modifier.height(12.dp))
-                        Text("Select photos", color = MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
+                        Text(stringResource(R.string.daily_log_select_photos), color = MoonTheme.customColors.logCardOnBg, fontSize = 14.sp)
                     }
                 }
             } else {
@@ -1366,7 +1369,7 @@ private fun DailyPhotoSection(
                                 ) {
                                     Icon(
                                         Icons.Rounded.Close,
-                                        contentDescription = "Remove",
+                                        contentDescription = stringResource(R.string.daily_log_remove_photo),
                                         tint = Color.White,
                                         modifier = Modifier.padding(4.dp)
                                     )
@@ -1383,7 +1386,7 @@ private fun DailyPhotoSection(
                                 ) {
                                     Icon(
                                         Icons.Rounded.AutoAwesome,
-                                        contentDescription = "Moment",
+                                        contentDescription = stringResource(R.string.calendar_moment_photo),
                                         tint = Color.White,
                                         modifier = Modifier.padding(3.dp)
                                     )
@@ -1754,7 +1757,7 @@ fun SpotifyAuthDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
                         shape = RoundedCornerShape(14.dp),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
                     ) {
-                        Text("Allow Access", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(R.string.allow_access), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyLarge)
                     }
                 }
             }

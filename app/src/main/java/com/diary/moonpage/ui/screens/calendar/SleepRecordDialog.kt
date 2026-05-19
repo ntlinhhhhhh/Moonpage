@@ -17,11 +17,13 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.diary.moonpage.R
 import com.diary.moonpage.core.theme.MoonTheme
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -203,12 +205,12 @@ fun SleepRecordDialog(
                         modifier = Modifier.align(Alignment.Center),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("Time asleep", fontSize = 11.sp, color = onSurfaceColor.copy(alpha = 0.55f))
+                        Text(stringResource(R.string.sleep_record_time_asleep), fontSize = 11.sp, color = onSurfaceColor.copy(alpha = 0.55f))
                         Row(verticalAlignment = Alignment.Bottom) {
                             Text("$sleepH", fontSize = 34.sp, fontWeight = FontWeight.Bold, color = onSurfaceColor)
-                            Text(" h ", fontSize = 13.sp, color = onSurfaceColor.copy(alpha = 0.65f))
+                            Text(stringResource(R.string.sleep_record_hours_unit), fontSize = 13.sp, color = onSurfaceColor.copy(alpha = 0.65f))
                             Text("$sleepM", fontSize = 34.sp, fontWeight = FontWeight.Bold, color = onSurfaceColor)
-                            Text(" m", fontSize = 13.sp, color = onSurfaceColor.copy(alpha = 0.65f))
+                            Text(stringResource(R.string.sleep_record_minutes_unit), fontSize = 13.sp, color = onSurfaceColor.copy(alpha = 0.65f))
                         }
                     }
 
@@ -261,7 +263,7 @@ fun SleepRecordDialog(
                             )
                         }
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("Went to bed", fontSize = 11.sp, color = onSurfaceColor.copy(alpha = 0.6f))
+                        Text(stringResource(R.string.daily_log_went_to_bed), fontSize = 11.sp, color = onSurfaceColor.copy(alpha = 0.6f))
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Surface(
@@ -277,7 +279,7 @@ fun SleepRecordDialog(
                             )
                         }
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("Woke up", fontSize = 11.sp, color = onSurfaceColor.copy(alpha = 0.6f))
+                        Text(stringResource(R.string.daily_log_woke_up), fontSize = 11.sp, color = onSurfaceColor.copy(alpha = 0.6f))
                     }
                 }
 
@@ -297,7 +299,7 @@ fun SleepRecordDialog(
                         ),
                         shape = RoundedCornerShape(14.dp)
                     ) {
-                        Text("Cancel", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        Text(stringResource(R.string.cancel), fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     }
                     Button(
                         onClick = { onConfirm(bedTime, wakeTime) },
@@ -308,7 +310,7 @@ fun SleepRecordDialog(
                         ),
                         shape = RoundedCornerShape(14.dp)
                     ) {
-                        Text("OK", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        Text(stringResource(R.string.ok), fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     }
                 }
             }

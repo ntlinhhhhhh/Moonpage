@@ -41,6 +41,7 @@ fun SettingsRoute(
 
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
+    val passwordChangedMessage = stringResource(R.string.password_changed_successfully)
 
     SettingsScreen(
         uiState = uiState,
@@ -78,7 +79,7 @@ fun SettingsRoute(
             onConfirm = { old, new ->
                 viewModel.changePassword(old, new) {
                     showChangePasswordDialog = false
-                    android.widget.Toast.makeText(context, "Password changed successfully", android.widget.Toast.LENGTH_SHORT).show()
+                    android.widget.Toast.makeText(context, passwordChangedMessage, android.widget.Toast.LENGTH_SHORT).show()
                 }
             }
         )
@@ -115,9 +116,12 @@ fun SettingsRoute(
                         } catch (e: androidx.credentials.exceptions.GetCredentialCancellationException) {
                             // User cancelled
                         } catch (e: androidx.credentials.exceptions.NoCredentialException) {
-                            viewModel.setError("Please sign in to a Google account to confirm account deletion.")
+                            viewModel.setErrorRes(R.string.google_confirmation_required)
                         } catch (e: Exception) {
-                            viewModel.setError(e.message ?: "Google confirmation failed.")
+                            viewModel.setError(e.message ?: "")
+                            if (e.message == null) {
+                                viewModel.setErrorRes(R.string.google_confirmation_failed)
+                            }
                         }
                     }
                 }
@@ -138,6 +142,14 @@ fun SettingsRoute(
 
     uiState.error?.let { error ->
         LaunchedEffect(error) {
+            android.widget.Toast.makeText(context, error, android.widget.Toast.LENGTH_LONG).show()
+            viewModel.clearError()
+        }
+    }
+
+    uiState.errorResId?.let { errorResId ->
+        val error = stringResource(errorResId)
+        LaunchedEffect(errorResId) {
             android.widget.Toast.makeText(context, error, android.widget.Toast.LENGTH_LONG).show()
             viewModel.clearError()
         }

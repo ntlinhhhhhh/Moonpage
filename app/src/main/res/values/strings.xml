@@ -2,11 +2,20 @@
     <string name="app_name">Moon Page</string>
     <string name="widget_description">Open Moon Page diary</string>
     <string name="widget_subtitle">Tap to write your diary today.</string>
+    <string name="widgets_moonpage_title">MoonPage Widgets</string>
+    <string name="widgets_moonpage_desc">Access your diary and track your mood directly from your home screen.</string>
+    <string name="widgets_instruction_1">Long press on an empty space on your home screen.</string>
+    <string name="widgets_instruction_2">Select Widgets from the menu.</string>
+    <string name="widgets_instruction_3">Find MoonPage and choose your favorite widget style.</string>
+    <string name="widgets_instruction_4">Drag it to your home screen and enjoy!</string>
+    <string name="got_it">Got it</string>
     <string name="google_web_client_id">511455154390-m8jmplb158akjj874288pipkt3emset0.apps.googleusercontent.com</string>
 
     <!-- Common -->
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
+    <string name="success">Success!</string>
+    <string name="great">Great!</string>
 
     <!-- Validation Errors -->
     <string name="error_email_empty">Email cannot be empty.</string>
@@ -17,6 +26,12 @@
     <string name="error_username_empty">Username cannot be empty.</string>
     <string name="error_unknown">An unknown error occurred.</string>
     <string name="error_connection">Connection error.</string>
+    <string name="biometric_not_supported">Biometric authentication is not supported or not set up.</string>
+    <string name="incorrect_password">Incorrect password.</string>
+    <string name="google_confirmation_failed">Google confirmation failed.</string>
+    <string name="google_confirmation_required">Please sign in to a Google account to confirm account deletion.</string>
+    <string name="account_cleanup_failed">Account deleted on server, but local cleanup failed.</string>
+    <string name="delete_account_failed">Failed to delete account.</string>
 
     <!-- Moment -->
     <string name="moment_upload_success">Moment uploaded successfully!</string>
@@ -58,6 +73,14 @@
     <string name="theme_store">Theme Store</string>
     <string name="widgets">Widgets</string>
     <string name="invite_friends">Invite Friends</string>
+    <string name="invite_share_joy_title">Share the Joy of Journaling</string>
+    <string name="invite_share_joy_desc">Invite your friends to MoonPage and help them start their mindfulness journey. Share your unique referral code below!</string>
+    <string name="invite_referral_code_label">YOUR REFERRAL CODE</string>
+    <string name="invite_referral_copied">Referral code copied to clipboard!</string>
+    <string name="invite_share_subject">Join me on MoonPage!</string>
+    <string name="invite_share_text">Hey! I am using MoonPage to track my moods and write my diary. Join me and use my referral code: %1$s. Download now: https://moonpage.diary/invite</string>
+    <string name="invite_share_chooser_title">Share Invitation</string>
+    <string name="invite_share_invitation">Share Invitation</string>
     <string name="logout">Logout</string>
     <string name="log_out">Log out</string>
     <string name="logout_confirmation">Are you sure you want to log out?</string>
@@ -105,6 +128,16 @@
     <string name="trends">Trends</string>
     <string name="yearly_cycle_trends">Yearly Cycle Trends</string>
     <string name="yearly_sleep_trends">Yearly Sleep Trends</string>
+    <string name="stats_activities_habits">Activities &amp; Habits</string>
+    <string name="stats_sleep_health">Sleep &amp; Health</string>
+    <string name="stats_mood_analysis">Mood Analysis</string>
+    <string name="mood_flow_cycle">Mood Flow &amp; Cycle</string>
+    <string name="stats_insights_title">Insights ✨</string>
+    <string name="stats_no_music_data">No music data yet</string>
+    <string name="stats_music_log_hint">Log music when writing your diary to see it here.</string>
+    <string name="stats_most_listened">Most listened</string>
+    <string name="stats_music_times">%1$d times</string>
+    <string name="stats_all_songs_count">All songs (%1$d)</string>
 
     <!-- Filter -->
     <string name="filter_title">Filter Your Month</string>
@@ -212,6 +245,10 @@
     <string name="current_streak">Current Streak</string>
     <string name="longest_streak">Longest Streak</string>
     <string name="how_it_works">How it works</string>
+    <string name="streak_total_days">Total Days</string>
+    <string name="streak_what_is_title">What is a Streak?</string>
+    <string name="streak_where_to_get_freezes">Where to get Freezes?</string>
+    <string name="streak_where_to_get_freezes_desc">You can purchase Streak Freezes in the Store using your Beans. Keep a few in stock for those extra busy days!</string>
     <string name="streak_info_desc">Your streak increases every day you record your mood and activities. Keep it going to build a consistent journaling habit!</string>
     <string name="streak_freeze_desc">Life gets busy. A Streak Freeze protects your streak if you miss a day. It activates automatically when you forget to log.</string>
     <string name="streak_freeze_store_desc">Protect your streak if you miss a day.</string>
@@ -265,7 +302,9 @@
     <string name="sign_up_with_google">Sign up with Google</string>
     <string name="get_started">Get Started</string>
     <string name="continue_btn">Continue</string>
+    <string name="next">Next</string>
     <string name="skip">Skip</string>
+    <string name="skip_for_now">Skip for now</string>
     <string name="or_continue_with">OR CONTINUE WITH</string>
     <string name="or_sign_up_with">OR SIGN UP WITH</string>
     <string name="dont_have_account">Don\'t have an account? </string>
@@ -293,6 +332,34 @@
     <string name="daily_reflection_title">Daily Reflection</string>
     <string name="reminder_question">What time should we remind you\nto write down your day?</string>
     <string name="finish_onboarding">Finish Onboarding</string>
+    <string name="activity_category_hobbies">Hobbies</string>
+    <string name="activity_category_hobbies_subtitle">exercise, movie, reading, ...</string>
+    <string name="activity_category_emotions">Emotions</string>
+    <string name="activity_category_emotions_subtitle">happy, proud, anxious, ...</string>
+    <string name="activity_category_meals">Meals</string>
+    <string name="activity_category_meals_subtitle">breakfast, lunch, dinner, ...</string>
+    <string name="activity_category_self_care">Self-Care</string>
+    <string name="activity_category_self_care_subtitle">shower, brush teeth, ...</string>
+    <string name="activity_category_chores">Chores</string>
+    <string name="activity_category_chores_subtitle">cleaning, laundry, dishes, ...</string>
+    <string name="activity_category_events">Events</string>
+    <string name="activity_category_events_subtitle">stay home, cafe, travel, ...</string>
+    <string name="activity_category_people">People</string>
+    <string name="activity_category_people_subtitle">friends, family, partner, ...</string>
+    <string name="activity_category_beauty">Beauty</string>
+    <string name="activity_category_beauty_subtitle">hair, nails, skincare, ...</string>
+    <string name="activity_category_weather">Weather</string>
+    <string name="activity_category_weather_subtitle">sunny, cloudy, rainy, ...</string>
+    <string name="activity_category_health">Health</string>
+    <string name="activity_category_health_subtitle">sick, hospital, medicine, ...</string>
+    <string name="activity_category_work">Work</string>
+    <string name="activity_category_work_subtitle">overtime, vacation, ...</string>
+    <string name="activity_category_other">Other</string>
+    <string name="activity_category_other_subtitle">snack, coffee, tea, ...</string>
+    <string name="activity_category_school">School</string>
+    <string name="activity_category_school_subtitle">class, homework, exam, ...</string>
+    <string name="activity_category_relationship">Relationship</string>
+    <string name="activity_category_relationship_subtitle">date, anniversary, gift, ...</string>
 
     <!-- Placeholders -->
     <string name="placeholder_email">Enter your email</string>
@@ -321,6 +388,68 @@
     <string name="when_did_i_record">When did I record…</string>
     <string name="feeling_mood">Feeling %1$s</string>
 
+    <string name="calendar_no_matching_entries">No matching entries</string>
+    <string name="calendar_no_entries_yet">No entries yet</string>
+    <string name="calendar_write_first_entry">Write first entry</string>
+    <string name="daily_log_how_was_your_day">How was your day?</string>
+    <string name="daily_log_music_title">Music</string>
+    <string name="daily_log_link_account">Link account</string>
+    <string name="daily_log_spotify_linked">Spotify Linked</string>
+    <string name="daily_log_unknown_artist">Unknown Artist</string>
+    <string name="daily_log_add_song">Add a song</string>
+    <string name="daily_log_recently_played">Recently Played</string>
+    <string name="daily_log_health_steps">Health &amp; Steps</string>
+    <string name="daily_log_import">Import</string>
+    <string name="daily_log_record_sleep">Record sleep</string>
+    <string name="daily_log_went_to_bed">Went to bed</string>
+    <string name="daily_log_asleep">Asleep</string>
+    <string name="daily_log_woke_up">Woke up</string>
+    <string name="daily_log_menstruation">Menstruation</string>
+    <string name="daily_log_menstrual_tracking_enabled">Menstrual tracking enabled</string>
+    <string name="daily_log_todays_note">Today\'s note</string>
+    <string name="daily_log_note_placeholder">Write here...</string>
+    <string name="daily_log_todays_photo">Today\'s photo</string>
+    <string name="daily_log_select_photos">Select photos</string>
+    <string name="daily_log_remove_photo">Remove photo</string>
+    <string name="allow_access">Allow Access</string>
+    <string name="calendar_steps_count">%1$,d steps</string>
+    <string name="calendar_streak">Streak</string>
+    <string name="calendar_switch_view">Switch view</string>
+    <string name="calendar_moment_photo">Moment photo</string>
+    <string name="filter_mood">Mood</string>
+    <string name="filter_activities">Activities</string>
+    <string name="filter_special">Special</string>
+    <string name="filter_music">Music</string>
+    <string name="filter_sleep">Sleep</string>
+    <string name="filter_sleep_six_to_eight_hours">6-8h of sleep</string>
+    <string name="filter_menstruation">Menstruation</string>
+    <string name="filter_reset">Reset</string>
+    <string name="filter_see_results">See results</string>
+    <string name="sleep_record_time_asleep">Time asleep</string>
+    <string name="sleep_record_hours_unit"> h </string>
+    <string name="sleep_record_minutes_unit"> m</string>
+    <string name="music_select_title">Select Music</string>
+    <string name="music_search_placeholder">Search songs or artists...</string>
+    <string name="music_connect_spotify">Connect Spotify</string>
+    <string name="music_connect_spotify_desc">Link your account to search and add music to your logs.</string>
+    <string name="music_link_spotify">Link Spotify</string>
+    <string name="music_no_songs_found">No songs found</string>
+    <string name="share_log_title">Share Log</string>
+    <string name="share_calendar_title">Share</string>
+    <string name="share_saved_to_gallery">Saved to gallery!</string>
+    <string name="share_save_failed">Save failed: %1$s</string>
+    <string name="share_failed">Share failed: %1$s</string>
+    <string name="share_calendar_image_title">My Moon Calendar</string>
+    <string name="share_log_image_title">My Mood Page</string>
+    <string name="share_download">Download</string>
+    <string name="share_ratio">Ratio</string>
+    <string name="share_log_footer">MoonPage Daily Log</string>
+    <string name="share_log_reference">REF: %1$d</string>
+    <string name="daily_photo_title">Today\'s Photo</string>
+    <string name="daily_photo_placeholder">Daily Photo Screen</string>
+    <string name="menstrual_cycle_title">Menstrual Cycle</string>
+    <string name="menstrual_cycle_placeholder">Menstrual Cycle Tracking Screen</string>
+
     <!-- Stats -->
     <string name="overview">Overview</string>
     <string name="mood_overview">Mood Overview</string>
@@ -345,6 +474,29 @@
     <string name="applied">Applied</string>
     <string name="my_themes">My Themes</string>
     <string name="premium_themes">Premium Themes</string>
+    <string name="theme_calendar_themes_styles">Themes &amp; Styles</string>
+    <string name="theme_calendar_appearance">Appearance</string>
+    <string name="theme_calendar_classic_yellow">Classic Yellow</string>
+    <string name="theme_calendar_classic_moon_beans">Classic moon beans</string>
+    <string name="theme_calendar_custom_colored_beans">Custom colored beans</string>
+    <string name="theme_calendar_this_theme">this theme</string>
+    <string name="store_streak_recovered_success">Streak recovered successfully!</string>
+    <string name="store_get_streak_freeze">Get Streak Freeze</string>
+    <string name="store_streak_freeze_purchase_desc">A Streak Freeze protects your daily progress. If you forget to log your day, a freeze will be used automatically to keep your streak alive!</string>
+    <string name="store_buy_for_200">Buy for 200</string>
+    <string name="store_freeze_count">You have %1$d Freezes</string>
+    <string name="store_freeze_count_desc">Use them to protect or recover your streak</string>
+    <string name="store_recover_streak">Recover Streak</string>
+    <string name="store_manual_recover">Manually Recover</string>
+    <string name="store_manual_recover_desc">If your streak was broken yesterday and you have a freeze, you can manually restore it.</string>
+    <string name="store_use_freeze_to_recover">Use 1 Freeze to Recover</string>
+    <string name="store_automatic_protection">Automatic Protection</string>
+    <string name="store_manual_recovery">Manual Recovery</string>
+    <string name="store_manual_recovery_desc">If you missed multiple days, use the manual recovery button to restore your longest possible streak.</string>
+    <string name="store_applying_themes">Applying Themes</string>
+    <string name="store_applying_themes_desc">Go to the My Theme tab, tap any owned theme, and click Apply to change your app appearance.</string>
+    <string name="store_icon_packs">Icon Packs</string>
+    <string name="store_icon_packs_desc">Some themes include custom icons. These are automatically applied when you activate the theme.</string>
 
     <!-- Profile / Premium -->
     <string name="premium_upgrade_title">Upgrade to Premium</string>
@@ -356,6 +508,8 @@
     <string name="add_photo">Add Photo</string>
     <string name="no_moments_yet">No moments yet</string>
     <string name="capture_first_moment">Capture your first moment!</string>
+    <string name="gallery_photo_gallery">Photo Gallery</string>
+    <string name="gallery_capture_first_moment_hint">Capture your first moment to see it here</string>
 
     <!-- Notifications -->
     <string name="no_notifications">No notifications yet</string>

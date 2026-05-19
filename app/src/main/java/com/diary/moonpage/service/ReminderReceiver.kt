@@ -34,12 +34,16 @@ class ReminderReceiver : BroadcastReceiver() {
     lateinit var notificationRepository: com.diary.moonpage.domain.repository.NotificationRepository
 
     override fun onReceive(context: Context, intent: Intent) {
-        val title = context.getString(R.string.noti_reminder_title)
-        val body = context.getString(R.string.noti_reminder_body)
+        val language = context
+            .getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
+            .getString("language", "en") ?: "en"
+        val localizedContext = LocaleUtils.applyLocale(context, language)
+        val title = localizedContext.getString(R.string.noti_reminder_title)
+        val body = localizedContext.getString(R.string.noti_reminder_body)
         val type = "REMINDER"
 
         // Show the system tray notification
-        showNotification(context, title, body)
+        showNotification(localizedContext, title, body)
 
         // Process in-app logic
         CoroutineScope(Dispatchers.IO).launch {

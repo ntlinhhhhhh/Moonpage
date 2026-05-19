@@ -1,5 +1,14 @@
 <resources>
     <string name="app_name">Moon Page</string>
+    <string name="widget_description">Mở nhật ký Moon Page</string>
+    <string name="widget_subtitle">Nhấn để viết nhật ký hôm nay.</string>
+    <string name="widgets_moonpage_title">Tiện ích MoonPage</string>
+    <string name="widgets_moonpage_desc">Truy cập nhật ký và theo dõi tâm trạng ngay từ màn hình chính.</string>
+    <string name="widgets_instruction_1">Nhấn giữ vào khoảng trống trên màn hình chính.</string>
+    <string name="widgets_instruction_2">Chọn Tiện ích trong menu.</string>
+    <string name="widgets_instruction_3">Tìm MoonPage và chọn kiểu tiện ích bạn thích.</string>
+    <string name="widgets_instruction_4">Kéo tiện ích ra màn hình chính và tận hưởng!</string>
+    <string name="got_it">Đã hiểu</string>
     <string name="google_web_client_id">511455154390-m8jmplb158akjj874288pipkt3emset0.apps.googleusercontent.com</string>
 
     <!-- Validation Errors -->
@@ -11,6 +20,12 @@
     <string name="error_username_empty">Tên người dùng không được để trống.</string>
     <string name="error_unknown">Đã xảy ra lỗi không xác định.</string>
     <string name="error_connection">Lỗi kết nối.</string>
+    <string name="biometric_not_supported">Thiết bị không hỗ trợ sinh trắc học hoặc bạn chưa thiết lập.</string>
+    <string name="incorrect_password">Mật khẩu không đúng.</string>
+    <string name="google_confirmation_failed">Xác nhận Google thất bại.</string>
+    <string name="google_confirmation_required">Vui lòng đăng nhập vào tài khoản Google để xác nhận xóa tài khoản.</string>
+    <string name="account_cleanup_failed">Tài khoản đã được xóa trên máy chủ, nhưng không thể dọn dữ liệu cục bộ.</string>
+    <string name="delete_account_failed">Không thể xóa tài khoản.</string>
 
     <!-- Moment -->
     <string name="moment_upload_success">Tải lên khoảnh khắc thành công!</string>
@@ -39,12 +54,14 @@
     <string name="delete">Xóa</string>
     <string name="cancel">Hủy</string>
     <string name="ok">OK</string>
+    <string name="success">Thành công!</string>
+    <string name="great">Tuyệt!</string>
 
     <!-- Calendar & Stats -->
     <string name="report">Báo cáo</string>
     <string name="monthly">Hàng tháng</string>
     <string name="annual">Hàng năm</string>
-    <string name="select_date">Chọn ngày</string>
+    <string name="select_date">Chọn Tháng</string>
     <string name="select_year">Chọn năm</string>
     <string name="share">Chia sẻ</string>
     <string name="edit">Sửa</string>
@@ -54,6 +71,14 @@
     <string name="theme_store">Cửa hàng giao diện</string>
     <string name="widgets">Tiện ích</string>
     <string name="invite_friends">Mời bạn bè</string>
+    <string name="invite_share_joy_title">Chia sẻ niềm vui viết nhật ký</string>
+    <string name="invite_share_joy_desc">Mời bạn bè đến với MoonPage và giúp họ bắt đầu hành trình chăm sóc tinh thần. Chia sẻ mã giới thiệu của bạn bên dưới!</string>
+    <string name="invite_referral_code_label">MÃ GIỚI THIỆU CỦA BẠN</string>
+    <string name="invite_referral_copied">Đã sao chép mã giới thiệu!</string>
+    <string name="invite_share_subject">Tham gia MoonPage cùng tôi nhé!</string>
+    <string name="invite_share_text">Mình đang dùng MoonPage để theo dõi tâm trạng và viết nhật ký. Tham gia cùng mình và dùng mã giới thiệu: %1$s. Tải tại: https://moonpage.diary/invite</string>
+    <string name="invite_share_chooser_title">Chia sẻ lời mời</string>
+    <string name="invite_share_invitation">Chia sẻ lời mời</string>
     <string name="logout">Đăng xuất</string>
     <string name="log_out">Đăng xuất</string>
     <string name="logout_confirmation">Bạn có chắc chắn muốn đăng xuất?</string>
@@ -101,6 +126,16 @@
     <string name="trends">Xu hướng</string>
     <string name="yearly_cycle_trends">Xu hướng chu kỳ năm</string>
     <string name="yearly_sleep_trends">Xu hướng giấc ngủ năm</string>
+    <string name="stats_activities_habits">Hoạt động &amp; Thói quen</string>
+    <string name="stats_sleep_health">Giấc ngủ &amp; Sức khỏe</string>
+    <string name="stats_mood_analysis">Phân tích cảm xúc</string>
+    <string name="mood_flow_cycle">Dòng cảm xúc &amp; Chu kỳ</string>
+    <string name="stats_insights_title">Góc nhìn ✨</string>
+    <string name="stats_no_music_data">Chưa có dữ liệu âm nhạc</string>
+    <string name="stats_music_log_hint">Ghi lại bài nhạc bạn nghe khi viết nhật ký để xem tại đây.</string>
+    <string name="stats_most_listened">Nghe nhiều nhất</string>
+    <string name="stats_music_times">%1$d lần</string>
+    <string name="stats_all_songs_count">Tất cả bài hát (%1$d)</string>
 
     <!-- Filter -->
     <string name="filter_title">Lọc dữ liệu tháng</string>
@@ -203,6 +238,21 @@
     <string name="not_specified">Chưa xác định</string>
     <string name="current_passcode">Mã PIN hiện tại</string>
     <string name="wrong_passcode_try_again">Sai mã PIN. Vui lòng thử lại.</string>
+    <string name="confirm">Xác nhận</string>
+    <string name="streak_freeze">Đóng băng chuỗi</string>
+    <string name="streak_freezes">Đóng băng chuỗi</string>
+    <string name="streak_protection">Bảo vệ chuỗi</string>
+    <string name="current_streak">Chuỗi hiện tại</string>
+    <string name="longest_streak">Chuỗi dài nhất</string>
+    <string name="how_it_works">Cách hoạt động</string>
+    <string name="streak_total_days">Tổng số ngày</string>
+    <string name="streak_what_is_title">Chuỗi là gì?</string>
+    <string name="streak_where_to_get_freezes">Lấy đóng băng chuỗi ở đâu?</string>
+    <string name="streak_where_to_get_freezes_desc">Bạn có thể mua Đóng băng chuỗi trong Cửa hàng bằng đậu của mình. Hãy giữ sẵn vài lượt cho những ngày thật bận rộn!</string>
+    <string name="streak_info_desc">Chuỗi của bạn tăng lên mỗi ngày bạn ghi lại tâm trạng và hoạt động. Hãy duy trì thói quen viết nhật ký đều đặn!</string>
+    <string name="streak_freeze_desc">Cuộc sống đôi khi rất bận rộn. Đóng băng chuỗi sẽ bảo vệ chuỗi của bạn nếu bạn bỏ lỡ một ngày và được dùng tự động khi bạn quên ghi nhật ký.</string>
+    <string name="streak_freeze_store_desc">Bảo vệ chuỗi của bạn nếu bỏ lỡ một ngày.</string>
+    <string name="buy_for_streak_freeze">Mua với %1$s</string>
 
     <!-- Notifications & Reminders -->
     <string name="notifications">Thông báo</string>
@@ -250,7 +300,9 @@
     <string name="sign_up_with_google">Đăng ký bằng Google</string>
     <string name="get_started">Bắt đầu</string>
     <string name="continue_btn">Tiếp tục</string>
+    <string name="next">Tiếp theo</string>
     <string name="skip">Bỏ qua</string>
+    <string name="skip_for_now">Bỏ qua lúc này</string>
     <string name="or_continue_with">HOẶC TIẾP TỤC VỚI</string>
     <string name="or_sign_up_with">HOẶC ĐĂNG KÝ VỚI</string>
     <string name="dont_have_account">Chưa có tài khoản? </string>
@@ -278,6 +330,34 @@
     <string name="daily_reflection_title">Nhật ký hàng ngày</string>
     <string name="reminder_question">Mấy giờ bạn muốn chúng tôi nhắc nhở\nbạn ghi lại ngày hôm nay?</string>
     <string name="finish_onboarding">Hoàn thành cài đặt</string>
+    <string name="activity_category_hobbies">Sở thích</string>
+    <string name="activity_category_hobbies_subtitle">tập luyện, xem phim, đọc sách, ...</string>
+    <string name="activity_category_emotions">Cảm xúc</string>
+    <string name="activity_category_emotions_subtitle">vui vẻ, tự hào, lo lắng, ...</string>
+    <string name="activity_category_meals">Bữa ăn</string>
+    <string name="activity_category_meals_subtitle">bữa sáng, bữa trưa, bữa tối, ...</string>
+    <string name="activity_category_self_care">Chăm sóc bản thân</string>
+    <string name="activity_category_self_care_subtitle">tắm, đánh răng, ...</string>
+    <string name="activity_category_chores">Việc nhà</string>
+    <string name="activity_category_chores_subtitle">dọn dẹp, giặt đồ, rửa bát, ...</string>
+    <string name="activity_category_events">Sự kiện</string>
+    <string name="activity_category_events_subtitle">ở nhà, đi cafe, du lịch, ...</string>
+    <string name="activity_category_people">Mối quan hệ</string>
+    <string name="activity_category_people_subtitle">bạn bè, gia đình, người yêu, ...</string>
+    <string name="activity_category_beauty">Làm đẹp</string>
+    <string name="activity_category_beauty_subtitle">làm tóc, làm móng, chăm sóc da, ...</string>
+    <string name="activity_category_weather">Thời tiết</string>
+    <string name="activity_category_weather_subtitle">nắng, nhiều mây, mưa, ...</string>
+    <string name="activity_category_health">Sức khỏe</string>
+    <string name="activity_category_health_subtitle">ốm, bệnh viện, thuốc, ...</string>
+    <string name="activity_category_work">Công việc</string>
+    <string name="activity_category_work_subtitle">tăng ca, nghỉ phép, ...</string>
+    <string name="activity_category_other">Khác</string>
+    <string name="activity_category_other_subtitle">ăn vặt, cà phê, trà, ...</string>
+    <string name="activity_category_school">Trường học</string>
+    <string name="activity_category_school_subtitle">lớp học, bài tập, thi cử, ...</string>
+    <string name="activity_category_relationship">Tình cảm</string>
+    <string name="activity_category_relationship_subtitle">hẹn hò, kỷ niệm, quà tặng, ...</string>
 
     <!-- Placeholders -->
     <string name="placeholder_email">Nhập email của bạn</string>
@@ -306,6 +386,68 @@
     <string name="when_did_i_record">Khi nào tôi đã ghi…</string>
     <string name="feeling_mood">Cảm giác %1$s</string>
 
+    <string name="calendar_no_matching_entries">Không có mục phù hợp</string>
+    <string name="calendar_no_entries_yet">Chưa có nhật ký nào</string>
+    <string name="calendar_write_first_entry">Viết nhật ký đầu tiên</string>
+    <string name="daily_log_how_was_your_day">Hôm nay của bạn thế nào?</string>
+    <string name="daily_log_music_title">Âm nhạc</string>
+    <string name="daily_log_link_account">Liên kết tài khoản</string>
+    <string name="daily_log_spotify_linked">Đã liên kết Spotify</string>
+    <string name="daily_log_unknown_artist">Nghệ sĩ không xác định</string>
+    <string name="daily_log_add_song">Thêm bài hát</string>
+    <string name="daily_log_recently_played">Đã phát gần đây</string>
+    <string name="daily_log_health_steps">Sức khỏe &amp; bước chân</string>
+    <string name="daily_log_import">Nhập</string>
+    <string name="daily_log_record_sleep">Ghi lại giấc ngủ</string>
+    <string name="daily_log_went_to_bed">Đi ngủ</string>
+    <string name="daily_log_asleep">Thời gian ngủ</string>
+    <string name="daily_log_woke_up">Thức dậy</string>
+    <string name="daily_log_menstruation">Chu kỳ kinh nguyệt</string>
+    <string name="daily_log_menstrual_tracking_enabled">Đang bật theo dõi chu kỳ kinh nguyệt</string>
+    <string name="daily_log_todays_note">Ghi chú hôm nay</string>
+    <string name="daily_log_note_placeholder">Viết tại đây...</string>
+    <string name="daily_log_todays_photo">Ảnh hôm nay</string>
+    <string name="daily_log_select_photos">Chọn ảnh</string>
+    <string name="daily_log_remove_photo">Xóa ảnh</string>
+    <string name="allow_access">Cho phép truy cập</string>
+    <string name="calendar_steps_count">%1$,d bước</string>
+    <string name="calendar_streak">Chuỗi</string>
+    <string name="calendar_switch_view">Đổi kiểu xem</string>
+    <string name="calendar_moment_photo">Ảnh khoảnh khắc</string>
+    <string name="filter_mood">Cảm xúc</string>
+    <string name="filter_activities">Hoạt động</string>
+    <string name="filter_special">Đặc biệt</string>
+    <string name="filter_music">Âm nhạc</string>
+    <string name="filter_sleep">Giấc ngủ</string>
+    <string name="filter_sleep_six_to_eight_hours">Ngủ 6-8 giờ</string>
+    <string name="filter_menstruation">Chu kỳ kinh nguyệt</string>
+    <string name="filter_reset">Đặt lại</string>
+    <string name="filter_see_results">Xem kết quả</string>
+    <string name="sleep_record_time_asleep">Thời gian ngủ</string>
+    <string name="sleep_record_hours_unit"> giờ </string>
+    <string name="sleep_record_minutes_unit"> phút</string>
+    <string name="music_select_title">Chọn nhạc</string>
+    <string name="music_search_placeholder">Tìm bài hát hoặc nghệ sĩ...</string>
+    <string name="music_connect_spotify">Kết nối Spotify</string>
+    <string name="music_connect_spotify_desc">Liên kết tài khoản để tìm và thêm nhạc vào nhật ký.</string>
+    <string name="music_link_spotify">Liên kết Spotify</string>
+    <string name="music_no_songs_found">Không tìm thấy bài hát</string>
+    <string name="share_log_title">Chia sẻ nhật ký</string>
+    <string name="share_calendar_title">Chia sẻ</string>
+    <string name="share_saved_to_gallery">Đã lưu vào thư viện!</string>
+    <string name="share_save_failed">Lưu thất bại: %1$s</string>
+    <string name="share_failed">Chia sẻ thất bại: %1$s</string>
+    <string name="share_calendar_image_title">Lịch trăng của tôi</string>
+    <string name="share_log_image_title">Trang cảm xúc của tôi</string>
+    <string name="share_download">Tải xuống</string>
+    <string name="share_ratio">Tỷ lệ</string>
+    <string name="share_log_footer">Nhật ký hàng ngày MoonPage</string>
+    <string name="share_log_reference">Mã: %1$d</string>
+    <string name="daily_photo_title">Ảnh hôm nay</string>
+    <string name="daily_photo_placeholder">Màn hình ảnh hôm nay</string>
+    <string name="menstrual_cycle_title">Chu kỳ kinh nguyệt</string>
+    <string name="menstrual_cycle_placeholder">Màn hình theo dõi chu kỳ kinh nguyệt</string>
+
     <!-- Stats -->
     <string name="overview">Tổng quan</string>
     <string name="mood_overview">Tổng quan cảm xúc</string>
@@ -330,6 +472,29 @@
     <string name="applied">Đang dùng</string>
     <string name="my_themes">Giao diện của tôi</string>
     <string name="premium_themes">Giao diện Premium</string>
+    <string name="theme_calendar_themes_styles">Giao diện &amp; Phong cách</string>
+    <string name="theme_calendar_appearance">Hiển thị</string>
+    <string name="theme_calendar_classic_yellow">Vàng cổ điển</string>
+    <string name="theme_calendar_classic_moon_beans">Hạt trăng cổ điển</string>
+    <string name="theme_calendar_custom_colored_beans">Hạt trăng tùy chỉnh màu</string>
+    <string name="theme_calendar_this_theme">giao diện này</string>
+    <string name="store_streak_recovered_success">Đã khôi phục chuỗi thành công!</string>
+    <string name="store_get_streak_freeze">Nhận Đóng băng chuỗi</string>
+    <string name="store_streak_freeze_purchase_desc">Đóng băng chuỗi bảo vệ tiến trình hằng ngày của bạn. Nếu bạn quên ghi nhật ký, một lượt đóng băng sẽ được dùng tự động để giữ chuỗi của bạn.</string>
+    <string name="store_buy_for_200">Mua với 200</string>
+    <string name="store_freeze_count">Bạn có %1$d lượt đóng băng</string>
+    <string name="store_freeze_count_desc">Dùng chúng để bảo vệ hoặc khôi phục chuỗi của bạn</string>
+    <string name="store_recover_streak">Khôi phục chuỗi</string>
+    <string name="store_manual_recover">Khôi phục thủ công</string>
+    <string name="store_manual_recover_desc">Nếu chuỗi của bạn bị ngắt hôm qua và bạn còn lượt đóng băng, bạn có thể khôi phục thủ công.</string>
+    <string name="store_use_freeze_to_recover">Dùng 1 lượt để khôi phục</string>
+    <string name="store_automatic_protection">Bảo vệ tự động</string>
+    <string name="store_manual_recovery">Khôi phục thủ công</string>
+    <string name="store_manual_recovery_desc">Nếu bạn bỏ lỡ nhiều ngày, hãy dùng nút khôi phục thủ công để khôi phục chuỗi dài nhất có thể.</string>
+    <string name="store_applying_themes">Áp dụng giao diện</string>
+    <string name="store_applying_themes_desc">Vào tab Giao diện của tôi, chọn giao diện đã sở hữu, rồi nhấn Áp dụng để đổi diện mạo ứng dụng.</string>
+    <string name="store_icon_packs">Gói biểu tượng</string>
+    <string name="store_icon_packs_desc">Một số giao diện có biểu tượng tùy chỉnh. Chúng sẽ tự động được áp dụng khi bạn kích hoạt giao diện.</string>
 
     <!-- Profile / Premium -->
     <string name="premium_upgrade_title">Nâng cấp Premium</string>
@@ -341,6 +506,8 @@
     <string name="add_photo">Thêm ảnh</string>
     <string name="no_moments_yet">Chưa có khoảnh khắc nào</string>
     <string name="capture_first_moment">Chụp khoảnh khắc đầu tiên!</string>
+    <string name="gallery_photo_gallery">Thư viện ảnh</string>
+    <string name="gallery_capture_first_moment_hint">Chụp khoảnh khắc đầu tiên để xem tại đây</string>
 
     <!-- Notifications -->
     <string name="no_notifications">Chưa có thông báo nào</string>

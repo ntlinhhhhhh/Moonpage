@@ -10,10 +10,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.diary.moonpage.R
 import com.diary.moonpage.ui.screens.stats.components.*
 
 @Composable
@@ -37,14 +39,15 @@ fun StatsSleepDetailScreen(
 ) {
     val stats = uiState.stats
     val scrollState = rememberScrollState()
+    val backText = stringResource(R.string.back)
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Sleep & Health", fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+                title = { Text(stringResource(R.string.stats_sleep_health), fontWeight = FontWeight.Bold, fontSize = 18.sp) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back")
+                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = backText)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -78,7 +81,7 @@ fun StatsSleepDetailScreen(
                 }
 
                 // Section 2: Sleep Analysis Chart
-                StatsCard(title = "Sleep Analysis") {
+                StatsCard(title = stringResource(R.string.sleep_analysis)) {
                     SleepAnalysisChart(
                         sleepData = stats?.sleepAnalysis ?: emptyList(),
                         year = uiState.selectedYear,
@@ -89,7 +92,7 @@ fun StatsSleepDetailScreen(
                 }
 
                 // Section 3: Mood by Sleep Correlation
-                StatsCard(title = "Moods by Sleep") {
+                StatsCard(title = stringResource(R.string.moods_by_sleep)) {
                     SleepMoodCorrelationChart(
                         sleepData = stats?.sleepAnalysis ?: emptyList(),
                         themeType = uiState.themeType
