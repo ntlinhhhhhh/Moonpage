@@ -620,10 +620,9 @@ class DailyLogViewModel @Inject constructor(
                     }
                 }.onFailure { e ->
                     android.util.Log.e("WeatherFetch", "API Error", e)
-                    _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Could not update weather data automatically."))
                 }
             } else {
-                android.util.Log.w("WeatherFetch", "Location is NULL - check permissions and GPS.")
+                android.util.Log.d("WeatherFetch", "Weather auto-fill skipped: location unavailable or permission not granted.")
             }
         }
     }

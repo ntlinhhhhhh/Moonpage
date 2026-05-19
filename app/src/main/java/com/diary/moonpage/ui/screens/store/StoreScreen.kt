@@ -654,8 +654,6 @@ fun HomeTabContent(
                 item { MoonFilterChip(stringResource(R.string.all_themes), selectedCategory == "ALL") { onCategoryClick("ALL") } }
                 item { MoonFilterChip(stringResource(R.string.light_mode), selectedCategory == "LIGHT") { onCategoryClick("LIGHT") } }
                 item { MoonFilterChip(stringResource(R.string.dark_mode), selectedCategory == "DARK") { onCategoryClick("DARK") } }
-                item { MoonFilterChip(stringResource(R.string.exclusive), selectedCategory == "EXCLUSIVE") { onCategoryClick("EXCLUSIVE") } }
-                item { MoonFilterChip(stringResource(R.string.newest), selectedCategory == "NEWEST") { onCategoryClick("NEWEST") } }
             }
         }
 

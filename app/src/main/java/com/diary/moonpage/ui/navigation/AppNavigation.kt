@@ -516,8 +516,10 @@ fun AppNavigation(
                             viewModel = storeViewModel,
                             onNavigateToDetail = { navController.navigate(Screen.ThemeDetail.route) },
                             onNavigateBack = {
-                                navController.navigate(Screen.Calendar.route) {
-                                    popUpTo(0) { inclusive = true }
+                                if (!navController.popBackStack()) {
+                                    navController.navigate(Screen.Calendar.route) {
+                                        popUpTo(0) { inclusive = true }
+                                    }
                                 }
                             }
                         )
@@ -649,11 +651,7 @@ fun AppNavigation(
                     ScreenWrapper(Screen.ThemeCalendar.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         ThemeCalendarRoute(
                             onNavigateBack = { navController.popBackStack() },
-                            onActivated = {
-                                navController.navigate(Screen.Calendar.route) {
-                                    popUpTo(0) { inclusive = true }
-                                }
-                            }
+                            onActivated = { navController.popBackStack() }
                         )
                     }
                 }

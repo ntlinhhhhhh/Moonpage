@@ -21,6 +21,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.R
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * Stateful Component
@@ -33,18 +35,44 @@ fun LockRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val scope = rememberCoroutineScope()
+    val latestOnUnlockSuccess by rememberUpdatedState(onUnlockSuccess)
     var passcode by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var isBiometricPromptShowing by remember { mutableStateOf(false) }
+    var hasUnlocked by remember { mutableStateOf(false) }
 
-    val showBiometricPrompt = {
+    val showBiometricPrompt = showBiometricPrompt@{
+        val activity = context as? FragmentActivity
+        if (
+            activity == null ||
+            hasUnlocked ||
+            isBiometricPromptShowing ||
+            !uiState.isBiometricEnabled ||
+            !uiState.isBiometricAvailable
+        ) {
+            return@showBiometricPrompt
+        }
+
+        isBiometricPromptShowing = true
         val executor = ContextCompat.getMainExecutor(context)
         val biometricPrompt = BiometricPrompt(
-            context as FragmentActivity,
+            activity,
             executor,
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
-                    onUnlockSuccess()
+                    isBiometricPromptShowing = false
+                    hasUnlocked = true
+                    scope.launch {
+                        delay(250)
+                        latestOnUnlockSuccess()
+                    }
+                }
+
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    super.onAuthenticationError(errorCode, errString)
+                    isBiometricPromptShowing = false
                 }
             }
         )
@@ -63,7 +91,11 @@ fun LockRoute(
             passcode += digit
             if (passcode.length == 4) {
                 if (viewModel.verifyPasscode(passcode)) {
-                    onUnlockSuccess()
+                    hasUnlocked = true
+                    scope.launch {
+                        delay(250)
+                        latestOnUnlockSuccess()
+                    }
                 } else {
                     errorMessage = context.getString(R.string.wrong_passcode)
                     passcode = ""
@@ -78,18 +110,24 @@ fun LockRoute(
         }
         errorMessage = null
     }
+    val latestShowBiometricPrompt by rememberUpdatedState(showBiometricPrompt)
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                if (uiState.isBiometricEnabled && uiState.isBiometricAvailable) {
-                    showBiometricPrompt()
-                }
+                latestShowBiometricPrompt()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    LaunchedEffect(uiState.isBiometricEnabled, uiState.isBiometricAvailable) {
+        if (uiState.isBiometricEnabled && uiState.isBiometricAvailable) {
+            delay(150)
+            showBiometricPrompt()
         }
     }
 

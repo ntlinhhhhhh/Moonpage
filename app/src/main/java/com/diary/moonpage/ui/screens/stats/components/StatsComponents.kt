@@ -2349,7 +2349,7 @@ fun YearInMoonpageMiniatureCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(32.dp),
-        colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(

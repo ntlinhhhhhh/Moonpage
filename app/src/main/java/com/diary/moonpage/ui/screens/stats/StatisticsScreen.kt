@@ -1,6 +1,7 @@
 package com.diary.moonpage.ui.screens.stats
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -238,20 +239,21 @@ fun StatisticsScreen(
                         )
 
                         // 4. Year in Moonpage (Overview) Card
-                        Surface(
-                            modifier = Modifier.fillMaxWidth().clickable { onNavigateToAnnualBeansDetail() },
-                            shape = RoundedCornerShape(24.dp),
-                            color = MoonTheme.customColors.logItemBg.copy(alpha = 0.6f),
-                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                        Card(
+                            modifier = Modifier.fillMaxWidth()
+                                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onNavigateToAnnualBeansDetail() },
+                            shape = RoundedCornerShape(32.dp),
+                            colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
+                            elevation = CardDefaults.cardElevation(0.dp)
                         ) {
-                            Column(modifier = Modifier.padding(20.dp)) {
+                            Column(modifier = Modifier.padding(24.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)), contentAlignment = Alignment.Center) {
-                                            Icon(Icons.Rounded.GridView, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                                        Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+                                            Icon(Icons.Rounded.GridView, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
                                         }
                                         Spacer(modifier = Modifier.width(12.dp))
-                                        Text(stringResource(R.string.year_in_beans), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                        Text(stringResource(R.string.year_in_beans), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f))
                                     }
                                     Icon(Icons.Rounded.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f), modifier = Modifier.size(20.dp))
                                 }

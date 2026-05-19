@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">Moon Page</string>
+    <string name="widget_description">Open Moon Page diary</string>
+    <string name="widget_subtitle">Tap to write your diary today.</string>
     <string name="google_web_client_id">511455154390-m8jmplb158akjj874288pipkt3emset0.apps.googleusercontent.com</string>
 
     <!-- Common -->
@@ -136,8 +138,6 @@
     <string name="all_themes">All Themes</string>
     <string name="light_mode">Light Mode</string>
     <string name="dark_mode">Dark Mode</string>
-    <string name="exclusive">Exclusive</string>
-    <string name="newest">Newest</string>
     <string name="featured_collections">Featured Collections</string>
     <string name="view_all">View All</string>
     <string name="icon_collections">Icon Collections</string>
