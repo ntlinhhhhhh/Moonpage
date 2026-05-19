@@ -7,6 +7,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
@@ -23,22 +26,30 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AcUnit
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Savings
 import androidx.compose.material.icons.rounded.GridView
+import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.Snowboarding
 import androidx.compose.material.icons.rounded.Whatshot
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.diary.moonpage.R
+import com.diary.moonpage.data.local.entity.CustomThemeEntity
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.domain.model.ThemeType
 import com.diary.moonpage.ui.components.layout.SectionTitle
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
+import com.diary.moonpage.ui.components.refresh.MoonPullToRefreshBox
 import com.diary.moonpage.ui.screens.store.components.*
 import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
 import com.diary.moonpage.ui.screens.tutorial.TutorialStep
+import coil.compose.AsyncImage
+import java.io.File
 
 /**
  * Stateful Component
@@ -47,6 +58,7 @@ import com.diary.moonpage.ui.screens.tutorial.TutorialStep
 fun StoreRoute(
     viewModel: StoreViewModel,
     onNavigateToDetail: () -> Unit,
+    onNavigateToCustomThemeEditor: () -> Unit,
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -66,6 +78,9 @@ fun StoreRoute(
                 is StoreUiEffect.NavigateBack -> {
                     onNavigateBack()
                 }
+                StoreUiEffect.NavigateToCustomThemeEditor -> {
+                    onNavigateToCustomThemeEditor()
+                }
                 else -> {}
             }
         }
@@ -80,14 +95,19 @@ fun StoreRoute(
             viewModel.selectTheme(theme)
             onNavigateToDetail()
         },
-        onViewAllClick = { viewModel.onTabSelected(2) },
+        onViewAllClick = { viewModel.onTabSelected(3) },
         onConfirmActivation = viewModel::confirmActivation,
         onCancelActivation = viewModel::cancelActivation,
         onDismissDialog = viewModel::dismissDialog,
         onInitiateFreezePurchase = { viewModel.onEvent(StoreUiEvent.InitiateFreezePurchase) },
         onConfirmFreezePurchase = { viewModel.onEvent(StoreUiEvent.BuyStreakFreeze) },
         onCancelFreezePurchase = { viewModel.onEvent(StoreUiEvent.CancelFreezePurchase) },
-        onRecoverStreak = { viewModel.onEvent(StoreUiEvent.RecoverStreak) }
+        onRecoverStreak = { viewModel.onEvent(StoreUiEvent.RecoverStreak) },
+        onCreateCustomThemeClick = { viewModel.onEvent(StoreUiEvent.InitiateCustomThemeUnlock) },
+        onConfirmCustomThemeUnlock = { viewModel.onEvent(StoreUiEvent.ConfirmCustomThemeUnlock) },
+        onCancelCustomThemeUnlock = { viewModel.onEvent(StoreUiEvent.CancelCustomThemeUnlock) },
+        onDismissInsufficientCoins = { viewModel.onEvent(StoreUiEvent.DismissInsufficientCoins) },
+        onRefresh = { viewModel.onEvent(StoreUiEvent.LoadData) }
     )
 }
 
@@ -108,12 +128,19 @@ fun StoreScreen(
     onInitiateFreezePurchase: () -> Unit,
     onConfirmFreezePurchase: () -> Unit,
     onCancelFreezePurchase: () -> Unit,
-    onRecoverStreak: () -> Unit
+    onRecoverStreak: () -> Unit,
+    onCreateCustomThemeClick: () -> Unit,
+    onConfirmCustomThemeUnlock: () -> Unit,
+    onCancelCustomThemeUnlock: () -> Unit,
+    onDismissInsufficientCoins: () -> Unit,
+    onRefresh: () -> Unit
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        Box(
+        MoonPullToRefreshBox(
+            isRefreshing = uiState.isLoading,
+            onRefresh = onRefresh,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
@@ -151,16 +178,23 @@ fun StoreScreen(
                         )
                         1 -> MyThemeTabContent(
                             ownedThemes = uiState.ownedThemes,
+                            customThemes = uiState.customThemes,
                             temporarySelectedId = uiState.temporarySelectedThemeId,
                             onThemeClick = onThemeClick,
                             onExploreMore = { onTabSelected(0) }
                         )
-                        2 -> CollectionsTabContent(
+                        2 -> CustomThemeTabContent(
+                            coins = uiState.userCoins,
+                            customThemes = uiState.customThemes,
+                            onCreateClick = onCreateCustomThemeClick
+                        )
+                        3 -> CollectionsTabContent(
                             themes = uiState.themes,
                             onThemeClick = onThemeClick
                         )
-                        3 -> StreakFreezeTabContent(
+                        4 -> StreakFreezeTabContent(
                             freezeCount = uiState.streakFreezeCount,
+                            currentStreak = uiState.currentStreak,
                             onBuyClick = onInitiateFreezePurchase,
                             onRecoverClick = onRecoverStreak
                         )
@@ -209,6 +243,116 @@ fun StoreScreen(
                     message = uiState.recoveryMessageRes?.let { stringResource(it) }.orEmpty(),
                     onDismiss = onDismissDialog
                 )
+            }
+
+            if (uiState.showConfirmCustomThemeUnlockDialog) {
+                ConfirmCustomThemeUnlockDialog(
+                    onConfirm = onConfirmCustomThemeUnlock,
+                    onDismiss = onCancelCustomThemeUnlock
+                )
+            }
+
+            if (uiState.showInsufficientCoinsSheet) {
+                InsufficientCoinsBottomSheet(onDismiss = onDismissInsufficientCoins)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun InsufficientCoinsBottomSheet(
+    onDismiss: () -> Unit
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Savings,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(44.dp)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = stringResource(R.string.custom_theme_not_enough_coins),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Text(stringResource(R.string.got_it))
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+    }
+}
+
+@Composable
+fun ConfirmCustomThemeUnlockDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Palette,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(48.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = stringResource(R.string.custom_theme_unlock_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = stringResource(R.string.custom_theme_unlock_desc, CUSTOM_THEME_SLOT_PRICE),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnBgColor,
+                            contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor
+                        ),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                    Button(
+                        onClick = onConfirm,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Text(stringResource(R.string.agree))
+                    }
+                }
             }
         }
     }
@@ -434,19 +578,238 @@ fun StoreTabs(
         Tab(
             selected = selectedIndex == 2,
             onClick = { onTabSelected(2) },
-            text = { Text(stringResource(R.string.collections)) }
+            text = { Text(stringResource(R.string.custom_theme)) }
         )
         Tab(
             selected = selectedIndex == 3,
             onClick = { onTabSelected(3) },
+            text = { Text(stringResource(R.string.collections)) }
+        )
+        Tab(
+            selected = selectedIndex == 4,
+            onClick = { onTabSelected(4) },
             text = { Text(stringResource(R.string.streak_freeze)) }
         )
     }
 }
 
 @Composable
+fun CustomThemeTabContent(
+    coins: Int,
+    customThemes: List<CustomThemeEntity>,
+    onCreateClick: () -> Unit
+) {
+    val themePreviews = if (customThemes.isEmpty()) sampleCustomThemes() else customThemes
+
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Savings,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(R.string.custom_theme_coin_balance, coins),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+
+        item {
+            CreateCustomThemeCard(onClick = onCreateClick)
+        }
+
+        items(
+            items = themePreviews,
+            key = { it.id }
+        ) { theme ->
+            CustomThemeCard(theme = theme)
+        }
+    }
+}
+
+@Composable
+fun CreateCustomThemeCard(
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(190.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f))
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                modifier = Modifier.size(48.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Add,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(12.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = stringResource(R.string.custom_theme_create_new),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Star,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = stringResource(R.string.custom_theme_price, CUSTOM_THEME_SLOT_PRICE),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CustomThemeCard(
+    theme: CustomThemeEntity
+) {
+    val previewColor = remember(theme.primaryColor) {
+        runCatching { Color(android.graphics.Color.parseColor(theme.primaryColor)) }.getOrDefault(Color(0xFFE8E1DA))
+    }
+    val iconColors = remember(theme.iconColors, theme.iconColor) {
+        theme.iconColors.split(",")
+            .filter { it.isNotBlank() }
+            .map { value -> runCatching { Color(android.graphics.Color.parseColor(value.trim())) }.getOrDefault(previewColor) }
+            .ifEmpty { List(5) { previewColor } }
+            .let { colors -> if (colors.size >= 5) colors.take(5) else colors + List(5 - colors.size) { previewColor } }
+    }
+    val savedPreviewFile = remember(theme.bgFilePath) { File(theme.bgFilePath) }
+    val hasSavedPreview = theme.bgFilePath.isNotBlank() && savedPreviewFile.exists()
+
+    Card(
+        modifier = Modifier.fillMaxWidth().height(190.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.logCardBg)
+    ) {
+        Column(modifier = Modifier.fillMaxSize().padding(12.dp)) {
+            Box(
+                modifier = Modifier.fillMaxWidth().weight(1f).clip(RoundedCornerShape(16.dp)).background(previewColor.copy(alpha = 0.22f)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (hasSavedPreview) {
+                    AsyncImage(
+                        model = savedPreviewFile,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY").forEachIndexed { index, mood ->
+                            CuteBeanIcon(
+                                modifier = Modifier.size(28.dp),
+                                emotion = mood,
+                                decoration = "NONE",
+                                color = iconColors[index]
+                            )
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = theme.name,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
+            )
+            Text(
+                text = stringResource(R.string.custom_theme_saved),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
+            )
+        }
+    }
+}
+
+private fun sampleCustomThemes(): List<CustomThemeEntity> = listOf(
+    CustomThemeEntity(
+        id = "sample_custom_rose",
+        name = "Rose Notes",
+        bgFilePath = "",
+        primaryColor = "#FFAD6A7A",
+        iconColor = "#FFEF9A9A",
+        iconColors = "#FFFFB3C1,#FFFF8FAB,#FFFB6F92,#FFD94F70,#FFB23A58",
+        createdAt = 0L
+    ),
+    CustomThemeEntity(
+        id = "sample_custom_sky",
+        name = "Soft Sky",
+        bgFilePath = "",
+        primaryColor = "#FF4FC3F7",
+        iconColor = "#FF64B5F6",
+        iconColors = "#FFFFF176,#FFAED581,#FF81D4FA,#FF7986CB,#FF9575CD",
+        createdAt = 0L
+    ),
+    CustomThemeEntity(
+        id = "sample_custom_matcha",
+        name = "Matcha Calm",
+        bgFilePath = "",
+        primaryColor = "#FF81C784",
+        iconColor = "#FFAED581",
+        iconColors = "#FFC5E1A5,#FFAED581,#FF81C784,#FF66BB6A,#FF4CAF50",
+        createdAt = 0L
+    )
+)
+
+@Composable
 fun StreakFreezeTabContent(
     freezeCount: Int,
+    currentStreak: Int,
     onBuyClick: () -> Unit,
     onRecoverClick: () -> Unit
 ) {
@@ -507,7 +870,11 @@ fun StreakFreezeTabContent(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = stringResource(R.string.store_manual_recover_desc),
+                        text = when {
+                            currentStreak > 0 -> stringResource(R.string.store_streak_safe_desc)
+                            freezeCount > 0 -> stringResource(R.string.store_manual_recover_available_desc, freezeCount)
+                            else -> stringResource(R.string.store_manual_recover_unavailable_desc)
+                        },
                         style = MaterialTheme.typography.bodySmall,
                         color = colorScheme.onSurface.copy(alpha = 0.6f)
                     )
@@ -734,12 +1101,14 @@ fun HomeTabContent(
 @Composable
 fun MyThemeTabContent(
     ownedThemes: List<Theme>,
+    customThemes: List<CustomThemeEntity>,
     temporarySelectedId: String?,
     onThemeClick: (Theme) -> Unit,
     onExploreMore: () -> Unit
 ) {
     val currentTheme = ownedThemes.find { it.isActive }
-    val otherThemes = ownedThemes.filter { !it.isActive }
+    val otherThemes = ownedThemes.filter { !it.isActive && !it.id.startsWith("custom_") }
+    val customThemePreviews = if (customThemes.isEmpty()) sampleCustomThemes() else customThemes
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -770,6 +1139,31 @@ fun MyThemeTabContent(
                 showSelectionIndicator = false,
                 onClick = { onThemeClick(theme) }
             )
+        }
+
+        if (customThemePreviews.isNotEmpty()) {
+            item {
+                Text(
+                    text = stringResource(R.string.custom_theme),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                    fontSize = 10.sp,
+                    letterSpacing = 1.sp
+                )
+            }
+            items(
+                items = customThemePreviews.chunked(2),
+                key = { row -> row.joinToString { it.id } }
+            ) { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    row.forEach { theme ->
+                        Box(modifier = Modifier.weight(1f)) {
+                            CustomThemeCard(theme = theme)
+                        }
+                    }
+                    if (row.size == 1) Spacer(modifier = Modifier.weight(1f))
+                }
+            }
         }
 
         item {

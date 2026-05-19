@@ -1,6 +1,7 @@
 package com.diary.moonpage.ui.screens.store
 
 import androidx.annotation.StringRes
+import com.diary.moonpage.data.local.entity.CustomThemeEntity
 import com.diary.moonpage.domain.model.Theme
 
 data class StoreUiState(
@@ -8,7 +9,7 @@ data class StoreUiState(
     val themes: List<Theme> = emptyList(),
     val ownedThemes: List<Theme> = emptyList(),
     val userCoins: Int = 0,
-    val selectedTabIndex: Int = 0, // 0 for Home, 1 for My Theme
+    val selectedTabIndex: Int = 0,
     val error: String? = null,
     val showPurchaseSuccessDialog: Boolean = false,
     val showConfirmPurchaseDialog: Boolean = false,
@@ -22,6 +23,10 @@ data class StoreUiState(
     val showConfirmFreezePurchaseDialog: Boolean = false,
     val freezePurchaseSuccess: Boolean = false,
     val streakFreezeCount: Int = 0,
+    val currentStreak: Int = 0,
     val showRecoverySuccessDialog: Boolean = false,
-    @StringRes val recoveryMessageRes: Int? = null
+    @StringRes val recoveryMessageRes: Int? = null,
+    val customThemes: List<CustomThemeEntity> = emptyList(),
+    val showConfirmCustomThemeUnlockDialog: Boolean = false,
+    val showInsufficientCoinsSheet: Boolean = false
 )

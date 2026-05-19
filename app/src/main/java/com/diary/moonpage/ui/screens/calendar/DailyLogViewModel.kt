@@ -9,6 +9,7 @@ import com.diary.moonpage.core.util.PkceUtil
 import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.core.util.LocationTracker
 import com.diary.moonpage.domain.repository.WeatherRepository
+import com.diary.moonpage.widget.glance.MoonpageWidgets
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -695,6 +696,7 @@ class DailyLogViewModel @Inject constructor(
             ).onSuccess {
                 val msg = if (state.existingLog != null) "Record updated successfully!" else "Record created successfully!"
                 statisticsRepository.triggerRefresh()
+                MoonpageWidgets.refreshAll(context)
 
                 // Cleanup temporary retained files
                 existingPhotoFiles.forEach { it.delete() }

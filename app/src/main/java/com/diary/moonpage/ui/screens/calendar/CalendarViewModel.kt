@@ -25,6 +25,7 @@ class CalendarViewModel @Inject constructor(
     private val activityPreferencesManager: ActivityPreferencesManager,
     private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager,
     private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository,
+    private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
     private val locationTracker: com.diary.moonpage.core.util.LocationTracker,
     private val weatherRepository: com.diary.moonpage.domain.repository.WeatherRepository
 ) : ViewModel() {
@@ -46,6 +47,13 @@ class CalendarViewModel @Inject constructor(
         viewModelScope.launch {
             themePreferencesManager.themeType.collect { themeType ->
                 _uiState.update { it.copy(themeType = themeType) }
+            }
+        }
+        viewModelScope.launch {
+            userRepository.currentUser.collect { user ->
+                if (user != null) {
+                    _uiState.update { it.copy(currentStreak = user.currentStreak) }
+                }
             }
         }
 
@@ -185,6 +193,7 @@ class CalendarViewModel @Inject constructor(
     }
 
     fun refreshLogs() {
+        _uiState.update { it.copy(isLoading = true) }
         refreshTrigger.update { it + 1 }
     }
 

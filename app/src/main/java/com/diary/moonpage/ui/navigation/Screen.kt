@@ -51,6 +51,7 @@ sealed class Screen (val route: String) {
 
     // Store Sub-screens
     object ThemeDetail: Screen("theme_detail_screen")
+    object CustomThemeEditor: Screen("custom_theme_editor_screen")
 
     // Stats Detail Screens
     object StatsMoodDetail: Screen("stats_mood_detail_screen")

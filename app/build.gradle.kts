@@ -83,6 +83,8 @@ dependencies {
 
     implementation(libs.places)
     implementation(libs.androidx.compose.foundation.layout)
+    implementation("androidx.glance:glance-appwidget:1.1.1")
+    implementation("androidx.glance:glance-material3:1.1.1")
 
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation(platform("com.google.firebase:firebase-bom:33.1.2"))

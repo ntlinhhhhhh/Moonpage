@@ -42,6 +42,7 @@ import com.diary.moonpage.ui.screens.stats.StatsAnnualMusicDetailRoute
 import com.diary.moonpage.ui.screens.store.StoreRoute
 import com.diary.moonpage.ui.screens.store.StoreViewModel
 import com.diary.moonpage.ui.screens.store.ThemeDetailRoute
+import com.diary.moonpage.ui.screens.store.CustomThemeEditorRoute
 import com.diary.moonpage.ui.screens.security.CreatePasscodeRoute
 import com.diary.moonpage.ui.screens.security.LockRoute
 import com.diary.moonpage.ui.MainViewModel
@@ -515,6 +516,7 @@ fun AppNavigation(
                         StoreRoute(
                             viewModel = storeViewModel,
                             onNavigateToDetail = { navController.navigate(Screen.ThemeDetail.route) },
+                            onNavigateToCustomThemeEditor = { navController.navigate(Screen.CustomThemeEditor.route) },
                             onNavigateBack = {
                                 if (!navController.popBackStack()) {
                                     navController.navigate(Screen.Calendar.route) {
@@ -655,6 +657,16 @@ fun AppNavigation(
                         )
                     }
                 }
+
+                composable(Screen.CustomThemeEditor.route) {
+                    ScreenWrapper(Screen.CustomThemeEditor.route, mainAppRoutes, totalBottomPadding, paddingValues) {
+                        CustomThemeEditorRoute(
+                            onNavigateBack = {
+                                navController.popBackStack()
+                            }
+                        )
+                    }
+                }
             }
 
             // Fixed Bottom Bar - No more AnimatedVisibility for Tab Switches
@@ -769,6 +781,7 @@ private fun ScreenWrapper(
     // Screens that handle their own status bar padding for a more custom layout
     val isEdgeToEdge = route == Screen.Store.route ||
                        route == Screen.ThemeDetail.route ||
+                       route == Screen.CustomThemeEditor.route ||
                        route.startsWith("daily_log_screen")
 
     Box(

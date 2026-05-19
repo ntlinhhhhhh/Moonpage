@@ -22,6 +22,12 @@ sealed class StoreUiEvent {
     object BuyStreakFreeze : StoreUiEvent()
     object CancelFreezePurchase : StoreUiEvent()
     object RecoverStreak : StoreUiEvent()
+
+    // Custom Theme
+    object InitiateCustomThemeUnlock : StoreUiEvent()
+    object ConfirmCustomThemeUnlock : StoreUiEvent()
+    object CancelCustomThemeUnlock : StoreUiEvent()
+    object DismissInsufficientCoins : StoreUiEvent()
 }
 
 /**
@@ -33,4 +39,5 @@ sealed class StoreUiEffect {
     object RecoverSuccess : StoreUiEffect()
     data class ThemeActivated(val message: String? = null) : StoreUiEffect()
     object NavigateBack : StoreUiEffect()
+    object NavigateToCustomThemeEditor : StoreUiEffect()
 }

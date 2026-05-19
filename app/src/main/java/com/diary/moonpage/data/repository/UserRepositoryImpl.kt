@@ -203,7 +203,7 @@ class UserRepositoryImpl @Inject constructor(
         return try {
             val response = userApi.buyStreakFreeze()
             if (response.isSuccessful) {
-                // Refresh user profile after purchase to update coins and freeze count
+                // Refresh user snapshot immediately so collectors on Store/Profile/Calendar update.
                 getCurrentUser()
                 Result.success(Unit)
             } else {
@@ -218,7 +218,7 @@ class UserRepositoryImpl @Inject constructor(
         return try {
             val response = userApi.recoverStreak()
             if (response.isSuccessful) {
-                // Refresh user profile after recovery to update streak and freeze count
+                // Refresh user snapshot immediately so collectors on Store/Profile/Calendar update.
                 getCurrentUser()
                 Result.success(Unit)
             } else {
@@ -227,5 +227,29 @@ class UserRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    override suspend fun spendCoinsLocally(amount: Int): Result<User> {
+        val current = _currentUser.value ?: return Result.failure(Exception("No user loaded"))
+        if (current.coinBalance < amount) return Result.failure(Exception("Not enough coins"))
+
+        val updated = current.copy(coinBalance = current.coinBalance - amount)
+        _currentUser.value = updated
+        userManager.saveUser(
+            UserResponseDto(
+                id = updated.userId,
+                name = updated.name,
+                email = updated.email,
+                avatarUrl = updated.avatarUrl,
+                gender = updated.gender,
+                birthday = updated.birthday,
+                coinBalance = updated.coinBalance,
+                authProvider = updated.authProvider,
+                streakFreezeCount = updated.streakFreezeCount,
+                currentStreak = updated.currentStreak,
+                longestStreak = updated.longestStreak
+            )
+        )
+        return Result.success(updated)
     }
 }

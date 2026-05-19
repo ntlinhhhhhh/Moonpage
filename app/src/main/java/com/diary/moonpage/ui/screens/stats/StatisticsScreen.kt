@@ -21,6 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.res.stringResource
 import com.diary.moonpage.R
 import com.diary.moonpage.core.theme.MoonTheme
+import com.diary.moonpage.ui.components.refresh.MoonPullToRefreshBox
 import com.diary.moonpage.ui.screens.calendar.components.MonthYearPickerDialog
 import com.diary.moonpage.ui.screens.stats.components.*
 import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
@@ -51,6 +52,7 @@ fun StatisticsRoute(
         onIconClick = viewModel::onIconClick,
         onShareRecap = viewModel::shareRecapCard,
         onClearCaptureError = viewModel::clearCaptureError,
+        onRefresh = viewModel::loadStatistics,
         onNavigateToMoodDetail = onNavigateToMoodDetail,
         onNavigateToSleepDetail = onNavigateToSleepDetail,
         onNavigateToActivityDetail = onNavigateToActivityDetail,
@@ -73,6 +75,7 @@ fun StatisticsScreen(
     onIconClick: (String?) -> Unit,
     onShareRecap: (android.content.Context, android.graphics.Bitmap) -> Unit,
     onClearCaptureError: () -> Unit,
+    onRefresh: () -> Unit,
     onNavigateToMoodDetail: () -> Unit = {},
     onNavigateToSleepDetail: () -> Unit = {},
     onNavigateToActivityDetail: () -> Unit = {},
@@ -153,7 +156,11 @@ fun StatisticsScreen(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+        MoonPullToRefreshBox(
+            isRefreshing = uiState.isLoading,
+            onRefresh = onRefresh,
+            modifier = Modifier.fillMaxSize().padding(paddingValues)
+        ) {
             if (uiState.isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center),

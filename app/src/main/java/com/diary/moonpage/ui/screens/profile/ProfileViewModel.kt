@@ -121,6 +121,12 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
+    fun refreshProfile() {
+        loadProfile(forceRefresh = true)
+        loadMyThemes()
+        loadStatistics()
+    }
+
     fun updateProfile(name: String, gender: String?, birthday: String?) {
         viewModelScope.launch {
             val currentAvatarUrl = _uiState.value.user?.avatarUrl

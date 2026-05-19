@@ -33,6 +33,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.Velocity
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.components.feedback.MoonDeleteConfirmDialog
+import com.diary.moonpage.ui.components.refresh.MoonPullToRefreshBox
 import com.diary.moonpage.ui.screens.moment.components.MomentFeedItem
 import com.diary.moonpage.ui.screens.moment.components.CaptureButton
 import com.diary.moonpage.ui.screens.moment.components.MomentZoomOverlay
@@ -104,7 +105,9 @@ fun MomentHistoryRoute(
         snackbarHostState = snackbarHostState,
         avatarUrl = profileState.user?.avatarUrl,
         localAvatarPath = profileState.localAvatarPath ?: profileState.tempAvatarPath,
-        isVerticalVisible = true 
+        isVerticalVisible = true,
+        isRefreshing = uiState.isLoading,
+        onRefresh = { viewModel.onEvent(MomentUiEvent.LoadMoments) }
     )
 
     if (zoomImage != null) {
@@ -138,6 +141,8 @@ fun MomentHistoryScreen(
     avatarUrl: String? = null,
     localAvatarPath: String? = null,
     isVerticalVisible: Boolean = true,
+    isRefreshing: Boolean = false,
+    onRefresh: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val sortedMoments = remember(moments) { moments.sortedByDescending { it.capturedAt } }
@@ -199,7 +204,9 @@ fun MomentHistoryScreen(
         }
     }
 
-    Box(
+    MoonPullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh,
         modifier = modifier
             .fillMaxSize()
             .background(bgColor)

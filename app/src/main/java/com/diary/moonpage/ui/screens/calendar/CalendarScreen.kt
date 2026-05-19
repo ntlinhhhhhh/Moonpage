@@ -31,6 +31,7 @@ import com.diary.moonpage.core.util.MoonIcon
 import com.diary.moonpage.ui.screens.calendar.components.*
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.components.feedback.MoonDeleteConfirmDialog
+import com.diary.moonpage.ui.components.refresh.MoonPullToRefreshBox
 import androidx.compose.ui.res.stringResource
 import com.diary.moonpage.R
 import java.time.LocalDate
@@ -82,7 +83,8 @@ fun CalendarRoute(
         onNavigateToShareCalendar = onNavigateToShareCalendar,
         onNavigateToThemeCalendar = onNavigateToThemeCalendar,
         onStreakClick = onNavigateToStreakStats,
-        showSnackbar = viewModel::showSnackbar
+        showSnackbar = viewModel::showSnackbar,
+        onRefresh = viewModel::refreshLogs
     )
 }
 
@@ -99,7 +101,8 @@ fun CalendarScreen(
     onNavigateToShareCalendar: (String) -> Unit,
     onNavigateToThemeCalendar: () -> Unit,
     onStreakClick: () -> Unit,
-    showSnackbar: (String) -> Unit
+    showSnackbar: (String) -> Unit,
+    onRefresh: () -> Unit
 ) {
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var dateToDelete by remember { mutableStateOf<LocalDate?>(null) }
@@ -137,38 +140,43 @@ fun CalendarScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = paddingValues.calculateBottomPadding())
+        MoonPullToRefreshBox(
+            isRefreshing = uiState.isLoading,
+            onRefresh = onRefresh,
+            modifier = Modifier.fillMaxSize()
         ) {
-            CalendarTopBar(
-                viewMode = uiState.viewMode,
-                onFilterClick = { onEvent(CalendarUiEvent.OnFilterClick) },
-                onToggleViewMode = { onEvent(CalendarUiEvent.ToggleViewMode) },
-                onThemeClick = onNavigateToThemeCalendar,
-                onStreakClick = onStreakClick,
-                streakCount = uiState.currentStreak,
-                isFilterActive = uiState.selectedFilter != null,
-                modifier = Modifier.statusBarsPadding()
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = paddingValues.calculateBottomPadding())
+            ) {
+                CalendarTopBar(
+                    viewMode = uiState.viewMode,
+                    onFilterClick = { onEvent(CalendarUiEvent.OnFilterClick) },
+                    onToggleViewMode = { onEvent(CalendarUiEvent.ToggleViewMode) },
+                    onThemeClick = onNavigateToThemeCalendar,
+                    onStreakClick = onStreakClick,
+                    streakCount = uiState.currentStreak,
+                    isFilterActive = uiState.selectedFilter != null,
+                    modifier = Modifier.statusBarsPadding()
+                )
 
-            AnimatedContent(
-                targetState = uiState.viewMode,
-                transitionSpec = {
-                    fadeIn(animationSpec = tween(300)) togetherWith 
-                    fadeOut(animationSpec = tween(300))
-                },
-                label = "ViewModeTransition"
-            ) { targetMode ->
-                when (targetMode) {
-                    CalendarViewMode.CALENDAR -> {
-                        HorizontalPager(
-                            state = pagerState,
-                            modifier = Modifier.fillMaxSize(),
-                            verticalAlignment = Alignment.Top,
-                            beyondViewportPageCount = 1
-                        ) { page ->
+                AnimatedContent(
+                    targetState = uiState.viewMode,
+                    transitionSpec = {
+                        fadeIn(animationSpec = tween(300)) togetherWith
+                        fadeOut(animationSpec = tween(300))
+                    },
+                    label = "ViewModeTransition"
+                ) { targetMode ->
+                    when (targetMode) {
+                        CalendarViewMode.CALENDAR -> {
+                            HorizontalPager(
+                                state = pagerState,
+                                modifier = Modifier.fillMaxSize(),
+                                verticalAlignment = Alignment.Top,
+                                beyondViewportPageCount = 1
+                            ) { page ->
                             val offset = page - initialPage
                             val pageYearMonth = baseYearMonth.plusMonths(offset.toLong())
                             val currentLanguage = com.diary.moonpage.core.theme.LocalLocale.current
@@ -236,22 +244,23 @@ fun CalendarScreen(
 
                                 Spacer(modifier = Modifier.height(100.dp))
                             }
+                            }
                         }
-                    }
-                    CalendarViewMode.TIMELINE -> {
-                        TimelineView(
-                            dailyLogs = uiState.dailyLogs,
-                            selectedFilter = uiState.selectedFilter,
-                            dynamicActivities = uiState.dynamicActivities,
-                            themeType = uiState.themeType,
-                            onEditLog = { date -> onNavigateToDailyLog(date.toString()) },
-                            onDeleteLog = { date -> 
-                                dateToDelete = date
-                                showDeleteConfirmDialog = true
-                            },
-                            onShareLog = { date -> onNavigateToShareLog(date.toString()) },
-                            onAddLog = { date -> onNavigateToDailyLog(date.toString()) }
-                        )
+                        CalendarViewMode.TIMELINE -> {
+                            TimelineView(
+                                dailyLogs = uiState.dailyLogs,
+                                selectedFilter = uiState.selectedFilter,
+                                dynamicActivities = uiState.dynamicActivities,
+                                themeType = uiState.themeType,
+                                onEditLog = { date -> onNavigateToDailyLog(date.toString()) },
+                                onDeleteLog = { date ->
+                                    dateToDelete = date
+                                    showDeleteConfirmDialog = true
+                                },
+                                onShareLog = { date -> onNavigateToShareLog(date.toString()) },
+                                onAddLog = { date -> onNavigateToDailyLog(date.toString()) }
+                            )
+                        }
                     }
                 }
             }

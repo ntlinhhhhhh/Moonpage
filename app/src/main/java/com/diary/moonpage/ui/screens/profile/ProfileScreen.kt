@@ -19,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import com.diary.moonpage.R
 import com.diary.moonpage.ui.screens.profile.components.*
 import com.diary.moonpage.ui.components.layout.SectionTitle
+import com.diary.moonpage.ui.components.refresh.MoonPullToRefreshBox
 import com.diary.moonpage.core.theme.*
 import com.diary.moonpage.core.util.StreakFreezeIcon
 import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
@@ -72,7 +73,9 @@ fun ProfileRoute(
             onInviteFriendClick = onNavigateToInviteFriend,
             onStatsClick = onNavigateToStats,
             onStreakClick = onNavigateToStreakStats,
-            onStreakFreezesClick = onNavigateToStore
+            onStreakFreezesClick = onNavigateToStore,
+            isRefreshing = uiState.isLoading,
+            onRefresh = viewModel::refreshProfile
         )
     }
 }
@@ -99,7 +102,9 @@ fun ProfileScreen(
     onInviteFriendClick: () -> Unit,
     onStatsClick: () -> Unit,
     onStreakClick: () -> Unit,
-    onStreakFreezesClick: () -> Unit
+    onStreakFreezesClick: () -> Unit,
+    isRefreshing: Boolean = false,
+    onRefresh: () -> Unit = {}
 ) {
     val colorScheme = MaterialTheme.colorScheme
 
@@ -113,37 +118,43 @@ fun ProfileScreen(
             )
         }
     ) { paddingValues ->
-        Column(
+        MoonPullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 20.dp)
-                .verticalScroll(rememberScrollState())
         ) {
-            SectionTitle(stringResource(R.string.account))
-            Box(modifier = Modifier.fillMaxWidth().tutorialTarget(TutorialStep.HighlightProfileSettings)) {
-                UserInfoCard(
-                    userId = if (userId.isNotEmpty()) "#$userId" else "",
-                    userName = userName,
-                    avatarUrl = avatarUrl,
-                    onClick = onAccountClick
-                )
-            }
-
-            SectionTitle(stringResource(R.string.my_records))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp)
+                    .verticalScroll(rememberScrollState())
             ) {
-                ActionCard(
-                    title = stringResource(R.string.report),
-                    value = recordedDays, 
-                    icon = Icons.Rounded.CalendarToday,
-                    modifier = Modifier.weight(1f), 
-                    onClick = onStatsClick
-                )
-                ActionCard(title = stringResource(R.string.my_photos), value = photoCount, modifier = Modifier.weight(1f), onClick = onPhotosClick)
-            }
+                SectionTitle(stringResource(R.string.account))
+                Box(modifier = Modifier.fillMaxWidth().tutorialTarget(TutorialStep.HighlightProfileSettings)) {
+                    UserInfoCard(
+                        userId = if (userId.isNotEmpty()) "#$userId" else "",
+                        userName = userName,
+                        avatarUrl = avatarUrl,
+                        onClick = onAccountClick
+                    )
+                }
+
+                SectionTitle(stringResource(R.string.my_records))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    ActionCard(
+                        title = stringResource(R.string.report),
+                        value = recordedDays,
+                        icon = Icons.Rounded.CalendarToday,
+                        modifier = Modifier.weight(1f),
+                        onClick = onStatsClick
+                    )
+                    ActionCard(title = stringResource(R.string.my_photos), value = photoCount, modifier = Modifier.weight(1f), onClick = onPhotosClick)
+                }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -179,7 +190,8 @@ fun ProfileScreen(
 
             ProfileMenuItem(title = stringResource(R.string.invite_a_friend), icon = Icons.Rounded.PersonAdd, onClick = onInviteFriendClick)
 
-            Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(32.dp))
+            }
         }
     }
 }

@@ -23,4 +23,5 @@ interface UserRepository {
     suspend fun confirmPassword(password: String? = null, googleIdToken: String? = null): Result<Unit>
     suspend fun buyStreakFreeze(): Result<Unit>
     suspend fun recoverStreak(): Result<Unit>
+    suspend fun spendCoinsLocally(amount: Int): Result<User>
 }

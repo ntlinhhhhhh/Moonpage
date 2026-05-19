@@ -11,6 +11,7 @@ import com.diary.moonpage.domain.usecase.theme.GetOwnedThemesUseCase
 import com.diary.moonpage.domain.usecase.theme.GetThemesUseCase
 import com.diary.moonpage.domain.usecase.theme.SetActiveThemeUseCase
 import com.diary.moonpage.core.theme.MoonThemeType
+import com.diary.moonpage.domain.repository.CustomThemeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -26,7 +27,9 @@ class StoreViewModel @Inject constructor(
     private val setActiveThemeUseCase: SetActiveThemeUseCase,
     private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager,
     private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
-    private val themeRepository: com.diary.moonpage.domain.repository.ThemeRepository
+    private val themeRepository: com.diary.moonpage.domain.repository.ThemeRepository,
+    private val customThemeRepository: CustomThemeRepository,
+    private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(StoreUiState())
@@ -45,7 +48,8 @@ class StoreViewModel @Inject constructor(
             userRepository.currentUser.collect { user ->
                 _uiState.update { it.copy(
                     userCoins = user?.coinBalance ?: 0,
-                    streakFreezeCount = user?.streakFreezeCount ?: 0
+                    streakFreezeCount = user?.streakFreezeCount ?: 0,
+                    currentStreak = user?.currentStreak ?: 0
                 ) }
             }
         }
@@ -59,6 +63,12 @@ class StoreViewModel @Inject constructor(
         viewModelScope.launch {
             themeRepository.allThemes.collect { all ->
                 _uiState.update { it.copy(themes = all) }
+            }
+        }
+
+        viewModelScope.launch {
+            customThemeRepository.customThemes.collect { customThemes ->
+                _uiState.update { it.copy(customThemes = customThemes) }
             }
         }
     }
@@ -148,7 +158,9 @@ class StoreViewModel @Inject constructor(
                     activationSuccess = false, 
                     showConfirmFreezePurchaseDialog = false, 
                     freezePurchaseSuccess = false,
-                    showRecoverySuccessDialog = false
+                    showRecoverySuccessDialog = false,
+                    showConfirmCustomThemeUnlockDialog = false,
+                    showInsufficientCoinsSheet = false
                 ) }
             }
             StoreUiEvent.InitiateFreezePurchase -> {
@@ -159,6 +171,36 @@ class StoreViewModel @Inject constructor(
                 _uiState.update { it.copy(showConfirmFreezePurchaseDialog = false) }
             }
             StoreUiEvent.RecoverStreak -> performRecoverStreak()
+            StoreUiEvent.InitiateCustomThemeUnlock -> initiateCustomThemeUnlock()
+            StoreUiEvent.ConfirmCustomThemeUnlock -> unlockCustomThemeSlot()
+            StoreUiEvent.CancelCustomThemeUnlock -> {
+                _uiState.update { it.copy(showConfirmCustomThemeUnlockDialog = false) }
+            }
+            StoreUiEvent.DismissInsufficientCoins -> {
+                _uiState.update { it.copy(showInsufficientCoinsSheet = false) }
+            }
+        }
+    }
+
+    private fun initiateCustomThemeUnlock() {
+        if (_uiState.value.userCoins < CUSTOM_THEME_SLOT_PRICE) {
+            _uiState.update { it.copy(showInsufficientCoinsSheet = true) }
+        } else {
+            _uiState.update { it.copy(showConfirmCustomThemeUnlockDialog = true) }
+        }
+    }
+
+    fun unlockCustomThemeSlot() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, showConfirmCustomThemeUnlockDialog = false) }
+            userRepository.spendCoinsLocally(CUSTOM_THEME_SLOT_PRICE)
+                .onSuccess {
+                    _uiState.update { state -> state.copy(isLoading = false) }
+                    _uiEffect.emit(StoreUiEffect.NavigateToCustomThemeEditor)
+                }
+                .onFailure {
+                    _uiState.update { state -> state.copy(isLoading = false, showInsufficientCoinsSheet = true) }
+                }
         }
     }
 
@@ -166,6 +208,7 @@ class StoreViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             userRepository.recoverStreak().onSuccess {
+                refreshStreakRelatedData()
                 _uiState.update { it.copy(
                     isLoading = false, 
                     showRecoverySuccessDialog = true,
@@ -183,6 +226,7 @@ class StoreViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, showConfirmFreezePurchaseDialog = false) }
             userRepository.buyStreakFreeze().onSuccess {
+                refreshStreakRelatedData()
                 _uiState.update { it.copy(isLoading = false, freezePurchaseSuccess = true) }
                 _uiEffect.emit(StoreUiEffect.PurchaseSuccess)
             }.onFailure { error ->
@@ -194,6 +238,11 @@ class StoreViewModel @Inject constructor(
 
     fun dismissSuccessMessage() {
         _uiState.update { it.copy(activationSuccess = false) }
+    }
+
+    private suspend fun refreshStreakRelatedData() {
+        userRepository.getCurrentUser()
+        statisticsRepository.triggerRefresh()
     }
 
     private fun loadData() {
@@ -305,6 +354,8 @@ class StoreViewModel @Inject constructor(
         }
     }
 }
+
+const val CUSTOM_THEME_SLOT_PRICE = 500
 
 // Extension to map Theme to MoonThemeType
 fun Theme.toMoonThemeType(): MoonThemeType {
