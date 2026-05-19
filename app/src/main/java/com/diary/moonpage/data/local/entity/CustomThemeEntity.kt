@@ -11,5 +11,7 @@ data class CustomThemeEntity(
     val primaryColor: String,
     val iconColor: String,
     val iconColors: String,
+    val lightConfigJson: String,
+    val darkConfigJson: String,
     val createdAt: Long
 )

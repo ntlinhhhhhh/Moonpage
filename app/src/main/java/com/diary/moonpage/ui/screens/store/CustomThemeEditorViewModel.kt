@@ -6,6 +6,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.core.util.saveBitmapToInternalStorage
+import com.diary.moonpage.domain.repository.CustomThemeAppearanceConfig
 import com.diary.moonpage.domain.repository.CustomThemeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -38,10 +39,12 @@ enum class ColorFocusTarget {
     Primary, Icon
 }
 
-data class CustomThemeEditorUiState(
-    val name: String = "My Custom Theme",
+enum class EditorAppearanceMode {
+    Light, Dark
+}
+
+data class ThemeAppearanceState(
     val backgroundUri: String? = null,
-    val pendingBackgroundUri: String? = null,
     val backgroundScale: Float = 1f,
     val backgroundRotation: Float = 0f,
     val backgroundOffsetX: Float = 0f,
@@ -49,7 +52,20 @@ data class CustomThemeEditorUiState(
     val solidBackgroundColor: Long = 0xFFFFF7EC,
     val primaryColor: Long = 0xFF8D6E63,
     val iconColor: Long = 0xFFEF9A9A,
-    val iconColors: List<Long> = listOf(0xFFFFCA28, 0xFF81C784, 0xFF64B5F6, 0xFFBA68C8, 0xFF8D6E63),
+    val iconColors: List<Long> = listOf(0xFFFFCA28, 0xFF81C784, 0xFF64B5F6, 0xFFBA68C8, 0xFF8D6E63)
+)
+
+data class CustomThemeEditorUiState(
+    val name: String = "My Custom Theme",
+    val pendingBackgroundUri: String? = null,
+    val editingMode: EditorAppearanceMode = EditorAppearanceMode.Light,
+    val lightAppearance: ThemeAppearanceState = ThemeAppearanceState(),
+    val darkAppearance: ThemeAppearanceState = ThemeAppearanceState(
+        solidBackgroundColor = 0xFF1C1C1C,
+        primaryColor = 0xFFFFF9EF,
+        iconColor = 0xFFFFD54F,
+        iconColors = listOf(0xFFFFD54F, 0xFF81C784, 0xFF4FC3F7, 0xFF9575CD, 0xFFEF9A9A)
+    ),
     val selectedIconIndex: Int = 0,
     val colorFocusTarget: ColorFocusTarget = ColorFocusTarget.Primary,
     val brushColor: Long = 0xFF8D6E63,
@@ -57,11 +73,34 @@ data class CustomThemeEditorUiState(
     val brushType: BrushType = BrushType.Fine,
     val isEraser: Boolean = false,
     val selectedTool: ThemeEditorTool = ThemeEditorTool.Background,
+    val lastEditingTool: ThemeEditorTool = ThemeEditorTool.Background,
     val strokes: List<DrawStroke> = emptyList(),
     val isSaving: Boolean = false,
     val showDiscardDialog: Boolean = false,
     val hasUnsavedChanges: Boolean = false
-)
+) {
+    val activeAppearance: ThemeAppearanceState
+        get() = if (editingMode == EditorAppearanceMode.Dark) darkAppearance else lightAppearance
+
+    val backgroundUri: String?
+        get() = activeAppearance.backgroundUri
+    val backgroundScale: Float
+        get() = activeAppearance.backgroundScale
+    val backgroundRotation: Float
+        get() = activeAppearance.backgroundRotation
+    val backgroundOffsetX: Float
+        get() = activeAppearance.backgroundOffsetX
+    val backgroundOffsetY: Float
+        get() = activeAppearance.backgroundOffsetY
+    val solidBackgroundColor: Long
+        get() = activeAppearance.solidBackgroundColor
+    val primaryColor: Long
+        get() = activeAppearance.primaryColor
+    val iconColor: Long
+        get() = activeAppearance.iconColors[selectedIconIndex.coerceIn(0, activeAppearance.iconColors.lastIndex)]
+    val iconColors: List<Long>
+        get() = activeAppearance.iconColors
+}
 
 sealed class CustomThemeEditorEffect {
     object Saved : CustomThemeEditorEffect()
@@ -89,17 +128,16 @@ class CustomThemeEditorViewModel @Inject constructor(
     }
 
     fun applyPendingBackground(scale: Float, rotation: Float, offsetX: Float, offsetY: Float) {
-        _uiState.update {
-            it.copy(
-                backgroundUri = it.pendingBackgroundUri,
-                pendingBackgroundUri = null,
+        updateAppearance { appearance ->
+            appearance.copy(
+                backgroundUri = _uiState.value.pendingBackgroundUri,
                 backgroundScale = scale,
                 backgroundRotation = rotation,
                 backgroundOffsetX = offsetX,
-                backgroundOffsetY = offsetY,
-                hasUnsavedChanges = true
+                backgroundOffsetY = offsetY
             )
         }
+        _uiState.update { it.copy(pendingBackgroundUri = null, hasUnsavedChanges = true) }
     }
 
     fun cancelPendingBackground() {
@@ -107,28 +145,46 @@ class CustomThemeEditorViewModel @Inject constructor(
     }
 
     fun setSolidBackgroundColor(color: Long) {
-        _uiState.update { it.copy(solidBackgroundColor = color, backgroundUri = null, hasUnsavedChanges = true) }
+        updateAppearance { appearance ->
+            appearance.copy(
+                solidBackgroundColor = color,
+                backgroundUri = null
+            )
+        }
+        _uiState.update { it.copy(hasUnsavedChanges = true) }
     }
 
     fun setPrimaryColor(color: Long) {
-        _uiState.update { it.copy(primaryColor = color, colorFocusTarget = ColorFocusTarget.Primary, hasUnsavedChanges = true) }
+        updateAppearance { it.copy(primaryColor = color) }
+        _uiState.update { it.copy(colorFocusTarget = ColorFocusTarget.Primary, hasUnsavedChanges = true) }
     }
 
     fun setIconColor(color: Long) {
-        _uiState.update { state ->
-            val updated = state.iconColors.toMutableList().also { colors ->
-                colors[state.selectedIconIndex] = color
+        updateAppearance { appearance ->
+            val updated = appearance.iconColors.toMutableList().also { colors ->
+                colors[_uiState.value.selectedIconIndex] = color
             }
-            state.copy(iconColor = color, iconColors = updated, colorFocusTarget = ColorFocusTarget.Icon, hasUnsavedChanges = true)
+            appearance.copy(iconColor = color, iconColors = updated)
+        }
+        _uiState.update { it.copy(colorFocusTarget = ColorFocusTarget.Icon, hasUnsavedChanges = true) }
+    }
+
+    fun toggleEditingMode() {
+        _uiState.update { state ->
+            state.copy(
+                editingMode = if (state.editingMode == EditorAppearanceMode.Light) {
+                    EditorAppearanceMode.Dark
+                } else {
+                    EditorAppearanceMode.Light
+                }
+            )
         }
     }
 
     fun selectIcon(index: Int) {
         _uiState.update {
-            val safeIndex = index.coerceIn(0, it.iconColors.lastIndex)
             it.copy(
-                selectedIconIndex = safeIndex,
-                iconColor = it.iconColors[safeIndex],
+                selectedIconIndex = index.coerceIn(0, it.iconColors.lastIndex),
                 colorFocusTarget = ColorFocusTarget.Icon
             )
         }
@@ -162,7 +218,16 @@ class CustomThemeEditorViewModel @Inject constructor(
     }
 
     fun setTool(tool: ThemeEditorTool) {
-        _uiState.update { it.copy(selectedTool = tool) }
+        _uiState.update {
+            it.copy(
+                selectedTool = tool,
+                lastEditingTool = if (tool == ThemeEditorTool.Preview) it.selectedTool else it.lastEditingTool
+            )
+        }
+    }
+
+    fun exitPreview() {
+        _uiState.update { it.copy(selectedTool = it.lastEditingTool) }
     }
 
     fun addStroke(stroke: DrawStroke) {
@@ -197,9 +262,8 @@ class CustomThemeEditorViewModel @Inject constructor(
                 customThemeRepository.saveCustomTheme(
                     name = state.name.ifBlank { "My Custom Theme" },
                     bgFilePath = path,
-                    primaryColor = state.primaryColor.toColorHex(),
-                    iconColor = state.iconColor.toColorHex(),
-                    iconColors = state.iconColors.map { it.toColorHex() }
+                    lightConfig = state.lightAppearance.toRepositoryConfig(),
+                    darkConfig = state.darkAppearance.toRepositoryConfig()
                 ).getOrThrow()
             }.onSuccess {
                 _uiState.update { it.copy(isSaving = false, hasUnsavedChanges = false) }
@@ -211,7 +275,29 @@ class CustomThemeEditorViewModel @Inject constructor(
         }
     }
 
-    private fun Long.toColorHex(): String {
-        return "#%08X".format(this)
+    private fun updateAppearance(transform: (ThemeAppearanceState) -> ThemeAppearanceState) {
+        _uiState.update { state ->
+            if (state.editingMode == EditorAppearanceMode.Dark) {
+                state.copy(darkAppearance = transform(state.darkAppearance))
+            } else {
+                state.copy(lightAppearance = transform(state.lightAppearance))
+            }
+        }
     }
+
+    private fun ThemeAppearanceState.toRepositoryConfig(): CustomThemeAppearanceConfig {
+        return CustomThemeAppearanceConfig(
+            backgroundUri = backgroundUri,
+            backgroundScale = backgroundScale,
+            backgroundRotation = backgroundRotation,
+            backgroundOffsetX = backgroundOffsetX,
+            backgroundOffsetY = backgroundOffsetY,
+            solidBackgroundColor = solidBackgroundColor.toColorHex(),
+            primaryColor = primaryColor.toColorHex(),
+            iconColor = iconColor.toColorHex(),
+            iconColors = iconColors.map { it.toColorHex() }
+        )
+    }
+
+    private fun Long.toColorHex(): String = "#%08X".format(this)
 }

@@ -5,7 +5,9 @@ import com.diary.moonpage.data.local.dao.ThemeDao
 import com.diary.moonpage.data.local.entity.CustomThemeEntity
 import com.diary.moonpage.data.local.entity.ThemeEntity
 import com.diary.moonpage.domain.model.ThemeType
+import com.diary.moonpage.domain.repository.CustomThemeAppearanceConfig
 import com.diary.moonpage.domain.repository.CustomThemeRepository
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 import javax.inject.Inject
@@ -14,7 +16,8 @@ import javax.inject.Singleton
 @Singleton
 class CustomThemeRepositoryImpl @Inject constructor(
     private val customThemeDao: CustomThemeDao,
-    private val themeDao: ThemeDao
+    private val themeDao: ThemeDao,
+    private val gson: Gson
 ) : CustomThemeRepository {
 
     override val customThemes: Flow<List<CustomThemeEntity>> = customThemeDao.observeCustomThemes()
@@ -22,9 +25,8 @@ class CustomThemeRepositoryImpl @Inject constructor(
     override suspend fun saveCustomTheme(
         name: String,
         bgFilePath: String,
-        primaryColor: String,
-        iconColor: String,
-        iconColors: List<String>
+        lightConfig: CustomThemeAppearanceConfig,
+        darkConfig: CustomThemeAppearanceConfig
     ): Result<CustomThemeEntity> {
         return runCatching {
             val id = "custom_${UUID.randomUUID()}"
@@ -33,9 +35,11 @@ class CustomThemeRepositoryImpl @Inject constructor(
                 id = id,
                 name = name,
                 bgFilePath = bgFilePath,
-                primaryColor = primaryColor,
-                iconColor = iconColor,
-                iconColors = iconColors.joinToString(","),
+                primaryColor = lightConfig.primaryColor,
+                iconColor = lightConfig.iconColor,
+                iconColors = lightConfig.iconColors.joinToString(","),
+                lightConfigJson = gson.toJson(lightConfig),
+                darkConfigJson = gson.toJson(darkConfig),
                 createdAt = createdAt
             )
             customThemeDao.upsert(customTheme)
@@ -55,7 +59,7 @@ class CustomThemeRepositoryImpl @Inject constructor(
                         description = null,
                         type = ThemeType.THEME.name,
                         icons = "VERY_HAPPY,HAPPY,NEUTRAL,SAD,ANGRY",
-                        primaryColor = primaryColor,
+                        primaryColor = lightConfig.primaryColor,
                         decoration = "CUSTOM",
                         activatedAt = null
                     )

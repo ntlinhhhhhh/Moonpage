@@ -784,6 +784,8 @@ private fun sampleCustomThemes(): List<CustomThemeEntity> = listOf(
         primaryColor = "#FFAD6A7A",
         iconColor = "#FFEF9A9A",
         iconColors = "#FFFFB3C1,#FFFF8FAB,#FFFB6F92,#FFD94F70,#FFB23A58",
+        lightConfigJson = "",
+        darkConfigJson = "",
         createdAt = 0L
     ),
     CustomThemeEntity(
@@ -793,6 +795,8 @@ private fun sampleCustomThemes(): List<CustomThemeEntity> = listOf(
         primaryColor = "#FF4FC3F7",
         iconColor = "#FF64B5F6",
         iconColors = "#FFFFF176,#FFAED581,#FF81D4FA,#FF7986CB,#FF9575CD",
+        lightConfigJson = "",
+        darkConfigJson = "",
         createdAt = 0L
     ),
     CustomThemeEntity(
@@ -802,6 +806,8 @@ private fun sampleCustomThemes(): List<CustomThemeEntity> = listOf(
         primaryColor = "#FF81C784",
         iconColor = "#FFAED581",
         iconColors = "#FFC5E1A5,#FFAED581,#FF81C784,#FF66BB6A,#FF4CAF50",
+        lightConfigJson = "",
+        darkConfigJson = "",
         createdAt = 0L
     )
 )
