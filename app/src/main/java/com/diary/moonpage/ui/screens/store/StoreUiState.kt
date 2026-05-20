@@ -1,7 +1,6 @@
 package com.diary.moonpage.ui.screens.store
 
 import androidx.annotation.StringRes
-import com.diary.moonpage.data.local.entity.CustomThemeEntity
 import com.diary.moonpage.domain.model.Theme
 
 data class StoreUiState(
@@ -26,7 +25,7 @@ data class StoreUiState(
     val currentStreak: Int = 0,
     val showRecoverySuccessDialog: Boolean = false,
     @StringRes val recoveryMessageRes: Int? = null,
-    val customThemes: List<CustomThemeEntity> = emptyList(),
+    val customThemes: List<Theme> = emptyList(),
     val showConfirmCustomThemeUnlockDialog: Boolean = false,
     val showInsufficientCoinsSheet: Boolean = false
 )

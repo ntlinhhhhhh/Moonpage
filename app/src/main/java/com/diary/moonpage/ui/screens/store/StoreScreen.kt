@@ -39,7 +39,6 @@ import androidx.compose.material.icons.rounded.Whatshot
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.diary.moonpage.R
-import com.diary.moonpage.data.local.entity.CustomThemeEntity
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.domain.model.ThemeType
 import com.diary.moonpage.ui.components.layout.SectionTitle
@@ -596,11 +595,9 @@ fun StoreTabs(
 @Composable
 fun CustomThemeTabContent(
     coins: Int,
-    customThemes: List<CustomThemeEntity>,
+    customThemes: List<Theme>,
     onCreateClick: () -> Unit
 ) {
-    val themePreviews = if (customThemes.isEmpty()) sampleCustomThemes() else customThemes
-
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = Modifier.fillMaxSize(),
@@ -638,7 +635,7 @@ fun CustomThemeTabContent(
         }
 
         items(
-            items = themePreviews,
+            items = customThemes,
             key = { it.id }
         ) { theme ->
             CustomThemeCard(theme = theme)
@@ -711,20 +708,31 @@ fun CreateCustomThemeCard(
 
 @Composable
 fun CustomThemeCard(
-    theme: CustomThemeEntity
+    theme: Theme
 ) {
-    val previewColor = remember(theme.primaryColor) {
-        runCatching { Color(android.graphics.Color.parseColor(theme.primaryColor)) }.getOrDefault(Color(0xFFE8E1DA))
+    val previewColor = remember(theme.primaryColor, theme.thumbnailUrl, theme.backgroundUrl) {
+        parseThemePreviewColor(theme.primaryColor)
+            ?: parseThemePreviewColor(theme.thumbnailUrl)
+            ?: parseThemePreviewColor(theme.backgroundUrl)
+            ?: Color(0xFFE8E1DA)
     }
-    val iconColors = remember(theme.iconColors, theme.iconColor) {
-        theme.iconColors.split(",")
-            .filter { it.isNotBlank() }
-            .map { value -> runCatching { Color(android.graphics.Color.parseColor(value.trim())) }.getOrDefault(previewColor) }
-            .ifEmpty { List(5) { previewColor } }
-            .let { colors -> if (colors.size >= 5) colors.take(5) else colors + List(5 - colors.size) { previewColor } }
+    val iconColors = remember(theme.id, theme.primaryColor, theme.thumbnailUrl, theme.backgroundUrl) {
+        val shades = getThemeShades(theme)
+        if (shades.size >= 5) shades.take(5) else List(5) { previewColor }
     }
-    val savedPreviewFile = remember(theme.bgFilePath) { File(theme.bgFilePath) }
-    val hasSavedPreview = theme.bgFilePath.isNotBlank() && savedPreviewFile.exists()
+    val previewPath = remember(theme.backgroundUrl, theme.thumbnailUrl) {
+        listOf(theme.backgroundUrl, theme.thumbnailUrl).firstOrNull { candidate ->
+            !candidate.isNullOrBlank() && parseThemePreviewColor(candidate) == null
+        }
+    }
+    val savedPreviewFile = remember(previewPath) { previewPath?.let(::File) }
+    val previewModel = remember(previewPath, savedPreviewFile) {
+        when {
+            previewPath.isNullOrBlank() -> null
+            savedPreviewFile?.exists() == true -> savedPreviewFile
+            else -> previewPath
+        }
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth().height(190.dp),
@@ -736,9 +744,9 @@ fun CustomThemeCard(
                 modifier = Modifier.fillMaxWidth().weight(1f).clip(RoundedCornerShape(16.dp)).background(previewColor.copy(alpha = 0.22f)),
                 contentAlignment = Alignment.Center
             ) {
-                if (hasSavedPreview) {
+                if (previewModel != null) {
                     AsyncImage(
-                        model = savedPreviewFile,
+                        model = previewModel,
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
@@ -775,42 +783,6 @@ fun CustomThemeCard(
         }
     }
 }
-
-private fun sampleCustomThemes(): List<CustomThemeEntity> = listOf(
-    CustomThemeEntity(
-        id = "sample_custom_rose",
-        name = "Rose Notes",
-        bgFilePath = "",
-        primaryColor = "#FFAD6A7A",
-        iconColor = "#FFEF9A9A",
-        iconColors = "#FFFFB3C1,#FFFF8FAB,#FFFB6F92,#FFD94F70,#FFB23A58",
-        lightConfigJson = "",
-        darkConfigJson = "",
-        createdAt = 0L
-    ),
-    CustomThemeEntity(
-        id = "sample_custom_sky",
-        name = "Soft Sky",
-        bgFilePath = "",
-        primaryColor = "#FF4FC3F7",
-        iconColor = "#FF64B5F6",
-        iconColors = "#FFFFF176,#FFAED581,#FF81D4FA,#FF7986CB,#FF9575CD",
-        lightConfigJson = "",
-        darkConfigJson = "",
-        createdAt = 0L
-    ),
-    CustomThemeEntity(
-        id = "sample_custom_matcha",
-        name = "Matcha Calm",
-        bgFilePath = "",
-        primaryColor = "#FF81C784",
-        iconColor = "#FFAED581",
-        iconColors = "#FFC5E1A5,#FFAED581,#FF81C784,#FF66BB6A,#FF4CAF50",
-        lightConfigJson = "",
-        darkConfigJson = "",
-        createdAt = 0L
-    )
-)
 
 @Composable
 fun StreakFreezeTabContent(
@@ -1107,14 +1079,13 @@ fun HomeTabContent(
 @Composable
 fun MyThemeTabContent(
     ownedThemes: List<Theme>,
-    customThemes: List<CustomThemeEntity>,
+    customThemes: List<Theme>,
     temporarySelectedId: String?,
     onThemeClick: (Theme) -> Unit,
     onExploreMore: () -> Unit
 ) {
     val currentTheme = ownedThemes.find { it.isActive }
     val otherThemes = ownedThemes.filter { !it.isActive && !it.id.startsWith("custom_") }
-    val customThemePreviews = if (customThemes.isEmpty()) sampleCustomThemes() else customThemes
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -1147,7 +1118,7 @@ fun MyThemeTabContent(
             )
         }
 
-        if (customThemePreviews.isNotEmpty()) {
+        if (customThemes.isNotEmpty()) {
             item {
                 Text(
                     text = stringResource(R.string.custom_theme),
@@ -1158,7 +1129,7 @@ fun MyThemeTabContent(
                 )
             }
             items(
-                items = customThemePreviews.chunked(2),
+                items = customThemes.chunked(2),
                 key = { row -> row.joinToString { it.id } }
             ) { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
@@ -1176,6 +1147,19 @@ fun MyThemeTabContent(
             ExploreMoreCard(onClick = onExploreMore)
         }
     }
+}
+
+private fun parseThemePreviewColor(value: String?): Color? {
+    if (value.isNullOrBlank()) return null
+    val raw = value.trim()
+    val normalized = when {
+        raw.startsWith("#") -> raw
+        raw.length == 6 || raw.length == 8 -> "#$raw"
+        else -> return null
+    }
+    return runCatching {
+        Color(android.graphics.Color.parseColor(normalized))
+    }.getOrNull()
 }
 
 @Composable

@@ -11,7 +11,6 @@ import com.diary.moonpage.domain.usecase.theme.GetOwnedThemesUseCase
 import com.diary.moonpage.domain.usecase.theme.GetThemesUseCase
 import com.diary.moonpage.domain.usecase.theme.SetActiveThemeUseCase
 import com.diary.moonpage.core.theme.MoonThemeType
-import com.diary.moonpage.domain.repository.CustomThemeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -28,7 +27,6 @@ class StoreViewModel @Inject constructor(
     private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager,
     private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
     private val themeRepository: com.diary.moonpage.domain.repository.ThemeRepository,
-    private val customThemeRepository: CustomThemeRepository,
     private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository
 ) : ViewModel() {
 
@@ -67,7 +65,7 @@ class StoreViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            customThemeRepository.customThemes.collect { customThemes ->
+            themeRepository.myThemes.collect { customThemes ->
                 _uiState.update { it.copy(customThemes = customThemes) }
             }
         }
@@ -267,6 +265,11 @@ class StoreViewModel @Inject constructor(
                 if (_uiState.value.ownedThemes.isEmpty()) {
                     _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Failed to load owned themes"))
                 }
+            }
+
+            // 4. Fetch custom themes created by the current user
+            themeRepository.getMyThemes().onFailure { error ->
+                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Failed to load custom themes"))
             }
 
             _uiState.update { it.copy(isLoading = false) }

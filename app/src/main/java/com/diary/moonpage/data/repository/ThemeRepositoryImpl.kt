@@ -4,13 +4,18 @@ import com.diary.moonpage.data.remote.api.ThemeApi
 import com.diary.moonpage.data.local.entity.ThemeEntity
 import com.diary.moonpage.data.local.entity.ThemeMoodEntity
 import com.diary.moonpage.data.remote.dto.theme.BuyThemeRequest
+import com.diary.moonpage.data.remote.dto.theme.CreateThemeMoodRequest
+import com.diary.moonpage.data.remote.dto.theme.CreateThemeRequest
 import com.diary.moonpage.data.remote.dto.theme.SetActiveThemeRequest
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.domain.model.ThemeType
+import com.diary.moonpage.domain.repository.CreateThemePayload
 import com.diary.moonpage.domain.repository.ThemeRepository
 import com.google.gson.Gson
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import com.diary.moonpage.core.util.ThemeConstants
 import com.diary.moonpage.core.util.PredefinedTheme
@@ -20,6 +25,8 @@ class ThemeRepositoryImpl @Inject constructor(
     private val api: ThemeApi,
     private val dao: com.diary.moonpage.data.local.dao.ThemeDao
 ) : ThemeRepository {
+    private val myThemesState = MutableStateFlow<List<Theme>>(emptyList())
+
     override val ownedThemes: Flow<List<Theme>> = dao.getOwnedThemes().map { entities ->
         entities.map { it.toDomain() }
     }
@@ -27,6 +34,8 @@ class ThemeRepositoryImpl @Inject constructor(
     override val allThemes: Flow<List<Theme>> = dao.getAllThemes().map { entities ->
         entities.map { it.toDomain() }
     }
+
+    override val myThemes: Flow<List<Theme>> = myThemesState.asStateFlow()
 
     override suspend fun getAllThemes(): Result<List<Theme>> {
         val cached = dao.getAllThemes().first().map { it.toDomain() }
@@ -102,6 +111,62 @@ class ThemeRepositoryImpl @Inject constructor(
             }
         } catch (e: Exception) {
             if (cachedOwned.isNotEmpty()) Result.success(cachedOwned) else Result.failure(e)
+        }
+    }
+
+    override suspend fun getMyThemes(): Result<List<Theme>> {
+        return try {
+            val response = api.getMyThemes()
+            if (response.isSuccessful && response.body() != null) {
+                val myThemes = response.body()!!
+                    .map { dto ->
+                        dto.toDomain().copy(
+                            collection = "Custom Theme",
+                            isOwned = true,
+                            isActive = false,
+                            primaryColor = dto.thumbnailUrl ?: dto.backgroundUrl
+                        )
+                    }
+                myThemesState.value = myThemes
+                Result.success(myThemes)
+            } else {
+                Result.failure(Exception(parseErrorResponse(response.errorBody()?.string())))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun createThemes(themes: List<CreateThemePayload>): Result<Unit> {
+        return try {
+            val request = themes.map { theme ->
+                CreateThemeRequest(
+                    id = theme.id,
+                    name = theme.name,
+                    price = theme.price,
+                    thumbnailUrl = theme.thumbnailUrl,
+                    backgroundUrl = theme.backgroundUrl,
+                    isOfficial = theme.isOfficial,
+                    isActive = theme.isActive,
+                    moods = theme.moods.map { mood ->
+                        CreateThemeMoodRequest(
+                            baseMoodId = mood.baseMoodId,
+                            iconUrl = mood.iconUrl,
+                            customName = mood.customName
+                        )
+                    }
+                )
+            }
+
+            val response = api.createThemes(request)
+            if (response.isSuccessful) {
+                getMyThemes()
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception(parseErrorResponse(response.errorBody()?.string())))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 

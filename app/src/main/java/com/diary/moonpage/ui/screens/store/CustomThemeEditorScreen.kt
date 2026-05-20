@@ -11,8 +11,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
@@ -66,6 +68,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.diary.moonpage.R
+import com.diary.moonpage.core.theme.MoonBgDark
+import com.diary.moonpage.core.theme.MoonBgLight
+import com.diary.moonpage.core.theme.MoonBottomNavBgDark
 import com.diary.moonpage.core.theme.MoonTheme
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import kotlinx.coroutines.launch
@@ -151,13 +156,13 @@ fun CustomThemeEditorScreen(
     var editorZoom by remember { mutableFloatStateOf(1f) }
     var editorPan by remember { mutableStateOf(Offset.Zero) }
     val previewTargetScale = when (uiState.selectedTool) {
-        ThemeEditorTool.Draw, ThemeEditorTool.Colors -> 0.84f
+        ThemeEditorTool.Background -> 0.92f
+        ThemeEditorTool.Draw, ThemeEditorTool.Colors -> 0.82f
         ThemeEditorTool.Preview -> 1f
-        ThemeEditorTool.Background -> 1f
     }
     val animatedPreviewScale by animateFloatAsState(targetValue = previewTargetScale, label = "customThemePreviewScale")
     val animatedPreviewOffsetY by animateDpAsState(
-        targetValue = if (uiState.selectedTool == ThemeEditorTool.Draw || uiState.selectedTool == ThemeEditorTool.Colors) (-18).dp else 0.dp,
+        targetValue = if (uiState.selectedTool == ThemeEditorTool.Draw || uiState.selectedTool == ThemeEditorTool.Colors) (-12).dp else 0.dp,
         label = "customThemePreviewOffset"
     )
     val transformState = rememberTransformableState { zoomChange, panChange, _ ->
@@ -281,7 +286,7 @@ fun CustomThemeEditorScreen(
                         .weight(1f),
                     contentAlignment = Alignment.TopCenter
                 ) {
-                    Box(
+                    BoxWithConstraints(
                         modifier = Modifier
                             .padding(top = 10.dp)
                             .offset(y = animatedPreviewOffsetY)
@@ -293,13 +298,18 @@ fun CustomThemeEditorScreen(
                             }
                             .transformable(transformState)
                     ) {
+                        val previewMaxHeight = if (uiState.selectedTool == ThemeEditorTool.Preview) {
+                            540.dp
+                        } else {
+                            minOf(492.dp, maxOf(360.dp, maxHeight - 28.dp))
+                        }
                         ThemePreviewCapture(
                             uiState = uiState,
                             showFullPreview = uiState.selectedTool == ThemeEditorTool.Preview,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .widthIn(max = 360.dp)
-                                .heightIn(max = 540.dp)
+                                .heightIn(max = previewMaxHeight)
                                 .aspectRatio(0.62f)
                                 .clip(RoundedCornerShape(28.dp))
                                 .drawWithContent {
@@ -316,17 +326,9 @@ fun CustomThemeEditorScreen(
                             onDarkModeSelected = {
                                 if (uiState.editingMode == EditorAppearanceMode.Light) onToggleEditingMode()
                             },
+                            onToggleAppearance = if (uiState.selectedTool != ThemeEditorTool.Preview) onToggleEditingMode else null,
                             onStrokeFinished = onStrokeFinished
                         )
-                        if (uiState.selectedTool != ThemeEditorTool.Preview) {
-                            AppearanceModeFab(
-                                isDarkMode = uiState.editingMode == EditorAppearanceMode.Dark,
-                                modifier = Modifier
-                                    .align(Alignment.TopStart)
-                                    .padding(12.dp),
-                                onClick = onToggleEditingMode
-                            )
-                        }
                     }
                 }
             }
@@ -380,6 +382,7 @@ private fun ThemePreviewCapture(
     onIconSelected: (Int) -> Unit = {},
     onLightModeSelected: () -> Unit = {},
     onDarkModeSelected: () -> Unit = {},
+    onToggleAppearance: (() -> Unit)? = null,
     onStrokeFinished: (DrawStroke) -> Unit
 ) {
     var activePoints by remember { mutableStateOf<List<Offset>>(emptyList()) }
@@ -389,6 +392,17 @@ private fun ThemePreviewCapture(
     val contentColor = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface
     val panelColor = if (isDarkMode) Color(0xFF151515).copy(alpha = 0.72f) else Color.White.copy(alpha = 0.66f)
     val safeBackgroundScale = uiState.backgroundScale * rotationCoverMultiplier(uiState.backgroundRotation)
+    val hasImageBackground = !uiState.backgroundUri.isNullOrBlank()
+    val bottomBarColor = if (hasImageBackground) {
+        if (isDarkMode) MoonBottomNavBgDark else Color.White
+    } else {
+        background.copy(alpha = 0.5f)
+    }
+    val bottomBarCutoutColor = if (hasImageBackground) {
+        if (isDarkMode) MoonBgDark else MoonBgLight
+    } else {
+        background
+    }
 
     Box(
         modifier = modifier
@@ -396,26 +410,52 @@ private fun ThemePreviewCapture(
             .then(
                 if (uiState.selectedTool == ThemeEditorTool.Draw) {
                     Modifier.pointerInput(uiState.brushColor, uiState.brushSize, uiState.brushType, uiState.isEraser) {
-                        detectDragGestures(
-                            onDragStart = { activePoints = listOf(it) },
-                            onDrag = { change, _ ->
-                                activePoints = activePoints + change.position
-                                change.consume()
-                            },
-                            onDragEnd = {
+                        awaitEachGesture {
+                            val strokePoints = mutableListOf<Offset>()
+                            var cancelledForTransform = false
+
+                            val firstDown = awaitFirstDown(requireUnconsumed = false)
+                            var activePointerId = firstDown.id
+                            strokePoints += firstDown.position
+                            activePoints = strokePoints.toList()
+
+                            while (true) {
+                                val event = awaitPointerEvent()
+                                val pressedChanges = event.changes.filter { it.pressed }
+
+                                if (pressedChanges.size > 1) {
+                                    cancelledForTransform = true
+                                    activePoints = emptyList()
+                                    break
+                                }
+
+                                val change = pressedChanges.firstOrNull { it.id == activePointerId }
+                                    ?: pressedChanges.firstOrNull()
+                                    ?: break
+
+                                activePointerId = change.id
+
+                                if (change.position != change.previousPosition) {
+                                    strokePoints += change.position
+                                    activePoints = strokePoints.toList()
+                                    change.consume()
+                                }
+                            }
+
+                            if (!cancelledForTransform && strokePoints.size > 1) {
                                 onStrokeFinished(
                                     DrawStroke(
-                                        points = activePoints,
+                                        points = strokePoints,
                                         color = uiState.brushColor,
                                         strokeWidth = uiState.brushSize,
                                         brushType = uiState.brushType,
                                         isEraser = uiState.isEraser
                                     )
                                 )
-                                activePoints = emptyList()
-                            },
-                            onDragCancel = { activePoints = emptyList() }
-                        )
+                            }
+
+                            activePoints = emptyList()
+                        }
                     }
                 } else Modifier
             )
@@ -457,45 +497,59 @@ private fun ThemePreviewCapture(
             }
         }
 
-        Column(
-            modifier = Modifier.fillMaxSize().padding(20.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            if (showFullPreview) {
-                ThemeCalendarMockScreen(
+        if (showFullPreview) {
+            ThemeCalendarMockScreen(
+                isDarkMode = isDarkMode,
+                primary = primary,
+                iconColors = uiState.iconColors,
+                contentColor = contentColor,
+                panelColor = panelColor,
+                bottomBarColor = bottomBarColor,
+                bottomBarCutoutColor = bottomBarCutoutColor,
+                onLightModeSelected = onLightModeSelected,
+                onDarkModeSelected = onDarkModeSelected,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            if (onToggleAppearance != null) {
+                AppearanceModeFab(
                     isDarkMode = isDarkMode,
-                    primary = primary,
-                    iconColors = uiState.iconColors,
-                    contentColor = contentColor,
-                    panelColor = panelColor,
-                    onLightModeSelected = onLightModeSelected,
-                    onDarkModeSelected = onDarkModeSelected
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(12.dp),
+                    onClick = onToggleAppearance
                 )
             }
 
-            if (!showFullPreview) {
-                when (uiState.selectedTool) {
-                    ThemeEditorTool.Background -> Unit
-                    ThemeEditorTool.Draw -> Unit
-                    ThemeEditorTool.Colors -> Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Spacer(modifier = Modifier.weight(1f))
-                        PreviewMoodIconRow(
-                            colors = uiState.iconColors,
-                            selectedIndex = if (uiState.colorFocusTarget == ColorFocusTarget.Icon) uiState.selectedIconIndex else -1,
-                            onSelected = onIconSelected,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Spacer(modifier = Modifier.weight(1f))
-                        MockAppBottomNavBar(
-                            primary = primary,
-                            onPrimarySelected = onPrimaryFocus
-                        )
-                    }
-                    ThemeEditorTool.Preview -> Unit
+            when (uiState.selectedTool) {
+                ThemeEditorTool.Background, ThemeEditorTool.Draw -> {
+                    MockAppBottomNavBar(
+                        primary = primary,
+                        backgroundColor = bottomBarColor,
+                        centerCutoutColor = bottomBarCutoutColor,
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                        onPrimarySelected = onPrimaryFocus
+                    )
                 }
+                ThemeEditorTool.Colors -> {
+                    PreviewMoodIconRow(
+                        colors = uiState.iconColors,
+                        selectedIndex = if (uiState.colorFocusTarget == ColorFocusTarget.Icon) uiState.selectedIconIndex else -1,
+                        onSelected = onIconSelected,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .padding(start = 20.dp, end = 20.dp, bottom = 84.dp)
+                    )
+                    MockAppBottomNavBar(
+                        primary = primary,
+                        backgroundColor = bottomBarColor,
+                        centerCutoutColor = bottomBarCutoutColor,
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                        onPrimarySelected = onPrimaryFocus
+                    )
+                }
+                ThemeEditorTool.Preview -> Unit
             }
         }
     }
@@ -531,69 +585,76 @@ private fun ThemeCalendarMockScreen(
     iconColors: List<Long>,
     contentColor: Color,
     panelColor: Color,
+    bottomBarColor: Color,
+    bottomBarCutoutColor: Color,
     onLightModeSelected: () -> Unit,
-    onDarkModeSelected: () -> Unit
+    onDarkModeSelected: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+    Box(modifier = modifier) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 84.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(shape = CircleShape, color = panelColor) {
-                    Icon(
-                        Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
-                        contentDescription = null,
-                        tint = primary,
-                        modifier = Modifier.padding(6.dp).size(22.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(shape = CircleShape, color = panelColor) {
+                        Icon(
+                            Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
+                            contentDescription = null,
+                            tint = primary,
+                            modifier = Modifier.padding(6.dp).size(22.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = stringResource(R.string.custom_theme_mock_month),
+                        color = primary,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
                     )
                 }
-                Spacer(modifier = Modifier.width(10.dp))
-                Text(
-                    text = stringResource(R.string.custom_theme_mock_month),
-                    color = primary,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    MiniModeIcon(
+                        selected = !isDarkMode,
+                        icon = Icons.Rounded.LightMode,
+                        tint = primary,
+                        panelColor = panelColor,
+                        onClick = onLightModeSelected
+                    )
+                    MiniModeIcon(
+                        selected = isDarkMode,
+                        icon = Icons.Rounded.DarkMode,
+                        tint = primary,
+                        panelColor = panelColor,
+                        onClick = onDarkModeSelected
+                    )
+                }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                MiniModeIcon(
-                    selected = !isDarkMode,
-                    icon = Icons.Rounded.LightMode,
-                    tint = primary,
-                    panelColor = panelColor,
-                    onClick = onLightModeSelected
-                )
-                MiniModeIcon(
-                    selected = isDarkMode,
-                    icon = Icons.Rounded.DarkMode,
-                    tint = primary,
-                    panelColor = panelColor,
-                    onClick = onDarkModeSelected
-                )
-            }
+
+            MockCalendarWeekHeader(contentColor = contentColor)
+            MockCalendarGrid(
+                primary = primary,
+                iconColors = iconColors,
+                contentColor = contentColor,
+                panelColor = panelColor,
+                transparentBackground = true,
+                modifier = Modifier.weight(1f)
+            )
         }
 
-        MockCalendarWeekHeader(contentColor = contentColor)
-        MockCalendarGrid(
+        MockAppBottomNavBar(
             primary = primary,
-            iconColors = iconColors,
-            contentColor = contentColor,
-            panelColor = panelColor,
-            modifier = Modifier.weight(1f)
+            backgroundColor = bottomBarColor,
+            centerCutoutColor = bottomBarCutoutColor,
+            modifier = Modifier.align(Alignment.BottomCenter)
         )
-
-        PreviewMoodIconRow(
-            colors = iconColors,
-            selectedIndex = -1,
-            onSelected = {},
-        )
-
-        MockAppBottomNavBar(primary = primary)
     }
 }
 
@@ -637,14 +698,11 @@ private fun MockCalendarGrid(
     iconColors: List<Long>,
     contentColor: Color,
     panelColor: Color,
+    transparentBackground: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val moodDays = mapOf(2 to 0, 5 to 1, 9 to 2, 14 to 3, 18 to 4, 22 to 0, 27 to 1)
-    Surface(
-        shape = RoundedCornerShape(22.dp),
-        color = panelColor,
-        modifier = modifier.fillMaxWidth()
-    ) {
+    val content: @Composable () -> Unit = {
         Column(
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -696,6 +754,20 @@ private fun MockCalendarGrid(
                     }
                 }
             }
+        }
+    }
+
+    if (transparentBackground) {
+        Box(modifier = modifier.fillMaxWidth()) {
+            content()
+        }
+    } else {
+        Surface(
+            shape = RoundedCornerShape(22.dp),
+            color = panelColor,
+            modifier = modifier.fillMaxWidth()
+        ) {
+            content()
         }
     }
 }
@@ -790,38 +862,43 @@ private fun ThemeEditorBottomTools(
 @Composable
 private fun MockAppBottomNavBar(
     primary: Color,
+    backgroundColor: Color,
+    centerCutoutColor: Color,
+    modifier: Modifier = Modifier,
     onPrimarySelected: (() -> Unit)? = null
 ) {
-    val inactiveColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.42f)
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .shadow(elevation = 16.dp, spotColor = Color.Black.copy(alpha = 0.10f)),
-        color = MoonTheme.customColors.bottomNavBg
+            .shadow(elevation = 16.dp, spotColor = Color.Black.copy(alpha = 0.10f))
+            .clickable(enabled = onPrimarySelected != null) { onPrimarySelected?.invoke() },
+        color = backgroundColor
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(vertical = 6.dp, horizontal = 24.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 6.dp, horizontal = 24.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            MockNavIcon(Icons.Rounded.CalendarMonth, tint = primary, onClick = onPrimarySelected)
-            MockNavIcon(Icons.Rounded.BarChart, tint = inactiveColor, onClick = onPrimarySelected)
+            MockNavIcon(Icons.Rounded.CalendarMonth, tint = primary)
+            MockNavIcon(Icons.Rounded.BarChart, tint = primary)
             Box(
                 modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.background),
+                    .background(centerCutoutColor),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     Icons.Rounded.CameraAlt,
                     contentDescription = null,
-                    tint = inactiveColor,
-                    modifier = Modifier.size(28.dp).clickable(enabled = onPrimarySelected != null) { onPrimarySelected?.invoke() }
+                    tint = primary,
+                    modifier = Modifier.size(28.dp)
                 )
             }
-            MockNavIcon(Icons.Rounded.Storefront, tint = inactiveColor, onClick = onPrimarySelected)
-            MockNavIcon(Icons.Rounded.Person, tint = inactiveColor, onClick = onPrimarySelected)
+            MockNavIcon(Icons.Rounded.Storefront, tint = primary)
+            MockNavIcon(Icons.Rounded.Person, tint = primary)
         }
     }
 }
@@ -829,8 +906,7 @@ private fun MockAppBottomNavBar(
 @Composable
 private fun MockNavIcon(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
-    tint: Color,
-    onClick: (() -> Unit)? = null
+    tint: Color
 ) {
     Icon(
         imageVector = icon,
@@ -839,7 +915,6 @@ private fun MockNavIcon(
         modifier = Modifier
             .padding(8.dp)
             .size(28.dp)
-            .clickable(enabled = onClick != null) { onClick?.invoke() }
     )
 }
 
