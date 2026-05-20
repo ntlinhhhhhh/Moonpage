@@ -13,6 +13,18 @@ class WeatherRepositoryImpl @Inject constructor(
     private val api: WeatherApi
 ) : WeatherRepository {
 
+    private var cachedWeather: WeatherResult? = null
+    private var cachedWeatherDate: LocalDate? = null
+
+    override fun getCachedWeather(date: LocalDate): WeatherResult? {
+        return if (cachedWeatherDate == date) cachedWeather else null
+    }
+
+    override fun setCachedWeather(date: LocalDate, result: WeatherResult) {
+        cachedWeather = result
+        cachedWeatherDate = date
+    }
+
     override suspend fun getWeatherConditions(lat: Double, lon: Double, date: LocalDate): Result<WeatherResult> {
         return try {
             val dateStr = date.toString()

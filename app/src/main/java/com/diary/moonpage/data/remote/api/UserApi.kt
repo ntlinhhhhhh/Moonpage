@@ -42,9 +42,22 @@ interface UserApi {
     @POST("api/users/me/store/buy-freeze")
     suspend fun buyStreakFreeze(): Response<Unit>
 
+    @POST("api/users/me/streak/recover")
+    suspend fun recoverStreak(): Response<Unit>
+
     @PUT("api/users/me/language")
     suspend fun updateLanguage(
         @Body request: LanguageRequest
+    ): Response<Unit>
+
+    @POST("api/users/me/change-password")
+    suspend fun changePassword(
+        @Body request: com.diary.moonpage.data.remote.dto.auth.ChangePasswordRequestDTO
+    ): Response<Unit>
+
+    @POST("api/users/me/confirm-password")
+    suspend fun confirmPassword(
+        @Body request: com.diary.moonpage.data.remote.dto.auth.ConfirmPasswordRequestDTO
     ): Response<Unit>
 }
 

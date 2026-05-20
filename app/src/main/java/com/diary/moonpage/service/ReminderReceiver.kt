@@ -8,7 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import com.diary.moonpage.MainActivity
+import com.diary.moonpage.ui.MainActivity
 import com.diary.moonpage.R
 import com.diary.moonpage.core.util.LocaleUtils
 import dagger.hilt.android.AndroidEntryPoint
@@ -34,9 +34,10 @@ class ReminderReceiver : BroadcastReceiver() {
     lateinit var notificationRepository: com.diary.moonpage.domain.repository.NotificationRepository
 
     override fun onReceive(context: Context, intent: Intent) {
-        val language = LocaleUtils.getSavedLanguage(context)
+        val language = context
+            .getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
+            .getString("language", "en") ?: "en"
         val localizedContext = LocaleUtils.applyLocale(context, language)
-        
         val title = localizedContext.getString(R.string.noti_reminder_title)
         val body = localizedContext.getString(R.string.noti_reminder_body)
         val type = "REMINDER"

@@ -26,6 +26,12 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
+    abstract fun bindCustomThemeRepository(
+        customThemeRepositoryImpl: CustomThemeRepositoryImpl
+    ): CustomThemeRepository
+
+    @Binds
+    @Singleton
     abstract fun bindUserRepository(
         userRepositoryImpl: UserRepositoryImpl
     ): UserRepository

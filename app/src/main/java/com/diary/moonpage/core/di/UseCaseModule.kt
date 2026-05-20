@@ -2,6 +2,7 @@ package com.diary.moonpage.core.di
 
 import android.content.Context
 import com.diary.moonpage.core.util.SettingsPreferencesManager
+import com.diary.moonpage.core.util.ThemePreferencesManager
 import com.diary.moonpage.core.util.UserManager
 import com.diary.moonpage.domain.repository.DailyLogRepository
 import com.diary.moonpage.domain.repository.MomentRepository
@@ -57,16 +58,22 @@ object UseCaseModule {
         notificationRepository: NotificationRepository,
         statsRepository: StatisticsRepository,
         dailyLogRepository: DailyLogRepository,
+        weatherRepository: com.diary.moonpage.domain.repository.WeatherRepository,
+        locationTracker: com.diary.moonpage.core.util.LocationTracker,
         userManager: UserManager,
         settingsPreferencesManager: SettingsPreferencesManager,
+        themePreferencesManager: ThemePreferencesManager,
         @ApplicationContext context: Context
     ): CheckAndTriggerNotificationsUseCase = 
         CheckAndTriggerNotificationsUseCase(
             notificationRepository,
             statsRepository,
             dailyLogRepository,
+            weatherRepository,
+            locationTracker,
             userManager,
             settingsPreferencesManager,
+            themePreferencesManager,
             context
         )
 }

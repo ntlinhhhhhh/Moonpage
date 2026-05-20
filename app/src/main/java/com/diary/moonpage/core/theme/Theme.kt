@@ -1,7 +1,10 @@
 package com.diary.moonpage.core.theme
 
 import android.os.Build
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -14,6 +17,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
@@ -212,7 +216,7 @@ fun MoonPageTheme(
         }
     }
 
-    val colorScheme = if (darkTheme) {
+    val targetColorScheme = if (darkTheme) {
         DarkColorScheme.copy(primary = themePrimary)
     } else {
         when (themeType) {
@@ -366,6 +370,7 @@ fun MoonPageTheme(
             )
         }
     }
+    val colorScheme = targetColorScheme
 
     val customColors = if (darkTheme) {
         MoonCustomColors(

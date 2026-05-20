@@ -18,4 +18,10 @@ interface UserRepository {
     suspend fun updateAvatar(image: okhttp3.MultipartBody.Part, localFile: File): Result<User>
     suspend fun clearCache()
     suspend fun updateLanguage(language: String): Result<Unit>
+    suspend fun deleteMyAccount(): Result<Unit>
+    suspend fun changePassword(old: String, new: String): Result<Unit>
+    suspend fun confirmPassword(password: String? = null, googleIdToken: String? = null): Result<Unit>
+    suspend fun buyStreakFreeze(): Result<Unit>
+    suspend fun recoverStreak(): Result<Unit>
+    suspend fun spendCoinsLocally(amount: Int): Result<User>
 }

@@ -7,6 +7,7 @@ data class StatisticsResponse(
     @SerializedName(value = "totalPhotos", alternate = ["total_photos", "TotalPhotos"]) val totalPhotos: Int,
     @SerializedName(value = "currentStreak", alternate = ["current_streak", "CurrentStreak"]) val currentStreak: Int,
     @SerializedName(value = "longestStreak", alternate = ["longest_streak", "LongestStreak"]) val longestStreak: Int,
+    @SerializedName(value = "streakFreezeCount", alternate = ["streak_freeze_count", "StreakFreezeCount"]) val streakFreezeCount: Int? = 0,
     @SerializedName(value = "moodDistribution", alternate = ["mood_distribution", "MoodDistribution"]) val moodDistribution: List<MoodDistributionDto>,
     @SerializedName(value = "moodFlow", alternate = ["mood_flow", "MoodFlow"]) val moodFlow: List<MoodFlowDto>,
     @SerializedName(value = "bestActivities", alternate = ["best_activities", "BestActivities", "influenceActivities", "influence_activities"]) val bestActivities: List<BestActivityDto>,
@@ -27,7 +28,7 @@ data class StatisticsResponse(
 
 data class SleepAnalysisDto(
     @SerializedName("date") val date: String,
-    @SerializedName("startTime") val startTime: String? = null,
+    @SerializedName(value = "startTime", alternate = ["sleepStartTime", "SleepStartTime", "start_time"]) val startTime: String? = null,
     @SerializedName("duration") val duration: Double,
     @SerializedName("moodId") val moodId: Int
 )

@@ -22,6 +22,17 @@ class ThemePreferencesManager @Inject constructor(
     companion object {
         private val THEME_TYPE_KEY = stringPreferencesKey("theme_type")
         private val DARK_MODE_KEY = androidx.datastore.preferences.core.booleanPreferencesKey("dark_mode")
+        private val LAST_WEATHER_NOTIFICATION_DATE_KEY = stringPreferencesKey("last_weather_noti_date")
+    }
+
+    val lastWeatherNotificationDate: Flow<String?> = context.themeDataStore.data.map { prefs ->
+        prefs[LAST_WEATHER_NOTIFICATION_DATE_KEY]
+    }
+
+    suspend fun setLastWeatherNotificationDate(date: String) {
+        context.themeDataStore.edit { prefs ->
+            prefs[LAST_WEATHER_NOTIFICATION_DATE_KEY] = date
+        }
     }
 
     val themeType: Flow<MoonThemeType> = context.themeDataStore.data.map { prefs ->

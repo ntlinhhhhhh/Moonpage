@@ -37,6 +37,11 @@ object DatabaseModule {
     }
 
     @Provides
+    fun provideCustomThemeDao(db: MoonPageDatabase): com.diary.moonpage.data.local.dao.CustomThemeDao {
+        return db.customThemeDao()
+    }
+
+    @Provides
     fun provideStatisticsDao(db: MoonPageDatabase): com.diary.moonpage.data.local.dao.StatisticsDao {
         return db.statisticsDao()
     }

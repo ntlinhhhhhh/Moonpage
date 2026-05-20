@@ -153,4 +153,103 @@ class UserRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun deleteMyAccount(): Result<Unit> {
+        return try {
+            val response = userApi.deleteMe()
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Failed to delete account"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun changePassword(old: String, new: String): Result<Unit> {
+        return try {
+            val request = com.diary.moonpage.data.remote.dto.auth.ChangePasswordRequestDTO(old, new)
+            val response = userApi.changePassword(request)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Failed to change password: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun confirmPassword(password: String?, googleIdToken: String?): Result<Unit> {
+        return try {
+            val request = com.diary.moonpage.data.remote.dto.auth.ConfirmPasswordRequestDTO(
+                password = password,
+                googleIdToken = googleIdToken
+            )
+            val response = userApi.confirmPassword(request)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                val errorMsg = response.errorBody()?.string() ?: "Confirmation failed"
+                Result.failure(Exception(errorMsg))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun buyStreakFreeze(): Result<Unit> {
+        return try {
+            val response = userApi.buyStreakFreeze()
+            if (response.isSuccessful) {
+                // Refresh user snapshot immediately so collectors on Store/Profile/Calendar update.
+                getCurrentUser()
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Purchase failed: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun recoverStreak(): Result<Unit> {
+        return try {
+            val response = userApi.recoverStreak()
+            if (response.isSuccessful) {
+                // Refresh user snapshot immediately so collectors on Store/Profile/Calendar update.
+                getCurrentUser()
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Recovery failed: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun spendCoinsLocally(amount: Int): Result<User> {
+        val current = _currentUser.value ?: return Result.failure(Exception("No user loaded"))
+        if (current.coinBalance < amount) return Result.failure(Exception("Not enough coins"))
+
+        val updated = current.copy(coinBalance = current.coinBalance - amount)
+        _currentUser.value = updated
+        userManager.saveUser(
+            UserResponseDto(
+                id = updated.userId,
+                name = updated.name,
+                email = updated.email,
+                avatarUrl = updated.avatarUrl,
+                gender = updated.gender,
+                birthday = updated.birthday,
+                coinBalance = updated.coinBalance,
+                authProvider = updated.authProvider,
+                streakFreezeCount = updated.streakFreezeCount,
+                currentStreak = updated.currentStreak,
+                longestStreak = updated.longestStreak
+            )
+        )
+        return Result.success(updated)
+    }
 }
