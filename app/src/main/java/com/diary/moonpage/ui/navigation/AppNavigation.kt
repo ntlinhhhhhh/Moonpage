@@ -632,6 +632,9 @@ fun AppNavigation(
                             onNavigateBack = { navController.popBackStack() },
                             onNavigateToMomentDetail = { momentId ->
                                 navController.navigate("camera_screen?momentId=$momentId")
+                            },
+                            onNavigateToDailyLog = { dateStr ->
+                                navController.navigate("daily_log_screen/$dateStr")
                             }
                         )
                     }

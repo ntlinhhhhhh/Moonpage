@@ -1,5 +1,6 @@
 package com.diary.moonpage.data.remote.dto.moment
 
+import com.diary.moonpage.core.util.normalizeAppImageUrl
 import com.diary.moonpage.domain.model.Moment
 
 data class MomentResponse(
@@ -15,7 +16,7 @@ data class MomentResponse(
     fun toDomain(): Moment {
         return Moment(
             id = id,
-            imageUrl = imageUrl,
+            imageUrl = normalizeAppImageUrl(imageUrl).orEmpty(),
             caption = caption,
             capturedAt = capturedAt,
             isPublic = isPublic,

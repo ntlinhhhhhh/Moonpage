@@ -2,6 +2,7 @@ package com.diary.moonpage.ui.screens.calendar
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.diary.moonpage.core.util.normalizeAppImageUrl
 import com.diary.moonpage.domain.repository.DailyLogRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,8 +31,6 @@ class CalendarViewModel @Inject constructor(
     private val weatherRepository: com.diary.moonpage.domain.repository.WeatherRepository
 ) : ViewModel() {
 
-    private val BASE_URL = "https://hieu-wikipedia.io.vn/"
-
     private val _uiState = MutableStateFlow(CalendarUiState())
     val uiState: StateFlow<CalendarUiState> = _uiState.asStateFlow()
 
@@ -59,6 +58,7 @@ class CalendarViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
+                momentRepository.getMyMoments()
                 val response = statisticsRepository.getGlobalSummary()
                 if (response.isSuccessful) {
                     _uiState.update { it.copy(currentStreak = response.body()?.currentStreak ?: 0) }
@@ -107,10 +107,10 @@ class CalendarViewModel @Inject constructor(
                         val momentDate = LocalDate.parse(moment.capturedAt.substring(0, 10))
                         if (YearMonth.from(momentDate) == month) {
                             val existingLog = logsMap[momentDate]
-                            val momentPhotoUrl = if (moment.imageUrl.startsWith("http")) moment.imageUrl else BASE_URL + moment.imageUrl.trimStart('/')
+                            val momentPhotoUrl = normalizeAppImageUrl(moment.imageUrl) ?: return@forEach
                             
                             if (existingLog != null) {
-                                val logPhotos = existingLog.dailyPhotos?.map { if (it.startsWith("http")) it else BASE_URL + it.trimStart('/') } ?: emptyList()
+                                val logPhotos = existingLog.dailyPhotos.orEmpty().mapNotNull(::normalizeAppImageUrl)
                                 val combinedPhotos = (logPhotos + momentPhotoUrl).distinct()
                                 logsMap[momentDate] = existingLog.copy(dailyPhotos = combinedPhotos)
                             } else {
@@ -131,7 +131,7 @@ class CalendarViewModel @Inject constructor(
                 }
 
                 val finalMap = logsMap.mapValues { (_, log) ->
-                    log.copy(dailyPhotos = log.dailyPhotos?.map { if (it.startsWith("http")) it else BASE_URL + it.trimStart('/') })
+                    log.copy(dailyPhotos = log.dailyPhotos?.mapNotNull(::normalizeAppImageUrl))
                 }
 
                 _uiState.update { it.copy(dailyLogs = finalMap, currentYearMonth = month, isLoading = false) }
@@ -195,6 +195,9 @@ class CalendarViewModel @Inject constructor(
     fun refreshLogs() {
         _uiState.update { it.copy(isLoading = true) }
         refreshTrigger.update { it + 1 }
+        viewModelScope.launch {
+            momentRepository.getMyMoments()
+        }
     }
 
     private fun deleteDailyLog(date: LocalDate) {

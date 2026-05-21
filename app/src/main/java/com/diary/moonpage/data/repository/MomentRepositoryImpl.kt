@@ -8,6 +8,7 @@ import com.diary.moonpage.domain.repository.MomentRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -24,7 +25,15 @@ class MomentRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context
 ) : MomentRepository {
 
-    override val moments: Flow<List<Moment>> = momentManager.getMoments()
+    override val moments: Flow<List<Moment>> = momentManager.getMoments().map { cachedMoments ->
+        cachedMoments.map { moment ->
+            if (moment.imageUrl.startsWith("http", ignoreCase = true)) {
+                moment
+            } else {
+                moment.copy(imageUrl = com.diary.moonpage.core.util.normalizeAppImageUrl(moment.imageUrl).orEmpty())
+            }
+        }
+    }
     override val localPaths: Flow<Map<String, String>> = momentManager.getLocalPaths()
 
     override suspend fun getMyMoments(): Result<List<Moment>> = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
@@ -92,7 +101,7 @@ class MomentRepositoryImpl @Inject constructor(
                 // Remove from localPaths and delete file
                 momentToDelete?.let { 
                     val currentPaths = localPaths.first().toMutableMap()
-                    val path = currentPaths.remove(it.imageUrl)
+                    val path = currentPaths.remove(it.id) ?: currentPaths.remove(it.imageUrl)
                     momentManager.saveLocalPaths(currentPaths)
                     path?.let { p ->
                         val file = File(p)
@@ -149,7 +158,11 @@ class MomentRepositoryImpl @Inject constructor(
                 // Update cache
                 val currentMoments = moments.first()
                 momentManager.saveMoments((listOf(newMoment) + currentMoments).distinctBy { it.id })
-                momentManager.addLocalPath(newMoment.imageUrl, permanentFile.absolutePath)
+                momentManager.addLocalPath(
+                    momentId = newMoment.id,
+                    imageUrl = newMoment.imageUrl,
+                    localPath = permanentFile.absolutePath
+                )
                 
                 Result.success(newMoment)
             } else {

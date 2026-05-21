@@ -91,7 +91,7 @@ fun MomentHistoryRoute(
         }
     }
 
-    var zoomImage by remember { mutableStateOf<String?>(null) }
+    var zoomMoment by remember { mutableStateOf<Moment?>(null) }
     MomentHistoryScreen(
         moments = uiState.moments,
         localPaths = uiState.localPaths,
@@ -101,7 +101,7 @@ fun MomentHistoryRoute(
         onShare = { moment -> viewModel.onEvent(MomentUiEvent.ShareMoment(moment.imageUrl)) },
         onDownload = { moment -> viewModel.onEvent(MomentUiEvent.DownloadMoment(moment.imageUrl)) },
         onDelete = { moment -> viewModel.onEvent(MomentUiEvent.DeleteMoment(moment.id)) },
-        onImageZoom = { url -> zoomImage = url },
+        onImageZoom = { moment -> zoomMoment = moment },
         snackbarHostState = snackbarHostState,
         avatarUrl = profileState.user?.avatarUrl,
         localAvatarPath = profileState.localAvatarPath ?: profileState.tempAvatarPath,
@@ -110,13 +110,13 @@ fun MomentHistoryRoute(
         onRefresh = { viewModel.onEvent(MomentUiEvent.LoadMoments) }
     )
 
-    if (zoomImage != null) {
+    if (zoomMoment != null) {
         MomentZoomOverlay(
-            imageUrl = zoomImage!!,
-            localPath = uiState.localPaths[zoomImage!!],
-            onDismiss = { zoomImage = null },
+            imageUrl = zoomMoment!!.imageUrl,
+            localPath = resolveMomentLocalPath(zoomMoment!!, uiState.localPaths),
+            onDismiss = { zoomMoment = null },
             onShare = {
-                viewModel.onEvent(MomentUiEvent.ShareMoment(zoomImage!!))
+                viewModel.onEvent(MomentUiEvent.ShareMoment(zoomMoment!!.imageUrl))
             }
         )
     }
@@ -136,7 +136,7 @@ fun MomentHistoryScreen(
     onShare: (Moment) -> Unit = {},
     onDownload: (Moment) -> Unit = {},
     onDelete: (Moment) -> Unit = {},
-    onImageZoom: (String) -> Unit = {},
+    onImageZoom: (Moment) -> Unit = {},
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     avatarUrl: String? = null,
     localAvatarPath: String? = null,
@@ -157,6 +157,12 @@ fun MomentHistoryScreen(
     val context = LocalContext.current
     var showMenu by remember { mutableStateOf(false) }
 
+    LaunchedEffect(initialMomentId, initialPage, sortedMoments.size) {
+        if (initialMomentId != null && sortedMoments.isNotEmpty() && initialPage in sortedMoments.indices) {
+            feedPagerState.scrollToPage(initialPage)
+        }
+    }
+
     LaunchedEffect(feedPagerState.currentPage, sortedMoments) {
         if (sortedMoments.isNotEmpty()) {
             val currentPage = feedPagerState.currentPage
@@ -164,7 +170,7 @@ fun MomentHistoryScreen(
             range.forEach { index ->
                 if (index in sortedMoments.indices) {
                     val moment = sortedMoments[index]
-                    val localPath = localPaths[moment.imageUrl]
+                    val localPath = resolveMomentLocalPath(moment, localPaths)
                     val imageData = if (localPath != null && java.io.File(localPath).exists()) java.io.File(localPath) else moment.imageUrl
                     
                     val request = ImageRequest.Builder(context)
@@ -225,10 +231,10 @@ fun MomentHistoryScreen(
                     val moment = sortedMoments[index]
                     MomentFeedItem(
                         moment = moment, 
-                        localPath = localPaths[moment.imageUrl],
+                        localPath = resolveMomentLocalPath(moment, localPaths),
                         avatarUrl = avatarUrl,
                         localAvatarPath = localAvatarPath,
-                        onImageClick = { onImageZoom(moment.imageUrl) }
+                        onImageClick = { onImageZoom(moment) }
                     )
                 }
             }

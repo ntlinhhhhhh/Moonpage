@@ -21,6 +21,9 @@ import kotlin.math.min
 
 import android.content.Intent
 import androidx.core.content.FileProvider
+import androidx.core.graphics.drawable.toBitmap
+import coil.imageLoader
+import coil.request.ImageRequest
 import kotlinx.coroutines.*
 
 object ImageUtils {
@@ -76,8 +79,12 @@ object ImageUtils {
     suspend fun shareImageFromUrl(context: Context, imageUrl: String) {
         withContext(Dispatchers.IO) {
             try {
-                val url = URL(imageUrl)
-                val bitmap = BitmapFactory.decodeStream(url.openConnection().getInputStream())
+                val request = ImageRequest.Builder(context)
+                    .data(imageUrl)
+                    .build()
+                val result = context.imageLoader.execute(request)
+                val drawable = (result as? coil.request.SuccessResult)?.drawable
+                val bitmap = drawable?.toBitmap()
                 if (bitmap != null) {
                     withContext(Dispatchers.Main) {
                         shareImage(context, bitmap, "Share Photo")
@@ -272,9 +279,19 @@ object ImageUtils {
     suspend fun downloadAndSaveImage(context: Context, imageUrl: String) {
         withContext(Dispatchers.IO) {
             try {
-                val url = URL(imageUrl)
-                val bitmap = BitmapFactory.decodeStream(url.openConnection().getInputStream())
-                saveBitmapToGallery(context, bitmap)
+                val request = ImageRequest.Builder(context)
+                    .data(imageUrl)
+                    .build()
+                val result = context.imageLoader.execute(request)
+                val drawable = (result as? coil.request.SuccessResult)?.drawable
+                val bitmap = drawable?.toBitmap()
+                if (bitmap != null) {
+                    saveBitmapToGallery(context, bitmap)
+                } else {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Failed to download image", Toast.LENGTH_SHORT).show()
+                    }
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
                 withContext(Dispatchers.Main) {

@@ -22,6 +22,12 @@ class DailyLogRepositoryImpl @Inject constructor(
     private val dao: DailyLogDao
 ) : DailyLogRepository {
 
+    override fun getAllDailyLogsFlow(): Flow<List<DailyLog>> {
+        return dao.getAllLogsFlow().map { entities ->
+            entities.map { it.toDomain() }
+        }.flowOn(Dispatchers.IO)
+    }
+
     override suspend fun createDailyLog(
         baseMoodId: Int,
         date: String,

@@ -3,6 +3,7 @@ package com.diary.moonpage
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.*
+import com.diary.moonpage.core.network.AuthInterceptor
 import com.diary.moonpage.service.WeatherWorker
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
@@ -20,6 +21,9 @@ class MoonPageApplication : Application(), ImageLoaderFactory, Configuration.Pro
 
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
+
+    @Inject
+    lateinit var authInterceptor: AuthInterceptor
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
@@ -62,6 +66,7 @@ class MoonPageApplication : Application(), ImageLoaderFactory, Configuration.Pro
             }
             .okHttpClient {
                 OkHttpClient.Builder()
+                    .addInterceptor(authInterceptor)
                     .connectTimeout(10, TimeUnit.SECONDS)
                     .readTimeout(15, TimeUnit.SECONDS)
                     .build()
