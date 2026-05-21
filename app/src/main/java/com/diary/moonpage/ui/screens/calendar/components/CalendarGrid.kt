@@ -57,7 +57,7 @@ fun CalendarGrid(
                             val logForDay = dailyLogs[date]
 
                             val isMatch = if (selectedFilters.isEmpty()) true else {
-                                selectedFilters.any { filter ->
+                                selectedFilters.all { filter ->
                                     when (filter) {
                                         is FilterItem.Mood -> logForDay?.baseMoodId == filter.id
                                         is FilterItem.Activity -> logForDay?.activityIds?.contains(filter.id) == true

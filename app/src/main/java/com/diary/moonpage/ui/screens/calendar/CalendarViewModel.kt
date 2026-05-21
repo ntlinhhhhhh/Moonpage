@@ -179,6 +179,9 @@ class CalendarViewModel @Inject constructor(
             is CalendarUiEvent.ApplyFilter -> {
                 _uiState.update { it.copy(selectedFilters = event.filters, showFilterSheet = false) }
             }
+            CalendarUiEvent.OnClearFilters -> {
+                _uiState.update { it.copy(selectedFilters = emptyList()) }
+            }
             CalendarUiEvent.ToggleViewMode -> {
                 _uiState.update { currentState ->
                     val newMode = if (currentState.viewMode == CalendarViewMode.CALENDAR) CalendarViewMode.TIMELINE else CalendarViewMode.CALENDAR

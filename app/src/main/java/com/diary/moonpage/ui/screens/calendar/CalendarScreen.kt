@@ -153,6 +153,7 @@ fun CalendarScreen(
                 CalendarTopBar(
                     viewMode = uiState.viewMode,
                     onFilterClick = { onEvent(CalendarUiEvent.OnFilterClick) },
+                    onClearFilters = { onEvent(CalendarUiEvent.OnClearFilters) },
                     onToggleViewMode = { onEvent(CalendarUiEvent.ToggleViewMode) },
                     onThemeClick = onNavigateToThemeCalendar,
                     onStreakClick = onStreakClick,
@@ -460,7 +461,7 @@ fun TimelineView(
     val filteredLogs = remember(dailyLogs, selectedFilters) {
         dailyLogs.values.filter { log ->
             if (selectedFilters.isEmpty()) true else {
-                selectedFilters.any { filter ->
+                selectedFilters.all { filter ->
                     when (filter) {
                         is FilterItem.Mood -> log.baseMoodId == filter.id
                         is FilterItem.Activity -> log.activityIds?.contains(filter.id) == true
