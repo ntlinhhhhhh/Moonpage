@@ -979,7 +979,7 @@ fun SleepMoodCorrelationChart(sleepData: List<com.diary.moonpage.data.remote.dto
             com.diary.moonpage.data.remote.dto.stats.SleepAnalysisDto("", null, 5.0, 3),
             com.diary.moonpage.data.remote.dto.stats.SleepAnalysisDto("", null, 7.0, 5),
             com.diary.moonpage.data.remote.dto.stats.SleepAnalysisDto("", null, 9.0, 4),
-            com.diary.moonpage.data.remote.dto.stats.SleepAnalysisDto("", null, 11.0, 3)
+            com.diary.moonpage.data.remote.dto.stats.SleepAnalysisDto("", null, 6.0, 1)
         )
     } else {
         sleepData
@@ -2363,7 +2363,9 @@ fun YearInMoonpageMiniatureCard(
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(
-            modifier = Modifier.padding(24.dp),
+            modifier = Modifier
+                .padding(24.dp)
+                .clip(RoundedCornerShape(32.dp)),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Title

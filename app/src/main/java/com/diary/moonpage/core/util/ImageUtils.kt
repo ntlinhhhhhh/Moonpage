@@ -99,6 +99,23 @@ object ImageUtils {
         }
     }
 
+    fun applyRoundedCorners(bitmap: Bitmap, cornerRadius: Float): Bitmap {
+        val output = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(output)
+        
+        val paint = android.graphics.Paint()
+        paint.isAntiAlias = true
+        paint.color = android.graphics.Color.WHITE
+        
+        val rect = android.graphics.RectF(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat())
+        canvas.drawRoundRect(rect, cornerRadius, cornerRadius, paint)
+        
+        paint.xfermode = android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.SRC_IN)
+        canvas.drawBitmap(bitmap, 0f, 0f, paint)
+        
+        return output
+    }
+
     suspend fun compressAndCropSquare(
         context: Context,
         uri: Uri,
