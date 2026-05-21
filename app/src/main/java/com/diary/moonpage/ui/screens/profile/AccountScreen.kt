@@ -506,6 +506,7 @@ fun AccountScreen(
                 label = stringResource(R.string.current_streak),
                 value = "$currentStreak ${stringResource(R.string.days_label)}",
                 icon = Icons.Rounded.Whatshot,
+                isEnabled = false,
                 onClick = {}
             )
 
@@ -513,6 +514,7 @@ fun AccountScreen(
                 label = stringResource(R.string.longest_streak),
                 value = "$longestStreak ${stringResource(R.string.days_label)}",
                 icon = Icons.Rounded.Star,
+                isEnabled = false,
                 onClick = {}
             )
 
@@ -520,6 +522,7 @@ fun AccountScreen(
                 label = stringResource(R.string.streak_freezes),
                 value = streakFreezeCount.toString(),
                 icon = com.diary.moonpage.core.util.StreakFreezeIcon,
+                isEnabled = false,
                 onClick = {}
             )
 
