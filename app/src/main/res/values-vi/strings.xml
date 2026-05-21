@@ -62,6 +62,9 @@
     <string name="ok">OK</string>
     <string name="success">Thành công!</string>
     <string name="great">Tuyệt!</string>
+    <string name="recommended">Khuyến nghị</string>
+    <string name="open_settings">Mở cài đặt</string>
+    <string name="not_now">Để sau</string>
 
     <!-- Calendar & Stats -->
     <string name="report">Báo cáo</string>
@@ -266,6 +269,8 @@
     <string name="daily_reminder">Nhắc nhở ghi nhật ký</string>
     <string name="daily_reminder_desc">Nhắc bạn viết nhật ký mỗi ngày</string>
     <string name="reminder_time">Giờ nhắc nhở</string>
+    <string name="battery_unrestricted_title">Không hạn chế pin cho cảnh báo mưa</string>
+    <string name="battery_unrestricted_desc">Để nhận cảnh báo mưa đúng lúc, hãy cho phép MoonPage chạy không bị hạn chế pin trong cài đặt Android.</string>
     <string name="app_updates">Cập nhật ứng dụng</string>
     <string name="news_and_updates">Tin tức &amp; Cập nhật</string>
     <string name="news_and_updates_desc">Nhận thông báo về tính năng và giao diện mới</string>

@@ -2,9 +2,10 @@ package com.diary.moonpage
 
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
-import androidx.work.*
+import androidx.work.Configuration
+import androidx.work.WorkManager
 import com.diary.moonpage.core.network.AuthInterceptor
-import com.diary.moonpage.service.WeatherWorker
+import com.diary.moonpage.core.util.WeatherAlarmScheduler
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 import java.util.concurrent.TimeUnit
@@ -25,6 +26,9 @@ class MoonPageApplication : Application(), ImageLoaderFactory, Configuration.Pro
     @Inject
     lateinit var authInterceptor: AuthInterceptor
 
+    @Inject
+    lateinit var weatherAlarmScheduler: WeatherAlarmScheduler
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
@@ -32,23 +36,8 @@ class MoonPageApplication : Application(), ImageLoaderFactory, Configuration.Pro
 
     override fun onCreate() {
         super.onCreate()
-        scheduleWeatherWork()
-    }
-
-    private fun scheduleWeatherWork() {
-        val constraints = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.CONNECTED)
-            .build()
-
-        val weatherWorkRequest = PeriodicWorkRequestBuilder<WeatherWorker>(3, TimeUnit.HOURS)
-            .setConstraints(constraints)
-            .build()
-
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-            "WeatherWork",
-            ExistingPeriodicWorkPolicy.KEEP,
-            weatherWorkRequest
-        )
+        WorkManager.getInstance(this).cancelUniqueWork("WeatherWork")
+        weatherAlarmScheduler.ensureWeatherAlarmScheduled()
     }
 
     override fun newImageLoader(): ImageLoader {

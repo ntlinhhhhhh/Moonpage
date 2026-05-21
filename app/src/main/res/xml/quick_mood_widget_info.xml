@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_quick_mood_description"
+    android:initialLayout="@layout/widget_glance_placeholder"
+    android:minWidth="180dp"
+    android:minHeight="73dp"
+    android:previewLayout="@layout/widget_glance_placeholder"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellWidth="3"
+    android:targetCellHeight="1"
+    android:updatePeriodMillis="0"
+    android:widgetCategory="home_screen" />

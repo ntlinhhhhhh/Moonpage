@@ -30,7 +30,7 @@ class MoonFirebaseMessagingService : FirebaseMessagingService() {
     lateinit var userRepository: com.diary.moonpage.domain.repository.UserRepository
 
     private val job = SupervisorJob()
-    private val scope = CoroutineScope(Dispatchers.Main + job)
+    private val scope = CoroutineScope(Dispatchers.IO + job)
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
@@ -41,46 +41,42 @@ class MoonFirebaseMessagingService : FirebaseMessagingService() {
         super.onMessageReceived(message)
         android.util.Log.d("FCMService", "Message received from: ${message.from}")
 
-        val type = message.data["type"]
-        val targetId = message.data["targetId"]
-        val title = message.notification?.title ?: message.data["title"] ?: "Moonpage"
-        val body = message.notification?.body ?: message.data["body"] ?: "Bạn có một thông điệp mới!"
+        val data = message.data
+        val type = data["type"] ?: "SYSTEM"
+        val targetId = data["targetId"] ?: data["target_id"]
+        val title = data["title"] ?: message.notification?.title ?: "Moonpage"
+        val body = data["body"] ?: data["message"] ?: message.notification?.body ?: "You have a new message."
 
         android.util.Log.d("FCMService", "Payload: title=$title, body=$body, type=$type, targetId=$targetId")
 
-        // Post to bus for in-app snackbar
-        scope.launch {
-            notificationBus.postEvent(title, body, type, targetId)
-            
-            // Record this notification in the backend database for Notification Center
-            // Using a separate scope or ensuring we don't leak the service
-            kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
-                try {
-                    // Use a fresh TokenManager with application context
-                    val tokenManager = com.diary.moonpage.core.util.TokenManager(applicationContext)
-                    val userId = tokenManager.getUserId()
+        showNotification(title, body, type, targetId)
 
-                    if (userId != null) {
-                        val response = notificationRepository.createNotification(
-                            com.diary.moonpage.data.remote.dto.notification.CreateNotificationRequest(
-                                userId = userId,
-                                title = title,
-                                message = body,
-                                type = type ?: "SYSTEM"
-                            )
+        scope.launch {
+            withContext(Dispatchers.Main) {
+                notificationBus.postEvent(title, body, type, targetId)
+            }
+            
+            try {
+                val tokenManager = com.diary.moonpage.core.util.TokenManager(applicationContext)
+                val userId = tokenManager.getUserId()
+
+                if (userId != null) {
+                    val response = notificationRepository.createNotification(
+                        com.diary.moonpage.data.remote.dto.notification.CreateNotificationRequest(
+                            userId = userId,
+                            title = title,
+                            message = body,
+                            type = type
                         )
-                        if (response.isSuccessful) {
-                            android.util.Log.d("FCMService", "Successfully recorded in-app notification in DB")
-                        }
+                    )
+                    if (response.isSuccessful) {
+                        android.util.Log.d("FCMService", "Successfully recorded in-app notification in DB")
                     }
-                } catch (e: Exception) {
-                    android.util.Log.e("FCMService", "Exception while recording in-app notification", e)
                 }
+            } catch (e: Exception) {
+                android.util.Log.e("FCMService", "Exception while recording in-app notification", e)
             }
         }
-
-        // Always show system notification as well
-        showNotification(title, body, type, targetId)
     }
 
     private fun showNotification(title: String, body: String, type: String? = null, targetId: String? = null) {
