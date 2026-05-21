@@ -79,7 +79,7 @@ fun FilterScreen(
 
     Column(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .background(bgColor)
             .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
@@ -162,8 +162,9 @@ fun FilterScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         LazyColumn(
-            modifier = Modifier.weight(1f, fill = false),
-            verticalArrangement = Arrangement.spacedBy(32.dp)
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(32.dp),
+            contentPadding = PaddingValues(bottom = 16.dp)
         ) {
             item {
                 // Mood Section

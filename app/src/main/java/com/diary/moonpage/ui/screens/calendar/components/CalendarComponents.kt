@@ -53,6 +53,7 @@ fun CalendarTopBar(
     onStreakClick: () -> Unit = {},
     streakCount: Int = 0,
     isFilterActive: Boolean = false,
+    onClearFilters: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -67,36 +68,29 @@ fun CalendarTopBar(
             modifier = Modifier.clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
-            ) { onFilterClick() }
+            ) { 
+                if (isFilterActive) onClearFilters() else onFilterClick()
+            }
         ) {
             Box(
                 modifier = Modifier.size(40.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.FilterList,
-                    contentDescription = stringResource(R.string.filter_title),
+                    imageVector = if (isFilterActive) Icons.Rounded.Close else Icons.Rounded.FilterList,
+                    contentDescription = if (isFilterActive) "Clear filters" else stringResource(R.string.filter_title),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
-                if (isFilterActive) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .align(Alignment.TopEnd)
-                            .offset(x = 2.dp, y = 2.dp)
-                            .background(MaterialTheme.colorScheme.primary, CircleShape)
-                            .border(1.5.dp, MaterialTheme.colorScheme.background, CircleShape)
-                    )
-                }
             }
-            Spacer(modifier = Modifier.width(0.dp))
-            Icon(
-                imageVector = Icons.Rounded.KeyboardArrowDown,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(20.dp)
-            )
+            if (!isFilterActive) {
+                Icon(
+                    imageVector = Icons.Rounded.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
 
         Row(

@@ -153,6 +153,7 @@ fun CalendarScreen(
                 CalendarTopBar(
                     viewMode = uiState.viewMode,
                     onFilterClick = { onEvent(CalendarUiEvent.OnFilterClick) },
+                    onClearFilters = { onEvent(CalendarUiEvent.OnClearFilters) },
                     onToggleViewMode = { onEvent(CalendarUiEvent.ToggleViewMode) },
                     onThemeClick = onNavigateToThemeCalendar,
                     onStreakClick = onStreakClick,
