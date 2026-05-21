@@ -177,7 +177,7 @@ class CalendarViewModel @Inject constructor(
                 _uiState.update { it.copy(showShareSheet = false) }
             }
             is CalendarUiEvent.ApplyFilter -> {
-                _uiState.update { it.copy(selectedFilter = event.filterItem, showFilterSheet = false) }
+                _uiState.update { it.copy(selectedFilters = event.filters, showFilterSheet = false) }
             }
             CalendarUiEvent.ToggleViewMode -> {
                 _uiState.update { currentState ->
