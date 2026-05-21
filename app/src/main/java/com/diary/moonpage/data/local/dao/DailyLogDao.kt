@@ -5,6 +5,9 @@ import com.diary.moonpage.data.local.entity.DailyLogEntity
 
 @Dao
 interface DailyLogDao {
+    @Query("SELECT * FROM daily_logs ORDER BY date DESC")
+    fun getAllLogsFlow(): kotlinx.coroutines.flow.Flow<List<DailyLogEntity>>
+
     @Query("SELECT * FROM daily_logs WHERE date LIKE :yearMonth || '%'")
     fun getLogsByMonthFlow(yearMonth: String): kotlinx.coroutines.flow.Flow<List<DailyLogEntity>>
 

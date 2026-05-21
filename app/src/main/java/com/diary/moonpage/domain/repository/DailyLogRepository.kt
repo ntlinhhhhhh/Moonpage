@@ -5,6 +5,8 @@ import kotlinx.coroutines.flow.Flow
 import java.io.File
 
 interface DailyLogRepository {
+    fun getAllDailyLogsFlow(): Flow<List<DailyLog>>
+
     suspend fun createDailyLog(
         baseMoodId: Int,
         date: String,

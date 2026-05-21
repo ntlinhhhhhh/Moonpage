@@ -30,19 +30,23 @@ class MomentManager @Inject constructor(
     suspend fun saveMoments(moments: List<Moment>) {
         val json = gson.toJson(moments)
         context.momentDataStore.edit { preferences ->
+            val previousMoments = parseMoments(preferences[MOMENT_LIST_KEY])
+            val currentPaths = parsePaths(preferences[LOCAL_PATHS_KEY])
             preferences[MOMENT_LIST_KEY] = json
+            val migratedPaths = migrateLocalPaths(
+                currentPaths = currentPaths,
+                previousMoments = previousMoments,
+                updatedMoments = moments
+            )
+            if (migratedPaths.isNotEmpty()) {
+                preferences[LOCAL_PATHS_KEY] = gson.toJson(migratedPaths)
+            }
         }
     }
 
     fun getMoments(): Flow<List<Moment>> {
         return context.momentDataStore.data.map { preferences ->
-            val json = preferences[MOMENT_LIST_KEY]
-            if (!json.isNullOrEmpty()) {
-                val type = object : TypeToken<List<Moment>>() {}.type
-                gson.fromJson(json, type)
-            } else {
-                emptyList()
-            }
+            parseMoments(preferences[MOMENT_LIST_KEY])
         }
     }
 
@@ -53,29 +57,20 @@ class MomentManager @Inject constructor(
         }
     }
 
-    suspend fun addLocalPath(imageUrl: String, localPath: String) {
+    suspend fun addLocalPath(momentId: String, imageUrl: String?, localPath: String) {
         context.momentDataStore.edit { preferences ->
-            val currentJson = preferences[LOCAL_PATHS_KEY]
-            val currentPaths: MutableMap<String, String> = if (!currentJson.isNullOrEmpty()) {
-                val type = object : TypeToken<Map<String, String>>() {}.type
-                gson.fromJson(currentJson, type)
-            } else {
-                mutableMapOf()
-            }
-            currentPaths[imageUrl] = localPath
+            val currentPaths = parsePaths(preferences[LOCAL_PATHS_KEY])
+            currentPaths[momentId] = localPath
+            imageUrl
+                ?.takeUnless { it == momentId }
+                ?.let { legacyKey -> currentPaths.remove(legacyKey) }
             preferences[LOCAL_PATHS_KEY] = gson.toJson(currentPaths)
         }
     }
 
     fun getLocalPaths(): Flow<Map<String, String>> {
         return context.momentDataStore.data.map { preferences ->
-            val json = preferences[LOCAL_PATHS_KEY]
-            if (!json.isNullOrEmpty()) {
-                val type = object : TypeToken<Map<String, String>>() {}.type
-                gson.fromJson(json, type)
-            } else {
-                emptyMap()
-            }
+            parsePaths(preferences[LOCAL_PATHS_KEY])
         }
     }
 
@@ -84,5 +79,44 @@ class MomentManager @Inject constructor(
             preferences.remove(MOMENT_LIST_KEY)
             preferences.remove(LOCAL_PATHS_KEY)
         }
+    }
+
+    private fun parseMoments(json: String?): List<Moment> {
+        if (json.isNullOrEmpty()) return emptyList()
+        val type = object : TypeToken<List<Moment>>() {}.type
+        return gson.fromJson(json, type) ?: emptyList()
+    }
+
+    private fun parsePaths(json: String?): MutableMap<String, String> {
+        if (json.isNullOrEmpty()) return mutableMapOf()
+        val type = object : TypeToken<Map<String, String>>() {}.type
+        return (gson.fromJson<Map<String, String>>(json, type) ?: emptyMap()).toMutableMap()
+    }
+
+    private fun migrateLocalPaths(
+        currentPaths: Map<String, String>,
+        previousMoments: List<Moment>,
+        updatedMoments: List<Moment>
+    ): Map<String, String> {
+        if (currentPaths.isEmpty()) return emptyMap()
+
+        val previousById = previousMoments.associateBy { it.id }
+        val migratedPaths = currentPaths.toMutableMap()
+
+        updatedMoments.forEach { moment ->
+            val candidateKeys = buildList {
+                add(moment.id)
+                add(moment.imageUrl)
+                previousById[moment.id]?.imageUrl?.let(::add)
+            }.distinct()
+
+            val resolvedPath = candidateKeys.firstNotNullOfOrNull(currentPaths::get) ?: return@forEach
+            migratedPaths[moment.id] = resolvedPath
+            candidateKeys
+                .filter { it != moment.id }
+                .forEach(migratedPaths::remove)
+        }
+
+        return migratedPaths
     }
 }

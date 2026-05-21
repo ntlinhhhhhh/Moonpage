@@ -36,7 +36,7 @@ fun MomentDetailRoute(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    var zoomImage by remember { mutableStateOf<String?>(null) }
+    var zoomMoment by remember { mutableStateOf<Moment?>(null) }
     var momentToDelete by remember { mutableStateOf<Moment?>(null) }
 
     if (momentToDelete != null) {
@@ -96,16 +96,16 @@ fun MomentDetailRoute(
         onShare = { m: Moment -> viewModel.onEvent(MomentUiEvent.ShareMoment(m.imageUrl)) },
         onDownload = { m: Moment -> viewModel.onEvent(MomentUiEvent.DownloadMoment(m.imageUrl)) },
         onDelete = { m: Moment -> momentToDelete = m },
-        onImageZoom = { url: String -> zoomImage = url }
+        onImageZoom = { moment: Moment -> zoomMoment = moment }
     )
 
-    if (zoomImage != null) {
+    if (zoomMoment != null) {
         MomentZoomOverlay(
-            imageUrl = zoomImage!!,
-            localPath = uiState.localPaths[zoomImage!!],
-            onDismiss = { zoomImage = null },
+            imageUrl = zoomMoment!!.imageUrl,
+            localPath = resolveMomentLocalPath(zoomMoment!!, uiState.localPaths),
+            onDismiss = { zoomMoment = null },
             onShare = {
-                viewModel.onEvent(MomentUiEvent.ShareMoment(zoomImage!!))
+                viewModel.onEvent(MomentUiEvent.ShareMoment(zoomMoment!!.imageUrl))
             }
         )
     }
@@ -124,7 +124,7 @@ fun MomentDetailScreen(
     onShare: (Moment) -> Unit,
     onDownload: (Moment) -> Unit,
     onDelete: (Moment) -> Unit,
-    onImageZoom: (String) -> Unit
+    onImageZoom: (Moment) -> Unit
 ) {
     val moment = uiState.moments.find { it.id == momentId }
 
@@ -141,8 +141,8 @@ fun MomentDetailScreen(
     Box(modifier = Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color.Black)) {
         MomentFeedItem(
             moment = moment,
-            localPath = uiState.localPaths[moment.imageUrl],
-            onImageClick = { onImageZoom(moment.imageUrl) }
+            localPath = resolveMomentLocalPath(moment, uiState.localPaths),
+            onImageClick = { onImageZoom(moment) }
         )
         
         // Overlay controls

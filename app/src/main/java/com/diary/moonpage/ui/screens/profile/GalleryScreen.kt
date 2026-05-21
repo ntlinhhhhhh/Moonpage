@@ -3,6 +3,8 @@ package com.diary.moonpage.ui.screens.profile
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -11,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material.icons.rounded.BrokenImage
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,6 +21,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -31,47 +36,36 @@ import coil.request.ImageRequest
 import coil.size.Scale
 import coil.size.Size
 import com.diary.moonpage.R
-import com.diary.moonpage.ui.screens.moment.MomentViewModel
-import com.diary.moonpage.domain.model.Moment
-import com.diary.moonpage.ui.screens.moment.MomentUiState
-
-/**
- * Stateful Component
- */
 @Composable
 fun GalleryScreen(
     onNavigateBack: () -> Unit,
     onNavigateToMomentDetail: (String) -> Unit = {},
-    viewModel: MomentViewModel = hiltViewModel()
+    onNavigateToDailyLog: (String) -> Unit = {},
+    viewModel: GalleryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     GalleryScreenContent(
         uiState = uiState,
         onNavigateBack = onNavigateBack,
-        onNavigateToMomentDetail = onNavigateToMomentDetail
+        onNavigateToMomentDetail = onNavigateToMomentDetail,
+        onNavigateToDailyLog = onNavigateToDailyLog
     )
 }
 
-/**
- * Stateless Component
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GalleryScreenContent(
-    uiState: MomentUiState,
+    uiState: GalleryUiState,
     onNavigateBack: () -> Unit,
-    onNavigateToMomentDetail: (String) -> Unit
+    onNavigateToMomentDetail: (String) -> Unit,
+    onNavigateToDailyLog: (String) -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    val moments = uiState.moments
     val isLoading = uiState.isLoading
     val backText = stringResource(R.string.back)
-
-    // Sort moments by capturedAt descending (newest first)
-    val sortedMoments = remember(moments) {
-        moments.sortedByDescending { it.capturedAt }
-    }
+    val galleryItems = uiState.items
+    var previewItem by remember { mutableStateOf<GalleryPhotoItem?>(null) }
 
     Scaffold(
         containerColor = colorScheme.background,
@@ -101,7 +95,7 @@ fun GalleryScreenContent(
         }
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-            if (sortedMoments.isEmpty() && !isLoading) {
+            if (galleryItems.isEmpty() && !isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -136,18 +130,31 @@ fun GalleryScreenContent(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(
-                        items = sortedMoments,
+                        items = galleryItems,
                         key = { it.id }
-                    ) { moment ->
+                    ) { item ->
                         GalleryItem(
-                            url = moment.imageUrl,
-                            localPath = uiState.localPaths[moment.imageUrl],
-                            onClick = { onNavigateToMomentDetail(moment.id) }
+                            url = item.imageUrl,
+                            localPath = item.localPath,
+                            onClick = {
+                                when {
+                                    item.momentId != null -> onNavigateToMomentDetail(item.momentId)
+                                    item.dailyLogDate != null -> previewItem = item
+                                }
+                            }
                         )
                     }
                 }
             }
         }
+    }
+
+    previewItem?.let { item ->
+        DailyLogGalleryFullscreenPreview(
+            url = item.imageUrl,
+            localPath = item.localPath,
+            onDismiss = { previewItem = null }
+        )
     }
 }
 
@@ -216,6 +223,89 @@ fun GalleryItem(
                 contentDescription = stringResource(R.string.error_unknown),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
             )
+        }
+    }
+}
+
+@Composable
+private fun DailyLogGalleryFullscreenPreview(
+    url: String,
+    localPath: String?,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val imageData = remember(localPath, url) {
+        if (localPath != null && java.io.File(localPath).exists()) java.io.File(localPath) else url
+    }
+    var scale by remember { mutableFloatStateOf(1f) }
+    var offset by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+    val backgroundColor = MaterialTheme.colorScheme.background
+
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onDoubleTap = {
+                        if (scale > 1f) {
+                            scale = 1f
+                            offset = androidx.compose.ui.geometry.Offset.Zero
+                        } else {
+                            scale = 2.5f
+                        }
+                    }
+                )
+            },
+        color = backgroundColor
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            AsyncImage(
+                model = remember(imageData) {
+                    ImageRequest.Builder(context)
+                        .data(imageData)
+                        .crossfade(true)
+                        .build()
+                },
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer(
+                        scaleX = scale,
+                        scaleY = scale,
+                        translationX = offset.x,
+                        translationY = offset.y
+                    )
+                    .pointerInput(Unit) {
+                        detectTransformGestures { _, pan, zoom, _ ->
+                            val nextScale = (scale * zoom).coerceIn(1f, 5f)
+                            scale = nextScale
+                            offset = if (nextScale > 1f) {
+                                offset + pan
+                            } else {
+                                androidx.compose.ui.geometry.Offset.Zero
+                            }
+                        }
+                    },
+                contentScale = ContentScale.Fit
+            )
+
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .statusBarsPadding()
+                    .padding(16.dp)
+                    .align(Alignment.TopStart)
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f), androidx.compose.foundation.shape.CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Close,
+                    contentDescription = stringResource(R.string.close),
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
     }
 }

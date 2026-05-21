@@ -3,6 +3,7 @@ package com.diary.moonpage.ui.screens.calendar
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.core.util.ActivityPreferencesManager
+import com.diary.moonpage.core.util.normalizeAppImageUrl
 import com.diary.moonpage.domain.model.DailyLog
 import com.diary.moonpage.domain.repository.DailyLogRepository
 import com.diary.moonpage.core.util.PkceUtil
@@ -41,8 +42,6 @@ class DailyLogViewModel @Inject constructor(
     val healthConnectManager: com.diary.moonpage.core.util.HealthConnectManager,
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
 ) : ViewModel() {
-
-    private val BASE_URL = "https://hieu-wikipedia.io.vn/"
 
     private val _uiState = MutableStateFlow(DailyLogUiState())
     val uiState: StateFlow<DailyLogUiState> = _uiState.asStateFlow()
@@ -90,7 +89,7 @@ class DailyLogViewModel @Inject constructor(
                     momentRepository.moments
                 ) { log, moments ->
                     val momentPhotos = moments.filter { it.capturedAt.startsWith(date.toString()) }
-                        .map { if (it.imageUrl.startsWith("http")) it.imageUrl else BASE_URL + it.imageUrl.trimStart('/') }
+                        .mapNotNull { normalizeAppImageUrl(it.imageUrl) }
                     Pair(log, momentPhotos)
                 }
             }.collect { (log, momentPhotos) ->
@@ -101,7 +100,7 @@ class DailyLogViewModel @Inject constructor(
                         val wakeTime = log.wakeupTime?.let { try { LocalTime.parse(it, formatter) } catch(e: Exception) { bedTime.plusMinutes(((log.sleepHours ?: 8.0) * 60).toLong()) } } 
                             ?: bedTime.plusMinutes(((log.sleepHours ?: 8.0) * 60).toLong())
                         val calculatedHours = log.sleepHours?.toFloat() ?: 0f
-                        val logPhotos = log.dailyPhotos?.map { if (it.startsWith("http")) it else BASE_URL + it.trimStart('/') } ?: emptyList()
+                        val logPhotos = log.dailyPhotos.orEmpty().mapNotNull(::normalizeAppImageUrl)
 
                         if (!currentState.isInitialized || currentState.date != log.date.let { LocalDate.parse(it) }) {
                             currentState.copy(
@@ -306,6 +305,9 @@ class DailyLogViewModel @Inject constructor(
         if (currentDate.value == date) return
         _uiState.update { it.copy(date = date, isLoading = true) }
         currentDate.value = date
+        viewModelScope.launch {
+            momentRepository.getMyMoments()
+        }
         if (date == LocalDate.now()) {
             fetchExternalData()
         }

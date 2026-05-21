@@ -49,6 +49,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.core.util.MoonIcon
 import com.diary.moonpage.core.util.MoonIcons
+import com.diary.moonpage.core.util.normalizeAppImageUrl
 import androidx.compose.ui.graphics.ColorFilter
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.components.feedback.MoonDeleteConfirmDialog
@@ -276,7 +277,8 @@ fun DailyLogScreen(
             val noteChanged = uiState.noteText != (existing.note ?: "")
             val sleepChanged = kotlin.math.abs(uiState.sleepHours - (existing.sleepHours?.toFloat() ?: 0f)) > 0.1f
             val menstruationChanged = uiState.isMenstruation != existing.isMenstruation
-            val photosChanged = uiState.dailyPhotos != (existing.dailyPhotos ?: emptyList<String>())
+            val existingPhotos = (existing.dailyPhotos ?: emptyList()).mapNotNull(::normalizeAppImageUrl)
+            val photosChanged = uiState.dailyPhotos != existingPhotos
             val musicChanged = uiState.musicTitle != existing.musicRecord
             val stepsChanged = uiState.steps != (existing.steps ?: 0)
             val caloriesChanged = uiState.calories != (existing.calories ?: 0)

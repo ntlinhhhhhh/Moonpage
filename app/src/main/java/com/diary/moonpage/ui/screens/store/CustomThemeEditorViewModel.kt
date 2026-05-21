@@ -6,8 +6,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.core.util.saveBitmapToInternalStorage
-import com.diary.moonpage.domain.repository.CustomThemeAppearanceConfig
-import com.diary.moonpage.domain.repository.CustomThemeRepository
+import com.diary.moonpage.domain.repository.CreateThemeMoodPayload
+import com.diary.moonpage.domain.repository.CreateThemePayload
+import com.diary.moonpage.domain.repository.ThemeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.UUID
 import javax.inject.Inject
 
 data class DrawStroke(
@@ -110,7 +112,7 @@ sealed class CustomThemeEditorEffect {
 @HiltViewModel
 class CustomThemeEditorViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val customThemeRepository: CustomThemeRepository
+    private val themeRepository: ThemeRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CustomThemeEditorUiState())
@@ -258,12 +260,20 @@ class CustomThemeEditorViewModel @Inject constructor(
             val fileName = "custom_theme_${System.currentTimeMillis()}.png"
             runCatching {
                 context.saveBitmapToInternalStorage(bitmap, fileName)
-            }.mapCatching { path ->
-                customThemeRepository.saveCustomTheme(
-                    name = state.name.ifBlank { "My Custom Theme" },
-                    bgFilePath = path,
-                    lightConfig = state.lightAppearance.toRepositoryConfig(),
-                    darkConfig = state.darkAppearance.toRepositoryConfig()
+            }.mapCatching { previewPath ->
+                themeRepository.createThemes(
+                    listOf(
+                        CreateThemePayload(
+                            id = "custom_${UUID.randomUUID()}",
+                            name = state.name.ifBlank { "My Custom Theme" },
+                            price = 0,
+                            thumbnailUrl = previewPath,
+                            backgroundUrl = previewPath,
+                            isOfficial = false,
+                            isActive = true,
+                            moods = state.lightAppearance.toMoodPayloads()
+                        )
+                    )
                 ).getOrThrow()
             }.onSuccess {
                 _uiState.update { it.copy(isSaving = false, hasUnsavedChanges = false) }
@@ -285,18 +295,21 @@ class CustomThemeEditorViewModel @Inject constructor(
         }
     }
 
-    private fun ThemeAppearanceState.toRepositoryConfig(): CustomThemeAppearanceConfig {
-        return CustomThemeAppearanceConfig(
-            backgroundUri = backgroundUri,
-            backgroundScale = backgroundScale,
-            backgroundRotation = backgroundRotation,
-            backgroundOffsetX = backgroundOffsetX,
-            backgroundOffsetY = backgroundOffsetY,
-            solidBackgroundColor = solidBackgroundColor.toColorHex(),
-            primaryColor = primaryColor.toColorHex(),
-            iconColor = iconColor.toColorHex(),
-            iconColors = iconColors.map { it.toColorHex() }
+    private fun ThemeAppearanceState.toMoodPayloads(): List<CreateThemeMoodPayload> {
+        val moodConfigs = listOf(
+            5 to "Very Happy",
+            4 to "Happy",
+            3 to "Neutral",
+            2 to "Sad",
+            1 to "Very Sad"
         )
+        return moodConfigs.mapIndexed { index, (moodId, customName) ->
+            CreateThemeMoodPayload(
+                baseMoodId = moodId,
+                iconUrl = iconColors.getOrElse(index) { primaryColor }.toColorHex(),
+                customName = customName
+            )
+        }
     }
 
     private fun Long.toColorHex(): String = "#%08X".format(this)
