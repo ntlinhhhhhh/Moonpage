@@ -123,7 +123,7 @@ class ThemeRepositoryImpl @Inject constructor(
                         dto.toDomain().copy(
                             collection = "Custom Theme",
                             isOwned = true,
-                            isActive = false,
+                            isActive = dto.isActive,
                             primaryColor = dto.thumbnailUrl ?: dto.backgroundUrl
                         )
                     }

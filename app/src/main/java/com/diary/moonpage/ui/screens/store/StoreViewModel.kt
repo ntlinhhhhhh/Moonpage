@@ -320,10 +320,15 @@ class StoreViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true) }
             
             setActiveThemeUseCase(themeId).onSuccess {
-                val theme = _uiState.value.ownedThemes.find { it.id == themeId }
+                val theme = (_uiState.value.ownedThemes + _uiState.value.customThemes)
+                    .distinctBy { it.id }
+                    .find { it.id == themeId }
                 
                 _uiState.update { state ->
                     val updatedOwned = state.ownedThemes.map { t ->
+                        t.copy(isActive = t.id == themeId)
+                    }
+                    val updatedCustomThemes = state.customThemes.map { t ->
                         t.copy(isActive = t.id == themeId)
                     }
                     
@@ -333,6 +338,7 @@ class StoreViewModel @Inject constructor(
 
                     state.copy(
                         ownedThemes = updatedOwned, 
+                        customThemes = updatedCustomThemes,
                         isLoading = false,
                         selectedThemeDetail = updatedDetail,
                         activationSuccess = true
@@ -348,7 +354,9 @@ class StoreViewModel @Inject constructor(
 
                 // Map theme and save locally
                 theme?.let {
-                    themePreferencesManager.setThemeType(it.toMoonThemeType())
+                    if (!it.id.startsWith("custom_")) {
+                        themePreferencesManager.setThemeType(it.toMoonThemeType())
+                    }
                 }
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false) }

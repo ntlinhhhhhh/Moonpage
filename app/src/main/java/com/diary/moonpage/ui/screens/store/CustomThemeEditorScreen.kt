@@ -11,6 +11,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -19,16 +21,20 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.Undo
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.Brush
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.CameraAlt
+import androidx.compose.material.icons.rounded.Colorize
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.FormatColorReset
 import androidx.compose.material.icons.rounded.Image
@@ -47,9 +53,11 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
@@ -61,7 +69,11 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -99,7 +111,10 @@ fun CustomThemeEditorRoute(
         onImagePicked = viewModel::setBackgroundUri,
         onApplyEditedImage = viewModel::applyPendingBackground,
         onCancelEditedImage = viewModel::cancelPendingBackground,
+        onBackgroundFillModeSelected = viewModel::setBackgroundFillMode,
         onSolidBackgroundSelected = viewModel::setSolidBackgroundColor,
+        onGradientStartSelected = viewModel::setGradientBackgroundStartColor,
+        onGradientEndSelected = viewModel::setGradientBackgroundEndColor,
         onPrimaryFocus = viewModel::focusPrimaryColor,
         onFocusedColorSelected = viewModel::applyFocusedColor,
         onIconSelected = viewModel::selectIcon,
@@ -133,7 +148,10 @@ fun CustomThemeEditorScreen(
     onImagePicked: (String?) -> Unit,
     onApplyEditedImage: (Float, Float, Float, Float) -> Unit,
     onCancelEditedImage: () -> Unit,
+    onBackgroundFillModeSelected: (BackgroundFillMode) -> Unit,
     onSolidBackgroundSelected: (Long) -> Unit,
+    onGradientStartSelected: (Long) -> Unit,
+    onGradientEndSelected: (Long) -> Unit,
     onPrimaryFocus: () -> Unit,
     onFocusedColorSelected: (Long) -> Unit,
     onIconSelected: (Int) -> Unit,
@@ -254,7 +272,10 @@ fun CustomThemeEditorScreen(
                     onPickImage = {
                         imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                     },
+                    onBackgroundFillModeSelected = onBackgroundFillModeSelected,
                     onSolidBackgroundSelected = onSolidBackgroundSelected,
+                    onGradientStartSelected = onGradientStartSelected,
+                    onGradientEndSelected = onGradientEndSelected,
                     onPrimaryFocus = onPrimaryFocus,
                     onFocusedColorSelected = onFocusedColorSelected,
                     onIconSelected = onIconSelected,
@@ -387,26 +408,33 @@ private fun ThemePreviewCapture(
 ) {
     var activePoints by remember { mutableStateOf<List<Offset>>(emptyList()) }
     val primary = uiState.primaryColor.toComposeColor()
-    val background = uiState.solidBackgroundColor.toComposeColor()
+    val solidBackground = uiState.solidBackgroundColor.toComposeColor()
     val isDarkMode = uiState.editingMode == EditorAppearanceMode.Dark
     val contentColor = if (isDarkMode) Color.White else MaterialTheme.colorScheme.onSurface
     val panelColor = if (isDarkMode) Color(0xFF151515).copy(alpha = 0.72f) else Color.White.copy(alpha = 0.66f)
     val safeBackgroundScale = uiState.backgroundScale * rotationCoverMultiplier(uiState.backgroundRotation)
     val hasImageBackground = !uiState.backgroundUri.isNullOrBlank()
-    val bottomBarColor = if (hasImageBackground) {
-        if (isDarkMode) MoonBottomNavBgDark else Color.White
-    } else {
-        background.copy(alpha = 0.5f)
+    val gradientBrush = remember(uiState.gradientStartColor, uiState.gradientEndColor) {
+        Brush.verticalGradient(
+            colors = listOf(
+                uiState.gradientStartColor.toComposeColor(),
+                uiState.gradientEndColor.toComposeColor()
+            )
+        )
     }
-    val bottomBarCutoutColor = if (hasImageBackground) {
-        if (isDarkMode) MoonBgDark else MoonBgLight
-    } else {
-        background
+    val backgroundBrush = when {
+        hasImageBackground -> null
+        uiState.backgroundFillMode == BackgroundFillMode.Gradient -> gradientBrush
+        else -> null
     }
+    val bottomBarColor = if (isDarkMode) MoonBottomNavBgDark else Color.White
+    val bottomBarCutoutColor = if (isDarkMode) MoonBgDark else MoonBgLight
 
     Box(
         modifier = modifier
-            .background(background)
+            .then(
+                if (backgroundBrush != null) Modifier.background(backgroundBrush) else Modifier.background(solidBackground)
+            )
             .then(
                 if (uiState.selectedTool == ThemeEditorTool.Draw) {
                     Modifier.pointerInput(uiState.brushColor, uiState.brushSize, uiState.brushType, uiState.isEraser) {
@@ -482,7 +510,7 @@ private fun ThemePreviewCapture(
                 .fillMaxSize()
                 .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
         ) {
-            uiState.strokes.forEach { drawStroke(it, background) }
+            uiState.strokes.forEach { drawStroke(it, solidBackground) }
             if (activePoints.size > 1) {
                 drawStroke(
                     DrawStroke(
@@ -492,7 +520,7 @@ private fun ThemePreviewCapture(
                         brushType = uiState.brushType,
                         isEraser = uiState.isEraser
                     ),
-                    background
+                    solidBackground
                 )
             }
         }
@@ -522,15 +550,7 @@ private fun ThemePreviewCapture(
             }
 
             when (uiState.selectedTool) {
-                ThemeEditorTool.Background, ThemeEditorTool.Draw -> {
-                    MockAppBottomNavBar(
-                        primary = primary,
-                        backgroundColor = bottomBarColor,
-                        centerCutoutColor = bottomBarCutoutColor,
-                        modifier = Modifier.align(Alignment.BottomCenter),
-                        onPrimarySelected = onPrimaryFocus
-                    )
-                }
+                ThemeEditorTool.Background, ThemeEditorTool.Draw -> Unit
                 ThemeEditorTool.Colors -> {
                     PreviewMoodIconRow(
                         colors = uiState.iconColors,
@@ -545,6 +565,7 @@ private fun ThemePreviewCapture(
                         primary = primary,
                         backgroundColor = bottomBarColor,
                         centerCutoutColor = bottomBarCutoutColor,
+                        emphasizeIcons = uiState.colorFocusTarget == ColorFocusTarget.Primary,
                         modifier = Modifier.align(Alignment.BottomCenter),
                         onPrimarySelected = onPrimaryFocus
                     )
@@ -591,6 +612,12 @@ private fun ThemeCalendarMockScreen(
     onDarkModeSelected: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val calendarCardColor = if (isDarkMode) {
+        Color(0xFF141414).copy(alpha = 0.72f)
+    } else {
+        Color.White.copy(alpha = 0.88f)
+    }
+
     Box(modifier = modifier) {
         Column(
             modifier = Modifier
@@ -638,15 +665,30 @@ private fun ThemeCalendarMockScreen(
                 }
             }
 
-            MockCalendarWeekHeader(contentColor = contentColor)
-            MockCalendarGrid(
-                primary = primary,
-                iconColors = iconColors,
-                contentColor = contentColor,
-                panelColor = panelColor,
-                transparentBackground = true,
-                modifier = Modifier.weight(1f)
-            )
+            Surface(
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                shape = RoundedCornerShape(28.dp),
+                color = calendarCardColor,
+                tonalElevation = 6.dp,
+                shadowElevation = 14.dp
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 10.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    MockCalendarWeekHeader(contentColor = contentColor)
+                    MockCalendarGrid(
+                        primary = primary,
+                        iconColors = iconColors,
+                        contentColor = contentColor,
+                        panelColor = panelColor,
+                        transparentBackground = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
         }
 
         MockAppBottomNavBar(
@@ -796,7 +838,10 @@ private fun ThemeEditorBottomTools(
     uiState: CustomThemeEditorUiState,
     onToolSelected: (ThemeEditorTool) -> Unit,
     onPickImage: () -> Unit,
+    onBackgroundFillModeSelected: (BackgroundFillMode) -> Unit,
     onSolidBackgroundSelected: (Long) -> Unit,
+    onGradientStartSelected: (Long) -> Unit,
+    onGradientEndSelected: (Long) -> Unit,
     onPrimaryFocus: () -> Unit,
     onFocusedColorSelected: (Long) -> Unit,
     onIconSelected: (Int) -> Unit,
@@ -837,9 +882,12 @@ private fun ThemeEditorBottomTools(
 
             when (uiState.selectedTool) {
                 ThemeEditorTool.Background -> BackgroundToolPanel(
-                    selected = uiState.solidBackgroundColor,
+                    uiState = uiState,
                     onPickImage = onPickImage,
-                    onSolidBackgroundSelected = onSolidBackgroundSelected
+                    onBackgroundFillModeSelected = onBackgroundFillModeSelected,
+                    onSolidBackgroundSelected = onSolidBackgroundSelected,
+                    onGradientStartSelected = onGradientStartSelected,
+                    onGradientEndSelected = onGradientEndSelected
                 )
                 ThemeEditorTool.Draw -> DrawToolPanel(
                     uiState = uiState,
@@ -851,6 +899,8 @@ private fun ThemeEditorBottomTools(
                 )
                 ThemeEditorTool.Colors -> ColorToolPanel(
                     uiState = uiState,
+                    onPrimaryFocus = onPrimaryFocus,
+                    onIconSelected = onIconSelected,
                     onFocusedColorSelected = onFocusedColorSelected
                 )
                 ThemeEditorTool.Preview -> Unit
@@ -864,6 +914,7 @@ private fun MockAppBottomNavBar(
     primary: Color,
     backgroundColor: Color,
     centerCutoutColor: Color,
+    emphasizeIcons: Boolean = false,
     modifier: Modifier = Modifier,
     onPrimarySelected: (() -> Unit)? = null
 ) {
@@ -881,11 +932,11 @@ private fun MockAppBottomNavBar(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            MockNavIcon(Icons.Rounded.CalendarMonth, tint = primary)
-            MockNavIcon(Icons.Rounded.BarChart, tint = primary)
+            MockNavIcon(Icons.Rounded.CalendarMonth, tint = primary, emphasized = emphasizeIcons)
+            MockNavIcon(Icons.Rounded.BarChart, tint = primary, emphasized = emphasizeIcons)
             Box(
                 modifier = Modifier
-                    .size(56.dp)
+                    .size(if (emphasizeIcons) 60.dp else 56.dp)
                     .clip(CircleShape)
                     .background(centerCutoutColor),
                 contentAlignment = Alignment.Center
@@ -894,11 +945,11 @@ private fun MockAppBottomNavBar(
                     Icons.Rounded.CameraAlt,
                     contentDescription = null,
                     tint = primary,
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(if (emphasizeIcons) 30.dp else 28.dp)
                 )
             }
-            MockNavIcon(Icons.Rounded.Storefront, tint = primary)
-            MockNavIcon(Icons.Rounded.Person, tint = primary)
+            MockNavIcon(Icons.Rounded.Storefront, tint = primary, emphasized = emphasizeIcons)
+            MockNavIcon(Icons.Rounded.Person, tint = primary, emphasized = emphasizeIcons)
         }
     }
 }
@@ -906,29 +957,105 @@ private fun MockAppBottomNavBar(
 @Composable
 private fun MockNavIcon(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
-    tint: Color
+    tint: Color,
+    emphasized: Boolean = false
 ) {
-    Icon(
-        imageVector = icon,
-        contentDescription = null,
-        tint = tint,
+    Box(
         modifier = Modifier
-            .padding(8.dp)
-            .size(28.dp)
-    )
+            .padding(4.dp)
+            .size(if (emphasized) 40.dp else 32.dp)
+            .shadow(if (emphasized) 10.dp else 0.dp, CircleShape)
+            .clip(CircleShape)
+            .background(if (emphasized) tint.copy(alpha = 0.14f) else Color.Transparent),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(if (emphasized) 30.dp else 26.dp)
+        )
+    }
 }
 
 @Composable
 private fun BackgroundToolPanel(
-    selected: Long,
+    uiState: CustomThemeEditorUiState,
     onPickImage: () -> Unit,
-    onSolidBackgroundSelected: (Long) -> Unit
+    onBackgroundFillModeSelected: (BackgroundFillMode) -> Unit,
+    onSolidBackgroundSelected: (Long) -> Unit,
+    onGradientStartSelected: (Long) -> Unit,
+    onGradientEndSelected: (Long) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Button(onClick = onPickImage, shape = RoundedCornerShape(12.dp)) {
-            Text(stringResource(R.string.custom_theme_upload_image))
+    var showColorSheet by remember { mutableStateOf(false) }
+    var selectedGradientStop by remember { mutableIntStateOf(0) }
+    val activeBackgroundColor = if (uiState.backgroundFillMode == BackgroundFillMode.Gradient) {
+        if (selectedGradientStop == 0) uiState.gradientStartColor else uiState.gradientEndColor
+    } else {
+        uiState.solidBackgroundColor
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(
+                selected = uiState.backgroundFillMode == BackgroundFillMode.Solid,
+                onClick = { onBackgroundFillModeSelected(BackgroundFillMode.Solid) },
+                label = { Text(stringResource(R.string.custom_theme_solid_color)) }
+            )
+            FilterChip(
+                selected = uiState.backgroundFillMode == BackgroundFillMode.Gradient,
+                onClick = { onBackgroundFillModeSelected(BackgroundFillMode.Gradient) },
+                label = { Text(stringResource(R.string.custom_theme_gradient_color)) }
+            )
         }
-        ExtendedColorSwatches(selected = selected, onSelected = onSolidBackgroundSelected)
+
+        FilledTonalIconButton(
+            onClick = onPickImage,
+            modifier = Modifier.size(48.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Image,
+                contentDescription = stringResource(R.string.custom_theme_upload_image)
+            )
+        }
+
+        if (uiState.backgroundFillMode == BackgroundFillMode.Gradient) {
+            GradientStopSelector(
+                startColor = uiState.gradientStartColor,
+                endColor = uiState.gradientEndColor,
+                selectedStop = selectedGradientStop,
+                onSelectedStopChange = { selectedGradientStop = it }
+            )
+        }
+
+        PaletteSwatchRow(
+            selected = activeBackgroundColor,
+            onSelected = { color ->
+                if (uiState.backgroundFillMode == BackgroundFillMode.Gradient) {
+                    if (selectedGradientStop == 0) onGradientStartSelected(color) else onGradientEndSelected(color)
+                } else {
+                    onSolidBackgroundSelected(color)
+                }
+            },
+            onAddColor = { showColorSheet = true }
+        )
+    }
+
+    if (showColorSheet) {
+        ColorPickerBottomSheet(
+            selectedColor = uiState.solidBackgroundColor,
+            onColorSelected = onSolidBackgroundSelected,
+            allowGradient = true,
+            mode = uiState.backgroundFillMode,
+            onModeChange = onBackgroundFillModeSelected,
+            gradientStartColor = uiState.gradientStartColor,
+            gradientEndColor = uiState.gradientEndColor,
+            activeGradientStop = selectedGradientStop,
+            onActiveGradientStopChange = { selectedGradientStop = it },
+            onGradientStartColorSelected = onGradientStartSelected,
+            onGradientEndColorSelected = onGradientEndSelected,
+            onDismiss = { showColorSheet = false }
+        )
     }
 }
 
@@ -941,6 +1068,8 @@ private fun DrawToolPanel(
     onEraserChanged: (Boolean) -> Unit,
     onUndo: () -> Unit
 ) {
+    var showColorSheet by remember { mutableStateOf(false) }
+
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         IconButton(onClick = onUndo, enabled = uiState.strokes.isNotEmpty()) {
             Icon(Icons.AutoMirrored.Rounded.Undo, contentDescription = stringResource(R.string.undo))
@@ -970,25 +1099,67 @@ private fun DrawToolPanel(
             )
         }
     }
-    ExtendedColorSwatches(selected = uiState.brushColor, onSelected = onBrushColorSelected)
+    PaletteSwatchRow(
+        selected = uiState.brushColor,
+        onSelected = onBrushColorSelected,
+        onAddColor = { showColorSheet = true }
+    )
     Slider(value = uiState.brushSize, onValueChange = onBrushSizeChange, valueRange = 3f..24f)
+
+    if (showColorSheet) {
+        ColorPickerBottomSheet(
+            selectedColor = uiState.brushColor,
+            onColorSelected = onBrushColorSelected,
+            onDismiss = { showColorSheet = false }
+        )
+    }
 }
 
 @Composable
 private fun ColorToolPanel(
     uiState: CustomThemeEditorUiState,
+    onPrimaryFocus: () -> Unit,
+    onIconSelected: (Int) -> Unit,
     onFocusedColorSelected: (Long) -> Unit,
 ) {
+    var showColorSheet by remember { mutableStateOf(false) }
     val focusedColor = when (uiState.colorFocusTarget) {
         ColorFocusTarget.Primary -> uiState.primaryColor
         ColorFocusTarget.Icon -> uiState.iconColors[uiState.selectedIconIndex]
     }
+
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        FreeColorPicker2D(
-            selected = focusedColor,
-            onSelected = onFocusedColorSelected
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(
+                selected = uiState.colorFocusTarget == ColorFocusTarget.Primary,
+                onClick = onPrimaryFocus,
+                label = { Text(stringResource(R.string.custom_theme_primary_color)) }
+            )
+            FilterChip(
+                selected = uiState.colorFocusTarget == ColorFocusTarget.Icon,
+                onClick = { onIconSelected(uiState.selectedIconIndex) },
+                label = { Text(stringResource(R.string.custom_theme_icon_color)) }
+            )
+        }
+        PreviewMoodIconRow(
+            colors = uiState.iconColors,
+            selectedIndex = if (uiState.colorFocusTarget == ColorFocusTarget.Icon) uiState.selectedIconIndex else -1,
+            onSelected = onIconSelected,
+            modifier = Modifier.fillMaxWidth()
         )
-        CompactDefaultColorSwatches(selected = focusedColor, onSelected = onFocusedColorSelected)
+        PaletteSwatchRow(
+            selected = focusedColor,
+            onSelected = onFocusedColorSelected,
+            onAddColor = { showColorSheet = true }
+        )
+    }
+
+    if (showColorSheet) {
+        ColorPickerBottomSheet(
+            selectedColor = focusedColor,
+            onColorSelected = onFocusedColorSelected,
+            onDismiss = { showColorSheet = false }
+        )
     }
 }
 
@@ -1056,192 +1227,453 @@ private fun PreviewBottomIconRow(primary: Color) {
 }
 
 @Composable
-private fun FreeColorPicker2D(
-    selected: Long,
-    onSelected: (Long) -> Unit
+private fun AddNewColorButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    size: Dp = 40.dp
 ) {
-    var size by remember { mutableStateOf(IntSize.Zero) }
-
-    fun colorAt(offset: Offset): Long {
-        val width = size.width.coerceAtLeast(1).toFloat()
-        val height = size.height.coerceAtLeast(1).toFloat()
-        val hue = (offset.x.coerceIn(0f, width) / width) * 360f
-        val value = 1f - (offset.y.coerceIn(0f, height) / height) * 0.82f
-        return android.graphics.Color.HSVToColor(floatArrayOf(hue, 0.86f, value)).toLong() and 0xFFFFFFFFL
+    val rainbowBrush = remember {
+        Brush.sweepGradient(
+            listOf(
+                Color(0xFFFF4D4D),
+                Color(0xFFFFB84D),
+                Color(0xFFFFF176),
+                Color(0xFF66BB6A),
+                Color(0xFF4FC3F7),
+                Color(0xFF7E57C2),
+                Color(0xFFFF4D4D)
+            )
+        )
     }
 
-    Canvas(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(128.dp)
-            .clip(RoundedCornerShape(18.dp))
-            .onSizeChanged { size = it }
-            .pointerInput(size) {
-                detectTapGestures { onSelected(colorAt(it)) }
-            }
-            .pointerInput(size) {
-                detectDragGestures(
-                    onDragStart = { onSelected(colorAt(it)) },
-                    onDrag = { change, _ ->
-                        onSelected(colorAt(change.position))
-                        change.consume()
-                    }
-                )
-            }
+    Box(
+        modifier = modifier
+            .size(size)
+            .background(rainbowBrush, CircleShape)
+            .padding(2.5.dp)
+            .background(MaterialTheme.colorScheme.surface, CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
     ) {
-        val columns = 48
-        val rows = 18
-        val cellWidth = this.size.width / columns
-        val cellHeight = this.size.height / rows
-        repeat(columns) { x ->
-            repeat(rows) { y ->
-                val hue = (x.toFloat() / (columns - 1)) * 360f
-                val value = 1f - (y.toFloat() / (rows - 1)) * 0.82f
-                drawRect(
-                    color = Color(android.graphics.Color.HSVToColor(floatArrayOf(hue, 0.86f, value))),
-                    topLeft = Offset(x * cellWidth, y * cellHeight),
-                    size = androidx.compose.ui.geometry.Size(cellWidth + 1f, cellHeight + 1f)
-                )
-            }
-        }
-        drawCircle(
-            color = Color.White,
-            radius = 9.dp.toPx(),
-            center = Offset(this.size.width - 20.dp.toPx(), 20.dp.toPx())
-        )
-        drawCircle(
-            color = selected.toComposeColor(),
-            radius = 7.dp.toPx(),
-            center = Offset(this.size.width - 20.dp.toPx(), 20.dp.toPx())
+        Icon(
+            imageVector = Icons.Rounded.Add,
+            contentDescription = stringResource(R.string.custom_theme_add_color),
+            tint = Color(0xFF202020),
+            modifier = Modifier.size(size * 0.42f)
         )
     }
 }
 
 @Composable
-private fun CompactDefaultColorSwatches(
+private fun PaletteSwatchRow(
     selected: Long,
-    onSelected: (Long) -> Unit
+    onSelected: (Long) -> Unit,
+    onAddColor: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(7.dp),
-        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
+    LazyRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        contentPadding = PaddingValues(horizontal = 2.dp, vertical = 2.dp)
     ) {
-        CustomThemeColorPalette.forEach { colorValue ->
-            Box(
-                modifier = Modifier
-                    .size(26.dp)
-                    .clip(CircleShape)
-                    .background(colorValue.toComposeColor())
-                    .border(
-                        width = if (selected == colorValue) 3.dp else 1.dp,
-                        color = if (selected == colorValue) MaterialTheme.colorScheme.onSurface else Color.White.copy(alpha = 0.75f),
-                        shape = CircleShape
-                    )
-                    .clickable { onSelected(colorValue) }
+        item {
+            AddNewColorButton(onClick = onAddColor)
+        }
+        items(CustomThemeColorPalette) { colorValue ->
+            PaletteSwatch(
+                colorValue = colorValue,
+                selected = colorValue == selected,
+                onClick = { onSelected(colorValue) }
             )
         }
     }
 }
 
 @Composable
-private fun ExtendedColorSwatches(
-    selected: Long,
-    onSelected: (Long) -> Unit
+private fun PaletteSwatch(
+    colorValue: Long,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    size: Dp = 40.dp
 ) {
-    var showFullPalette by remember { mutableStateOf(false) }
-    val colors = CustomThemeColorPalette
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState())
-        ) {
-            colors.forEach { colorValue ->
-                val color = colorValue.toComposeColor()
-                Box(
-                    modifier = Modifier
-                        .size(34.dp)
-                        .clip(CircleShape)
-                        .background(color)
-                        .border(
-                            width = if (selected == colorValue) 3.dp else 1.dp,
-                            color = if (selected == colorValue) MaterialTheme.colorScheme.onSurface else Color.White.copy(alpha = 0.75f),
-                            shape = CircleShape
-                        )
-                        .clickable { onSelected(colorValue) }
-                )
-            }
-        }
-        OutlinedButton(onClick = { showFullPalette = true }, shape = RoundedCornerShape(12.dp)) {
-            Text(stringResource(R.string.custom_theme_pick_color))
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(colorValue.toComposeColor())
+            .border(
+                width = if (selected) 3.dp else 1.dp,
+                color = if (selected) MaterialTheme.colorScheme.onSurface else Color.White.copy(alpha = 0.78f),
+                shape = CircleShape
+            )
+            .clickable(onClick = onClick)
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ColorPickerBottomSheet(
+    selectedColor: Long,
+    onColorSelected: (Long) -> Unit,
+    onDismiss: () -> Unit,
+    allowGradient: Boolean = false,
+    mode: BackgroundFillMode = BackgroundFillMode.Solid,
+    onModeChange: (BackgroundFillMode) -> Unit = {},
+    gradientStartColor: Long = selectedColor,
+    gradientEndColor: Long = selectedColor,
+    activeGradientStop: Int = 0,
+    onActiveGradientStopChange: (Int) -> Unit = {},
+    onGradientStartColorSelected: (Long) -> Unit = {},
+    onGradientEndColorSelected: (Long) -> Unit = {}
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val editingColor = if (allowGradient && mode == BackgroundFillMode.Gradient) {
+        if (activeGradientStop == 0) gradientStartColor else gradientEndColor
+    } else {
+        selectedColor
+    }
+    var localHue by remember { mutableFloatStateOf(0f) }
+    var localSaturation by remember { mutableFloatStateOf(0f) }
+    var localValue by remember { mutableFloatStateOf(0f) }
+    var hexValue by remember { mutableStateOf(colorToHex(editingColor)) }
+
+    LaunchedEffect(editingColor, mode, activeGradientStop) {
+        val hsv = editingColor.toHsv()
+        localHue = hsv[0]
+        localSaturation = hsv[1]
+        localValue = hsv[2]
+        hexValue = colorToHex(editingColor)
+    }
+
+    fun dispatchColor(color: Long) {
+        val hsv = color.toHsv()
+        localHue = hsv[0]
+        localSaturation = hsv[1]
+        localValue = hsv[2]
+        hexValue = colorToHex(color)
+        if (allowGradient && mode == BackgroundFillMode.Gradient) {
+            if (activeGradientStop == 0) onGradientStartColorSelected(color) else onGradientEndColorSelected(color)
+        } else {
+            onColorSelected(color)
         }
     }
-    if (showFullPalette) {
-        FullColorPaletteDialog(
-            selected = selected,
-            onSelected = {
-                onSelected(it)
-                showFullPalette = false
-            },
-            onDismiss = { showFullPalette = false }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        dragHandle = { BottomSheetDefaults.DragHandle() },
+        containerColor = MaterialTheme.colorScheme.surface
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 20.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
+        ) {
+            if (allowGradient) {
+                TabRow(selectedTabIndex = if (mode == BackgroundFillMode.Solid) 0 else 1) {
+                    Tab(
+                        selected = mode == BackgroundFillMode.Solid,
+                        onClick = { onModeChange(BackgroundFillMode.Solid) },
+                        text = { Text(stringResource(R.string.custom_theme_solid_color)) }
+                    )
+                    Tab(
+                        selected = mode == BackgroundFillMode.Gradient,
+                        onClick = { onModeChange(BackgroundFillMode.Gradient) },
+                        text = { Text(stringResource(R.string.custom_theme_gradient_color)) }
+                    )
+                }
+            }
+
+            if (allowGradient && mode == BackgroundFillMode.Gradient) {
+                GradientStopSelector(
+                    startColor = gradientStartColor,
+                    endColor = gradientEndColor,
+                    selectedStop = activeGradientStop,
+                    onSelectedStopChange = onActiveGradientStopChange
+                )
+            }
+
+            SaturationValuePicker(
+                hue = localHue,
+                saturation = localSaturation,
+                value = localValue,
+                onChange = { saturation, value ->
+                    localSaturation = saturation
+                    localValue = value
+                    dispatchColor(colorFromHsv(localHue, saturation, value))
+                }
+            )
+
+            HueSlider(
+                selectedHue = localHue,
+                onHueChange = { hue ->
+                    localHue = hue
+                    dispatchColor(colorFromHsv(hue, localSaturation.coerceAtLeast(0.01f), localValue.coerceAtLeast(0.01f)))
+                }
+            )
+
+            Surface(
+                shape = RoundedCornerShape(22.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (allowGradient && mode == BackgroundFillMode.Gradient) {
+                                    Brush.horizontalGradient(
+                                        listOf(
+                                            gradientStartColor.toComposeColor(),
+                                            gradientEndColor.toComposeColor()
+                                        )
+                                    )
+                                } else {
+                                    SolidColor(editingColor.toComposeColor())
+                                }
+                            )
+                    )
+                    TextField(
+                        value = hexValue,
+                        onValueChange = { input ->
+                            val sanitized = sanitizeHexInput(input)
+                            hexValue = sanitized
+                            hexToColorOrNull(sanitized)?.let { dispatchColor(it) }
+                        },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        placeholder = { Text(stringResource(R.string.custom_theme_hex_code)) },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            disabledContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        ),
+                        keyboardOptions = KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Characters,
+                            keyboardType = KeyboardType.Ascii
+                        )
+                    )
+                    IconButton(onClick = {}, enabled = false) {
+                        Icon(
+                            imageVector = Icons.Rounded.Colorize,
+                            contentDescription = stringResource(R.string.custom_theme_eyedropper_placeholder),
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f)
+                        )
+                    }
+                }
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = stringResource(R.string.custom_theme_picker_suggestions),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    items(CustomThemeColorPalette) { colorValue ->
+                        PaletteSwatch(
+                            colorValue = colorValue,
+                            selected = colorFromHsv(localHue, localSaturation, localValue) == colorValue,
+                            onClick = { dispatchColor(colorValue) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GradientStopSelector(
+    startColor: Long,
+    endColor: Long,
+    selectedStop: Int,
+    onSelectedStopChange: (Int) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        GradientStopChip(
+            label = stringResource(R.string.custom_theme_gradient_start),
+            color = startColor.toComposeColor(),
+            selected = selectedStop == 0,
+            onClick = { onSelectedStopChange(0) },
+            modifier = Modifier.weight(1f)
+        )
+        GradientStopChip(
+            label = stringResource(R.string.custom_theme_gradient_end),
+            color = endColor.toComposeColor(),
+            selected = selectedStop == 1,
+            onClick = { onSelectedStopChange(1) },
+            modifier = Modifier.weight(1f)
         )
     }
 }
 
 @Composable
-private fun FullColorPaletteDialog(
-    selected: Long,
-    onSelected: (Long) -> Unit,
-    onDismiss: () -> Unit
+private fun GradientStopChip(
+    label: String,
+    color: Color,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    var red by remember(selected) { mutableFloatStateOf(android.graphics.Color.red(selected.toInt()).toFloat()) }
-    var green by remember(selected) { mutableFloatStateOf(android.graphics.Color.green(selected.toInt()).toFloat()) }
-    var blue by remember(selected) { mutableFloatStateOf(android.graphics.Color.blue(selected.toInt()).toFloat()) }
-    val customColor = Color(red.toInt(), green.toInt(), blue.toInt())
-    val customValue = (0xFF000000L or (red.toInt().toLong() shl 16) or (green.toInt().toLong() shl 8) or blue.toInt().toLong())
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.custom_theme_pick_color)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                CustomThemeColorPalette.chunked(6).forEach { row ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        row.forEach { value ->
-                            val color = value.toComposeColor()
-                            Box(
-                                modifier = Modifier
-                                    .size(38.dp)
-                                    .clip(CircleShape)
-                                    .background(color)
-                                    .border(if (selected == value) 3.dp else 1.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
-                                    .clickable { onSelected(value) }
-                            )
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(44.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(customColor)
-                )
-                Text(stringResource(R.string.custom_theme_red_value, red.toInt()), style = MaterialTheme.typography.labelSmall)
-                Slider(value = red, onValueChange = { red = it }, valueRange = 0f..255f)
-                Text(stringResource(R.string.custom_theme_green_value, green.toInt()), style = MaterialTheme.typography.labelSmall)
-                Slider(value = green, onValueChange = { green = it }, valueRange = 0f..255f)
-                Text(stringResource(R.string.custom_theme_blue_value, blue.toInt()), style = MaterialTheme.typography.labelSmall)
-                Slider(value = blue, onValueChange = { blue = it }, valueRange = 0f..255f)
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = { onSelected(customValue) }) { Text(stringResource(R.string.apply)) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+    Surface(
+        modifier = modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = if (selected) 0.62f else 0.34f),
+        tonalElevation = if (selected) 4.dp else 0.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(18.dp)
+                    .clip(CircleShape)
+                    .background(color)
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+            )
         }
-    )
+    }
+}
+
+@Composable
+private fun SaturationValuePicker(
+    hue: Float,
+    saturation: Float,
+    value: Float,
+    onChange: (Float, Float) -> Unit
+) {
+    var canvasSize by remember { mutableStateOf(IntSize.Zero) }
+    val hueColor = remember(hue) { colorFromHsv(hue, 1f, 1f).toComposeColor() }
+
+    fun handleTouch(offset: Offset) {
+        val width = canvasSize.width.coerceAtLeast(1).toFloat()
+        val height = canvasSize.height.coerceAtLeast(1).toFloat()
+        val normalizedX = (offset.x / width).coerceIn(0f, 1f)
+        val normalizedY = (offset.y / height).coerceIn(0f, 1f)
+        onChange(normalizedX, 1f - normalizedY)
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(220.dp)
+            .clip(RoundedCornerShape(26.dp))
+            .background(hueColor)
+            .onSizeChanged { canvasSize = it }
+            .pointerInput(hue) {
+                detectTapGestures { handleTouch(it) }
+            }
+            .pointerInput(hue) {
+                detectDragGestures(
+                    onDragStart = { handleTouch(it) },
+                    onDrag = { change, _ ->
+                        handleTouch(change.position)
+                        change.consume()
+                    }
+                )
+            }
+    ) {
+        Canvas(modifier = Modifier.matchParentSize()) {
+            drawRect(
+                brush = Brush.horizontalGradient(
+                    listOf(Color.White, Color.Transparent)
+                )
+            )
+            drawRect(
+                brush = Brush.verticalGradient(
+                    listOf(Color.Transparent, Color.Black)
+                )
+            )
+            val thumbX = saturation.coerceIn(0f, 1f) * size.width
+            val thumbY = (1f - value.coerceIn(0f, 1f)) * size.height
+            drawCircle(
+                color = Color.Transparent,
+                center = Offset(thumbX, thumbY),
+                radius = 12.dp.toPx(),
+                style = Stroke(width = 3.dp.toPx())
+            )
+            drawCircle(
+                color = Color.White,
+                center = Offset(thumbX, thumbY),
+                radius = 12.dp.toPx(),
+                style = Stroke(width = 3.dp.toPx())
+            )
+        }
+    }
+}
+
+@Composable
+private fun HueSlider(
+    selectedHue: Float,
+    onHueChange: (Float) -> Unit
+) {
+    var sliderSize by remember { mutableStateOf(IntSize.Zero) }
+
+    fun handleTouch(offset: Offset) {
+        val width = sliderSize.width.coerceAtLeast(1).toFloat()
+        val hue = (offset.x.coerceIn(0f, width) / width) * 360f
+        onHueChange(hue)
+    }
+
+    Canvas(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(32.dp)
+            .clip(RoundedCornerShape(99.dp))
+            .onSizeChanged { sliderSize = it }
+            .pointerInput(Unit) {
+                detectTapGestures { handleTouch(it) }
+            }
+            .pointerInput(Unit) {
+                detectDragGestures(
+                    onDragStart = { handleTouch(it) },
+                    onDrag = { change, _ ->
+                        handleTouch(change.position)
+                        change.consume()
+                    }
+                )
+            }
+    ) {
+        drawRoundRect(
+            brush = Brush.horizontalGradient(RainbowSpectrumColors),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(999f, 999f)
+        )
+        val thumbX = (selectedHue / 360f).coerceIn(0f, 1f) * size.width
+        drawCircle(
+            color = Color.White,
+            radius = 12.dp.toPx(),
+            center = Offset(thumbX, size.height / 2f)
+        )
+        drawCircle(
+            color = colorFromHsv(selectedHue, 1f, 1f).toComposeColor(),
+            radius = 8.dp.toPx(),
+            center = Offset(thumbX, size.height / 2f)
+        )
+    }
 }
 
 @Composable
@@ -1311,6 +1743,46 @@ private val CustomThemeColorPalette = listOf(
     0xFF263238, 0xFFFF8A65, 0xFFAED581, 0xFF4DB6AC, 0xFF7986CB, 0xFFF06292,
     0xFFFFF7EC, 0xFFE1F5FE, 0xFFF3E5F5, 0xFFE8F5E9, 0xFFFFEBEE, 0xFF212121
 )
+
+private val RainbowSpectrumColors = listOf(
+    Color(0xFFFF3B30),
+    Color(0xFFFF9500),
+    Color(0xFFFFCC00),
+    Color(0xFF34C759),
+    Color(0xFF00C7BE),
+    Color(0xFF007AFF),
+    Color(0xFF5856D6),
+    Color(0xFFFF2D55)
+)
+
+private fun Long.toHsv(): FloatArray = FloatArray(3).also {
+    android.graphics.Color.colorToHSV(this.toInt(), it)
+}
+
+private fun colorFromHsv(hue: Float, saturation: Float, value: Float): Long {
+    return android.graphics.Color.HSVToColor(
+        floatArrayOf(
+            hue.coerceIn(0f, 360f),
+            saturation.coerceIn(0f, 1f),
+            value.coerceIn(0f, 1f)
+        )
+    ).toLong() and 0xFFFFFFFFL
+}
+
+private fun colorToHex(color: Long): String {
+    return String.format("#%06X", color.toInt() and 0x00FFFFFF)
+}
+
+private fun sanitizeHexInput(value: String): String {
+    val raw = value.uppercase().filter { it in '0'..'9' || it in 'A'..'F' }
+    return "#${raw.take(6)}"
+}
+
+private fun hexToColorOrNull(value: String): Long? {
+    val normalized = value.removePrefix("#")
+    if (normalized.length != 6) return null
+    return normalized.toLongOrNull(16)?.let { 0xFF000000L or it }
+}
 
 private fun rotationCoverMultiplier(rotation: Float): Float {
     val normalized = kotlin.math.abs(rotation) / 45f

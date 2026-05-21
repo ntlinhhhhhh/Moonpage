@@ -480,6 +480,15 @@
     <string name="custom_theme_primary_color_desc">MÃ u nÃ y thay Ä‘á»•i tiÃªu Ä‘á», nÃºt vÃ  cÃ¡c hÃ nh Ä‘á»™ng chÃ­nh.</string>
     <string name="custom_theme_icon_color_desc">Chá»n tá»«ng icon cáº£m xÃºc rá»“i gÃ¡n mÃ u riÃªng.</string>
     <string name="custom_theme_pick_color">Chá»n</string>
+    <string name="custom_theme_add_color">Them mau moi</string>
+    <string name="custom_theme_solid_color">Mau dong nhat</string>
+    <string name="custom_theme_gradient_color">Mau gradient</string>
+    <string name="custom_theme_gradient_start">Mau dau</string>
+    <string name="custom_theme_gradient_end">Mau cuoi</string>
+    <string name="custom_theme_hex_code">Ma HEX</string>
+    <string name="custom_theme_picker_suggestions">Bang mau</string>
+    <string name="custom_theme_eyedropper_placeholder">Ong hut mau sap co</string>
+    <string name="custom_theme_active_now">Dang kich hoat</string>
     <string name="custom_theme_eraser">Táº©y</string>
     <string name="custom_theme_brush_fine">Máº£nh</string>
     <string name="custom_theme_brush_bold">Äáº­m</string>
