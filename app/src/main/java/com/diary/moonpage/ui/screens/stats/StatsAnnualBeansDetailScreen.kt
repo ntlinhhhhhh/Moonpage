@@ -133,7 +133,8 @@ fun StatsAnnualBeansDetailScreen(
                                 try {
                                     val layer = if (selectedTab == 0) graphicsLayerEntire else graphicsLayerMonth
                                     val bitmap = layer.toImageBitmap().asAndroidBitmap()
-                                    ImageUtils.shareImage(context, bitmap, "My Yearly Recap")
+                                    val roundedBitmap = ImageUtils.applyRoundedCorners(bitmap, 32.dp.value * context.resources.displayMetrics.density)
+                                    ImageUtils.shareImage(context, roundedBitmap, "My Yearly Recap")
                                 } catch (e: Exception) {
                                     snackbarHostState.showSnackbar("Share failed: ${e.message}")
                                 }
