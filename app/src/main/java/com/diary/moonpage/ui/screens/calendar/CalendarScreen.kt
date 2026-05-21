@@ -153,11 +153,12 @@ fun CalendarScreen(
                 CalendarTopBar(
                     viewMode = uiState.viewMode,
                     onFilterClick = { onEvent(CalendarUiEvent.OnFilterClick) },
+                    onClearFilters = { onEvent(CalendarUiEvent.OnClearFilters) },
                     onToggleViewMode = { onEvent(CalendarUiEvent.ToggleViewMode) },
                     onThemeClick = onNavigateToThemeCalendar,
                     onStreakClick = onStreakClick,
                     streakCount = uiState.currentStreak,
-                    isFilterActive = uiState.selectedFilter != null,
+                    isFilterActive = uiState.selectedFilters.isNotEmpty(),
                     modifier = Modifier.statusBarsPadding()
                 )
 
@@ -208,7 +209,7 @@ fun CalendarScreen(
                                     pageYearMonth = pageYearMonth,
                                     selectedDate = uiState.selectedDate,
                                     dailyLogs = uiState.dailyLogs,
-                                    selectedFilter = uiState.selectedFilter,
+                                    selectedFilters = uiState.selectedFilters,
                                     dynamicActivities = uiState.dynamicActivities,
                                     themeType = uiState.themeType,
                                     onDateSelected = { date ->
@@ -249,7 +250,7 @@ fun CalendarScreen(
                         CalendarViewMode.TIMELINE -> {
                             TimelineView(
                                 dailyLogs = uiState.dailyLogs,
-                                selectedFilter = uiState.selectedFilter,
+                                selectedFilters = uiState.selectedFilters,
                                 dynamicActivities = uiState.dynamicActivities,
                                 themeType = uiState.themeType,
                                 onEditLog = { date -> onNavigateToDailyLog(date.toString()) },
@@ -296,12 +297,12 @@ fun CalendarScreen(
             }
         ) {
             FilterScreen(
-                currentFilter = uiState.selectedFilter,
+                currentFilters = uiState.selectedFilters,
                 dynamicActivities = uiState.dynamicActivities,
                 themeType = uiState.themeType,
                 onDismiss = { onEvent(CalendarUiEvent.OnFilterDismiss) },
-                onSeeResults = { filter ->
-                    onEvent(CalendarUiEvent.ApplyFilter(filter))
+                onSeeResults = { filters ->
+                    onEvent(CalendarUiEvent.ApplyFilter(filters))
                 }
             )
         }
@@ -449,7 +450,7 @@ fun CalendarSelectedLogDetail(
 @Composable
 fun TimelineView(
     dailyLogs: Map<LocalDate, DailyLog>,
-    selectedFilter: FilterItem?,
+    selectedFilters: List<FilterItem>,
     dynamicActivities: List<com.diary.moonpage.domain.model.Activity>,
     themeType: com.diary.moonpage.core.theme.MoonThemeType,
     onEditLog: (LocalDate) -> Unit,
@@ -457,19 +458,22 @@ fun TimelineView(
     onShareLog: (LocalDate) -> Unit,
     onAddLog: (LocalDate) -> Unit
 ) {
-    val filteredLogs = remember(dailyLogs, selectedFilter) {
+    val filteredLogs = remember(dailyLogs, selectedFilters) {
         dailyLogs.values.filter { log ->
-            when (val filter = selectedFilter) {
-                null -> true
-                is FilterItem.Mood -> log.baseMoodId == filter.id
-                is FilterItem.Activity -> log.activityIds?.contains(filter.id) == true
-                is FilterItem.Special -> {
-                    when (filter.id) {
-                        "music" -> log.activityIds?.any { it.contains("music", ignoreCase = true) } == true
-                        "sleep" -> (log.sleepHours ?: 0.0) > 0.0
-                        "sleep_long" -> (log.sleepHours ?: 0.0) in 6.0..8.0
-                        "menstruation" -> log.isMenstruation
-                        else -> false
+            if (selectedFilters.isEmpty()) true else {
+                selectedFilters.all { filter ->
+                    when (filter) {
+                        is FilterItem.Mood -> log.baseMoodId == filter.id
+                        is FilterItem.Activity -> log.activityIds?.contains(filter.id) == true
+                        is FilterItem.Special -> {
+                            when (filter.id) {
+                                "music" -> log.activityIds?.any { it.contains("music", ignoreCase = true) } == true
+                                "sleep" -> (log.sleepHours ?: 0.0) > 0.0
+                                "sleep_long" -> (log.sleepHours ?: 0.0) in 6.0..8.0
+                                "menstruation" -> log.isMenstruation
+                                else -> false
+                            }
+                        }
                     }
                 }
             }
@@ -480,14 +484,14 @@ fun TimelineView(
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(
-                    imageVector = if (selectedFilter != null) Icons.Rounded.SearchOff else Icons.Rounded.EditNote,
+                    imageVector = if (selectedFilters.isNotEmpty()) Icons.Rounded.SearchOff else Icons.Rounded.EditNote,
                     contentDescription = null,
                     modifier = Modifier.size(64.dp),
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = if (selectedFilter != null) {
+                    text = if (selectedFilters.isNotEmpty()) {
                         stringResource(R.string.calendar_no_matching_entries)
                     } else {
                         stringResource(R.string.calendar_no_entries_yet)
@@ -496,7 +500,7 @@ fun TimelineView(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                 )
                 Spacer(modifier = Modifier.height(24.dp))
-                if (selectedFilter == null) {
+                if (selectedFilters.isEmpty()) {
                     Button(
                         onClick = { onAddLog(LocalDate.now()) },
                         shape = RoundedCornerShape(12.dp)

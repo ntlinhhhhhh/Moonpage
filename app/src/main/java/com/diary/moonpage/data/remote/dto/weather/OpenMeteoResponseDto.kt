@@ -12,17 +12,18 @@ data class OpenMeteoResponseDto(
 data class CurrentWeatherDto(
     val temperature: Double,
     val windspeed: Double,
+    @SerializedName("weathercode")
     val weathercode: Int
 )
 
 data class DailyWeatherDataDto(
-    val time: List<String>,
-    @SerializedName("weathercode")
-    val weathercode: List<Int>,
+    val time: List<String>?,
+    @SerializedName("weather_code")
+    val weathercode: List<Int>?,
     @SerializedName("temperature_2m_max")
-    val temperatureMax: List<Double>,
+    val temperatureMax: List<Double>?,
     @SerializedName("temperature_2m_min")
-    val temperatureMin: List<Double>,
+    val temperatureMin: List<Double>?,
     @SerializedName("windspeed_10m_max")
-    val windspeedMax: List<Double>
+    val windspeedMax: List<Double>?
 )

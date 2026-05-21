@@ -27,7 +27,7 @@ data class CalendarUiState(
     val showMonthPicker: Boolean = false,
     val showFilterSheet: Boolean = false,
     val showShareSheet: Boolean = false,
-    val selectedFilter: FilterItem? = null,
+    val selectedFilters: List<FilterItem> = emptyList(),
     val themeType: MoonThemeType = MoonThemeType.DEFAULT,
     val viewMode: CalendarViewMode = CalendarViewMode.CALENDAR,
     val currentStreak: Int = 0
