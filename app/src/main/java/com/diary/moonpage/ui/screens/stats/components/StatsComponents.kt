@@ -973,7 +973,17 @@ private fun parseTimeFromNoon(timeStr: String?): Float {
 
 @Composable
 fun SleepMoodCorrelationChart(sleepData: List<com.diary.moonpage.data.remote.dto.stats.SleepAnalysisDto>, themeType: MoonThemeType) {
-    if (sleepData.isEmpty()) return
+    val displayData = if (sleepData.isEmpty()) {
+        listOf(
+            com.diary.moonpage.data.remote.dto.stats.SleepAnalysisDto("", null, 2.0, 2),
+            com.diary.moonpage.data.remote.dto.stats.SleepAnalysisDto("", null, 5.0, 3),
+            com.diary.moonpage.data.remote.dto.stats.SleepAnalysisDto("", null, 7.0, 5),
+            com.diary.moonpage.data.remote.dto.stats.SleepAnalysisDto("", null, 9.0, 4),
+            com.diary.moonpage.data.remote.dto.stats.SleepAnalysisDto("", null, 11.0, 3)
+        )
+    } else {
+        sleepData
+    }
 
     val ranges = listOf(
         "<4h" to (0.0..4.0),
@@ -1000,7 +1010,7 @@ fun SleepMoodCorrelationChart(sleepData: List<com.diary.moonpage.data.remote.dto
         }
 
         ranges.forEach { (label, range) ->
-            val entriesInRange = sleepData.filter { it.duration in range }
+            val entriesInRange = displayData.filter { it.duration in range }
             val avgMood = if (entriesInRange.isNotEmpty()) entriesInRange.map { it.moodId }.average().toFloat() else 0f
             
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
