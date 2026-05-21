@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="app_name">Moon Page</string>
     <string name="widget_description">Open Moon Page diary</string>
     <string name="widget_subtitle">Tap to write your diary today.</string>
@@ -8,12 +8,6 @@
     <string name="widget_daily_summary_description">See today\'s mood, note, and quick stats.</string>
     <string name="widget_photo_empty">No photo added today yet.</string>
     <string name="widget_summary_empty_note">Write today\'s note in MoonPage.</string>
-    <string name="widget_photo_slideshow_name">Photo Slideshow</string>
-    <string name="widget_photo_slideshow_description">Auto slideshow of today\'s photos on your home screen.</string>
-    <string name="widget_mood_calendar_name">Mood Calendar</string>
-    <string name="widget_mood_calendar_description">View your monthly mood calendar at a glance.</string>
-    <string name="widget_quick_mood_name">Quick Mood</string>
-    <string name="widget_quick_mood_description">A quick banner to open today\'s mood log.</string>
     <string name="widgets_moonpage_title">MoonPage Widgets</string>
     <string name="widgets_moonpage_desc">Access your diary and track your mood directly from your home screen.</string>
     <string name="widgets_instruction_1">Long press on an empty space on your home screen.</string>
@@ -28,9 +22,6 @@
     <string name="cancel">Cancel</string>
     <string name="success">Success!</string>
     <string name="great">Great!</string>
-    <string name="recommended">Recommended</string>
-    <string name="open_settings">Open settings</string>
-    <string name="not_now">Not now</string>
 
     <!-- Validation Errors -->
     <string name="error_email_empty">Email cannot be empty.</string>
@@ -277,8 +268,6 @@
     <string name="daily_reminder">Daily Diary Reminder</string>
     <string name="daily_reminder_desc">Remind you to write your diary every day</string>
     <string name="reminder_time">Reminder Time</string>
-    <string name="battery_unrestricted_title">Unrestricted battery for rain alerts</string>
-    <string name="battery_unrestricted_desc">To receive rain alerts on time, allow MoonPage to run without battery restrictions in Android settings.</string>
     <string name="app_updates">App Updates</string>
     <string name="news_and_updates">News &amp; Updates</string>
     <string name="news_and_updates_desc">Get notified about new features and themes</string>
@@ -611,4 +600,3 @@
     <string name="tutorial_account_info">Here is where you can change your avatar and username.</string>
     <string name="tutorial_account_back">Tap here to complete the tutorial.</string>
 </resources>
-

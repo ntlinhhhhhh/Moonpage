@@ -107,31 +107,6 @@ class MoonpageWidgetDataSource(private val context: Context) {
             ?: entryPoint.dailyLogRepository().getDailyLogByDateFlow(date).firstOrNull()
     }
 
-    /**
-     * Load all daily logs for a given month and return a map of date (yyyy-MM-dd) → moodResId.
-     * Used by MoodCalendarWidget to render the calendar grid.
-     */
-    suspend fun loadMonthLogsMap(yearMonth: String): Map<String, Int> = withContext(Dispatchers.IO) {
-        val logs = entryPoint.dailyLogRepository()
-            .getDailyLogsByMonth(yearMonth)
-            .firstOrNull()
-            .orEmpty()
-        logs.associate { log ->
-            log.date to mapMoodDrawable(log.baseMoodId)
-        }
-    }
-
-    /**
-     * Load all daily logs for a given month as a list (date, baseMoodId).
-     */
-    suspend fun loadMonthMoodIds(yearMonth: String): Map<String, Int> = withContext(Dispatchers.IO) {
-        val logs = entryPoint.dailyLogRepository()
-            .getDailyLogsByMonth(yearMonth)
-            .firstOrNull()
-            .orEmpty()
-        logs.associate { log -> log.date to log.baseMoodId }
-    }
-
     private fun buildFooterItems(log: DailyLog?, activities: List<Activity>): List<String> {
         if (log == null) return emptyList()
 
