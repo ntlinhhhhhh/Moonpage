@@ -41,6 +41,10 @@ enum class ColorFocusTarget {
     Primary, Icon
 }
 
+enum class BackgroundFillMode {
+    Solid, Gradient
+}
+
 enum class EditorAppearanceMode {
     Light, Dark
 }
@@ -51,7 +55,10 @@ data class ThemeAppearanceState(
     val backgroundRotation: Float = 0f,
     val backgroundOffsetX: Float = 0f,
     val backgroundOffsetY: Float = 0f,
+    val backgroundFillMode: BackgroundFillMode = BackgroundFillMode.Solid,
     val solidBackgroundColor: Long = 0xFFFFF7EC,
+    val gradientStartColor: Long = 0xFFFFF7EC,
+    val gradientEndColor: Long = 0xFFE8F5E9,
     val primaryColor: Long = 0xFF8D6E63,
     val iconColor: Long = 0xFFEF9A9A,
     val iconColors: List<Long> = listOf(0xFFFFCA28, 0xFF81C784, 0xFF64B5F6, 0xFFBA68C8, 0xFF8D6E63)
@@ -63,7 +70,10 @@ data class CustomThemeEditorUiState(
     val editingMode: EditorAppearanceMode = EditorAppearanceMode.Light,
     val lightAppearance: ThemeAppearanceState = ThemeAppearanceState(),
     val darkAppearance: ThemeAppearanceState = ThemeAppearanceState(
+        backgroundFillMode = BackgroundFillMode.Solid,
         solidBackgroundColor = 0xFF1C1C1C,
+        gradientStartColor = 0xFF232323,
+        gradientEndColor = 0xFF393939,
         primaryColor = 0xFFFFF9EF,
         iconColor = 0xFFFFD54F,
         iconColors = listOf(0xFFFFD54F, 0xFF81C784, 0xFF4FC3F7, 0xFF9575CD, 0xFFEF9A9A)
@@ -94,8 +104,14 @@ data class CustomThemeEditorUiState(
         get() = activeAppearance.backgroundOffsetX
     val backgroundOffsetY: Float
         get() = activeAppearance.backgroundOffsetY
+    val backgroundFillMode: BackgroundFillMode
+        get() = activeAppearance.backgroundFillMode
     val solidBackgroundColor: Long
         get() = activeAppearance.solidBackgroundColor
+    val gradientStartColor: Long
+        get() = activeAppearance.gradientStartColor
+    val gradientEndColor: Long
+        get() = activeAppearance.gradientEndColor
     val primaryColor: Long
         get() = activeAppearance.primaryColor
     val iconColor: Long
@@ -149,7 +165,40 @@ class CustomThemeEditorViewModel @Inject constructor(
     fun setSolidBackgroundColor(color: Long) {
         updateAppearance { appearance ->
             appearance.copy(
+                backgroundFillMode = BackgroundFillMode.Solid,
                 solidBackgroundColor = color,
+                backgroundUri = null
+            )
+        }
+        _uiState.update { it.copy(hasUnsavedChanges = true) }
+    }
+
+    fun setBackgroundFillMode(mode: BackgroundFillMode) {
+        updateAppearance { appearance ->
+            appearance.copy(
+                backgroundFillMode = mode,
+                backgroundUri = null
+            )
+        }
+        _uiState.update { it.copy(hasUnsavedChanges = true) }
+    }
+
+    fun setGradientBackgroundStartColor(color: Long) {
+        updateAppearance { appearance ->
+            appearance.copy(
+                backgroundFillMode = BackgroundFillMode.Gradient,
+                gradientStartColor = color,
+                backgroundUri = null
+            )
+        }
+        _uiState.update { it.copy(hasUnsavedChanges = true) }
+    }
+
+    fun setGradientBackgroundEndColor(color: Long) {
+        updateAppearance { appearance ->
+            appearance.copy(
+                backgroundFillMode = BackgroundFillMode.Gradient,
+                gradientEndColor = color,
                 backgroundUri = null
             )
         }
