@@ -17,7 +17,7 @@ sealed class CalendarUiEvent {
     object OnFilterClick : CalendarUiEvent()
     object OnFilterDismiss : CalendarUiEvent()
     object OnShareDismiss : CalendarUiEvent()
-    data class ApplyFilter(val filterItem: FilterItem?) : CalendarUiEvent()
+    data class ApplyFilter(val filters: List<FilterItem>) : CalendarUiEvent()
     object OnClearFilters : CalendarUiEvent()
     object DismissMessage : CalendarUiEvent()
     object OnSettingsClick : CalendarUiEvent()

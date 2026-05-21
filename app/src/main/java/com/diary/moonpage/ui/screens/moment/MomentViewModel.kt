@@ -1,21 +1,26 @@
 package com.diary.moonpage.ui.screens.moment
 
+import android.location.Geocoder
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.R
+import com.diary.moonpage.core.util.LocationTracker
 import com.diary.moonpage.core.util.UiText
 import com.diary.moonpage.domain.repository.MomentRepository
+import com.diary.moonpage.domain.repository.WeatherRepository
 import com.diary.moonpage.domain.usecase.moment.*
 import com.diary.moonpage.ui.screens.moment.components.MomentTag
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
+import java.time.LocalDate
 import java.util.*
 import javax.inject.Inject
 

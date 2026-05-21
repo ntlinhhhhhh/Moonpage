@@ -1,5 +1,6 @@
 package com.diary.moonpage.ui.screens.profile.components
 
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -29,16 +30,19 @@ fun AccountInfoRow(
     actionText: String? = null,
     showArrow: Boolean = false,
     isColumnValue: Boolean = false,
+    isEnabled: Boolean = true,
     onClick: () -> Unit
 ) {
+    val alpha = if (isEnabled) 1f else 0.4f
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
             .clip(RoundedCornerShape(12.dp))
             .clickable(
+                enabled = isEnabled,
                 interactionSource = remember { MutableInteractionSource() },
-                indication = null,
+                indication = if (isEnabled) LocalIndication.current else null,
                 onClick = onClick
             )
             .padding(horizontal = 8.dp, vertical = 12.dp),
@@ -48,14 +52,14 @@ fun AccountInfoRow(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onBackground,
+                tint = MaterialTheme.colorScheme.onBackground.copy(alpha = alpha),
                 modifier = Modifier.size(24.dp)
             )
         } else if (iconRes != null) {
             Icon(
                 painter = painterResource(id = iconRes),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onBackground,
+                tint = MaterialTheme.colorScheme.onBackground.copy(alpha = alpha),
                 modifier = Modifier.size(24.dp)
             )
         }
@@ -67,27 +71,27 @@ fun AccountInfoRow(
                 Text(
                     text = label,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = alpha),
                     fontWeight = FontWeight.Medium
                 )
                 Text(
                     text = value,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = if (showArrow) 1f else 0.8f),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = if (showArrow) alpha else 0.8f * alpha),
                 )
             }
         } else {
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = alpha),
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.weight(1f)
             )
             Text(
                 text = value,
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = if (showArrow) 1f else 0.8f),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = if (showArrow) alpha else 0.8f * alpha),
             )
         }
 
@@ -96,7 +100,7 @@ fun AccountInfoRow(
             Text(
                 text = actionText,
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = alpha),
                 fontWeight = FontWeight.Bold
             )
         }
@@ -106,7 +110,7 @@ fun AccountInfoRow(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onBackground,
+                tint = MaterialTheme.colorScheme.onBackground.copy(alpha = alpha),
                 modifier = Modifier.size(20.dp)
             )
         }

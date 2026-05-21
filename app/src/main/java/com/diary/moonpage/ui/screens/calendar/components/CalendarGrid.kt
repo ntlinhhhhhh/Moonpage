@@ -20,7 +20,7 @@ fun CalendarGrid(
     pageYearMonth: YearMonth,
     selectedDate: LocalDate?,
     dailyLogs: Map<LocalDate, DailyLog>,
-    selectedFilter: FilterItem?,
+    selectedFilters: List<FilterItem>,
     dynamicActivities: List<com.diary.moonpage.domain.model.Activity>,
     themeType: com.diary.moonpage.core.theme.MoonThemeType,
     onDateSelected: (LocalDate) -> Unit,
@@ -56,22 +56,25 @@ fun CalendarGrid(
                             val isToday = date == today
                             val logForDay = dailyLogs[date]
 
-                            val isMatch = when (val filter = selectedFilter) {
-                                null -> true
-                                is FilterItem.Mood -> logForDay?.baseMoodId == filter.id
-                                is FilterItem.Activity -> logForDay?.activityIds?.contains(filter.id) == true
-                                is FilterItem.Special -> {
-                                    when (filter.id) {
-                                        "music" -> logForDay?.activityIds?.any { it.contains("music", ignoreCase = true) } == true
-                                        "sleep" -> (logForDay?.sleepHours ?: 0.0) > 0.0
-                                        "sleep_long" -> (logForDay?.sleepHours ?: 0.0) in 6.0..8.0
-                                        "menstruation" -> logForDay?.isMenstruation == true
-                                        else -> false
+                            val isMatch = if (selectedFilters.isEmpty()) true else {
+                                selectedFilters.any { filter ->
+                                    when (filter) {
+                                        is FilterItem.Mood -> logForDay?.baseMoodId == filter.id
+                                        is FilterItem.Activity -> logForDay?.activityIds?.contains(filter.id) == true
+                                        is FilterItem.Special -> {
+                                            when (filter.id) {
+                                                "music" -> logForDay?.activityIds?.any { it.contains("music", ignoreCase = true) } == true
+                                                "sleep" -> (logForDay?.sleepHours ?: 0.0) > 0.0
+                                                "sleep_long" -> (logForDay?.sleepHours ?: 0.0) in 6.0..8.0
+                                                "menstruation" -> logForDay?.isMenstruation == true
+                                                else -> false
+                                            }
+                                        }
                                     }
                                 }
                             }
                             
-                            val isFiltered = selectedFilter != null
+                            val isFiltered = selectedFilters.isNotEmpty()
                             val isDimmed = isFiltered && !isMatch
 
                             var moodColor: Color? = null
@@ -82,8 +85,11 @@ fun CalendarGrid(
                                 val mv = MoonIcons.Moods.getMoodVisual(logForDay.baseMoodId, themeType)
                                 moodColor = mv.color
                                 
-                                if (selectedFilter is FilterItem.Activity) {
-                                    val activity = dynamicActivities.find { it.id == selectedFilter.id }
+                                val firstActivityFilter = selectedFilters.filterIsInstance<FilterItem.Activity>().firstOrNull()
+                                val firstSpecialFilter = selectedFilters.filterIsInstance<FilterItem.Special>().firstOrNull()
+
+                                if (firstActivityFilter != null) {
+                                    val activity = dynamicActivities.find { it.id == firstActivityFilter.id }
                                     if (activity != null) {
                                         val activityIcon = MoonIcons.getIconForActivity(activity.name)
                                         moodDrawable = activityIcon.drawableRes
@@ -91,8 +97,8 @@ fun CalendarGrid(
                                     } else {
                                         moodDrawable = mv.drawableRes
                                     }
-                                } else if (selectedFilter is FilterItem.Special) {
-                                    moodIcon = selectedFilter.icon
+                                } else if (firstSpecialFilter != null) {
+                                    moodIcon = firstSpecialFilter.icon
                                 } else {
                                     moodDrawable = mv.drawableRes
                                 }

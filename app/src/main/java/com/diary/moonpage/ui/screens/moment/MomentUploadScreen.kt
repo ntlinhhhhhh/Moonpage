@@ -53,6 +53,7 @@ import coil.compose.AsyncImage
 import com.diary.moonpage.core.util.ImageUtils
 import com.diary.moonpage.ui.screens.moment.components.MomentTag
 import com.diary.moonpage.core.theme.nunitoFontFamily
+import com.diary.moonpage.core.util.MoonIcons
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -98,7 +99,7 @@ fun MomentUploadScreen(
             focusManager.clearFocus()
             keyboardController?.hide()
             if (currentTag.id == "location") onLocationClick()
-            if (currentTag.id == "weather") onWeatherClick()
+        // Removed automatic onWeatherClick/onLocationClick to prevent cycling/permission spam on swipe
         }
     }
 
@@ -127,9 +128,9 @@ fun MomentUploadScreen(
 
         Spacer(modifier = Modifier.height(topSpacerHeight))
 
-        var scale by remember { mutableFloatStateOf(1f) }
-        var offsetX by remember { mutableFloatStateOf(0f) }
-        var offsetY by remember { mutableFloatStateOf(0f) }
+        var scale by remember { mutableStateOf(1f) }
+        var offsetX by remember { mutableStateOf(0f) }
+        var offsetY by remember { mutableStateOf(0f) }
         val transformState = rememberTransformableState { zoomChange, panChange, _ ->
             scale = (scale * zoomChange).coerceIn(1f, 4f)
             val maxOffset = 500f * (scale - 1f)
@@ -266,7 +267,7 @@ fun MomentUploadScreen(
                                             repeat(5) { index ->
                                                 val starIndex = index + 1
                                                 val starIcon = when {
-                                                    userRating >= starIndex -> Icons.Default.Star
+                                                    userRating >= starIndex.toFloat() -> Icons.Default.Star
                                                     userRating >= starIndex - 0.5f -> Icons.AutoMirrored.Filled.StarHalf
                                                     else -> Icons.Default.StarBorder
                                                 }
@@ -278,7 +279,7 @@ fun MomentUploadScreen(
                                                         .size(28.dp)
                                                         .clickable {
                                                             val newRating = if (userRating == starIndex.toFloat()) starIndex - 0.5f 
-                                                                           else if (userRating == starIndex - 0.5f) starIndex - 1.0f
+                                                                           else if (userRating == starIndex - 0.5f) (starIndex - 1).toFloat()
                                                                            else starIndex.toFloat()
                                                             onUserRatingChange(newRating)
                                                         }
@@ -358,7 +359,7 @@ fun MomentUploadScreen(
             ) {
                 AnimatedContent(
                     targetState = isSuccess,
-                    transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(300)) },
+                    transitionSpec = { (fadeIn(tween(300)) + scaleIn()).togetherWith(fadeOut(tween(300)) + scaleOut()) },
                     label = "Success"
                 ) { success ->
                     Box(

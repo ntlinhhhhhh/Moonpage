@@ -802,10 +802,12 @@ fun StreakFreezeTabContent(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = colorScheme.primaryContainer.copy(alpha = 0.4f))
+                colors = CardDefaults.cardColors(containerColor = colorScheme.surface)
             ) {
                 Column(
-                    modifier = Modifier.padding(20.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(
@@ -818,12 +820,14 @@ fun StreakFreezeTabContent(
                     Text(
                         text = stringResource(R.string.store_freeze_count, freezeCount),
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
                     )
                     Text(
                         text = stringResource(R.string.store_freeze_count_desc),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = colorScheme.onSurface.copy(alpha = 0.6f)
+                        color = colorScheme.onSurface.copy(alpha = 0.6f),
+                        textAlign = TextAlign.Center
                     )
                 }
             }
