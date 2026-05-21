@@ -1,6 +1,7 @@
 *.iml
 .gradle
 .kotlin/
+./.idea
 AGENTS.md
 /local.properties
 /.idea/caches
