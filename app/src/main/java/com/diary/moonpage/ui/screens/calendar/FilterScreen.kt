@@ -68,6 +68,16 @@ fun FilterScreen(
     themeType: com.diary.moonpage.core.theme.MoonThemeType = com.diary.moonpage.core.theme.MoonThemeType.DEFAULT
 ) {
     var selectedItems by remember { mutableStateOf(currentFilters.toSet()) }
+    val groupedActivities = remember(dynamicActivities) { dynamicActivities.groupBy { it.category } }
+    val categories = remember(groupedActivities) { groupedActivities.keys.toList() }
+    var expandedCategories by remember { 
+        mutableStateOf(
+            currentFilters.filterIsInstance<FilterItem.Activity>()
+                .mapNotNull { activityFilter -> dynamicActivities.find { it.id == activityFilter.id }?.category }
+                .toSet()
+        )
+    }
+
     val isAnySelected = selectedItems.isNotEmpty()
     val colorScheme = MaterialTheme.colorScheme
     val isActuallyDark = colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
@@ -87,7 +97,10 @@ fun FilterScreen(
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             IconButton(
-                onClick = { selectedItems = emptySet() },
+                onClick = { 
+                    selectedItems = emptySet()
+                    expandedCategories = emptySet()
+                },
                 modifier = Modifier.align(Alignment.CenterStart)
             ) {
                 Icon(
@@ -147,7 +160,10 @@ fun FilterScreen(
                     
                     // Small Reset Button inside the pill
                     IconButton(
-                        onClick = { selectedItems = emptySet() },
+                        onClick = { 
+                            selectedItems = emptySet()
+                            expandedCategories = emptySet()
+                        },
                         modifier = Modifier.size(24.dp)
                     ) {
                         Icon(
@@ -196,10 +212,43 @@ fun FilterScreen(
             }
 
             item {
-                // Grouped Activities Section
-                val groupedActivities = dynamicActivities.groupBy { it.category }
-                Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
-                    groupedActivities.forEach { (category, activities) ->
+                // Activity Category Bar
+                FilterSectionTitle(stringResource(R.string.filter_activities))
+                androidx.compose.foundation.lazy.LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(categories) { category ->
+                        val isSelected = expandedCategories.contains(category)
+                        val label = if (category == "SelfCare") "Self-Care" else category
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { 
+                                expandedCategories = if (isSelected) {
+                                    expandedCategories - category
+                                } else {
+                                    expandedCategories + category
+                                }
+                            },
+                            label = { Text(label, fontSize = 12.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                                containerColor = pillBg,
+                                labelColor = textColor
+                            ),
+                            border = null,
+                            shape = RoundedCornerShape(20.dp)
+                        )
+                    }
+                }
+            }
+
+            // Grouped Activities Sections (only show if expanded)
+            categories.forEach { category ->
+                if (expandedCategories.contains(category)) {
+                    val activities = groupedActivities[category] ?: emptyList()
+                    item {
                         Column {
                             FilterSectionTitle(category.ifBlank { stringResource(R.string.filter_activities) })
                             val activityItems = activities.map { 
