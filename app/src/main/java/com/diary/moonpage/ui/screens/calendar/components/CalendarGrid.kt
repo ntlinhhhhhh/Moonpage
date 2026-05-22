@@ -84,24 +84,8 @@ fun CalendarGrid(
                             if (logForDay != null) {
                                 val mv = MoonIcons.Moods.getMoodVisual(logForDay.baseMoodId, themeType)
                                 moodColor = mv.color
-                                
-                                val firstActivityFilter = selectedFilters.filterIsInstance<FilterItem.Activity>().firstOrNull()
-                                val firstSpecialFilter = selectedFilters.filterIsInstance<FilterItem.Special>().firstOrNull()
-
-                                if (firstActivityFilter != null) {
-                                    val activity = dynamicActivities.find { it.id == firstActivityFilter.id }
-                                    if (activity != null) {
-                                        val activityIcon = MoonIcons.getIconForActivity(activity.name)
-                                        moodDrawable = activityIcon.drawableRes
-                                        moodIcon = activityIcon.vector
-                                    } else {
-                                        moodDrawable = mv.drawableRes
-                                    }
-                                } else if (firstSpecialFilter != null) {
-                                    moodIcon = firstSpecialFilter.icon
-                                } else {
-                                    moodDrawable = mv.drawableRes
-                                }
+                                moodDrawable = mv.drawableRes
+                                moodIcon = mv.vector
                             }
 
                             DayItem(
