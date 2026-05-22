@@ -66,6 +66,18 @@ class CheckAndTriggerNotificationsUseCase @Inject constructor(
         checkWeather(userId, localizedContext)
     }
 
+    suspend fun checkWeatherOnly() {
+        val user = userManager.getUser().firstOrNull()
+        val userId = user?.id ?: run {
+            android.util.Log.e("TriggerNotify", "No user ID found for weather check")
+            return
+        }
+
+        val language = settingsPreferencesManager.language.first()
+        val localizedContext = LocaleUtils.applyLocale(context, language)
+        checkWeather(userId, localizedContext)
+    }
+
     private suspend fun checkDailyReminder(userId: String, context: Context) {
         val today = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
         dailyLogRepository.getDailyLogByDate(today).onFailure {

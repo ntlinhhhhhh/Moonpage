@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -86,13 +87,16 @@
 
         <service
             android:name=".service.MoonFirebaseMessagingService"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
 
         <receiver android:name=".service.ReminderReceiver" />
+        <receiver
+            android:name=".service.WeatherAlarmReceiver"
+            android:exported="false" />
         <receiver
             android:name=".widget.glance.PhotoMomentWidgetReceiver"
             android:exported="true">
@@ -112,6 +116,36 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/daily_summary_widget_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.glance.PhotoSlideshowWidgetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/photo_slideshow_widget_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.glance.MoodCalendarWidgetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/mood_calendar_widget_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.glance.QuickMoodWidgetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/quick_mood_widget_info" />
         </receiver>
         <receiver
             android:name=".service.BootReceiver"

@@ -7,5 +7,9 @@ object MoonpageWidgets {
     suspend fun refreshAll(context: Context) {
         PhotoMomentWidget().updateAll(context)
         DailySummaryWidget().updateAll(context)
+        PhotoSlideshowWidget().updateAll(context)
+        MoodCalendarWidget().updateAll(context)
+        QuickMoodWidget().updateAll(context)
     }
 }
+
