@@ -63,6 +63,7 @@ fun AppNavigation(
     val navBackStackEntry = navController.currentBackStackEntryAsState().value
     val currentRoute = navBackStackEntry?.destination?.route
     val isAppLocked by mainViewModel.isAppLocked.collectAsState()
+    var pendingStoreTab by remember { mutableStateOf<Int?>(null) }
 
     val authViewModel: AuthViewModel = hiltViewModel()
     val onboardingViewModel: OnboardingViewModel = hiltViewModel()
@@ -515,6 +516,8 @@ fun AppNavigation(
                     ScreenWrapper(Screen.Store.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         StoreRoute(
                             viewModel = storeViewModel,
+                            initialTabIndex = pendingStoreTab,
+                            onInitialTabConsumed = { pendingStoreTab = null },
                             onNavigateToDetail = { navController.navigate(Screen.ThemeDetail.route) },
                             onNavigateToCustomThemeEditor = { navController.navigate(Screen.CustomThemeEditor.route) },
                             onNavigateBack = {
@@ -554,7 +557,10 @@ fun AppNavigation(
                             onNavigateToInviteFriend = { navController.navigate(Screen.InviteFriend.route) },
                             onNavigateToStats = { navController.navigate(Screen.Stats.route) },
                             onNavigateToStreakStats = { navController.navigate(Screen.StreakStats.route) },
-                            onNavigateToStore = { navController.navigate(Screen.Store.route) }
+                            onNavigateToStore = {
+                                pendingStoreTab = 4
+                                navController.navigate(Screen.Store.route)
+                            }
                         )
                     }
                 }

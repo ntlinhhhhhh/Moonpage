@@ -10,8 +10,13 @@ data class StatisticsUiState(
     val error: String? = null,
     val stats: StatisticsResponse? = null,
     val frequentlyRecorded: List<BestActivityDto> = emptyList(),
+    // Legacy lists kept for backward compatibility (use activityCorrelations for new UI)
     val bestActivities: List<BestActivityDto> = emptyList(),
     val worstActivities: List<BestActivityDto> = emptyList(),
+    // New computed insights from local data
+    val bestCorrelations: List<ActivityCorrelation> = emptyList(),
+    val worstCorrelations: List<ActivityCorrelation> = emptyList(),
+    val iconDeepDive: IconDeepDiveResult? = null,
     val selectedYear: Int = java.time.LocalDate.now().year,
     val selectedMonth: Int = java.time.LocalDate.now().monthValue,
     val isMonthly: Boolean = true,

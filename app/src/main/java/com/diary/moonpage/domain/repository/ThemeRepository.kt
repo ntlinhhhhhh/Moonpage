@@ -25,7 +25,7 @@ interface ThemeRepository {
     suspend fun getOwnedThemes(): Result<List<Theme>>
     suspend fun getMyThemes(): Result<List<Theme>>
     suspend fun createThemes(themes: List<CreateThemePayload>): Result<Unit>
-    suspend fun buyTheme(themeId: String): Result<Unit>
+    suspend fun buyTheme(themeId: String, price: Int? = null): Result<Unit>
     suspend fun setActiveTheme(themeId: String): Result<Unit>
     
     suspend fun getMoodsForTheme(themeId: String): List<com.diary.moonpage.data.local.entity.ThemeMoodEntity>

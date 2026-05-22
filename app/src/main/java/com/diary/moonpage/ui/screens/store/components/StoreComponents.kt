@@ -111,7 +111,8 @@ fun CuteBeanIcon(
 
 @Composable
 fun StoreTopBar(
-    coins: Int
+    coins: Int,
+    onStreakClick: () -> Unit = {}
 ) {
     Box(
         modifier = Modifier
@@ -163,6 +164,23 @@ fun StoreTopBar(
                 )
             }
         }
+
+        IconButton(
+            onClick = onStreakClick,
+            modifier = Modifier
+                .padding(start = 16.dp)
+                .size(36.dp)
+                .align(Alignment.CenterStart)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.AcUnit,
+                contentDescription = "Streak Freeze",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp)
+            )
+        }
     }
 }
 @Composable
@@ -170,6 +188,7 @@ fun ThemeCard(
     theme: Theme,
     isSelected: Boolean = false,
     showSelectionIndicator: Boolean = true,
+    previewDarkMode: Boolean? = null,
     onClick: () -> Unit
 ) {
     val onSurface = MaterialTheme.colorScheme.onBackground
@@ -274,17 +293,38 @@ fun ThemeCard(
         val shades = getThemeShades(theme)
 
         val defaultBg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-        val previewBg = if (theme.id == ThemeConstants.DEFAULT_THEME_ID) {
-            Color(0xFFFFF2C2).copy(alpha = 0.2f)
-        } else if (!theme.primaryColor.isNullOrBlank()) {
+        val lightPreviewBg = run {
+            val predefined = ThemeConstants.THEMES.find { it.id == theme.id }
+            val source = predefined?.backgroundUrl ?: theme.backgroundUrl ?: theme.primaryColor
             try {
-                val colorStr = if (theme.primaryColor.startsWith("#")) theme.primaryColor else "#${theme.primaryColor}"
-                Color(android.graphics.Color.parseColor(colorStr)).copy(alpha = 0.15f)
+                if (!source.isNullOrBlank()) {
+                    val colorStr = if (source.startsWith("#")) source else "#$source"
+                    Color(android.graphics.Color.parseColor(colorStr)).copy(alpha = 0.28f)
+                } else if (theme.id == ThemeConstants.DEFAULT_THEME_ID) {
+                    Color(0xFFFFF2C2).copy(alpha = 0.2f)
+                } else {
+                    Color(0xFFFFFBF4)
+                }
             } catch (e: Exception) {
+                if (theme.id == ThemeConstants.DEFAULT_THEME_ID) Color(0xFFFFF2C2).copy(alpha = 0.2f) else Color(0xFFFFFBF4)
+            }
+        }
+        val darkPreviewBg = Color(0xFF1F222A)
+        val previewBg = when (previewDarkMode) {
+            true -> darkPreviewBg
+            false -> lightPreviewBg
+            null -> if (!theme.primaryColor.isNullOrBlank()) {
+                try {
+                    val colorStr = if (theme.primaryColor.startsWith("#")) theme.primaryColor else "#${theme.primaryColor}"
+                    Color(android.graphics.Color.parseColor(colorStr)).copy(alpha = 0.15f)
+                } catch (e: Exception) {
+                    defaultBg
+                }
+            } else if (theme.id == ThemeConstants.DEFAULT_THEME_ID) {
+                Color(0xFFFFF2C2).copy(alpha = 0.2f)
+            } else {
                 defaultBg
             }
-        } else {
-            defaultBg
         }
 
         Box(

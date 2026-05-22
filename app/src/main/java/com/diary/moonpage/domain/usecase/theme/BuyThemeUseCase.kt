@@ -6,7 +6,7 @@ import javax.inject.Inject
 class BuyThemeUseCase @Inject constructor(
     private val repository: ThemeRepository
 ) {
-    suspend operator fun invoke(themeId: String): Result<Unit> {
-        return repository.buyTheme(themeId)
+    suspend operator fun invoke(themeId: String, price: Int? = null): Result<Unit> {
+        return repository.buyTheme(themeId, price)
     }
 }

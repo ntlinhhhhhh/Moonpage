@@ -56,6 +56,8 @@ import java.io.File
 @Composable
 fun StoreRoute(
     viewModel: StoreViewModel,
+    initialTabIndex: Int? = null,
+    onInitialTabConsumed: () -> Unit = {},
     onNavigateToDetail: () -> Unit,
     onNavigateToCustomThemeEditor: () -> Unit,
     onNavigateBack: () -> Unit
@@ -82,6 +84,13 @@ fun StoreRoute(
                 }
                 else -> {}
             }
+        }
+    }
+
+    LaunchedEffect(initialTabIndex) {
+        initialTabIndex?.let { tab ->
+            viewModel.onTabSelected(tab)
+            onInitialTabConsumed()
         }
     }
 
@@ -155,7 +164,8 @@ fun StoreScreen(
                     .fillMaxSize()
             ) {
                 StoreTopBar(
-                    coins = uiState.userCoins
+                    coins = uiState.userCoins,
+                    onStreakClick = { onTabSelected(4) }
                 )
 
                 StoreTabs(
@@ -174,8 +184,7 @@ fun StoreScreen(
                             selectedCategory = uiState.selectedCategory,
                             onCategoryClick = onCategorySelected,
                             onThemeClick = onThemeClick,
-                            onViewAllClick = onViewAllClick,
-                            onFreezeBuyClick = onInitiateFreezePurchase
+                            onViewAllClick = onViewAllClick
                         )
                         1 -> MyThemeTabContent(
                             ownedThemes = uiState.ownedThemes,
@@ -186,7 +195,6 @@ fun StoreScreen(
                             onExploreMore = { onTabSelected(0) }
                         )
                         2 -> CustomThemeTabContent(
-                            coins = uiState.userCoins,
                             customThemes = uiState.customThemes,
                             onActivateCustomTheme = onActivateCustomTheme,
                             onCreateClick = onCreateCustomThemeClick
@@ -599,7 +607,6 @@ fun StoreTabs(
 
 @Composable
 fun CustomThemeTabContent(
-    coins: Int,
     customThemes: List<Theme>,
     onActivateCustomTheme: (String) -> Unit,
     onCreateClick: () -> Unit
@@ -611,31 +618,6 @@ fun CustomThemeTabContent(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Savings,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.custom_theme_coin_balance, coins),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
-
         item {
             CreateCustomThemeCard(onClick = onCreateClick)
         }
@@ -995,15 +977,14 @@ fun HomeTabContent(
     selectedCategory: String,
     onCategoryClick: (String) -> Unit,
     onThemeClick: (Theme) -> Unit,
-    onViewAllClick: () -> Unit,
-    onFreezeBuyClick: () -> Unit
+    onViewAllClick: () -> Unit
 ) {
     val filteredThemes = remember(themes, selectedCategory) {
         when (selectedCategory) {
             "ALL" -> themes.filter { it.type == ThemeType.THEME }
             "LIGHT", "DARK" -> themes.filter { it.type == ThemeType.THEME }
             else -> themes.filter { it.type == ThemeType.THEME && it.category == selectedCategory }
-        }
+        }.filter { !it.isOwned }.take(5)
     }
     val iconPacks = themes.filter { it.type == ThemeType.ICON_PACK }
 
@@ -1012,10 +993,6 @@ fun HomeTabContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
-            FreezePurchaseItem(onBuyClick = onFreezeBuyClick)
-        }
-
         item {
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),
@@ -1055,36 +1032,45 @@ fun HomeTabContent(
             items = filteredThemes,
             key = { _, theme -> theme.id }
         ) { index, theme ->
+            val previewDarkMode = when (selectedCategory) {
+                "LIGHT" -> false
+                "DARK" -> true
+                else -> null
+            }
             Box(
                 modifier = if (index == 0) Modifier.tutorialTarget(TutorialStep.HighlightStoreThemes) else Modifier
             ) {
-                ThemeCard(theme = theme, onClick = { onThemeClick(theme) })
+                ThemeCard(
+                    theme = theme,
+                    previewDarkMode = previewDarkMode,
+                    onClick = { onThemeClick(theme) }
+                )
             }
         }
 
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.icon_collections),
-                    color = MaterialTheme.colorScheme.onBackground,
-                    style = MaterialTheme.typography.titleLarge
-                )
-                Text(
-                    text = stringResource(R.string.view_all),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { onViewAllClick() }
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                )
-            }
-        }
+//        item {
+//            Row(
+//                modifier = Modifier
+//                    .fillMaxWidth(),
+//                horizontalArrangement = Arrangement.SpaceBetween,
+//                verticalAlignment = Alignment.CenterVertically
+//            ) {
+//                Text(
+//                    text = stringResource(R.string.icon_collections),
+//                    color = MaterialTheme.colorScheme.onBackground,
+//                    style = MaterialTheme.typography.titleLarge
+//                )
+//                Text(
+//                    text = stringResource(R.string.view_all),
+//                    style = MaterialTheme.typography.labelLarge,
+//                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+//                    modifier = Modifier
+//                        .clip(RoundedCornerShape(8.dp))
+//                        .clickable { onViewAllClick() }
+//                        .padding(horizontal = 8.dp, vertical = 4.dp)
+//                )
+//            }
+//        }
 
         items(iconPacks.chunked(2)) { row ->
             Row(

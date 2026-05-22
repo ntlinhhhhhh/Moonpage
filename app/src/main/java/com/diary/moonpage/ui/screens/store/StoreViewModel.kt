@@ -190,15 +190,8 @@ class StoreViewModel @Inject constructor(
 
     fun unlockCustomThemeSlot() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, showConfirmCustomThemeUnlockDialog = false) }
-            userRepository.spendCoinsLocally(CUSTOM_THEME_SLOT_PRICE)
-                .onSuccess {
-                    _uiState.update { state -> state.copy(isLoading = false) }
-                    _uiEffect.emit(StoreUiEffect.NavigateToCustomThemeEditor)
-                }
-                .onFailure {
-                    _uiState.update { state -> state.copy(isLoading = false, showInsufficientCoinsSheet = true) }
-                }
+            _uiState.update { it.copy(showConfirmCustomThemeUnlockDialog = false) }
+            _uiEffect.emit(StoreUiEffect.NavigateToCustomThemeEditor)
         }
     }
 
@@ -371,9 +364,21 @@ const val CUSTOM_THEME_SLOT_PRICE = 500
 // Extension to map Theme to MoonThemeType
 fun Theme.toMoonThemeType(): MoonThemeType {
     if (this.id == ThemeConstants.DEFAULT_THEME_ID) return MoonThemeType.DEFAULT
-    return try {
-        MoonThemeType.valueOf(this.decoration.uppercase())
-    } catch (e: Exception) {
-        MoonThemeType.DEFAULT
+    return id.toMoonThemeTypeOrNull()
+        ?: decoration.toMoonThemeTypeOrNull()
+        ?: MoonThemeType.DEFAULT
+}
+
+private fun String.toMoonThemeTypeOrNull(): MoonThemeType? {
+    if (this == ThemeConstants.DEFAULT_THEME_ID) return MoonThemeType.DEFAULT
+    val normalized = if (startsWith("theme_")) substringAfter("theme_") else this
+    val enumName = when (normalized.uppercase()) {
+        "MOON" -> "DEFAULT"
+        "BROWN" -> "GRAY_BROWN"
+        "COOKIE" -> "COOKIE_BATCH"
+        "HEART" -> "HEART_FELT"
+        "WEATHER" -> "WEATHER_CYCLE"
+        else -> normalized.uppercase()
     }
+    return runCatching { MoonThemeType.valueOf(enumName) }.getOrNull()
 }

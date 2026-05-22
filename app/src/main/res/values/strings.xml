@@ -134,7 +134,10 @@
     <string name="trends">Trends</string>
     <string name="yearly_cycle_trends">Yearly Cycle Trends</string>
     <string name="yearly_sleep_trends">Yearly Sleep Trends</string>
-    <string name="stats_activities_habits">Activities &amp; Habits</string>
+    <string name="stats_activities_habits">Frequently Recorded</string>
+    <string name="sort_by">Sort by</string>
+    <string name="sort_most_records">Most # of records</string>
+    <string name="sort_least_records">Least # of records</string>
     <string name="stats_sleep_health">Sleep &amp; Health</string>
     <string name="stats_mood_analysis">Mood Analysis</string>
     <string name="mood_flow_cycle">Mood Flow &amp; Cycle</string>
@@ -468,6 +471,8 @@
     <string name="custom_theme_create_new">Create Custom Theme</string>
     <string name="custom_theme_price">%1$d coins</string>
     <string name="custom_theme_saved">Saved custom theme</string>
+    <string name="custom_theme_purchased">Purchased</string>
+    <string name="custom_theme_unpurchased">Not purchased</string>
     <string name="custom_theme_not_enough_coins">You do not have enough coins. Keep journaling to earn more!</string>
     <string name="custom_theme_unlock_title">Unlock Custom Theme</string>
     <string name="custom_theme_unlock_desc">Do you want to use %1$d coins to unlock a new theme creation slot?</string>

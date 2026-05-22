@@ -215,6 +215,13 @@ fun ShareLogCard(uiState: DailyLogUiState) {
     val dividerColor = if (isDark) Color(0xFF444444) else Color(0xFFD1D1CB)
     val musicCardBg = if (isDark) Color.White.copy(alpha = 0.1f) else Color.White.copy(alpha = 0.8f)
     val unknownArtist = stringResource(R.string.daily_log_unknown_artist)
+    val noteText = uiState.noteText.ifBlank { uiState.existingLog?.note.orEmpty() }
+    val menstruationText = when {
+        uiState.isMenstruation && uiState.menstruationDay != null -> stringResource(R.string.on_day_x, uiState.menstruationDay)
+        uiState.isMenstruation && !uiState.menstruationPhase.isNullOrBlank() -> uiState.menstruationPhase
+        uiState.isMenstruation -> stringResource(R.string.daily_log_menstrual_tracking_enabled)
+        else -> null
+    }
 
     Column(
         modifier = Modifier
@@ -333,19 +340,75 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
-            // Note Text (Left Aligned)
-            if (!uiState.noteText.isNullOrBlank()) {
-                Text(
-                    text = uiState.noteText,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 4.dp),
-                    fontSize = 15.sp,
-                    color = textColor,
-                    textAlign = TextAlign.Start,
-                    lineHeight = 22.sp,
-                    fontWeight = FontWeight.Medium
-                )
+            if (noteText.isNotBlank()) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = musicCardBg
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Text(
+                            text = stringResource(R.string.daily_log_todays_note),
+                            fontSize = 12.sp,
+                            color = secondaryTextColor,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = noteText,
+                            modifier = Modifier.fillMaxWidth(),
+                            fontSize = 15.sp,
+                            color = textColor,
+                            textAlign = TextAlign.Start,
+                            lineHeight = 22.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            if (menstruationText != null) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = musicCardBg
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFEF5350).copy(alpha = if (isDark) 0.22f else 0.12f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Rounded.WaterDrop,
+                                contentDescription = null,
+                                tint = Color(0xFFEF5350),
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = stringResource(R.string.daily_log_menstruation),
+                                fontSize = 12.sp,
+                                color = secondaryTextColor,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = menstruationText,
+                                fontSize = 14.sp,
+                                color = textColor,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.height(24.dp))
             }
 

@@ -31,6 +31,7 @@ object ImageUtils {
     suspend fun shareImage(context: Context, bitmap: Bitmap, title: String = "Share Mood") {
         withContext(Dispatchers.IO) {
             try {
+                val shareBitmap = bitmap.toSoftwareBitmap()
                 val cachePath = File(context.cacheDir, "shared_images")
                 if (!cachePath.exists()) cachePath.mkdirs()
                 
@@ -41,7 +42,7 @@ object ImageUtils {
 
                 val file = File(cachePath, "MP_Share_${System.currentTimeMillis()}.jpg")
                 FileOutputStream(file).use { stream ->
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+                    shareBitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
                 }
 
                 val contentUri = FileProvider.getUriForFile(
@@ -100,20 +101,26 @@ object ImageUtils {
     }
 
     fun applyRoundedCorners(bitmap: Bitmap, cornerRadius: Float): Bitmap {
-        val output = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+        val source = bitmap.toSoftwareBitmap()
+        val output = Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888)
         val canvas = android.graphics.Canvas(output)
         
         val paint = android.graphics.Paint()
         paint.isAntiAlias = true
         paint.color = android.graphics.Color.WHITE
         
-        val rect = android.graphics.RectF(0f, 0f, bitmap.width.toFloat(), bitmap.height.toFloat())
+        val rect = android.graphics.RectF(0f, 0f, source.width.toFloat(), source.height.toFloat())
         canvas.drawRoundRect(rect, cornerRadius, cornerRadius, paint)
         
         paint.xfermode = android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.SRC_IN)
-        canvas.drawBitmap(bitmap, 0f, 0f, paint)
+        canvas.drawBitmap(source, 0f, 0f, paint)
         
         return output
+    }
+
+    private fun Bitmap.toSoftwareBitmap(): Bitmap {
+        if (config != Bitmap.Config.HARDWARE && config != null) return this
+        return copy(Bitmap.Config.ARGB_8888, false)
     }
 
     suspend fun compressAndCropSquare(

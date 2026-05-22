@@ -132,7 +132,10 @@
     <string name="trends">Xu hướng</string>
     <string name="yearly_cycle_trends">Xu hướng chu kỳ năm</string>
     <string name="yearly_sleep_trends">Xu hướng giấc ngủ năm</string>
-    <string name="stats_activities_habits">Hoạt động &amp; Thói quen</string>
+    <string name="stats_activities_habits">Frequently Recorded</string>
+    <string name="sort_by">Sắp xếp theo</string>
+    <string name="sort_most_records">Dùng nhiều nhất</string>
+    <string name="sort_least_records">Dùng ít nhất</string>
     <string name="stats_sleep_health">Giấc ngủ &amp; Sức khỏe</string>
     <string name="stats_mood_analysis">Phân tích cảm xúc</string>
     <string name="mood_flow_cycle">Dòng cảm xúc &amp; Chu kỳ</string>
@@ -199,6 +202,7 @@
     <string name="look_back">Nhìn lại năm %1$s của bạn.</string>
     <string name="avg_cycle">Chu kỳ trung bình: %1$d ngày</string>
     <string name="avg_period">Kinh nguyệt trung bình: %1$d ngày</string>
+    <string name="on_day_x">Ngày thứ %1$d</string>
     <string name="avg_sleep">Ngủ trung bình: %1$.1fh</string>
     <string name="sleep_quality">Chất lượng giấc ngủ: %1$s</string>
     <string name="good">Tốt</string>
@@ -214,7 +218,6 @@
     <string name="reflect_journey">Nhìn lại hành trình của bạn với MoonPage</string>
     <string name="strength_training">Tập thể lực %1$dp</string>
     <string name="not_started">Chưa bắt đầu</string>
-    <string name="on_day_x">Ngày thứ %1$d</string>
     <string name="streak">Chuỗi</string>
     <string name="back">Quay lại</string>
     <string name="theme_detail">Chi tiết giao diện</string>
@@ -466,6 +469,8 @@
     <string name="custom_theme_create_new">Táº¡o theme má»›i</string>
     <string name="custom_theme_price">%1$d xu</string>
     <string name="custom_theme_saved">Theme tÃ¹y chá»‰nh Ä‘Ã£ lÆ°u</string>
+    <string name="custom_theme_purchased">Da mua</string>
+    <string name="custom_theme_unpurchased">Chua mua</string>
     <string name="custom_theme_not_enough_coins">Báº¡n khÃ´ng Ä‘á»§ xu, hÃ£y chÄƒm chá»‰ ghi nháº­t kÃ½ thÃªm nhÃ©!</string>
     <string name="custom_theme_unlock_title">Má»Ÿ khÃ³a theme tÃ¹y chá»‰nh</string>
     <string name="custom_theme_unlock_desc">Báº¡n cÃ³ muá»‘n dÃ¹ng %1$d xu Ä‘á»ƒ má»Ÿ khÃ³a má»™t slot táº¡o theme má»›i khÃ´ng?</string>

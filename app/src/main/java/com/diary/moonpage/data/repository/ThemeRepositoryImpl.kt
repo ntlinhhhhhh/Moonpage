@@ -122,6 +122,8 @@ class ThemeRepositoryImpl @Inject constructor(
                     .map { dto ->
                         dto.toDomain().copy(
                             collection = "Custom Theme",
+                            price = CUSTOM_THEME_PRICE,
+                            isFree = false,
                             isOwned = true,
                             isActive = dto.isActive,
                             primaryColor = dto.thumbnailUrl ?: dto.backgroundUrl
@@ -160,6 +162,39 @@ class ThemeRepositoryImpl @Inject constructor(
 
             val response = api.createThemes(request)
             if (response.isSuccessful) {
+                themes.forEach { theme ->
+                    dao.insertThemes(
+                        listOf(
+                            ThemeEntity(
+                                id = theme.id,
+                                name = theme.name,
+                                collection = "Custom Theme",
+                                price = theme.price,
+                                isFree = theme.price == 0,
+                                thumbnailUrl = theme.thumbnailUrl,
+                                backgroundUrl = theme.backgroundUrl,
+                                isOwned = false,
+                                isActive = theme.isActive,
+                                description = null,
+                                type = ThemeType.THEME.name,
+                                icons = "VERY_HAPPY,HAPPY,NEUTRAL,SAD,ANGRY",
+                                primaryColor = theme.thumbnailUrl ?: theme.backgroundUrl,
+                                decoration = "CUSTOM",
+                                activatedAt = null
+                            )
+                        )
+                    )
+                    dao.insertThemeMoods(
+                        theme.moods.map { mood ->
+                            ThemeMoodEntity(
+                                themeId = theme.id,
+                                baseMoodId = mood.baseMoodId.toThemeMoodName(),
+                                iconUrl = mood.iconUrl,
+                                customName = mood.customName
+                            )
+                        }
+                    )
+                }
                 getMyThemes()
                 Result.success(Unit)
             } else {
@@ -236,15 +271,14 @@ class ThemeRepositoryImpl @Inject constructor(
         dao.insertThemeMoods(moods)
     }
 
-    override suspend fun buyTheme(themeId: String): Result<Unit> {
+    override suspend fun buyTheme(themeId: String, price: Int?): Result<Unit> {
         return try {
-            // Find price from cache
             val cachedTheme = dao.getThemeById(themeId)
-            val price = cachedTheme?.price ?: 0
+            val requestPrice = price ?: cachedTheme?.price ?: 0
             
-            val response = api.buyTheme(BuyThemeRequest(themeId, price))
+            val response = api.buyTheme(BuyThemeRequest(themeId, requestPrice))
             if (response.isSuccessful) {
-                cachedTheme?.let { dao.insertThemes(listOf(it.copy(isOwned = true))) }
+                cachedTheme?.let { dao.insertThemes(listOf(it.copy(price = requestPrice, isFree = requestPrice == 0, isOwned = true))) }
                 Result.success(Unit)
             } else {
                 Result.failure(Exception(parseErrorResponse(response.errorBody()?.string())))
@@ -327,3 +361,14 @@ class ThemeRepositoryImpl @Inject constructor(
         }
     }
 }
+
+private fun Int.toThemeMoodName(): String = when (this) {
+    1 -> "Awful"
+    2 -> "Bad"
+    3 -> "Meh"
+    4 -> "Good"
+    5 -> "Rad"
+    else -> "Meh"
+}
+
+private const val CUSTOM_THEME_PRICE = 500

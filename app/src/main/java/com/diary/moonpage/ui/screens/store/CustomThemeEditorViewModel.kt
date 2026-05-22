@@ -9,6 +9,7 @@ import com.diary.moonpage.core.util.saveBitmapToInternalStorage
 import com.diary.moonpage.domain.repository.CreateThemeMoodPayload
 import com.diary.moonpage.domain.repository.CreateThemePayload
 import com.diary.moonpage.domain.repository.ThemeRepository
+import com.diary.moonpage.domain.usecase.theme.BuyThemeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -128,7 +129,9 @@ sealed class CustomThemeEditorEffect {
 @HiltViewModel
 class CustomThemeEditorViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val themeRepository: ThemeRepository
+    private val themeRepository: ThemeRepository,
+    private val buyThemeUseCase: BuyThemeUseCase,
+    private val userRepository: com.diary.moonpage.domain.repository.UserRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CustomThemeEditorUiState())
@@ -307,23 +310,35 @@ class CustomThemeEditorViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true) }
             val fileName = "custom_theme_${System.currentTimeMillis()}.png"
+            val themeId = "custom_${UUID.randomUUID()}"
+            val themeName = state.name.ifBlank { "My Custom Theme" }
             runCatching {
                 context.saveBitmapToInternalStorage(bitmap, fileName)
             }.mapCatching { previewPath ->
                 themeRepository.createThemes(
                     listOf(
                         CreateThemePayload(
-                            id = "custom_${UUID.randomUUID()}",
-                            name = state.name.ifBlank { "My Custom Theme" },
-                            price = 0,
+                            id = themeId,
+                            name = themeName,
+                            price = CUSTOM_THEME_SLOT_PRICE,
                             thumbnailUrl = previewPath,
                             backgroundUrl = previewPath,
                             isOfficial = false,
-                            isActive = true,
+                            isActive = false,
                             moods = state.lightAppearance.toMoodPayloads()
                         )
                     )
                 ).getOrThrow()
+                val myThemes = themeRepository.getMyThemes().getOrThrow()
+                val serverThemeId = myThemes.findCreatedThemeId(
+                    fallbackId = themeId,
+                    fileName = fileName,
+                    previewPath = previewPath,
+                    themeName = themeName
+                )
+                buyThemeUseCase(serverThemeId, CUSTOM_THEME_SLOT_PRICE).getOrThrow()
+                themeRepository.getMyThemes().getOrThrow()
+                userRepository.getCurrentUser()
             }.onSuccess {
                 _uiState.update { it.copy(isSaving = false, hasUnsavedChanges = false) }
                 _effect.emit(CustomThemeEditorEffect.Saved)
@@ -362,4 +377,21 @@ class CustomThemeEditorViewModel @Inject constructor(
     }
 
     private fun Long.toColorHex(): String = "#%08X".format(this)
+
+    private fun List<com.diary.moonpage.domain.model.Theme>.findCreatedThemeId(
+        fallbackId: String,
+        fileName: String,
+        previewPath: String,
+        themeName: String
+    ): String {
+        val matchedTheme = firstOrNull { theme ->
+            theme.id == fallbackId ||
+                theme.thumbnailUrl == previewPath ||
+                theme.backgroundUrl == previewPath ||
+                theme.thumbnailUrl?.contains(fileName) == true ||
+                theme.backgroundUrl?.contains(fileName) == true
+        } ?: lastOrNull { it.name == themeName }
+
+        return matchedTheme?.id ?: fallbackId
+    }
 }

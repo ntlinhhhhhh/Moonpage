@@ -177,8 +177,9 @@ class AuthViewModel @Inject constructor (
     fun login() {
         viewModelScope.launch {
             _uiState.update { it.copy(emailError = null, passwordError = null) }
+            val emailInput = uiState.value.emailInput.trim()
             
-            val emailResult = validateEmail.execute(uiState.value.emailInput)
+            val emailResult = validateEmail.execute(emailInput)
             val passwordResult = validatePassword.execute(uiState.value.passwordInput)
 
             if (!emailResult.successful || !passwordResult.successful) {
@@ -191,7 +192,7 @@ class AuthViewModel @Inject constructor (
 
             _uiState.update { it.copy(isLoading = true) }
             try {
-                val loginRequest = LoginRequestDTO(uiState.value.emailInput, uiState.value.passwordInput)
+                val loginRequest = LoginRequestDTO(emailInput, uiState.value.passwordInput)
                 val result: Result<User> = loginUseCase(loginRequest)
 
                 result.onSuccess { user ->
@@ -216,6 +217,7 @@ class AuthViewModel @Inject constructor (
     fun register() {
         viewModelScope.launch {
             val state = uiState.value
+            val emailInput = state.emailInput.trim()
             _uiState.update {
                 it.copy(
                     emailError = null,
@@ -225,7 +227,7 @@ class AuthViewModel @Inject constructor (
                 )
             }
 
-            val emailResult = validateEmail.execute(state.emailInput)
+            val emailResult = validateEmail.execute(emailInput)
             val passwordResult = validatePassword.execute(state.passwordInput)
             val usernameResult = validateUsername.execute(state.usernameInput)
             
@@ -249,7 +251,7 @@ class AuthViewModel @Inject constructor (
             _uiState.update { it.copy(isLoading = true) }
             try {
                 val request = RegisterRequestDTO(
-                    email = state.emailInput,
+                    email = emailInput,
                     name = state.usernameInput,
                     password = state.passwordInput
                 )
@@ -259,7 +261,7 @@ class AuthViewModel @Inject constructor (
                     // After register: pre-fill both email + password for Login screen
                     _uiState.update {
                         AuthUiState(
-                            emailInput = state.emailInput,
+                            emailInput = emailInput,
                             passwordInput = state.passwordInput,
                             prefillPassword = state.passwordInput
                         )

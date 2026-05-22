@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -131,6 +132,7 @@ fun StatsAnnualBeansDetailScreen(
                         onClick = {
                             scope.launch {
                                 try {
+                                    withFrameNanos { }
                                     val layer = if (selectedTab == 0) graphicsLayerEntire else graphicsLayerMonth
                                     val bitmap = layer.toImageBitmap().asAndroidBitmap()
                                     val roundedBitmap = ImageUtils.applyRoundedCorners(bitmap, 32.dp.value * context.resources.displayMetrics.density)
@@ -271,8 +273,6 @@ private fun EntireYearContent(
     graphicsLayer: androidx.compose.ui.graphics.layer.GraphicsLayer
 ) {
     val moodMap = remember(moodData) { moodData.associateBy { it.date } }
-    val emptyColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.13f)
-    val labelColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
 
     Column(
         modifier = Modifier
@@ -293,6 +293,10 @@ private fun EntireYearContent(
 
         // Capture area — explicit background so download/share works in both light & dark mode
         val captureBackground = MaterialTheme.colorScheme.background
+        val isCaptureDark = captureBackground.luminance() < 0.5f
+        val captureContentColor = if (isCaptureDark) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+        val emptyColor = captureContentColor.copy(alpha = if (isCaptureDark) 0.18f else 0.13f)
+        val labelColor = captureContentColor.copy(alpha = if (isCaptureDark) 0.88f else 0.55f)
 
         // Label geometry (fixed)
         val dayLabelWidth = 18.dp
@@ -305,7 +309,10 @@ private fun EntireYearContent(
                 .clip(RoundedCornerShape(20.dp))
                 .background(captureBackground)
                 .drawWithContent {
-                    graphicsLayer.record { this@drawWithContent.drawContent() }
+                    graphicsLayer.record {
+                        drawRect(color = captureBackground)
+                        this@drawWithContent.drawContent()
+                    }
                     drawLayer(graphicsLayer)
                 }
                 .padding(horizontal = outerHorizPadding, vertical = 16.dp),
@@ -441,7 +448,6 @@ private fun ByMonthContent(
     graphicsLayer: androidx.compose.ui.graphics.layer.GraphicsLayer
 ) {
     val moodMap = remember(moodData) { moodData.associateBy { it.date } }
-    val emptyColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.13f)
 
     Column(
         modifier = Modifier
@@ -462,12 +468,18 @@ private fun ByMonthContent(
 
         // Capture wrapper — explicit background for correct light/dark screenshot
         val captureBackground = MaterialTheme.colorScheme.background
+        val isCaptureDark = captureBackground.luminance() < 0.5f
+        val emptyColor = (if (isCaptureDark) Color.White else MaterialTheme.colorScheme.onSurfaceVariant)
+            .copy(alpha = if (isCaptureDark) 0.18f else 0.13f)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(captureBackground)
                 .drawWithContent {
-                    graphicsLayer.record { this@drawWithContent.drawContent() }
+                    graphicsLayer.record {
+                        drawRect(color = captureBackground)
+                        this@drawWithContent.drawContent()
+                    }
                     drawLayer(graphicsLayer)
                 }
         ) {

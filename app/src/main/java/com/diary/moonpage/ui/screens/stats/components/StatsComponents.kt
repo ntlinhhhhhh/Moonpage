@@ -12,6 +12,7 @@ import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,6 +35,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.data.remote.dto.stats.BestActivityDto
+import com.diary.moonpage.ui.screens.stats.ActivityCorrelation
+import com.diary.moonpage.ui.screens.stats.IconDeepDiveResult
+import com.diary.moonpage.ui.screens.stats.MoodDistributionEntry
 import com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto
 import com.diary.moonpage.data.remote.dto.stats.MoodFlowDto
 import com.diary.moonpage.core.theme.*
@@ -1100,143 +1104,193 @@ fun MusicSummaryView(musicSummary: List<com.diary.moonpage.data.remote.dto.stats
 
 @Composable
 fun IconDeepDiveView(
-    activityId: String?,
+    deepDive: IconDeepDiveResult?,
     allActivities: List<BestActivityDto>,
-    themeType: MoonThemeType = MoonThemeType.DEFAULT
+    selectedIconId: String?,
+    themeType: MoonThemeType = MoonThemeType.DEFAULT,
+    onIconClick: (String?) -> Unit = {}
 ) {
     val shades = getThemeShades(themeType)
     val primaryColor = MaterialTheme.colorScheme.primary
+    val onSurface = MaterialTheme.colorScheme.onSurface
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+    val successColor = MoonTheme.customColors.successColor
+    val errorColor = MoonTheme.customColors.errorColor
 
-    val selectedActivity = remember(activityId, allActivities) {
-        allActivities.find { it.activityId == activityId } ?: allActivities.firstOrNull()
+    // Activity selector chips
+    if (allActivities.isNotEmpty()) {
+        val displayActivities = allActivities.take(8)
+        androidx.compose.foundation.lazy.LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            items(displayActivities.size) { idx ->
+                val act = displayActivities[idx]
+                val isSelected = act.activityId == (selectedIconId ?: allActivities.firstOrNull()?.activityId)
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = if (isSelected) primaryColor.copy(alpha = 0.15f) else MoonTheme.customColors.logItemBg.copy(alpha = 0.5f),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (isSelected) primaryColor.copy(alpha = 0.6f) else androidx.compose.ui.graphics.Color.Transparent
+                    ),
+                    modifier = Modifier.clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onIconClick(act.activityId) }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Box(modifier = Modifier.size(18.dp), contentAlignment = Alignment.Center) {
+                            MoonActivityIcon(icon = MoonIcons.getIconForActivity(act.activityName), size = 18.dp)
+                        }
+                        Text(act.activityName, fontSize = 12.sp, fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                            color = if (isSelected) primaryColor else onSurfaceVariant, maxLines = 1)
+                    }
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(20.dp))
     }
 
-    if (selectedActivity == null) {
+    if (deepDive == null) {
         Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
             Text("Select an activity to see details", color = onSurfaceVariant.copy(alpha = 0.5f))
         }
         return
     }
 
-    Column {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+    // Header
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier.size(64.dp).clip(CircleShape).background(MoonTheme.customColors.logItemBg),
+            contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(CircleShape)
-                    .background(MoonTheme.customColors.logItemBg),
-                contentAlignment = Alignment.Center
-            ) {
-                val icon = MoonIcons.getIconForActivity(selectedActivity.activityName)
-                MoonActivityIcon(icon = icon, size = 44.dp)
-            }
-            
-            Spacer(modifier = Modifier.width(20.dp))
-            
-            Column {
-                Text(
-                    text = selectedActivity.activityName,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "${selectedActivity.occurrence} recordings this period",
-                    color = onSurfaceVariant,
-                    fontSize = 14.sp
-                )
-            }
+            MoonActivityIcon(icon = MoonIcons.getIconForActivity(deepDive.activityName), size = 40.dp)
         }
+        Spacer(modifier = Modifier.width(16.dp))
+        Column {
+            Text(deepDive.activityName, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = onSurface)
+            Text("${deepDive.totalOccurrence} recordings this period", color = onSurfaceVariant, fontSize = 13.sp)
+        }
+    }
 
-        Spacer(modifier = Modifier.height(32.dp))
-        
-        Text("Average Mood Impact", style = MaterialTheme.typography.labelLarge, color = onSurfaceVariant)
-        Spacer(modifier = Modifier.height(12.dp))
-        
-        Row(verticalAlignment = Alignment.CenterVertically) {
+    Spacer(modifier = Modifier.height(24.dp))
+
+    // ---- Metric 2: Average Mood Score ----
+    val avgScore = deepDive.averageMoodScore
+    val scoreColor = when {
+        avgScore >= 4.0 -> successColor
+        avgScore <= 2.5 -> errorColor
+        else -> primaryColor
+    }
+    val scoreLabel = when {
+        avgScore >= 4.0 -> "Positive influence ✨"
+        avgScore >= 3.0 -> "Neutral influence 😌"
+        else -> "Negative influence 💙"
+    }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(String.format(Locale.ENGLISH, "%.1f", avgScore), fontSize = 42.sp, fontWeight = FontWeight.Black, color = scoreColor, lineHeight = 42.sp)
+        Spacer(modifier = Modifier.width(14.dp))
+        Column {
+            Surface(shape = RoundedCornerShape(8.dp), color = scoreColor.copy(alpha = 0.1f)) {
+                Text(scoreLabel, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = scoreColor)
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text("avg mood score", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.55f))
+        }
+    }
+
+    if (avgScore > 3.5) {
+        Spacer(modifier = Modifier.height(8.dp))
+        Surface(shape = RoundedCornerShape(12.dp), color = successColor.copy(alpha = 0.08f), modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = String.format(Locale.ENGLISH, "%.1f", selectedActivity.averageMoodScore),
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Black,
-                color = primaryColor
+                "This activity usually brings you positive energy! 🌟",
+                modifier = Modifier.padding(12.dp), fontSize = 13.sp, color = successColor, lineHeight = 18.sp
             )
-            Spacer(modifier = Modifier.width(16.dp))
-            Column {
-                val impact = selectedActivity.averageMoodScore - 3.0
-                val impactText = if (impact > 0) "Positive influence" else "Negative influence"
-                val impactColor = if (impact > 0) MoonTheme.customColors.successColor else MoonTheme.customColors.errorColor
-                
-                Text(impactText, color = impactColor, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text("compared to neutral", color = onSurfaceVariant, fontSize = 12.sp)
-            }
         }
+    }
 
-        Spacer(modifier = Modifier.height(32.dp))
-        
-        Text("Mood Distribution", style = MaterialTheme.typography.labelLarge, color = onSurfaceVariant)
-        Spacer(modifier = Modifier.height(12.dp))
-        
+    Spacer(modifier = Modifier.height(20.dp))
+
+    // ---- Metric 1: Mood Distribution ----
+    if (deepDive.moodDistribution.isNotEmpty() && deepDive.totalOccurrence > 0) {
+        Text("Mood Distribution", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = onSurfaceVariant)
+        Spacer(modifier = Modifier.height(10.dp))
+        // Stacked bar
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(28.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(MoonTheme.customColors.logItemBg)
+            modifier = Modifier.fillMaxWidth().height(24.dp).clip(RoundedCornerShape(12.dp)).background(MoonTheme.customColors.logItemBg)
         ) {
-            val distribution = listOf(0.5f, 0.3f, 0.1f, 0.1f, 0.0f)
-            distribution.forEachIndexed { i, weight ->
-                if (weight > 0) {
-                    Box(
-                        modifier = Modifier
-                            .weight(weight)
-                            .fillMaxHeight()
-                            .background(shades.getOrElse(i) { Color.Gray })
-                            .border(1.dp, Color.White.copy(alpha = 0.2f))
-                    )
+            deepDive.moodDistribution.forEachIndexed { i, entry ->
+                if (entry.percentage > 0f) {
+                    val segColor = shades.getOrElse(4 - i) { androidx.compose.ui.graphics.Color.Gray }
+                    Box(modifier = Modifier.weight(entry.percentage / 100f).fillMaxHeight().background(segColor))
                 }
             }
         }
-        
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text("Happy", fontSize = 11.sp, color = shades[0], fontWeight = FontWeight.Bold)
-            Text("Angry", fontSize = 11.sp, color = shades[4], fontWeight = FontWeight.Bold)
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-        
-        Surface(
-            shape = RoundedCornerShape(20.dp),
-            color = MoonTheme.customColors.logItemBg.copy(alpha = 0.4f),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier.size(32.dp).background(primaryColor.copy(alpha = 0.2f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Rounded.Lightbulb, contentDescription = null, tint = primaryColor, modifier = Modifier.size(18.dp))
+        Spacer(modifier = Modifier.height(8.dp))
+        // Legend
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            deepDive.moodDistribution.forEachIndexed { i, entry ->
+                if (entry.count > 0) {
+                    val moodLabel = when (entry.moodId) { 5 -> "Rad"; 4 -> "Good"; 3 -> "Okay"; 2 -> "Bad"; else -> "Awful" }
+                    val segColor = shades.getOrElse(4 - i) { androidx.compose.ui.graphics.Color.Gray }
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(segColor))
+                        Text("$moodLabel ${entry.percentage.toInt()}%", fontSize = 10.sp, color = onSurfaceVariant.copy(alpha = 0.7f))
+                    }
                 }
-                Spacer(modifier = Modifier.width(16.dp))
-                Text(
-                    text = "When you record ${selectedActivity.activityName}, your mood is typically ${if (selectedActivity.averageMoodScore > 3.5) "significantly higher" else "more stable"} than usual.",
-                    fontSize = 13.sp,
-                    lineHeight = 18.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
-                )
+            }
+        }
+        Spacer(modifier = Modifier.height(20.dp))
+    }
+
+    // ---- Metrics 3: Stats Row (Streak + Frequency) ----
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Surface(shape = RoundedCornerShape(16.dp), color = MoonTheme.customColors.logItemBg.copy(alpha = 0.5f), modifier = Modifier.weight(1f)) {
+            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Icon(Icons.Rounded.LocalFireDepartment, null, tint = primaryColor, modifier = Modifier.size(18.dp))
+                Text("${deepDive.longestStreak}", fontSize = 24.sp, fontWeight = FontWeight.Black, color = onSurface)
+                Text("Longest streak\n(days)", fontSize = 11.sp, color = onSurfaceVariant.copy(alpha = 0.6f), lineHeight = 15.sp)
+            }
+        }
+        Surface(shape = RoundedCornerShape(16.dp), color = MoonTheme.customColors.logItemBg.copy(alpha = 0.5f), modifier = Modifier.weight(1f)) {
+            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Icon(Icons.Rounded.CalendarMonth, null, tint = primaryColor, modifier = Modifier.size(18.dp))
+                Text(String.format(Locale.ENGLISH, "%.1fx", deepDive.weeklyFrequency), fontSize = 24.sp, fontWeight = FontWeight.Black, color = onSurface)
+                Text("Times per\nweek avg", fontSize = 11.sp, color = onSurfaceVariant.copy(alpha = 0.6f), lineHeight = 15.sp)
+            }
+        }
+    }
+
+    // ---- Metric 4: Co-occurrence ----
+    if (deepDive.relatedActivities.isNotEmpty()) {
+        Spacer(modifier = Modifier.height(20.dp))
+        Surface(shape = RoundedCornerShape(16.dp), color = MoonTheme.customColors.logItemBg.copy(alpha = 0.3f), modifier = Modifier.fillMaxWidth()) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Rounded.Link, null, tint = primaryColor, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Often paired with", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = onSurface)
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    deepDive.relatedActivities.forEach { (name, count) ->
+                        Surface(shape = RoundedCornerShape(20.dp), color = primaryColor.copy(alpha = 0.1f)) {
+                            Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                                Box(modifier = Modifier.size(14.dp), contentAlignment = Alignment.Center) {
+                                    MoonActivityIcon(MoonIcons.getIconForActivity(name), 14.dp)
+                                }
+                                Text(name, fontSize = 11.sp, color = primaryColor, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 }
+
 
 @Composable
 fun MoonActivityIcon(icon: com.diary.moonpage.core.util.MoonIcon, size: androidx.compose.ui.unit.Dp = 44.dp) {
@@ -1356,104 +1410,139 @@ fun ActivityRankCard(rank: Int, name: String, count: Int, modifier: Modifier = M
 }
 
 @Composable
-fun BestAndWorstView(best: List<BestActivityDto>, worst: List<BestActivityDto>) {
+fun BestAndWorstView(
+    bestCorrelations: List<ActivityCorrelation> = emptyList(),
+    worstCorrelations: List<ActivityCorrelation> = emptyList(),
+    bestLegacy: List<BestActivityDto> = emptyList(),
+    worstLegacy: List<BestActivityDto> = emptyList()
+) {
     val primaryColor = MaterialTheme.colorScheme.primary
     val errorColor = MoonTheme.customColors.errorColor
+    val onSurface = MaterialTheme.colorScheme.onSurface
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
-    
-    Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
-        // Insight Header
+    val successColor = MoonTheme.customColors.successColor
+
+    // Use correlation-based data if available, fallback to legacy
+    val hasCorrData = bestCorrelations.isNotEmpty() || worstCorrelations.isNotEmpty()
+
+    Column(verticalArrangement = Arrangement.spacedBy(28.dp)) {
+        // Info banner
         Surface(
-            shape = RoundedCornerShape(20.dp),
-            color = MoonTheme.customColors.logItemBg.copy(alpha = 0.3f),
+            shape = RoundedCornerShape(16.dp),
+            color = primaryColor.copy(alpha = 0.08f),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Rounded.AutoAwesome, null, tint = primaryColor, modifier = Modifier.size(24.dp))
-                Spacer(modifier = Modifier.width(16.dp))
+            Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Rounded.AutoAwesome, null, tint = primaryColor, modifier = Modifier.size(20.dp))
+                Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = "Correlation analysis shows which habits spark joy or weigh you down.",
-                    fontSize = 14.sp,
-                    color = onSurfaceVariant,
-                    lineHeight = 20.sp
+                    text = if (hasCorrData)
+                        "Based on % of days each activity appeared with best/worst moods."
+                    else
+                        "Correlation analysis shows which habits spark joy or weigh you down.",
+                    fontSize = 13.sp, color = onSurfaceVariant, lineHeight = 18.sp
                 )
             }
         }
 
         // Best Section
-        Column {
-            Text(
-                text = "Activities for Positive Vibes",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = "These habits often coincide with your best moods.",
-                fontSize = 13.sp,
-                color = onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-            
-            if (best.isEmpty()) {
-                Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
-                    Text("More data needed to calculate...", color = onSurfaceVariant.copy(alpha = 0.5f), fontSize = 14.sp)
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier.size(28.dp).clip(CircleShape).background(successColor.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(Icons.Rounded.SentimentVerySatisfied, null, tint = successColor, modifier = Modifier.size(16.dp)) }
+                Spacer(modifier = Modifier.width(10.dp))
+                Column {
+                    Text("Activities for Positive Vibes", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = onSurface)
+                    Text("Appear most with great moods", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.6f))
+                }
+            }
+            if (hasCorrData && bestCorrelations.isNotEmpty()) {
+                bestCorrelations.forEachIndexed { idx, corr ->
+                    CorrelationActivityRow(rank = idx + 1, correlation = corr, accentColor = successColor, isPositive = true)
+                }
+            } else if (bestLegacy.isNotEmpty()) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    bestLegacy.take(3).forEachIndexed { idx, act ->
+                        ActivityScoreCard(rank = idx + 1, name = act.activityName, score = act.averageMoodScore, color = successColor, modifier = Modifier.weight(1f))
+                    }
+                    repeat(3 - bestLegacy.size.coerceAtMost(3)) { Spacer(modifier = Modifier.weight(1f)) }
                 }
             } else {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    best.take(3).forEachIndexed { index, activity ->
-                        ActivityScoreCard(
-                            rank = index + 1, 
-                            name = activity.activityName, 
-                            score = activity.averageMoodScore, 
-                            color = primaryColor,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    repeat(3 - best.size.coerceAtMost(3)) {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
+                Box(modifier = Modifier.fillMaxWidth().height(64.dp), contentAlignment = Alignment.Center) {
+                    Text("Log more days to see results", color = onSurfaceVariant.copy(alpha = 0.45f), fontSize = 13.sp)
                 }
             }
         }
 
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
         // Worst Section
-        Column {
-            Text(
-                text = "Emotional Challenges",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Text(
-                text = "You recorded lower mood levels alongside these activities.",
-                fontSize = 13.sp,
-                color = onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-            
-            if (worst.isEmpty()) {
-                Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
-                    Text("Everything looks balanced so far!", color = onSurfaceVariant.copy(alpha = 0.5f), fontSize = 14.sp)
-                }
-            } else {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    worst.take(3).forEachIndexed { index, activity ->
-                        ActivityScoreCard(
-                            rank = index + 1, 
-                            name = activity.activityName, 
-                            score = activity.averageMoodScore, 
-                            color = errorColor,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    repeat(3 - worst.size.coerceAtMost(3)) {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier.size(28.dp).clip(CircleShape).background(errorColor.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
+                ) { Icon(Icons.Rounded.SentimentVeryDissatisfied, null, tint = errorColor, modifier = Modifier.size(16.dp)) }
+                Spacer(modifier = Modifier.width(10.dp))
+                Column {
+                    Text("Emotional Challenges", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = onSurface)
+                    Text("Appear most with tough moods", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.6f))
                 }
             }
+            if (hasCorrData && worstCorrelations.isNotEmpty()) {
+                worstCorrelations.forEachIndexed { idx, corr ->
+                    CorrelationActivityRow(rank = idx + 1, correlation = corr, accentColor = errorColor, isPositive = false)
+                }
+            } else if (worstLegacy.isNotEmpty()) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    worstLegacy.take(3).forEachIndexed { idx, act ->
+                        ActivityScoreCard(rank = idx + 1, name = act.activityName, score = act.averageMoodScore, color = errorColor, modifier = Modifier.weight(1f))
+                    }
+                    repeat(3 - worstLegacy.size.coerceAtMost(3)) { Spacer(modifier = Modifier.weight(1f)) }
+                }
+            } else {
+                Box(modifier = Modifier.fillMaxWidth().height(64.dp), contentAlignment = Alignment.Center) {
+                    Text("Everything looks balanced so far!", color = onSurfaceVariant.copy(alpha = 0.45f), fontSize = 13.sp)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CorrelationActivityRow(rank: Int, correlation: ActivityCorrelation, accentColor: Color, isPositive: Boolean) {
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+    val icon = MoonIcons.getIconForActivity(correlation.activityName)
+    val ratePercent = if (isPositive) correlation.bestRatePercent else correlation.worstRatePercent
+
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MoonTheme.customColors.logItemBg.copy(alpha = 0.4f)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("#$rank", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = accentColor.copy(alpha = 0.7f), modifier = Modifier.width(22.dp))
+            Box(
+                modifier = Modifier.size(40.dp).clip(CircleShape).background(MoonTheme.customColors.logItemBg),
+                contentAlignment = Alignment.Center
+            ) { MoonActivityIcon(icon = icon, size = 24.dp) }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(correlation.activityName, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = onSurface, maxLines = 1)
+                Text("${correlation.occurrence} times recorded", fontSize = 11.sp, color = onSurfaceVariant.copy(alpha = 0.55f))
+                Spacer(modifier = Modifier.height(6.dp))
+                // Percentage bar
+                Box(modifier = Modifier.fillMaxWidth().height(5.dp).clip(RoundedCornerShape(3.dp)).background(accentColor.copy(alpha = 0.15f))) {
+                    Box(modifier = Modifier.fillMaxWidth(fraction = (ratePercent / 100f).coerceIn(0f, 1f)).fillMaxHeight().clip(RoundedCornerShape(3.dp)).background(accentColor))
+                }
+            }
+            Spacer(modifier = Modifier.width(10.dp))
+            Text("$ratePercent%", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = accentColor)
         }
     }
 }
@@ -2114,8 +2203,10 @@ private fun PhysicalWidgetCard(avgSteps: Int, avgCalories: Int, modifier: Modifi
 
 @Composable
 fun ActivityHabitsCard(frequentlyRecorded: List<BestActivityDto>, onClick: () -> Unit) {
+    val primaryColor = MaterialTheme.colorScheme.primary
     val onSurface = MaterialTheme.colorScheme.onSurface
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+    val top3 = frequentlyRecorded.take(3)
     Card(
         modifier = Modifier.fillMaxWidth()
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onClick() },
@@ -2125,38 +2216,105 @@ fun ActivityHabitsCard(frequentlyRecorded: List<BestActivityDto>, onClick: () ->
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Activity & Habits", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = onSurfaceVariant.copy(alpha = 0.55f))
-                Icon(Icons.Rounded.ChevronRight, null, tint = onSurfaceVariant.copy(alpha = 0.35f), modifier = Modifier.size(20.dp))
+                Text("Frequently Recorded", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = onSurface)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onClick() }
+                ) {
+                    Text("More", fontSize = 14.sp, color = onSurfaceVariant.copy(alpha = 0.6f))
+                    Icon(Icons.Rounded.ChevronRight, null, tint = onSurfaceVariant.copy(alpha = 0.5f), modifier = Modifier.size(18.dp))
+                }
             }
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             if (frequentlyRecorded.isEmpty()) {
                 Text("No activity data available.", fontSize = 14.sp, color = onSurfaceVariant.copy(alpha = 0.5f))
             } else {
-                val top = frequentlyRecorded.first()
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(modifier = Modifier.size(48.dp).clip(CircleShape).background(MoonTheme.customColors.logItemBg), contentAlignment = Alignment.Center) {
-                        MoonActivityIcon(icon = MoonIcons.getIconForActivity(top.activityName), size = 28.dp)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    top3.forEachIndexed { index, activity ->
+                        FrequentlyRecordedMiniCard(
+                            rank = index + 1,
+                            activity = activity,
+                            modifier = Modifier.weight(1f)
+                        )
                     }
-                    Spacer(modifier = Modifier.width(14.dp))
-                    Column {
-                        Text(top.activityName, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = onSurface)
-                        Text("Most recorded activity · ${top.occurrence} times", fontSize = 13.sp, color = onSurfaceVariant.copy(alpha = 0.6f))
+                    // Fill empty spots
+                    repeat(3 - top3.size) {
+                        Box(modifier = Modifier.weight(1f))
                     }
                 }
-                if (frequentlyRecorded.size > 1) {
+                if (top3.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(16.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        frequentlyRecorded.drop(1).take(2).forEach { activity ->
-                            Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(MoonTheme.customColors.logItemBg), contentAlignment = Alignment.Center) {
-                                MoonActivityIcon(icon = MoonIcons.getIconForActivity(activity.activityName), size = 24.dp)
+                    Text(
+                        text = buildAnnotatedString {
+                            append("You recorded ")
+                            withStyle(style = SpanStyle(color = primaryColor, fontWeight = FontWeight.Bold)) {
+                                append(top3.first().activityName)
                             }
-                        }
-                    }
+                            append(" the most.")
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center,
+                        color = primaryColor,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
         }
     }
 }
+
+@Composable
+private fun FrequentlyRecordedMiniCard(rank: Int, activity: BestActivityDto, modifier: Modifier = Modifier) {
+    val icon = MoonIcons.getIconForActivity(activity.activityName)
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
+
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Rank number
+        Text(
+            text = "$rank",
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = onSurfaceVariant.copy(alpha = 0.5f),
+            modifier = Modifier.align(Alignment.Start)
+        )
+        // Icon container
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .clip(RoundedCornerShape(16.dp))
+                .background(MoonTheme.customColors.logItemBg.copy(alpha = 0.6f)),
+            contentAlignment = Alignment.Center
+        ) {
+            MoonActivityIcon(icon = icon, size = 36.dp)
+        }
+        // Activity name
+        Text(
+            text = activity.activityName,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            color = onSurface,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            modifier = Modifier.fillMaxWidth()
+        )
+        // Occurrence count
+        Text(
+            text = "x${activity.occurrence}",
+            fontSize = 11.sp,
+            color = onSurfaceVariant.copy(alpha = 0.55f),
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
 
 @Composable
 fun InsightsTeaserCard(bestActivities: List<BestActivityDto>, onClick: () -> Unit) {
@@ -2349,13 +2507,12 @@ fun YearInMoonpageMiniatureCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(32.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(
             modifier = Modifier
-                .padding(24.dp)
-                .clip(RoundedCornerShape(32.dp)),
+                .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Title

@@ -24,10 +24,11 @@ fun StatsInsightsDetailRoute(
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    
+
     StatsInsightsDetailScreen(
         uiState = uiState,
-        onNavigateBack = onNavigateBack
+        onNavigateBack = onNavigateBack,
+        onIconClick = viewModel::onIconClick
     )
 }
 
@@ -35,9 +36,9 @@ fun StatsInsightsDetailRoute(
 @Composable
 fun StatsInsightsDetailScreen(
     uiState: StatisticsUiState,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onIconClick: (String?) -> Unit = {}
 ) {
-    val stats = uiState.stats
     val scrollState = rememberScrollState()
     val backText = stringResource(R.string.back)
 
@@ -68,20 +69,25 @@ fun StatsInsightsDetailScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                // Best & Worst section
+                // Best & Worst section — now uses correlation-based data
                 StatsCard(title = stringResource(R.string.best_worst)) {
                     BestAndWorstView(
-                        best = uiState.bestActivities,
-                        worst = uiState.worstActivities
+                        bestCorrelations = uiState.bestCorrelations,
+                        worstCorrelations = uiState.worstCorrelations,
+                        // Fallback to legacy averageMoodScore list if correlations unavailable
+                        bestLegacy = uiState.bestActivities,
+                        worstLegacy = uiState.worstActivities
                     )
                 }
 
-                // Icon Deep Dive
+                // Icon Deep Dive — now uses fully computed data
                 StatsCard(title = stringResource(R.string.icon_deep_dive)) {
                     IconDeepDiveView(
-                        activityId = uiState.selectedIconId,
-                        allActivities = stats?.bestActivities ?: emptyList(),
-                        themeType = uiState.themeType
+                        deepDive = uiState.iconDeepDive,
+                        allActivities = uiState.stats?.bestActivities ?: emptyList(),
+                        selectedIconId = uiState.selectedIconId,
+                        themeType = uiState.themeType,
+                        onIconClick = onIconClick
                     )
                 }
 

@@ -215,6 +215,9 @@ fun CustomThemeEditorScreen(
                         TextButton(
                             enabled = !uiState.isSaving,
                             modifier = Modifier.padding(end = 4.dp),
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = MaterialTheme.colorScheme.primary
+                            ),
                             onClick = {
                                 scope.launch {
                                     onSave(graphicsLayer.toImageBitmap().asAndroidBitmap())
@@ -252,6 +255,9 @@ fun CustomThemeEditorScreen(
                         TextButton(
                             enabled = !uiState.isSaving,
                             modifier = Modifier.padding(end = 4.dp),
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = MaterialTheme.colorScheme.primary
+                            ),
                             onClick = {
                                 scope.launch {
                                     onSave(graphicsLayer.toImageBitmap().asAndroidBitmap())
@@ -386,7 +392,12 @@ fun CustomThemeEditorScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = onDiscardDismiss) {
+                TextButton(
+                    onClick = onDiscardDismiss,
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
@@ -1000,18 +1011,24 @@ private fun BackgroundToolPanel(
             FilterChip(
                 selected = uiState.backgroundFillMode == BackgroundFillMode.Solid,
                 onClick = { onBackgroundFillModeSelected(BackgroundFillMode.Solid) },
-                label = { Text(stringResource(R.string.custom_theme_solid_color)) }
+                label = { Text(stringResource(R.string.custom_theme_solid_color)) },
+                colors = customThemeFilterChipColors()
             )
             FilterChip(
                 selected = uiState.backgroundFillMode == BackgroundFillMode.Gradient,
                 onClick = { onBackgroundFillModeSelected(BackgroundFillMode.Gradient) },
-                label = { Text(stringResource(R.string.custom_theme_gradient_color)) }
+                label = { Text(stringResource(R.string.custom_theme_gradient_color)) },
+                colors = customThemeFilterChipColors()
             )
         }
 
         FilledTonalIconButton(
             onClick = onPickImage,
-            modifier = Modifier.size(48.dp)
+            modifier = Modifier.size(48.dp),
+            colors = IconButtonDefaults.filledTonalIconButtonColors(
+                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
+                contentColor = MaterialTheme.colorScheme.primary
+            )
         ) {
             Icon(
                 imageVector = Icons.Rounded.Image,
@@ -1072,13 +1089,18 @@ private fun DrawToolPanel(
 
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         IconButton(onClick = onUndo, enabled = uiState.strokes.isNotEmpty()) {
-            Icon(Icons.AutoMirrored.Rounded.Undo, contentDescription = stringResource(R.string.undo))
+            Icon(
+                Icons.AutoMirrored.Rounded.Undo,
+                contentDescription = stringResource(R.string.undo),
+                tint = if (uiState.strokes.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.32f)
+            )
         }
         FilterChip(
             selected = uiState.isEraser,
             onClick = { onEraserChanged(!uiState.isEraser) },
             label = { Text(stringResource(R.string.custom_theme_eraser)) },
-            leadingIcon = { Icon(Icons.Rounded.FormatColorReset, contentDescription = null, modifier = Modifier.size(18.dp)) }
+            leadingIcon = { Icon(Icons.Rounded.FormatColorReset, contentDescription = null, modifier = Modifier.size(18.dp)) },
+            colors = customThemeFilterChipColors()
         )
     }
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
@@ -1086,6 +1108,7 @@ private fun DrawToolPanel(
             FilterChip(
                 selected = uiState.brushType == type,
                 onClick = { onBrushTypeSelected(type) },
+                colors = customThemeFilterChipColors(),
                 label = {
                     Text(
                         when (type) {
@@ -1133,12 +1156,14 @@ private fun ColorToolPanel(
             FilterChip(
                 selected = uiState.colorFocusTarget == ColorFocusTarget.Primary,
                 onClick = onPrimaryFocus,
-                label = { Text(stringResource(R.string.custom_theme_primary_color)) }
+                label = { Text(stringResource(R.string.custom_theme_primary_color)) },
+                colors = customThemeFilterChipColors()
             )
             FilterChip(
                 selected = uiState.colorFocusTarget == ColorFocusTarget.Icon,
                 onClick = { onIconSelected(uiState.selectedIconIndex) },
-                label = { Text(stringResource(R.string.custom_theme_icon_color)) }
+                label = { Text(stringResource(R.string.custom_theme_icon_color)) },
+                colors = customThemeFilterChipColors()
             )
         }
         PreviewMoodIconRow(
@@ -1258,11 +1283,21 @@ private fun AddNewColorButton(
         Icon(
             imageVector = Icons.Rounded.Add,
             contentDescription = stringResource(R.string.custom_theme_add_color),
-            tint = Color(0xFF202020),
+            tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(size * 0.42f)
         )
     }
 }
+
+@Composable
+private fun customThemeFilterChipColors() = FilterChipDefaults.filterChipColors(
+    selectedContainerColor = MaterialTheme.colorScheme.primary,
+    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+    selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary,
+    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.62f),
+    labelColor = MaterialTheme.colorScheme.onSurface,
+    iconColor = MaterialTheme.colorScheme.primary
+)
 
 @Composable
 private fun PaletteSwatchRow(

@@ -86,14 +86,16 @@ class DailyLogViewModel @Inject constructor(
             currentDate.filterNotNull().flatMapLatest { date ->
                 combine(
                     repository.getDailyLogByDateFlow(date.toString()),
-                    momentRepository.moments
-                ) { log, moments ->
+                    momentRepository.moments,
+                    repository.getAllDailyLogsFlow()
+                ) { log, moments, allLogs ->
                     val momentPhotos = moments.filter { it.capturedAt.startsWith(date.toString()) }
                         .mapNotNull { normalizeAppImageUrl(it.imageUrl) }
-                    Pair(log, momentPhotos)
+                    Triple(log, momentPhotos, allLogs)
                 }
-            }.collect { (log, momentPhotos) ->
+            }.collect { (log, momentPhotos, allLogs) ->
                 _uiState.update { currentState ->
+                    val menstruationDay = calculateMenstruationDay(log, allLogs)
                     val updatedState = if (log != null) {
                         val formatter = DateTimeFormatter.ofPattern("HH:mm")
                         val bedTime = log.sleepStartTime?.let { try { LocalTime.parse(it, formatter) } catch(e: Exception) { LocalTime.of(0, 0) } } ?: LocalTime.of(0, 0)
@@ -114,6 +116,7 @@ class DailyLogViewModel @Inject constructor(
                                 sleepWakeTime = wakeTime,
                                 isMenstruation = log.isMenstruation,
                                 menstruationPhase = log.menstruationPhase,
+                                menstruationDay = menstruationDay,
                                 dailyPhotos = logPhotos,
                                 momentPhotos = momentPhotos,
                                 musicTitle = log.musicRecord,
@@ -129,6 +132,7 @@ class DailyLogViewModel @Inject constructor(
                                 existingLog = log,
                                 dailyPhotos = logPhotos,
                                 momentPhotos = momentPhotos,
+                                menstruationDay = menstruationDay,
                                 isLoading = false
                             )
                         }
@@ -139,12 +143,14 @@ class DailyLogViewModel @Inject constructor(
                                 existingLog = null,
                                 dailyPhotos = emptyList(),
                                 momentPhotos = momentPhotos,
+                                menstruationDay = null,
                                 isInitialized = true,
                                 isLoading = false
                             )
                         } else {
                             currentState.copy(
                                 momentPhotos = momentPhotos,
+                                menstruationDay = null,
                                 isLoading = false
                             )
                         }
@@ -153,6 +159,23 @@ class DailyLogViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    private fun calculateMenstruationDay(currentLog: DailyLog?, allLogs: List<DailyLog>): Int? {
+        if (currentLog?.isMenstruation != true) return null
+        val currentDate = runCatching { LocalDate.parse(currentLog.date) }.getOrNull() ?: return null
+        val periodDates = allLogs.asSequence()
+            .filter { it.isMenstruation }
+            .mapNotNull { runCatching { LocalDate.parse(it.date) }.getOrNull() }
+            .toSet()
+
+        var day = 1
+        var cursor = currentDate.minusDays(1)
+        while (periodDates.contains(cursor)) {
+            day += 1
+            cursor = cursor.minusDays(1)
+        }
+        return day
     }
 
     fun fetchExternalData() {
@@ -326,6 +349,15 @@ class DailyLogViewModel @Inject constructor(
                     current.add(event.category)
                 }
                 _uiState.update { it.copy(expandedCategories = current) }
+            }
+            is DailyLogUiEvent.OnActivityCategoryCollapseToggle -> {
+                val current = _uiState.value.collapsedActivityCategories.toMutableSet()
+                if (current.contains(event.category)) {
+                    current.remove(event.category)
+                } else {
+                    current.add(event.category)
+                }
+                _uiState.update { it.copy(collapsedActivityCategories = current) }
             }
             is DailyLogUiEvent.OnActivityToggled -> {
                 val current = _uiState.value.selectedActivities.toMutableList()

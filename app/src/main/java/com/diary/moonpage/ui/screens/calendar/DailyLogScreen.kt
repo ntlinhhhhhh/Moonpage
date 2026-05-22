@@ -612,7 +612,10 @@ private fun DailyLogMainContent(
                             items = categoryActivities,
                             selectedIds = uiState.selectedActivities,
                             onItemClick = { onEvent(DailyLogUiEvent.OnActivityToggled(it)) },
-                            isInitiallyCollapsed = false
+                            isCollapsed = uiState.collapsedActivityCategories.contains(category),
+                            onCollapseToggle = {
+                                onEvent(DailyLogUiEvent.OnActivityCategoryCollapseToggle(category))
+                            }
                         )
                     }
                 }
@@ -916,10 +919,13 @@ fun DailyActivitySection(
     items: List<DailyActivity>,
     selectedIds: List<String>,
     onItemClick: (String) -> Unit,
-    isInitiallyCollapsed: Boolean = true
+    isInitiallyCollapsed: Boolean = true,
+    isCollapsed: Boolean? = null,
+    onCollapseToggle: (() -> Unit)? = null
 ) {
-    var isCollapsed by remember { mutableStateOf(isInitiallyCollapsed) }
-    val rotation by animateFloatAsState(targetValue = if (isCollapsed) -90f else 0f, label = "")
+    var localCollapsed by remember { mutableStateOf(isInitiallyCollapsed) }
+    val collapsed = isCollapsed ?: localCollapsed
+    val rotation by animateFloatAsState(targetValue = if (collapsed) -90f else 0f, label = "")
 
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -934,7 +940,13 @@ fun DailyActivitySection(
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
-                    ) { isCollapsed = !isCollapsed },
+                    ) {
+                        if (onCollapseToggle != null) {
+                            onCollapseToggle()
+                        } else {
+                            localCollapsed = !localCollapsed
+                        }
+                    },
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -954,7 +966,7 @@ fun DailyActivitySection(
             }
 
             AnimatedVisibility(
-                visible = !isCollapsed,
+                visible = !collapsed,
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically()
             ) {
