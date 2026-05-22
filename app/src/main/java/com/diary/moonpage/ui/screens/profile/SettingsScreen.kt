@@ -22,6 +22,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.R
+import com.diary.moonpage.core.util.BatteryOptimizationHelper
+import com.diary.moonpage.core.util.ExactAlarmHelper
 import com.diary.moonpage.core.util.LocaleUtils
 import com.diary.moonpage.ui.screens.profile.components.*
 import com.diary.moonpage.ui.components.layout.SectionTitle
@@ -41,6 +43,8 @@ fun SettingsRoute(
 
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
+    var showBatteryDialog by remember { mutableStateOf(false) }
+    var showExactAlarmDialog by remember { mutableStateOf(false) }
     val passwordChangedMessage = stringResource(R.string.password_changed_successfully)
 
     SettingsScreen(
@@ -55,6 +59,8 @@ fun SettingsRoute(
         onBiometricToggle = { viewModel.toggleBiometric(it) },
         onReminderToggle = { viewModel.toggleReminder(it) },
         onReminderTimeClick = { hour, minute -> viewModel.updateReminderTime(hour, minute) },
+        onBatteryOptimizationClick = { showBatteryDialog = true },
+        onExactAlarmClick = { showExactAlarmDialog = true },
         onChangePasswordClick = { showChangePasswordDialog = true },
         onDeleteAccountClick = { viewModel.showDeleteAccountDialog() }
     )
@@ -81,6 +87,26 @@ fun SettingsRoute(
                     showChangePasswordDialog = false
                     android.widget.Toast.makeText(context, passwordChangedMessage, android.widget.Toast.LENGTH_SHORT).show()
                 }
+            }
+        )
+    }
+
+    if (showBatteryDialog) {
+        BatteryOptimizationDialog(
+            onDismiss = { showBatteryDialog = false },
+            onOpenSettings = {
+                showBatteryDialog = false
+                BatteryOptimizationHelper.openBatteryOptimizationSettings(context)
+            }
+        )
+    }
+
+    if (showExactAlarmDialog) {
+        ExactAlarmDialog(
+            onDismiss = { showExactAlarmDialog = false },
+            onOpenSettings = {
+                showExactAlarmDialog = false
+                ExactAlarmHelper.openExactAlarmSettings(context)
             }
         )
     }
@@ -167,10 +193,13 @@ fun SettingsScreen(
     onBiometricToggle: (Boolean) -> Unit,
     onReminderToggle: (Boolean) -> Unit,
     onReminderTimeClick: (Int, Int) -> Unit,
+    onBatteryOptimizationClick: () -> Unit,
+    onExactAlarmClick: () -> Unit,
     onChangePasswordClick: () -> Unit,
     onDeleteAccountClick: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
+    val context = LocalContext.current
     var showTimePicker by remember { mutableStateOf(false) }
     
     Scaffold(
@@ -239,6 +268,24 @@ fun SettingsScreen(
                     value = uiState.reminderTime,
                     icon = Icons.Rounded.Schedule,
                     onClick = { showTimePicker = true }
+                )
+            }
+
+            if (!ExactAlarmHelper.canScheduleExactAlarms(context)) {
+                SettingsMenuItem(
+                    title = stringResource(R.string.exact_alarm_title),
+                    value = stringResource(R.string.recommended),
+                    icon = Icons.Rounded.AlarmOn,
+                    onClick = onExactAlarmClick
+                )
+            }
+
+            if (!BatteryOptimizationHelper.isIgnoringBatteryOptimizations(context)) {
+                SettingsMenuItem(
+                    title = stringResource(R.string.battery_unrestricted_title),
+                    value = stringResource(R.string.recommended),
+                    icon = Icons.Rounded.BatteryAlert,
+                    onClick = onBatteryOptimizationClick
                 )
             }
 
@@ -312,4 +359,68 @@ fun SettingsScreen(
             }
         )
     }
+}
+
+@Composable
+private fun BatteryOptimizationDialog(
+    onDismiss: () -> Unit,
+    onOpenSettings: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                imageVector = Icons.Rounded.BatterySaver,
+                contentDescription = null
+            )
+        },
+        title = {
+            Text(text = stringResource(R.string.battery_unrestricted_title))
+        },
+        text = {
+            Text(text = stringResource(R.string.battery_unrestricted_desc))
+        },
+        confirmButton = {
+            TextButton(onClick = onOpenSettings) {
+                Text(stringResource(R.string.open_settings))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.not_now))
+            }
+        }
+    )
+}
+
+@Composable
+private fun ExactAlarmDialog(
+    onDismiss: () -> Unit,
+    onOpenSettings: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                imageVector = Icons.Rounded.AlarmOn,
+                contentDescription = null
+            )
+        },
+        title = {
+            Text(text = stringResource(R.string.exact_alarm_title))
+        },
+        text = {
+            Text(text = stringResource(R.string.exact_alarm_desc))
+        },
+        confirmButton = {
+            TextButton(onClick = onOpenSettings) {
+                Text(stringResource(R.string.open_settings))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.not_now))
+            }
+        }
+    )
 }

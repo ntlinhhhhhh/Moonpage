@@ -268,6 +268,13 @@
     <string name="daily_reminder">Daily Diary Reminder</string>
     <string name="daily_reminder_desc">Remind you to write your diary every day</string>
     <string name="reminder_time">Reminder Time</string>
+    <string name="exact_alarm_title">Precise reminder timing</string>
+    <string name="exact_alarm_desc">Allow exact alarms so MoonPage can show daily reminders at the time you choose.</string>
+    <string name="battery_unrestricted_title">Unrestricted battery for reminders</string>
+    <string name="battery_unrestricted_desc">Allow MoonPage to run without battery restrictions so reminders are less likely to arrive late.</string>
+    <string name="recommended">Recommended</string>
+    <string name="open_settings">Open settings</string>
+    <string name="not_now">Not now</string>
     <string name="app_updates">App Updates</string>
     <string name="news_and_updates">News &amp; Updates</string>
     <string name="news_and_updates_desc">Get notified about new features and themes</string>
