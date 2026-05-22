@@ -91,6 +91,7 @@ fun CalendarRoute(
 /**
  * Stateless Component
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarScreen(
     uiState: CalendarUiState,
@@ -284,10 +285,12 @@ fun CalendarScreen(
     if (uiState.showFilterSheet) {
         val isActuallyDark = com.diary.moonpage.core.theme.MoonTheme.customColors.isDark
         val sheetBgColor = if (isActuallyDark) com.diary.moonpage.core.theme.MoonBgDark else Color.White
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
         @OptIn(ExperimentalMaterial3Api::class)
         ModalBottomSheet(
             onDismissRequest = { onEvent(CalendarUiEvent.OnFilterDismiss) },
+            sheetState = sheetState,
             containerColor = sheetBgColor,
             tonalElevation = 0.dp,
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),

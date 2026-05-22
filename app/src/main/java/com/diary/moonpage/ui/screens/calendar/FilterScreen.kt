@@ -79,9 +79,11 @@ fun FilterScreen(
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
+            .fillMaxHeight(0.8f)
             .background(bgColor)
             .padding(horizontal = 24.dp, vertical = 16.dp)
+            .windowInsetsPadding(WindowInsets.navigationBars)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             IconButton(
