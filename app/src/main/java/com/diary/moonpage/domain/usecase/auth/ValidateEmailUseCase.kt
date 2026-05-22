@@ -1,8 +1,8 @@
 package com.diary.moonpage.domain.usecase.auth
 
-class ValidateEmailUseCase {
-    private val emailRegex = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\$")
+import com.diary.moonpage.core.util.EmailValidator
 
+class ValidateEmailUseCase {
     operator fun invoke(email: String): ValidationResult {
         if (email.isBlank()) {
             return ValidationResult(
@@ -10,7 +10,7 @@ class ValidateEmailUseCase {
                 errorMessage = "Email cannot be empty."
             )
         }
-        if (!emailRegex.matches(email)) {
+        if (!EmailValidator.isValid(email)) {
             return ValidationResult(
                 successful = false,
                 errorMessage = "Invalid email format."
