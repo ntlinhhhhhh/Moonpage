@@ -459,11 +459,14 @@ fun TimelineView(
     onAddLog: (LocalDate) -> Unit
 ) {
     val filteredLogs = remember(dailyLogs, selectedFilters) {
+        val moodFilters = selectedFilters.filterIsInstance<FilterItem.Mood>()
+        val otherFilters = selectedFilters.filter { it !is FilterItem.Mood }
+
         dailyLogs.values.filter { log ->
             if (selectedFilters.isEmpty()) true else {
-                selectedFilters.all { filter ->
+                val matchesMood = moodFilters.isEmpty() || moodFilters.any { it.id == log.baseMoodId }
+                val matchesOthers = otherFilters.all { filter ->
                     when (filter) {
-                        is FilterItem.Mood -> log.baseMoodId == filter.id
                         is FilterItem.Activity -> log.activityIds?.contains(filter.id) == true
                         is FilterItem.Special -> {
                             when (filter.id) {
@@ -474,8 +477,10 @@ fun TimelineView(
                                 else -> false
                             }
                         }
+                        else -> true
                     }
                 }
+                matchesMood && matchesOthers
             }
         }.sortedByDescending { it.date }
     }
