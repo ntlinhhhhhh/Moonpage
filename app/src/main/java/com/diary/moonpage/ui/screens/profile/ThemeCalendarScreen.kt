@@ -61,17 +61,14 @@ fun ThemeCalendarRoute(
     // 2. Map API Owned Themes (Purchased)
     val ownedThemes = remember(uiState.ownedThemes) {
         uiState.ownedThemes.filter { it.id != ThemeConstants.DEFAULT_THEME_ID }.map { theme ->
-            val type = theme.decoration.toMoonThemeType()
-            val color = try {
-                if (!theme.primaryColor.isNullOrBlank()) {
-                    val colorStr = if (theme.primaryColor.startsWith("#")) theme.primaryColor else "#${theme.primaryColor}"
-                    Color(android.graphics.Color.parseColor(colorStr))
-                } else {
-                    Color(0xFFFFC547)
-                }
-            } catch (e: Exception) {
-                Color(0xFFFFC547)
-            }
+            val type = theme.id.toMoonThemeTypeOrNull()
+                ?: theme.decoration.toMoonThemeTypeOrNull()
+                ?: MoonThemeType.DEFAULT
+            val color = ThemeConstants.THEMES.find { it.id == theme.id }?.thumbnailUrl.toColorOrNull()
+                ?: theme.primaryColor.toColorOrNull()
+                ?: theme.thumbnailUrl.toColorOrNull()
+                ?: theme.backgroundUrl.toColorOrNull()
+                ?: Color(0xFFFFC547)
             Triple(type, theme.name, color)
         }
     }
@@ -312,14 +309,34 @@ fun ThemePickerContent(
 }
 
 private fun String.toMoonThemeType(): MoonThemeType {
+    return toMoonThemeTypeOrNull() ?: MoonThemeType.DEFAULT
+}
+
+private fun String.toMoonThemeTypeOrNull(): MoonThemeType? {
     if (this == ThemeConstants.DEFAULT_THEME_ID) return MoonThemeType.DEFAULT
-    return try {
-        // Try mapping decoration name to MoonThemeType
-        val decoration = if (this.startsWith("theme_")) this.substringAfter("theme_") else this
-        MoonThemeType.valueOf(decoration.uppercase())
-    } catch (e: Exception) {
-        MoonThemeType.DEFAULT
+    val decoration = if (this.startsWith("theme_")) this.substringAfter("theme_") else this
+    val enumName = when (decoration.uppercase()) {
+        "MOON" -> "DEFAULT"
+        "BROWN" -> "GRAY_BROWN"
+        "COOKIE" -> "COOKIE_BATCH"
+        "HEART" -> "HEART_FELT"
+        "WEATHER" -> "WEATHER_CYCLE"
+        else -> decoration.uppercase()
     }
+    return runCatching { MoonThemeType.valueOf(enumName) }.getOrNull()
+}
+
+private fun String?.toColorOrNull(): Color? {
+    if (isNullOrBlank()) return null
+    val raw = trim()
+    val normalized = when {
+        raw.startsWith("#") -> raw
+        raw.length == 6 || raw.length == 8 -> "#$raw"
+        else -> return null
+    }
+    return runCatching {
+        Color(android.graphics.Color.parseColor(normalized))
+    }.getOrNull()
 }
 
 @Composable
