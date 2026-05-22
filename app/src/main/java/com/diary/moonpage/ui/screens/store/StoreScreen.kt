@@ -106,6 +106,7 @@ fun StoreRoute(
         onConfirmCustomThemeUnlock = { viewModel.onEvent(StoreUiEvent.ConfirmCustomThemeUnlock) },
         onCancelCustomThemeUnlock = { viewModel.onEvent(StoreUiEvent.CancelCustomThemeUnlock) },
         onDismissInsufficientCoins = { viewModel.onEvent(StoreUiEvent.DismissInsufficientCoins) },
+        onActivateCustomTheme = viewModel::activateTheme,
         onRefresh = { viewModel.onEvent(StoreUiEvent.LoadData) }
     )
 }
@@ -132,6 +133,7 @@ fun StoreScreen(
     onConfirmCustomThemeUnlock: () -> Unit,
     onCancelCustomThemeUnlock: () -> Unit,
     onDismissInsufficientCoins: () -> Unit,
+    onActivateCustomTheme: (String) -> Unit,
     onRefresh: () -> Unit
 ) {
     Scaffold(
@@ -180,11 +182,13 @@ fun StoreScreen(
                             customThemes = uiState.customThemes,
                             temporarySelectedId = uiState.temporarySelectedThemeId,
                             onThemeClick = onThemeClick,
+                            onActivateCustomTheme = onActivateCustomTheme,
                             onExploreMore = { onTabSelected(0) }
                         )
                         2 -> CustomThemeTabContent(
                             coins = uiState.userCoins,
                             customThemes = uiState.customThemes,
+                            onActivateCustomTheme = onActivateCustomTheme,
                             onCreateClick = onCreateCustomThemeClick
                         )
                         3 -> CollectionsTabContent(
@@ -209,8 +213,9 @@ fun StoreScreen(
             )
             
             if (uiState.showConfirmActivationDialog) {
-                val tempTheme = remember(uiState.temporarySelectedThemeId, uiState.ownedThemes) {
-                    uiState.ownedThemes.find { it.id == uiState.temporarySelectedThemeId }
+                val tempTheme = remember(uiState.temporarySelectedThemeId, uiState.ownedThemes, uiState.customThemes) {
+                    (uiState.ownedThemes + uiState.customThemes).distinctBy { it.id }
+                        .find { it.id == uiState.temporarySelectedThemeId }
                 }
                 val tempThemePrimaryColor = remember(tempTheme) {
                     tempTheme?.let { getThemeShades(it).lastOrNull() }
@@ -596,6 +601,7 @@ fun StoreTabs(
 fun CustomThemeTabContent(
     coins: Int,
     customThemes: List<Theme>,
+    onActivateCustomTheme: (String) -> Unit,
     onCreateClick: () -> Unit
 ) {
     LazyVerticalGrid(
@@ -638,7 +644,10 @@ fun CustomThemeTabContent(
             items = customThemes,
             key = { it.id }
         ) { theme ->
-            CustomThemeCard(theme = theme)
+            CustomThemeCard(
+                theme = theme,
+                onActivateClick = { onActivateCustomTheme(theme.id) }
+            )
         }
     }
 }
@@ -708,7 +717,8 @@ fun CreateCustomThemeCard(
 
 @Composable
 fun CustomThemeCard(
-    theme: Theme
+    theme: Theme,
+    onActivateClick: () -> Unit = {}
 ) {
     val previewColor = remember(theme.primaryColor, theme.thumbnailUrl, theme.backgroundUrl) {
         parseThemePreviewColor(theme.primaryColor)
@@ -780,6 +790,18 @@ fun CustomThemeCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
             )
+            Spacer(modifier = Modifier.height(10.dp))
+            FilledTonalButton(
+                onClick = onActivateClick,
+                enabled = !theme.isActive,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Text(
+                    text = if (theme.isActive) stringResource(R.string.custom_theme_active_now) else stringResource(R.string.custom_theme_activate),
+                    maxLines = 1
+                )
+            }
         }
     }
 }
@@ -1086,6 +1108,7 @@ fun MyThemeTabContent(
     customThemes: List<Theme>,
     temporarySelectedId: String?,
     onThemeClick: (Theme) -> Unit,
+    onActivateCustomTheme: (String) -> Unit,
     onExploreMore: () -> Unit
 ) {
     val currentTheme = ownedThemes.find { it.isActive }
@@ -1139,7 +1162,10 @@ fun MyThemeTabContent(
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                     row.forEach { theme ->
                         Box(modifier = Modifier.weight(1f)) {
-                            CustomThemeCard(theme = theme)
+                            CustomThemeCard(
+                                theme = theme,
+                                onActivateClick = { onActivateCustomTheme(theme.id) }
+                            )
                         }
                     }
                     if (row.size == 1) Spacer(modifier = Modifier.weight(1f))

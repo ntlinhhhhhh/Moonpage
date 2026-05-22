@@ -11,6 +11,7 @@ import androidx.core.app.NotificationCompat
 import com.diary.moonpage.ui.MainActivity
 import com.diary.moonpage.R
 import com.diary.moonpage.core.util.LocaleUtils
+import com.diary.moonpage.data.remote.dto.notification.NotificationType
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -40,7 +41,7 @@ class ReminderReceiver : BroadcastReceiver() {
         val localizedContext = LocaleUtils.applyLocale(context, language)
         val title = localizedContext.getString(R.string.noti_reminder_title)
         val body = localizedContext.getString(R.string.noti_reminder_body)
-        val type = "REMINDER"
+        val type = NotificationType.REMINDER
 
         // Show the system tray notification
         showNotification(localizedContext, title, body)
