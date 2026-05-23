@@ -213,6 +213,7 @@ fun CalendarScreen(
                                     selectedFilters = uiState.selectedFilters,
                                     dynamicActivities = uiState.dynamicActivities,
                                     themeType = uiState.themeType,
+                                    customMoods = uiState.customMoods,
                                     onDateSelected = { date ->
                                         if (date.isAfter(LocalDate.now())) {
                                             showSnackbar("You cannot record for a future date!")
@@ -232,6 +233,7 @@ fun CalendarScreen(
                                     dailyLogs = uiState.dailyLogs,
                                     dynamicActivities = uiState.dynamicActivities,
                                     themeType = uiState.themeType,
+                                    customMoods = uiState.customMoods,
                                     onEditLog = { date -> onNavigateToDailyLog(date.toString()) },
                                     onDeleteLog = { date -> 
                                         dateToDelete = date
@@ -254,6 +256,7 @@ fun CalendarScreen(
                                 selectedFilters = uiState.selectedFilters,
                                 dynamicActivities = uiState.dynamicActivities,
                                 themeType = uiState.themeType,
+                                customMoods = uiState.customMoods,
                                 onEditLog = { date -> onNavigateToDailyLog(date.toString()) },
                                 onDeleteLog = { date ->
                                     dateToDelete = date
@@ -386,13 +389,14 @@ fun CalendarSelectedLogDetail(
     dailyLogs: Map<LocalDate, DailyLog>,
     dynamicActivities: List<com.diary.moonpage.domain.model.Activity>,
     themeType: com.diary.moonpage.core.theme.MoonThemeType,
+    customMoods: Map<Int, MoonIcon>? = null,
     onEditLog: (LocalDate) -> Unit,
     onDeleteLog: (LocalDate) -> Unit,
     onShareClick: () -> Unit
 ) {
     val date = selectedDate ?: return
     val selectedLog = dailyLogs[date] ?: return
-    val mv = MoonIcons.Moods.getMoodVisual(selectedLog.baseMoodId, themeType)
+    val mv = MoonIcons.Moods.getMoodVisual(selectedLog.baseMoodId, themeType, customMoods)
     val activityNames = selectedLog.activityIds?.mapNotNull { id ->
         dynamicActivities.find { it.id == id }?.name
     } ?: emptyList()
@@ -456,6 +460,7 @@ fun TimelineView(
     selectedFilters: List<FilterItem>,
     dynamicActivities: List<com.diary.moonpage.domain.model.Activity>,
     themeType: com.diary.moonpage.core.theme.MoonThemeType,
+    customMoods: Map<Int, MoonIcon>? = null,
     onEditLog: (LocalDate) -> Unit,
     onDeleteLog: (LocalDate) -> Unit,
     onShareLog: (LocalDate) -> Unit,
@@ -524,7 +529,7 @@ fun TimelineView(
                 key = { it.id }
             ) { log ->
                 val date = LocalDate.parse(log.date)
-                val mv = MoonIcons.Moods.getMoodVisual(log.baseMoodId, themeType)
+                val mv = MoonIcons.Moods.getMoodVisual(log.baseMoodId, themeType, customMoods)
                 val activityNames = log.activityIds?.mapNotNull { id ->
                     dynamicActivities.find { it.id == id }?.name
                 } ?: emptyList<String>()

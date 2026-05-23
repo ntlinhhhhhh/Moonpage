@@ -29,6 +29,7 @@ data class CalendarUiState(
     val showShareSheet: Boolean = false,
     val selectedFilters: List<FilterItem> = emptyList(),
     val themeType: MoonThemeType = MoonThemeType.DEFAULT,
+    val customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null,
     val viewMode: CalendarViewMode = CalendarViewMode.CALENDAR,
     val currentStreak: Int = 0
 )

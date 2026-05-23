@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import com.diary.moonpage.domain.model.DailyLog
 import com.diary.moonpage.ui.screens.calendar.FilterItem
 import com.diary.moonpage.core.util.MoonIcons
+import com.diary.moonpage.core.util.MoonIcon
 import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
 import com.diary.moonpage.ui.screens.tutorial.TutorialStep
 import java.time.LocalDate
@@ -23,6 +24,7 @@ fun CalendarGrid(
     selectedFilters: List<FilterItem>,
     dynamicActivities: List<com.diary.moonpage.domain.model.Activity>,
     themeType: com.diary.moonpage.core.theme.MoonThemeType,
+    customMoods: Map<Int, MoonIcon>? = null,
     onDateSelected: (LocalDate) -> Unit,
     isReadOnly: Boolean = false
 ) {
@@ -82,7 +84,7 @@ fun CalendarGrid(
                             var moodDrawable: Int? = null
 
                             if (logForDay != null) {
-                                val mv = MoonIcons.Moods.getMoodVisual(logForDay.baseMoodId, themeType)
+                                val mv = MoonIcons.Moods.getMoodVisual(logForDay.baseMoodId, themeType, customMoods)
                                 moodColor = mv.color
                                 moodDrawable = mv.drawableRes
                                 moodIcon = mv.vector

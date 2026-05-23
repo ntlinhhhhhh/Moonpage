@@ -3,6 +3,7 @@ package com.diary.moonpage.ui.screens.calendar
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.core.util.normalizeAppImageUrl
+import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.domain.repository.DailyLogRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +26,7 @@ class CalendarViewModel @Inject constructor(
     private val momentRepository: com.diary.moonpage.domain.repository.MomentRepository,
     private val activityPreferencesManager: ActivityPreferencesManager,
     private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager,
+    private val themeRepository: com.diary.moonpage.domain.repository.ThemeRepository,
     private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository,
     private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
     private val locationTracker: com.diary.moonpage.core.util.LocationTracker,
@@ -46,6 +48,12 @@ class CalendarViewModel @Inject constructor(
         viewModelScope.launch {
             themePreferencesManager.themeType.collect { themeType ->
                 _uiState.update { it.copy(themeType = themeType) }
+                loadCustomMoods()
+            }
+        }
+        viewModelScope.launch {
+            themeRepository.activeTheme.collect {
+                loadCustomMoods()
             }
         }
         viewModelScope.launch {
@@ -86,6 +94,62 @@ class CalendarViewModel @Inject constructor(
         }
         
         observeData()
+    }
+
+    private suspend fun loadCustomMoods() {
+        val activeThemeId = themeRepository.getActiveThemeId()
+        if (activeThemeId == null) {
+            _uiState.update { it.copy(customMoods = null) }
+            return
+        }
+
+        val moodEntities = themeRepository.getMoodsForTheme(activeThemeId)
+        if (moodEntities.isEmpty()) {
+            _uiState.update { it.copy(customMoods = null) }
+            return
+        }
+
+        val currentTheme = _uiState.value.themeType
+        val customMoods = moodEntities.associate { entity ->
+            val level = when (entity.baseMoodId) {
+                "1" -> 1
+                "2" -> 2
+                "3" -> 3
+                "4" -> 4
+                "5" -> 5
+                "Awful", "Very Sad" -> 1
+                "Bad", "Sad" -> 2
+                "Meh", "Neutral" -> 3
+                "Good", "Happy" -> 4
+                "Rad", "Very Happy" -> 5
+                else -> 3
+            }
+
+            val color = try {
+                if (entity.iconUrl.isNotBlank() && (entity.iconUrl.startsWith("#") || entity.iconUrl.length == 6 || entity.iconUrl.length == 8)) {
+                    val colorStr = if (entity.iconUrl.startsWith("#")) entity.iconUrl else "#${entity.iconUrl}"
+                    androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor(colorStr))
+                } else {
+                    MoonIcons.Moods.getMoodColor(level, currentTheme)
+                }
+            } catch (e: Exception) {
+                MoonIcons.Moods.getMoodColor(level, currentTheme)
+            }
+
+            level to com.diary.moonpage.core.util.MoonIcon(
+                color = color,
+                name = entity.customName,
+                drawableRes = when (level) {
+                    1 -> com.diary.moonpage.R.drawable.very_sad
+                    2 -> com.diary.moonpage.R.drawable.sad
+                    3 -> com.diary.moonpage.R.drawable.neutral
+                    4 -> com.diary.moonpage.R.drawable.happy
+                    5 -> com.diary.moonpage.R.drawable.very_happy
+                    else -> com.diary.moonpage.R.drawable.neutral
+                }
+            )
+        }
+        _uiState.update { it.copy(customMoods = customMoods) }
     }
 
     private fun observeData() {
