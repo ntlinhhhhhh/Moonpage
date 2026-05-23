@@ -118,7 +118,7 @@ class AuthViewModel @Inject constructor (
                 
                 val jobs = listOf(
                     async { userRepository.getCurrentUser() },
-                    async { userRepository.getMyThemes() },
+                    async { themeRepository.getMyThemes() },
                     async { activityRepository.syncActivities() }
                 )
 
@@ -136,21 +136,22 @@ class AuthViewModel @Inject constructor (
                                 if (activeTheme != null) {
                                     try {
                                          val cleanId = activeTheme.id.replace("theme_", "").uppercase()
-                                         val themeType = try {
+                                         val themeType = runCatching {
                                              com.diary.moonpage.core.theme.MoonThemeType.valueOf(cleanId)
-                                         } catch (e: Exception) {
-                                             try {
-                                                 com.diary.moonpage.core.theme.MoonThemeType.valueOf(activeTheme.decoration.uppercase())
-                                             } catch (ex: Exception) {
-                                                 com.diary.moonpage.core.theme.MoonThemeType.DEFAULT
-                                             }
+                                         }.getOrNull() ?: runCatching {
+                                             com.diary.moonpage.core.theme.MoonThemeType.valueOf(activeTheme.decoration.uppercase())
+                                         }.getOrNull()
+                                         if (themeType != null) {
+                                             themePreferencesManager.setThemeType(themeType)
                                          }
-                                         themePreferencesManager.setThemeType(themeType)
                                         
                                         // Also set dark mode if theme category suggests it
-                                        if (activeTheme.category == "DARK") {
+                                        val isCustomTheme = activeTheme.id.startsWith("custom_") ||
+                                            activeTheme.decoration.equals("CUSTOM", ignoreCase = true) ||
+                                            activeTheme.collection.equals("Custom Theme", ignoreCase = true)
+                                        if (!isCustomTheme && activeTheme.category == "DARK") {
                                             themePreferencesManager.setDarkMode(true)
-                                        } else if (activeTheme.category == "LIGHT") {
+                                        } else if (!isCustomTheme && activeTheme.category == "LIGHT") {
                                             themePreferencesManager.setDarkMode(false)
                                         }
                                     } catch (e: Exception) {

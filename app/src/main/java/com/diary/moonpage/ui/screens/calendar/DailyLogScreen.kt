@@ -86,6 +86,7 @@ fun DailyLogRoute(
     onNavigateToMusic: () -> Unit,
     onNavigateToMenstrualCycle: () -> Unit,
     onNavigateToDailyPhoto: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     onNavigateToShare: (String) -> Unit,
     onDone: (String, String) -> Unit,
     viewModel: DailyLogViewModel = hiltViewModel()
@@ -215,6 +216,7 @@ fun DailyLogRoute(
         scope = scope,
         snackbarHostState = snackbarHostState,
         onNavigateToShare = onNavigateToShare,
+        onNavigateToSettings = onNavigateToSettings,
         onPhotoDeleteRequest = { photoToDelete = it },
         onPhotoZoomRequest = { url -> viewModel.onEvent(DailyLogUiEvent.OnPhotoZoom(url)) }
     )
@@ -282,6 +284,7 @@ fun DailyLogScreen(
     onNavigateToMenstrualCycle: () -> Unit,
     onNavigateToDailyPhoto: () -> Unit,
     onNavigateToShare: (String) -> Unit,
+    onNavigateToSettings: () -> Unit,
     onImportSteps: () -> Unit,
     onLinkMusicAccount: () -> Unit,
     checkLogExists: (LocalDate, (Boolean) -> Unit) -> Unit,
@@ -344,7 +347,8 @@ fun DailyLogScreen(
             DailyLogTopBar(
                 date = uiState.date,
                 onBackClick = { if (isChanged) onEvent(DailyLogUiEvent.OnExitClick) else onNavigateBack() },
-                onDateClick = { onEvent(DailyLogUiEvent.OnDatePickerClick) }
+                onDateClick = { onEvent(DailyLogUiEvent.OnDatePickerClick) },
+                onSettingsClick = onNavigateToSettings
             )
         },
         bottomBar = {
@@ -461,7 +465,8 @@ fun DailyLogScreen(
 private fun DailyLogTopBar(
     date: LocalDate,
     onBackClick: () -> Unit,
-    onDateClick: () -> Unit
+    onDateClick: () -> Unit,
+    onSettingsClick: () -> Unit
 ) {
     Surface(
         color = MaterialTheme.colorScheme.background,
@@ -496,7 +501,7 @@ private fun DailyLogTopBar(
                 )
                 Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             }
-            IconButton(onClick = {}) {
+            IconButton(onClick = onSettingsClick) {
                 Icon(Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings), tint = MaterialTheme.colorScheme.onSurface)
             }
         }

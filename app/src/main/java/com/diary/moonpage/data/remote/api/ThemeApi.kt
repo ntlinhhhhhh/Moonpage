@@ -39,6 +39,12 @@ interface ThemeApi {
         @Body request: List<CreateThemeRequest>
     ): Response<CreateThemeResponse>
 
+    @PUT("api/themes/{id}")
+    suspend fun updateTheme(
+        @Path("id") id: String,
+        @Body request: CreateThemeRequest
+    ): Response<Unit>
+
     @PUT("api/users/me/themes/active")
     suspend fun setActiveTheme(
         @Body request: SetActiveThemeRequest

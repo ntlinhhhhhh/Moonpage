@@ -25,6 +25,7 @@ import androidx.core.content.ContextCompat
 import com.diary.moonpage.core.util.ReminderManager
 import androidx.compose.ui.res.stringResource
 import com.diary.moonpage.R
+import com.diary.moonpage.ui.components.inputs.MoonTimePicker
 
 /**
  * Stateful Component
@@ -180,7 +181,6 @@ fun OnboardingReminderScreen(
             Box(contentAlignment = Alignment.Center) {
                 Text(
                     text = String.format("%02d:%02d", selectedHour, selectedMinute),
-                    style = MaterialTheme.typography.displaySmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
                     letterSpacing = 4.sp
@@ -230,7 +230,7 @@ fun OnboardingReminderScreen(
                         .padding(top = 24.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    TimePicker(state = timePickerState)
+                    MoonTimePicker(state = timePickerState)
                 }
             }
         }

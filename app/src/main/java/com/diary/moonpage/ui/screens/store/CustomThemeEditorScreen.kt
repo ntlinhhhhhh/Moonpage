@@ -337,32 +337,39 @@ fun CustomThemeEditorScreen(
                             } else {
                                 minOf(492.dp, maxOf(360.dp, maxHeight - 28.dp))
                             }
-                            ThemePreviewCapture(
-                                uiState = uiState,
-                                showFullPreview = uiState.selectedTool == ThemeEditorTool.Preview,
+                            Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .widthIn(max = 360.dp)
                                     .heightIn(max = previewMaxHeight)
                                     .aspectRatio(0.62f)
                                     .clip(RoundedCornerShape(28.dp))
-                                    .drawWithContent {
-                                        graphicsLayer.record {
-                                            this@drawWithContent.drawContent()
-                                        }
-                                        drawLayer(graphicsLayer)
+                            ) {
+                                ThemePreviewCapture(
+                                    uiState = uiState,
+                                    showFullPreview = uiState.selectedTool == ThemeEditorTool.Preview,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(RoundedCornerShape(28.dp))
+                                        .drawWithContent {
+                                            graphicsLayer.record {
+                                                this@drawWithContent.drawContent()
+                                            }
+                                            drawLayer(graphicsLayer)
+                                        },
+                                    onPrimaryFocus = onPrimaryFocus,
+                                    onIconSelected = onIconSelected,
+                                    onLightModeSelected = {
+                                        if (uiState.editingMode == EditorAppearanceMode.Dark) onToggleEditingMode()
                                     },
-                                onPrimaryFocus = onPrimaryFocus,
-                                onIconSelected = onIconSelected,
-                                onLightModeSelected = {
-                                    if (uiState.editingMode == EditorAppearanceMode.Dark) onToggleEditingMode()
-                                },
-                                onDarkModeSelected = {
-                                    if (uiState.editingMode == EditorAppearanceMode.Light) onToggleEditingMode()
-                                },
-                                onToggleAppearance = if (uiState.selectedTool != ThemeEditorTool.Preview) onToggleEditingMode else null,
-                                onStrokeFinished = onStrokeFinished
-                            )
+                                    onDarkModeSelected = {
+                                        if (uiState.editingMode == EditorAppearanceMode.Light) onToggleEditingMode()
+                                    },
+                                    onToggleAppearance = if (uiState.selectedTool != ThemeEditorTool.Preview) onToggleEditingMode else null,
+                                    onStrokeFinished = onStrokeFinished
+                                )
+
+                            }
                         }
                     }
                 }
@@ -523,6 +530,13 @@ private fun ThemePreviewCapture(
                     },
                 contentScale = ContentScale.Crop
             )
+            if (isDarkMode) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.32f))
+                )
+            }
         }
 
         Canvas(

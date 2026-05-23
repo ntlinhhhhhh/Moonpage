@@ -87,6 +87,21 @@ class StoreViewModel @Inject constructor(
         _uiState.update { it.copy(showConfirmActivationDialog = true, temporarySelectedThemeId = themeId) }
     }
 
+    fun showRenameCustomThemeDialog(theme: Theme) {
+        _uiState.update { it.copy(themeToRename = theme) }
+    }
+
+    fun dismissRenameCustomThemeDialog() {
+        _uiState.update { it.copy(themeToRename = null, isRenamingTheme = false) }
+    }
+
+    fun renameCustomTheme(name: String) {
+        val theme = _uiState.value.themeToRename ?: return
+        val trimmedName = name.trim()
+        if (trimmedName.isBlank()) return
+        performRenameCustomTheme(theme, trimmedName)
+    }
+
 
     fun selectThemeTemporarily(themeId: String) {
         _uiState.update { it.copy(temporarySelectedThemeId = themeId) }
@@ -158,7 +173,9 @@ class StoreViewModel @Inject constructor(
                     freezePurchaseSuccess = false,
                     showRecoverySuccessDialog = false,
                     showConfirmCustomThemeUnlockDialog = false,
-                    showInsufficientCoinsSheet = false
+                    showInsufficientCoinsSheet = false,
+                    themeToRename = null,
+                    isRenamingTheme = false
                 ) }
             }
             StoreUiEvent.InitiateFreezePurchase -> {
@@ -341,6 +358,33 @@ class StoreViewModel @Inject constructor(
             // Call the UseCase (which now handles optimistic DB/DataStore updates)
             setActiveThemeUseCase(themeId).onFailure { error ->
                 _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Failed to sync theme activation"))
+            }
+        }
+    }
+
+    private fun performRenameCustomTheme(theme: Theme, name: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isRenamingTheme = true) }
+            themeRepository.renameTheme(theme.id, name).onSuccess {
+                _uiState.update { state ->
+                    val rename: (Theme) -> Theme = { current ->
+                        if (current.id == theme.id) current.copy(name = name) else current
+                    }
+                    state.copy(
+                        customThemes = state.customThemes.map(rename),
+                        ownedThemes = state.ownedThemes.map(rename),
+                        themes = state.themes.map(rename),
+                        selectedThemeDetail = state.selectedThemeDetail?.let(rename),
+                        purchasedTheme = state.purchasedTheme?.let(rename),
+                        themeToPurchase = state.themeToPurchase?.let(rename),
+                        themeToRename = null,
+                        isRenamingTheme = false
+                    )
+                }
+                _uiEffect.emit(StoreUiEffect.ShowSnackBar("Theme renamed"))
+            }.onFailure { error ->
+                _uiState.update { it.copy(isRenamingTheme = false) }
+                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Failed to rename theme"))
             }
         }
     }

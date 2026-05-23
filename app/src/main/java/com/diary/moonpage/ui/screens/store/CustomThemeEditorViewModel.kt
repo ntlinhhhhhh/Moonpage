@@ -152,16 +152,27 @@ class CustomThemeEditorViewModel @Inject constructor(
     }
 
     fun applyPendingBackground(scale: Float, rotation: Float, offsetX: Float, offsetY: Float) {
-        updateAppearance { appearance ->
-            appearance.copy(
-                backgroundUri = _uiState.value.pendingBackgroundUri,
-                backgroundScale = scale,
-                backgroundRotation = rotation,
-                backgroundOffsetX = offsetX,
-                backgroundOffsetY = offsetY
+        val backgroundUri = _uiState.value.pendingBackgroundUri
+        _uiState.update { state ->
+            state.copy(
+                lightAppearance = state.lightAppearance.copy(
+                    backgroundUri = backgroundUri,
+                    backgroundScale = scale,
+                    backgroundRotation = rotation,
+                    backgroundOffsetX = offsetX,
+                    backgroundOffsetY = offsetY
+                ),
+                darkAppearance = state.darkAppearance.copy(
+                    backgroundUri = backgroundUri,
+                    backgroundScale = scale,
+                    backgroundRotation = rotation,
+                    backgroundOffsetX = offsetX,
+                    backgroundOffsetY = offsetY
+                ),
+                pendingBackgroundUri = null,
+                hasUnsavedChanges = true
             )
         }
-        _uiState.update { it.copy(pendingBackgroundUri = null, hasUnsavedChanges = true) }
     }
 
     fun cancelPendingBackground() {
@@ -334,6 +345,8 @@ class CustomThemeEditorViewModel @Inject constructor(
                             backgroundUrl = previewPath,
                             primaryColor = state.lightAppearance.primaryColor.toColorHex(),
                             backgroundColor = state.lightAppearance.themeBackgroundColor().toColorHex(),
+                            backgroundLightColor = state.lightAppearance.themeBackgroundColor().toApiColorHex(),
+                            backgroundDarkColor = state.darkAppearance.themeBackgroundColor().toApiColorHex(),
                             description = state.toThemeConfigJson(),
                             isOfficial = false,
                             isActive = true,
@@ -387,6 +400,8 @@ class CustomThemeEditorViewModel @Inject constructor(
     }
 
     private fun Long.toColorHex(): String = "#%08X".format(this)
+
+    private fun Long.toApiColorHex(): String = "0x%08X".format(this)
 
     private fun ThemeAppearanceState.themeBackgroundColor(): Long {
         return when (backgroundFillMode) {

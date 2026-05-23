@@ -27,6 +27,7 @@ import com.diary.moonpage.core.util.ExactAlarmHelper
 import com.diary.moonpage.core.util.LocaleUtils
 import com.diary.moonpage.ui.screens.profile.components.*
 import com.diary.moonpage.ui.components.layout.SectionTitle
+import com.diary.moonpage.ui.components.inputs.MoonTimePicker
 import com.diary.moonpage.core.theme.*
 import kotlinx.coroutines.launch
 
@@ -341,6 +342,8 @@ fun SettingsScreen(
         )
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
+            containerColor = colorScheme.surface,
+            tonalElevation = 0.dp,
             confirmButton = {
                 TextButton(onClick = {
                     onReminderTimeClick(timePickerState.hour, timePickerState.minute)
@@ -355,7 +358,7 @@ fun SettingsScreen(
                 }
             },
             text = {
-                TimePicker(state = timePickerState)
+                MoonTimePicker(state = timePickerState)
             }
         )
     }

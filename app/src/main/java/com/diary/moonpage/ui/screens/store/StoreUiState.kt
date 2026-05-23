@@ -27,5 +27,7 @@ data class StoreUiState(
     @StringRes val recoveryMessageRes: Int? = null,
     val customThemes: List<Theme> = emptyList(),
     val showConfirmCustomThemeUnlockDialog: Boolean = false,
-    val showInsufficientCoinsSheet: Boolean = false
+    val showInsufficientCoinsSheet: Boolean = false,
+    val themeToRename: Theme? = null,
+    val isRenamingTheme: Boolean = false
 )

@@ -17,6 +17,8 @@ data class CreateThemePayload(
     val backgroundUrl: String?,
     val primaryColor: String? = null,
     val backgroundColor: String? = null,
+    val backgroundDarkColor: String? = null,
+    val backgroundLightColor: String? = null,
     val description: String? = null,
     val isOfficial: Boolean = false,
     val isActive: Boolean = true,
@@ -28,6 +30,7 @@ interface ThemeRepository {
     suspend fun getOwnedThemes(): Result<List<Theme>>
     suspend fun getMyThemes(): Result<List<Theme>>
     suspend fun createThemes(themes: List<CreateThemePayload>): Result<Unit>
+    suspend fun renameTheme(themeId: String, name: String): Result<Unit>
     suspend fun buyTheme(themeId: String, price: Int? = null): Result<Unit>
     suspend fun setActiveTheme(themeId: String): Result<Unit>
     

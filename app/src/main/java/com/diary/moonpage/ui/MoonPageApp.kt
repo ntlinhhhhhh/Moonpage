@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
@@ -27,6 +29,7 @@ import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.navigation.AppNavigation
 import coil.compose.AsyncImage
+import org.json.JSONObject
 import java.io.File
 
 /**
@@ -87,6 +90,9 @@ fun MoonPageAppContent(
         val customBackgroundModel = remember(uiState.activeTheme) {
             uiState.activeTheme.customBackgroundModel()
         }
+        val hasCustomImageBackground = remember(uiState.activeTheme) {
+            uiState.activeTheme.hasCustomImageBackground()
+        }
         CompositionLocalProvider(
             com.diary.moonpage.core.theme.LocalLocale provides uiState.language
         ) {
@@ -98,6 +104,13 @@ fun MoonPageAppContent(
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
+                    if (isDark && hasCustomImageBackground) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.Black.copy(alpha = 0.32f))
+                        )
+                    }
                 }
 
                 Surface(
@@ -128,6 +141,13 @@ private fun Theme?.customBackgroundModel(): Any? {
     return if (file.exists()) file else path
 }
 
+private fun Theme?.hasCustomImageBackground(): Boolean {
+    val theme = this ?: return false
+    if (!theme.isCustomTheme()) return false
+    return theme.description.appearanceObject("light")?.optString("backgroundUri").isThemeAssetPath() ||
+        theme.description.appearanceObject("dark")?.optString("backgroundUri").isThemeAssetPath()
+}
+
 private fun Theme.isCustomTheme(): Boolean {
     return id.startsWith("custom_") ||
         decoration.equals("CUSTOM", ignoreCase = true) ||
@@ -135,6 +155,19 @@ private fun Theme.isCustomTheme(): Boolean {
 }
 
 private fun String.isThemeColor(): Boolean {
-    val value = if (startsWith("#")) drop(1) else this
+    val value = when {
+        startsWith("#") -> drop(1)
+        startsWith("0x", ignoreCase = true) -> drop(2)
+        else -> this
+    }
     return (value.length == 6 || value.length == 8) && value.all { it in '0'..'9' || it in 'a'..'f' || it in 'A'..'F' }
+}
+
+private fun String?.appearanceObject(mode: String): JSONObject? {
+    if (isNullOrBlank()) return null
+    return runCatching { JSONObject(this).optJSONObject(mode) }.getOrNull()
+}
+
+private fun String?.isThemeAssetPath(): Boolean {
+    return !isNullOrBlank() && !isThemeColor()
 }

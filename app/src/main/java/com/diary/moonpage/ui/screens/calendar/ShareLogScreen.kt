@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -41,6 +42,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.*
 import com.diary.moonpage.ui.screens.moment.components.DashedDivider
+import com.diary.moonpage.core.theme.MoonTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,6 +56,7 @@ fun ShareLogRoute(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     val graphicsLayer = rememberGraphicsLayer()
+    val isDark = MoonTheme.customColors.isDark
 
     LaunchedEffect(dateString) {
         viewModel.setInitialDate(LocalDate.parse(dateString))
@@ -70,12 +73,13 @@ fun ShareLogRoute(
                         "Share",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF424242)
+                        fontStyle = FontStyle.Normal,
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Rounded.ArrowBackIosNew, "Back", modifier = Modifier.size(20.dp), tint = Color(0xFF757575))
+                        Icon(Icons.Rounded.ArrowBackIosNew, "Back", modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
                     }
                 },
                 actions = {
@@ -88,18 +92,17 @@ fun ShareLogRoute(
                                     graphicsLayer.toImageBitmap().asAndroidBitmap()
                                 }.onSuccess { bitmap ->
                                     ImageUtils.saveBitmapToGallery(context, bitmap)
-                                    snackbarHostState.showSnackbar("Saved to gallery")
                                 }.onFailure { error ->
                                     snackbarHostState.showSnackbar("Save failed: ${error.message ?: "unknown error"}")
                                 }
                             }
                         }
                     ) {
-                        Icon(Icons.Rounded.Download, "Save", tint = Color(0xFF757575))
+                        Icon(Icons.Rounded.Download, "Save", tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color(0xFFF7F7F5)
+                    containerColor = Color.Transparent
                 )
             )
         },
@@ -132,12 +135,12 @@ fun ShareLogRoute(
                     ),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
                 ) {
-                    Text("Share", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text("Share", fontSize = 18.sp, fontWeight = FontWeight.Bold, fontStyle = FontStyle.Normal, color = Color.White)
                 }
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = Color(0xFFF7F7F5)
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         if (uiState.isLoading) {
             Box(
@@ -164,7 +167,7 @@ fun ShareLogRoute(
                         .padding(horizontal = 24.dp)
                         .width(360.dp)
                         .clip(RoundedCornerShape(24.dp))
-                        .background(Color(0xFFF1F1ED))
+                        .background(Color.Transparent) // Transparent outside the card
                         .drawWithContent {
                             graphicsLayer.record {
                                 this@drawWithContent.drawContent()
@@ -185,6 +188,7 @@ fun ShareLogRoute(
 fun ShareLogCard(uiState: DailyLogUiState) {
     val date = uiState.date
     val themeType = uiState.themeType
+    val isDark = MoonTheme.customColors.isDark
 
     // Formatting date: Monday, May 4
     val dayOfWeek = date.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, Locale.ENGLISH)
@@ -194,12 +198,19 @@ fun ShareLogCard(uiState: DailyLogUiState) {
 
     val moodVisual = MoonIcons.Moods.getMoodVisual(uiState.selectedMood ?: 3, themeType, uiState.customMoods)
     val themeColor = moodVisual.color
+    
+    val cardBgColor = if (isDark) Color(0xFF2C2C2C) else Color(0xFFF1F1ED)
+    val textColor = if (isDark) Color(0xFFEEEEEE) else Color(0xFF424242)
+    val secondaryTextColor = if (isDark) Color(0xFFAAAAAA) else Color(0xFF9E9E9E)
+    val dividerColor = if (isDark) Color(0xFF424242) else Color(0xFFD1D1CB)
+    val pillBgColor = if (isDark) Color.White.copy(alpha = 0.15f) else Color.White.copy(alpha = 0.6f)
+    val pillTextColor = if (isDark) Color(0xFFE0E0E0) else Color(0xFF616161)
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
-            .background(Color(0xFFF1F1ED))
+            .background(cardBgColor)
             .padding(24.dp),
         horizontalAlignment = Alignment.Start
     ) {
@@ -219,6 +230,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                 Text(
                     "MoonPage",
                     fontWeight = FontWeight.Bold,
+                    fontStyle = FontStyle.Normal,
                     fontSize = 18.sp,
                     color = themeColor
                 )
@@ -226,7 +238,8 @@ fun ShareLogCard(uiState: DailyLogUiState) {
             Text(
                 text = date.format(DateTimeFormatter.ofPattern("yyyy")),
                 fontSize = 14.sp,
-                color = Color(0xFF9E9E9E),
+                fontStyle = FontStyle.Normal,
+                color = secondaryTextColor,
                 fontWeight = FontWeight.Medium
             )
         }
@@ -257,14 +270,15 @@ fun ShareLogCard(uiState: DailyLogUiState) {
         // Date Pill (Center)
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             Surface(
-                color = Color.White.copy(alpha = 0.6f),
+                color = pillBgColor,
                 shape = RoundedCornerShape(10.dp)
             ) {
                 Text(
                     text = dateText,
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
                     fontSize = 14.sp,
-                    color = Color(0xFF616161),
+                    fontStyle = FontStyle.Normal,
+                    color = pillTextColor,
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -274,7 +288,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
 
         // Dashed Line Divider
         DashedDivider(
-            color = Color(0xFFD1D1CB),
+            color = dividerColor,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
         )
 
@@ -303,7 +317,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                                 modifier = Modifier
                                     .size(36.dp)
                                     .clip(CircleShape)
-                                    .background(icon.color.copy(alpha = 0.1f)),
+                                    .background(icon.color.copy(alpha = if (isDark) 0.2f else 0.1f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 if (icon.drawableRes != null) {
@@ -336,7 +350,8 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                     text = uiState.noteText,
                     modifier = Modifier.fillMaxWidth(),
                     fontSize = 15.sp,
-                    color = Color(0xFF424242),
+                    fontStyle = FontStyle.Normal,
+                    color = textColor,
                     textAlign = TextAlign.Start,
                     lineHeight = 22.sp,
                     fontWeight = FontWeight.Medium
@@ -359,7 +374,9 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                             icon = Icons.Rounded.WbSunny,
                             value = "${weather.temp.toInt()}°C",
                             label = weather.condition,
-                            color = Color(0xFFFFB300)
+                            color = Color(0xFFFFB300),
+                            textColor = textColor,
+                            secondaryTextColor = secondaryTextColor
                         )
                     }
                     if (uiState.sleepHours > 0) {
@@ -367,7 +384,9 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                             icon = Icons.Rounded.Bedtime,
                             value = String.format("%.1fh", uiState.sleepHours),
                             label = "Sleep",
-                            color = Color(0xFF5C6BC0)
+                            color = Color(0xFF5C6BC0),
+                            textColor = textColor,
+                            secondaryTextColor = secondaryTextColor
                         )
                     }
                     if (uiState.steps > 0) {
@@ -375,7 +394,9 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                             icon = Icons.AutoMirrored.Rounded.DirectionsWalk,
                             value = String.format("%,d", uiState.steps),
                             label = "Steps",
-                            color = Color(0xFF66BB6A)
+                            color = Color(0xFF66BB6A),
+                            textColor = textColor,
+                            secondaryTextColor = secondaryTextColor
                         )
                     }
                 }
@@ -412,7 +433,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    color = Color.White.copy(alpha = 0.8f)
+                    color = pillBgColor
                 ) {
                     Row(
                         modifier = Modifier.padding(12.dp),
@@ -427,10 +448,10 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                             )
                         } else {
                             Box(
-                                modifier = Modifier.size(48.dp).background(Color(0xFFE0E0E0), RoundedCornerShape(8.dp)),
+                                modifier = Modifier.size(48.dp).background(if (isDark) Color(0xFF424242) else Color(0xFFE0E0E0), RoundedCornerShape(8.dp)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Rounded.MusicNote, null, tint = Color.Gray, modifier = Modifier.size(24.dp))
+                                Icon(Icons.Rounded.MusicNote, null, tint = secondaryTextColor, modifier = Modifier.size(24.dp))
                             }
                         }
 
@@ -440,14 +461,16 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                             Text(
                                 text = uiState.musicTitle,
                                 fontWeight = FontWeight.Bold,
+                                fontStyle = FontStyle.Normal,
                                 fontSize = 14.sp,
-                                color = Color(0xFF424242),
+                                color = textColor,
                                 maxLines = 1
                             )
                             Text(
                                 text = uiState.artistName ?: "Unknown Artist",
                                 fontSize = 12.sp,
-                                color = Color(0xFF9E9E9E),
+                                fontStyle = FontStyle.Normal,
+                                color = secondaryTextColor,
                                 maxLines = 1
                             )
                         }
@@ -459,7 +482,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
 
         // Another Dashed Divider
         DashedDivider(
-            color = Color(0xFFD1D1CB),
+            color = dividerColor,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
         )
 
@@ -476,19 +499,21 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                     "MoonPage Daily Log",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
+                    fontStyle = FontStyle.Normal,
                     color = themeColor
                 )
                 Text(
                     text = "REF: ${uiState.date.toEpochDay()}${System.currentTimeMillis() % 10000}",
                     fontSize = 10.sp,
-                    color = Color(0xFF9E9E9E)
+                    fontStyle = FontStyle.Normal,
+                    color = secondaryTextColor
                 )
             }
 
             Image(
                 painter = painterResource(id = R.drawable.logo),
                 contentDescription = null,
-                modifier = Modifier.size(40.dp).alpha(0.6f)
+                modifier = Modifier.size(40.dp).alpha(if (isDark) 0.4f else 0.6f)
             )
         }
     }
@@ -499,7 +524,9 @@ private fun ShareInfoItem(
     icon: ImageVector,
     value: String,
     label: String,
-    color: Color
+    color: Color,
+    textColor: Color,
+    secondaryTextColor: Color
 ) {
     Column(
         horizontalAlignment = Alignment.Start,
@@ -516,14 +543,16 @@ private fun ShareInfoItem(
             Text(
                 text = value,
                 fontWeight = FontWeight.Bold,
+                fontStyle = FontStyle.Normal,
                 fontSize = 14.sp,
-                color = Color(0xFF424242)
+                color = textColor
             )
         }
         Text(
             text = label,
             fontSize = 11.sp,
-            color = Color(0xFF9E9E9E),
+            fontStyle = FontStyle.Normal,
+            color = secondaryTextColor,
             fontWeight = FontWeight.Normal
         )
     }

@@ -330,6 +330,7 @@ fun AppNavigation(
                             onNavigateToMenstrualCycle = { navController.navigate(Screen.MenstrualCycle.route) },
                             onNavigateToDailyPhoto = { navController.navigate(Screen.DailyPhoto.route) },
                             onNavigateToShare = { date -> navController.navigate("share_log_screen/$date") },
+                            onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                             onDone = { date, message ->
                                 navController.previousBackStackEntry?.savedStateHandle?.apply {
                                     set("created_log_date", date)

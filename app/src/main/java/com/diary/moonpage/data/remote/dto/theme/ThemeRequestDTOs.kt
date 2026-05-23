@@ -17,6 +17,8 @@ data class CreateThemeRequest(
     @SerializedName("price") val price: Int,
     @SerializedName("thumbnailUrl") val thumbnailUrl: String? = null,
     @SerializedName("backgroundUrl") val backgroundUrl: String? = null,
+    @SerializedName("backgroundDarkColor") val backgroundDarkColor: String? = null,
+    @SerializedName("backgroundLightColor") val backgroundLightColor: String? = null,
     @SerializedName("isOfficial") val isOfficial: Boolean = false,
     @SerializedName("isActive") val isActive: Boolean = true,
     @SerializedName("moods") val moods: List<CreateThemeMoodRequest>

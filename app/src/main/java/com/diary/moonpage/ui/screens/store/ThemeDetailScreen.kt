@@ -223,7 +223,8 @@ fun ThemeDetailScreen(
                 )
 
                 Text(
-                    text = theme.description ?: stringResource(R.string.theme_description_default),
+                    text = theme.description.themeDetailText()
+                        ?: stringResource(R.string.theme_description_default),
                     style = MaterialTheme.typography.bodyLarge,
                     color = onBackground.copy(alpha = 0.6f),
                     textAlign = TextAlign.Center,
@@ -304,6 +305,13 @@ fun ThemeDetailScreen(
             }
         }
     }
+}
+
+private fun String?.themeDetailText(): String? {
+    val value = this?.trim().orEmpty()
+    if (value.isBlank()) return null
+    if ((value.startsWith("{") && value.endsWith("}")) || (value.startsWith("[") && value.endsWith("]"))) return null
+    return value
 }
 
 @Composable

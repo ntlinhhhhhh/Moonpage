@@ -40,9 +40,9 @@ object ImageUtils {
                     if (it.lastModified() < System.currentTimeMillis() - 3600000) it.delete() 
                 }
 
-                val file = File(cachePath, "MP_Share_${System.currentTimeMillis()}.jpg")
+                val file = File(cachePath, "MP_Share_${System.currentTimeMillis()}.png")
                 FileOutputStream(file).use { stream ->
-                    shareBitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+                    shareBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
                 }
 
                 val contentUri = FileProvider.getUriForFile(
@@ -54,7 +54,7 @@ object ImageUtils {
                 if (contentUri != null) {
                     val shareIntent = Intent(Intent.ACTION_SEND).apply {
                         putExtra(Intent.EXTRA_STREAM, contentUri)
-                        type = "image/jpeg"
+                        type = "image/png"
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     }
                     val chooser = Intent.createChooser(shareIntent, title)
@@ -240,13 +240,13 @@ object ImageUtils {
         withContext(Dispatchers.IO) {
             var success = false
             try {
-                val filename = "MP_Log_${System.currentTimeMillis()}.jpg"
+                val filename = "MP_Log_${System.currentTimeMillis()}.png"
                 val resolver = context.contentResolver
                 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     val contentValues = ContentValues().apply {
                         put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
-                        put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+                        put(MediaStore.MediaColumns.MIME_TYPE, "image/png")
                         put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/MoonPage")
                         put(MediaStore.MediaColumns.IS_PENDING, 1)
                     }
@@ -255,7 +255,7 @@ object ImageUtils {
                     if (imageUri != null) {
                         resolver.openOutputStream(imageUri).use { os ->
                             if (os != null) {
-                                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, os)
+                                bitmap.compress(Bitmap.CompressFormat.PNG, 100, os)
                                 success = true
                             }
                         }
@@ -275,7 +275,7 @@ object ImageUtils {
                     
                     val file = File(dir, filename)
                     FileOutputStream(file).use { out ->
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
                         success = true
                     }
                     

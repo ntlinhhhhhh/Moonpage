@@ -731,10 +731,10 @@ GET /api/dailylogs/date/:date
   "id": "log_id",
   "baseMoodId": 4,
   "date": "2024-04-20",
-  "yearMonth": "2024-04",
   "note": "Great day!",
   "sleepHours": 8.0,
   "sleepStartTime": "22:00",
+  "wakeupTime": "06:30",
   "isMenstruation": false,
   "menstruationPhase": null,
   "steps": 10000,
@@ -1184,8 +1184,8 @@ GET /api/statistics/summary
   "moodFlow": [
     { "date": "2024-04-20", "moodId": 4 }
   ],
-  "influenceActivities": [
-    { "activityId": "act_1", "activityName": "Reading", "averageMoodScore": 4.8, "occurrence": 5 }
+  "bestActivities": [
+    { "activityId": "act_1", "activityName": "Reading", "iconUrl": "https://...", "averageMoodScore": 4.8, "occurrence": 5 }
   ],
   "averageSleepHours": 7.5,
   "averageSleepStartTime": "23:00",
@@ -1330,6 +1330,8 @@ GET /api/themes
     "price": 0,
     "thumbnailUrl": "https://...",
     "backgroundUrl": "https://...",
+    "backgroundDarkColor": "0xFFF4F6F1",
+    "backgroundLightColor": "0xFF1C1C1C",
     "authorId": "system",
     "isOfficial": true
   }
@@ -1359,6 +1361,8 @@ GET /api/themes/me
     "price": 0,
     "thumbnailUrl": "https://...",
     "backgroundUrl": "https://...",
+    "backgroundDarkColor": "0xFFF4F6F1",
+    "backgroundLightColor": "0xFF1C1C1C",
     "authorId": "user_id_here",
     "isOfficial": false
   }
@@ -1414,6 +1418,8 @@ POST /api/themes
     - price (int, Required)
     - thumbnailUrl (string, Optional)
     - backgroundUrl (string, Optional)
+    - backgroundDarkColor (string, Optional)
+    - backgroundLightColor (string, Optional)
     - isOfficial (bool, Optional): Set to true for store themes, false for personal. Default is false.
     - isActive (bool, Optional): Default is true.
     - moods (array, Required): List of mood icons.
@@ -1425,8 +1431,14 @@ POST /api/themes
     "name": "Summer Vibe",
     "price": 300,
     "isOfficial": true,
+    "backgroundDarkColor": "0xFFF4F6F1",
+    "backgroundLightColor": "0xFF1C1C1C",
     "moods": [
-      { "baseMoodId": 5, "iconUrl": "https://...", "customName": "Sunshine" }
+      { "baseMoodId": 5, "iconUrl": "https://...", "customName": "Sunshine" },
+      { "baseMoodId": 4, "iconUrl": "https://...", "customName": "Sunshine" },
+      { "baseMoodId": 3, "iconUrl": "https://...", "customName": "Sunshine" },
+      { "baseMoodId": 2, "iconUrl": "https://...", "customName": "Sunshine" },
+      { "baseMoodId": 1, "iconUrl": "https://...", "customName": "Sunshine" }
     ]
   }
 ]

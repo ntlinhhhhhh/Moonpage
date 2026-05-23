@@ -501,6 +501,8 @@
     <string name="custom_theme_picker_suggestions">Bang mau</string>
     <string name="custom_theme_eyedropper_placeholder">Ong hut mau sap co</string>
     <string name="custom_theme_active_now">Dang kich hoat</string>
+    <string name="custom_theme_rename">Doi ten theme tuy chinh</string>
+    <string name="custom_theme_name">Ten theme</string>
     <string name="custom_theme_eraser">Táº©y</string>
     <string name="custom_theme_clear_strokes">Xoa net ve</string>
     <string name="custom_theme_brush_fine">Máº£nh</string>

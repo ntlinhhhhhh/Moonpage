@@ -525,8 +525,12 @@ private fun String?.appearanceObject(mode: String): JSONObject? {
 private fun String?.toThemeColorOrNull(): Color? {
     if (isNullOrBlank()) return null
     return runCatching {
-        val value = if (startsWith("#")) this else "#$this"
-        Color(android.graphics.Color.parseColor(value))
+        val normalized = when {
+            startsWith("0x", ignoreCase = true) -> "#${drop(2)}"
+            startsWith("#") -> this
+            else -> "#$this"
+        }
+        Color(android.graphics.Color.parseColor(normalized))
     }.getOrNull()
 }
 

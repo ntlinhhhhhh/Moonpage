@@ -30,6 +30,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AcUnit
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Savings
 import androidx.compose.material.icons.rounded.GridView
@@ -116,6 +117,9 @@ fun StoreRoute(
         onCancelCustomThemeUnlock = { viewModel.onEvent(StoreUiEvent.CancelCustomThemeUnlock) },
         onDismissInsufficientCoins = { viewModel.onEvent(StoreUiEvent.DismissInsufficientCoins) },
         onActivateCustomTheme = viewModel::activateTheme,
+        onRenameCustomTheme = viewModel::showRenameCustomThemeDialog,
+        onConfirmRenameCustomTheme = viewModel::renameCustomTheme,
+        onDismissRenameCustomTheme = viewModel::dismissRenameCustomThemeDialog,
         onRefresh = { viewModel.onEvent(StoreUiEvent.LoadData) }
     )
 }
@@ -143,6 +147,9 @@ fun StoreScreen(
     onCancelCustomThemeUnlock: () -> Unit,
     onDismissInsufficientCoins: () -> Unit,
     onActivateCustomTheme: (String) -> Unit,
+    onRenameCustomTheme: (Theme) -> Unit,
+    onConfirmRenameCustomTheme: (String) -> Unit,
+    onDismissRenameCustomTheme: () -> Unit,
     onRefresh: () -> Unit
 ) {
     Scaffold(
@@ -192,11 +199,13 @@ fun StoreScreen(
                             temporarySelectedId = uiState.temporarySelectedThemeId,
                             onThemeClick = onThemeClick,
                             onActivateCustomTheme = onActivateCustomTheme,
+                            onRenameCustomTheme = onRenameCustomTheme,
                             onExploreMore = { onTabSelected(0) }
                         )
                         2 -> CustomThemeTabContent(
                             customThemes = uiState.customThemes,
                             onActivateCustomTheme = onActivateCustomTheme,
+                            onRenameCustomTheme = onRenameCustomTheme,
                             onCreateClick = onCreateCustomThemeClick
                         )
                         3 -> CollectionsTabContent(
@@ -267,6 +276,15 @@ fun StoreScreen(
             if (uiState.showInsufficientCoinsSheet) {
                 InsufficientCoinsBottomSheet(onDismiss = onDismissInsufficientCoins)
             }
+
+            uiState.themeToRename?.let { theme ->
+                RenameCustomThemeDialog(
+                    initialName = theme.name,
+                    isSaving = uiState.isRenamingTheme,
+                    onConfirm = onConfirmRenameCustomTheme,
+                    onDismiss = onDismissRenameCustomTheme
+                )
+            }
         }
     }
 }
@@ -305,6 +323,63 @@ fun InsufficientCoinsBottomSheet(
             Spacer(modifier = Modifier.height(12.dp))
         }
     }
+}
+
+@Composable
+fun RenameCustomThemeDialog(
+    initialName: String,
+    isSaving: Boolean,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var name by remember(initialName) { mutableStateOf(initialName) }
+    val trimmedName = name.trim()
+
+    AlertDialog(
+        onDismissRequest = {
+            if (!isSaving) onDismiss()
+        },
+        title = {
+            Text(
+                text = stringResource(R.string.custom_theme_rename),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                enabled = !isSaving,
+                singleLine = true,
+                label = { Text(stringResource(R.string.custom_theme_name)) },
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            TextButton(
+                enabled = !isSaving && trimmedName.isNotBlank() && trimmedName != initialName,
+                onClick = { onConfirm(trimmedName) }
+            ) {
+                if (isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(stringResource(R.string.save), fontWeight = FontWeight.Bold)
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                enabled = !isSaving,
+                onClick = onDismiss
+            ) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
 }
 
 @Composable
@@ -609,6 +684,7 @@ fun StoreTabs(
 fun CustomThemeTabContent(
     customThemes: List<Theme>,
     onActivateCustomTheme: (String) -> Unit,
+    onRenameCustomTheme: (Theme) -> Unit,
     onCreateClick: () -> Unit
 ) {
     LazyVerticalGrid(
@@ -628,7 +704,8 @@ fun CustomThemeTabContent(
         ) { theme ->
             CustomThemeCard(
                 theme = theme,
-                onActivateClick = { onActivateCustomTheme(theme.id) }
+                onActivateClick = { onActivateCustomTheme(theme.id) },
+                onRenameClick = { onRenameCustomTheme(theme) }
             )
         }
     }
@@ -700,7 +777,8 @@ fun CreateCustomThemeCard(
 @Composable
 fun CustomThemeCard(
     theme: Theme,
-    onActivateClick: () -> Unit = {}
+    onActivateClick: () -> Unit = {},
+    onRenameClick: () -> Unit = {}
 ) {
     val previewColor = remember(theme.primaryColor, theme.thumbnailUrl, theme.backgroundUrl) {
         parseThemePreviewColor(theme.primaryColor)
@@ -761,12 +839,29 @@ fun CustomThemeCard(
                 }
             }
             Spacer(modifier = Modifier.height(10.dp))
-            Text(
-                text = theme.name,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth().height(30.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = theme.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(
+                    onClick = onRenameClick,
+                    modifier = Modifier.size(30.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Edit,
+                        contentDescription = stringResource(R.string.custom_theme_rename),
+                        modifier = Modifier.size(17.dp),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                }
+            }
             Text(
                 text = stringResource(R.string.custom_theme_saved),
                 style = MaterialTheme.typography.bodySmall,
@@ -1095,6 +1190,7 @@ fun MyThemeTabContent(
     temporarySelectedId: String?,
     onThemeClick: (Theme) -> Unit,
     onActivateCustomTheme: (String) -> Unit,
+    onRenameCustomTheme: (Theme) -> Unit,
     onExploreMore: () -> Unit
 ) {
     val currentTheme = ownedThemes.find { it.isActive }
@@ -1150,7 +1246,8 @@ fun MyThemeTabContent(
                         Box(modifier = Modifier.weight(1f)) {
                             CustomThemeCard(
                                 theme = theme,
-                                onActivateClick = { onActivateCustomTheme(theme.id) }
+                                onActivateClick = { onActivateCustomTheme(theme.id) },
+                                onRenameClick = { onRenameCustomTheme(theme) }
                             )
                         }
                     }
