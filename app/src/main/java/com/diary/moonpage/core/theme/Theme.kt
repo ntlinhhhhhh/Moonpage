@@ -12,6 +12,7 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -31,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalRippleConfiguration
 import com.diary.moonpage.domain.model.Theme
+import org.json.JSONObject
 
 private object NoIndication : IndicationNodeFactory {
     override fun create(interactionSource: InteractionSource): DelegatableNode {
@@ -202,12 +204,12 @@ fun MoonPageTheme(
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val customThemePrimary = activeTheme
-        ?.takeIf { it.isCustomTheme() }
-        ?.primaryColor
-        .toThemeColorOrNull()
+    val customTheme = activeTheme?.takeIf { it.isCustomTheme() }
+    val customThemePrimary = customTheme?.customPrimaryColor(darkTheme)
+    val customThemeBackground = customTheme?.customBackgroundColor(darkTheme)
+    val hasCustomBackgroundImage = customTheme?.thumbnailUrl.isThemeAssetPath()
 
-    val themePrimary = if (darkTheme) {
+    val themePrimary = customThemePrimary ?: if (darkTheme) {
         when (themeType) {
             MoonThemeType.DEFAULT -> Color(0xFFE8D5C4) // More sophisticated cream/gold for dark
             MoonThemeType.SPROUT -> Color(0xFFB6E388)
@@ -233,20 +235,34 @@ fun MoonPageTheme(
             MoonThemeType.WEATHER_CYCLE -> Color(0xFF607D8B)
         }
     } else {
-        customThemePrimary ?: when (themeType) {
+        when (themeType) {
             MoonThemeType.DEFAULT -> Color(0xFF8C7E6A) // Deep elegant taupe for light
             else -> MoonActionLight // Fallback to original
         }
     }
 
+    val customThemeFallbackBackground = customTheme?.let {
+        if (darkTheme) {
+            themePrimary.copy(alpha = 0.18f).compositeOver(MoonBgDark)
+        } else {
+            themePrimary.copy(alpha = 0.08f).compositeOver(MoonBgLight)
+        }
+    }
+
     val targetColorScheme = if (darkTheme) {
-        DarkColorScheme.copy(primary = themePrimary)
+        DarkColorScheme.copy(
+            primary = themePrimary,
+            background = (customThemeBackground ?: customThemeFallbackBackground ?: MoonBgDark)
+                .withBackgroundImageAlpha(hasCustomBackgroundImage)
+        )
     } else {
         when {
-            customThemePrimary != null -> {
+            customTheme != null -> {
                 LightColorScheme.copy(
-                    primary = customThemePrimary,
-                    surfaceVariant = customThemePrimary.copy(alpha = 0.05f)
+                    primary = themePrimary,
+                    background = (customThemeBackground ?: customThemeFallbackBackground ?: MoonBgLight)
+                        .withBackgroundImageAlpha(hasCustomBackgroundImage),
+                    surfaceVariant = themePrimary.copy(alpha = 0.05f)
                 )
             }
             themeType == MoonThemeType.DEFAULT -> LightColorScheme
@@ -476,12 +492,50 @@ private fun Theme.isCustomTheme(): Boolean {
         collection.equals("Custom Theme", ignoreCase = true)
 }
 
+private fun Theme.customPrimaryColor(darkTheme: Boolean): Color? {
+    val mode = if (darkTheme) "dark" else "light"
+    return description.appearanceColor(mode, "primaryColor") ?: primaryColor.toThemeColorOrNull()
+}
+
+private fun Theme.customBackgroundColor(darkTheme: Boolean): Color? {
+    val mode = if (darkTheme) "dark" else "light"
+    return description.appearanceBackgroundColor(mode) ?: backgroundUrl.toThemeColorOrNull()
+}
+
+private fun String?.appearanceBackgroundColor(mode: String): Color? {
+    val appearance = appearanceObject(mode) ?: return null
+    val fillMode = appearance.optString("backgroundFillMode", "Solid")
+    val colorKey = if (fillMode.equals("Gradient", ignoreCase = true)) {
+        "gradientStartColor"
+    } else {
+        "solidBackgroundColor"
+    }
+    return appearance.optString(colorKey).toThemeColorOrNull()
+}
+
+private fun String?.appearanceColor(mode: String, key: String): Color? {
+    return appearanceObject(mode)?.optString(key).toThemeColorOrNull()
+}
+
+private fun String?.appearanceObject(mode: String): JSONObject? {
+    if (isNullOrBlank()) return null
+    return runCatching { JSONObject(this).optJSONObject(mode) }.getOrNull()
+}
+
 private fun String?.toThemeColorOrNull(): Color? {
     if (isNullOrBlank()) return null
     return runCatching {
         val value = if (startsWith("#")) this else "#$this"
         Color(android.graphics.Color.parseColor(value))
     }.getOrNull()
+}
+
+private fun String?.isThemeAssetPath(): Boolean {
+    return !isNullOrBlank() && toThemeColorOrNull() == null
+}
+
+private fun Color.withBackgroundImageAlpha(hasBackgroundImage: Boolean): Color {
+    return if (hasBackgroundImage) copy(alpha = 0.88f) else this
 }
 
 @Composable

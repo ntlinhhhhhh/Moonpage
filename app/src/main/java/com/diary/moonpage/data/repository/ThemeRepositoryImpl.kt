@@ -7,6 +7,7 @@ import com.diary.moonpage.data.remote.dto.theme.BuyThemeRequest
 import com.diary.moonpage.data.remote.dto.theme.CreateThemeMoodRequest
 import com.diary.moonpage.data.remote.dto.theme.CreateThemeRequest
 import com.diary.moonpage.data.remote.dto.theme.SetActiveThemeRequest
+import com.diary.moonpage.core.theme.MoonThemeType
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.domain.model.ThemeType
 import com.diary.moonpage.domain.repository.CreateThemePayload
@@ -23,7 +24,8 @@ import javax.inject.Inject
 
 class ThemeRepositoryImpl @Inject constructor(
     private val api: ThemeApi,
-    private val dao: com.diary.moonpage.data.local.dao.ThemeDao
+    private val dao: com.diary.moonpage.data.local.dao.ThemeDao,
+    private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager
 ) : ThemeRepository {
     private val myThemesState = MutableStateFlow<List<Theme>>(emptyList())
 
@@ -120,17 +122,40 @@ class ThemeRepositoryImpl @Inject constructor(
         return try {
             val response = api.getMyThemes()
             if (response.isSuccessful && response.body() != null) {
+                val cachedThemes = dao.getAllThemes().first()
                 val myThemes = response.body()!!
                     .map { dto ->
-                        dto.toDomain().copy(
+                        val networkTheme = dto.toDomain().copy(
                             collection = "Custom Theme",
                             price = CUSTOM_THEME_PRICE,
                             isFree = false,
                             isOwned = true,
                             isActive = dto.isActive,
-                            primaryColor = dto.thumbnailUrl ?: dto.backgroundUrl
+                            decoration = "CUSTOM",
+                            primaryColor = dto.thumbnailUrl.takeIfThemeColor()
+                        )
+                        val cachedTheme = cachedThemes.findCachedCustomTheme(networkTheme)
+                        val cachedPrimary = cachedTheme?.primaryColor.takeIfThemeColor()
+                        val networkPrimary = networkTheme.primaryColor.takeIfThemeColor()
+                        val moodPrimary = if (cachedPrimary == null && networkPrimary == null) {
+                            loadThemeMoodPrimaryColor(networkTheme.id)
+                        } else {
+                            null
+                        }
+                        networkTheme.copy(
+                            thumbnailUrl = networkTheme.thumbnailUrl ?: cachedTheme?.thumbnailUrl,
+                            backgroundUrl = cachedTheme?.backgroundUrl?.takeIfThemeColor()
+                                ?: networkTheme.backgroundUrl,
+                            primaryColor = cachedPrimary ?: networkPrimary ?: moodPrimary,
+                            description = cachedTheme?.description,
+                            activatedAt = cachedTheme?.activatedAt
                         )
                     }
+
+                if (myThemes.any { it.isActive }) {
+                    dao.clearActiveTheme()
+                }
+                dao.insertThemes(myThemes.map { ThemeEntity.fromDomain(it) })
                 myThemesState.value = myThemes
                 Result.success(myThemes)
             } else {
@@ -138,6 +163,34 @@ class ThemeRepositoryImpl @Inject constructor(
             }
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    private suspend fun loadThemeMoodPrimaryColor(themeId: String): String? {
+        val cachedMoodColor = dao.getMoodsForTheme(themeId)
+            .firstNotNullOfOrNull { it.iconUrl.takeIfThemeColor() }
+        if (cachedMoodColor != null) return cachedMoodColor
+
+        return try {
+            val response = api.getThemeMoods(themeId)
+            if (response.isSuccessful && response.body() != null) {
+                val moods = response.body()!!.map { dto ->
+                    ThemeMoodEntity(
+                        themeId = themeId,
+                        baseMoodId = dto.baseMoodId,
+                        iconUrl = dto.iconUrl,
+                        customName = dto.customName
+                    )
+                }
+                if (moods.isNotEmpty()) {
+                    dao.insertThemeMoods(moods)
+                }
+                moods.firstNotNullOfOrNull { it.iconUrl.takeIfThemeColor() }
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
         }
     }
 
@@ -174,13 +227,16 @@ class ThemeRepositoryImpl @Inject constructor(
                                 price = theme.price,
                                 isFree = theme.price == 0,
                                 thumbnailUrl = theme.thumbnailUrl,
-                                backgroundUrl = theme.backgroundUrl,
+                                backgroundUrl = theme.backgroundColor ?: theme.backgroundUrl,
                                 isOwned = false,
                                 isActive = theme.isActive,
-                                description = null,
+                                description = theme.description,
                                 type = ThemeType.THEME.name,
                                 icons = "VERY_HAPPY,HAPPY,NEUTRAL,SAD,ANGRY",
-                                primaryColor = theme.thumbnailUrl ?: theme.backgroundUrl,
+                                primaryColor = theme.primaryColor
+                                    ?: theme.thumbnailUrl.takeIfThemeColor()
+                                    ?: theme.backgroundColor
+                                    ?: theme.backgroundUrl.takeIfThemeColor(),
                                 decoration = "CUSTOM",
                                 activatedAt = null
                             )
@@ -291,18 +347,44 @@ class ThemeRepositoryImpl @Inject constructor(
     }
 
     override suspend fun setActiveTheme(themeId: String): Result<Unit> {
+        // Optimistic UI Update: change local state immediately
+        try {
+            ensureThemeCached(themeId)
+            dao.clearActiveTheme()
+            dao.setActiveTheme(themeId, System.currentTimeMillis())
+
+            // Also sync the themeType DataStore for real-time presets reactivity
+            val themeType = themeId.toMoonThemeTypeOrNull()
+                ?: dao.getThemeById(themeId)?.decoration?.toMoonThemeTypeOrNull()
+                ?: MoonThemeType.DEFAULT
+            themePreferencesManager.setThemeType(themeType)
+        } catch (e: Exception) {
+            android.util.Log.e("ThemeRepository", "Optimistic update failed", e)
+        }
+
         return try {
             val response = api.setActiveTheme(SetActiveThemeRequest(themeId))
             if (response.isSuccessful) {
-                dao.clearActiveTheme()
-                dao.setActiveTheme(themeId, System.currentTimeMillis())
                 Result.success(Unit)
             } else {
                 Result.failure(Exception(parseErrorResponse(response.errorBody()?.string())))
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            // Keep the optimistic change for offline support
+            Result.success(Unit)
         }
+    }
+
+    private suspend fun ensureThemeCached(themeId: String) {
+        if (dao.getThemeById(themeId) != null) return
+
+        val myTheme = myThemesState.value.find { it.id == themeId }
+        if (myTheme != null) {
+            dao.insertThemes(listOf(ThemeEntity.fromDomain(myTheme).copy(isOwned = true)))
+            return
+        }
+
+        fetchAndCacheThemeDetails(themeId)
     }
 
     override suspend fun getMoodsForTheme(themeId: String): List<ThemeMoodEntity> {
@@ -371,6 +453,69 @@ private fun Int.toThemeMoodName(): String = when (this) {
     4 -> "Good"
     5 -> "Rad"
     else -> "Meh"
+}
+
+private fun List<ThemeEntity>.findCachedCustomTheme(theme: Theme): ThemeEntity? {
+    return firstOrNull { it.id == theme.id && it.isCustomThemeEntity() }
+        ?: firstOrNull { cached ->
+            cached.isCustomThemeEntity() && cached.matchesCustomTheme(theme)
+        }
+}
+
+private fun ThemeEntity.matchesCustomTheme(theme: Theme): Boolean {
+    val themePaths = listOfNotNull(theme.thumbnailUrl, theme.backgroundUrl).filter { it.isNotBlank() }
+    val cachedPaths = listOfNotNull(thumbnailUrl, backgroundUrl).filter { it.isNotBlank() }
+    val hasSharedPath = themePaths.any { path ->
+        cachedPaths.any { cachedPath ->
+            path == cachedPath || path.contains(cachedPath) || cachedPath.contains(path)
+        }
+    }
+    return hasSharedPath || name == theme.name
+}
+
+private fun ThemeEntity.isCustomThemeEntity(): Boolean {
+    return id.startsWith("custom_") ||
+        decoration.equals("CUSTOM", ignoreCase = true) ||
+        collection.equals("Custom Theme", ignoreCase = true)
+}
+
+private fun String?.takeIfThemeColor(): String? {
+    return takeIf { it.isThemeColor() }
+}
+
+private fun String?.isThemeColor(): Boolean {
+    if (isNullOrBlank()) return false
+    val value = if (startsWith("#")) drop(1) else this
+    return (value.length == 6 || value.length == 8) && value.all { it in '0'..'9' || it in 'a'..'f' || it in 'A'..'F' }
+}
+
+private fun String.toMoonThemeTypeOrNull(): MoonThemeType? {
+    if (this == ThemeConstants.DEFAULT_THEME_ID) return MoonThemeType.DEFAULT
+    val normalized = if (startsWith("theme_")) substringAfter("theme_") else this
+    val enumName = when (normalized.uppercase()) {
+        "MOON" -> "DEFAULT"
+        "BROWN" -> "GRAY_BROWN"
+        "COOKIE" -> "COOKIE_BATCH"
+        "HEART" -> "HEART_FELT"
+        "WEATHER" -> "WEATHER_CYCLE"
+        "CUSTOM" -> return null
+        else -> normalized.uppercase()
+    }
+    return runCatching { MoonThemeType.valueOf(enumName) }.getOrNull()
+}
+
+private fun String.toMoonThemeType(): MoonThemeType {
+    if (this == ThemeConstants.DEFAULT_THEME_ID) return MoonThemeType.DEFAULT
+    val normalized = if (startsWith("theme_")) substringAfter("theme_") else this
+    val enumName = when (normalized.uppercase()) {
+        "MOON" -> "DEFAULT"
+        "BROWN" -> "GRAY_BROWN"
+        "COOKIE" -> "COOKIE_BATCH"
+        "HEART" -> "HEART_FELT"
+        "WEATHER" -> "WEATHER_CYCLE"
+        else -> normalized.replace("-", "_").uppercase()
+    }
+    return runCatching { MoonThemeType.valueOf(enumName) }.getOrNull() ?: MoonThemeType.DEFAULT
 }
 
 private const val CUSTOM_THEME_PRICE = 500

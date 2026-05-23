@@ -15,6 +15,9 @@ data class CreateThemePayload(
     val price: Int,
     val thumbnailUrl: String?,
     val backgroundUrl: String?,
+    val primaryColor: String? = null,
+    val backgroundColor: String? = null,
+    val description: String? = null,
     val isOfficial: Boolean = false,
     val isActive: Boolean = true,
     val moods: List<CreateThemeMoodPayload>

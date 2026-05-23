@@ -27,9 +27,18 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.diary.moonpage.ui.MainViewModel
 import com.diary.moonpage.core.util.ThemeConstants
 import com.diary.moonpage.core.theme.MoonThemeType
+import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.ui.screens.store.components.ConfirmActivationDialog
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import kotlinx.coroutines.launch
+
+private data class ThemePickerItem(
+    val id: String,
+    val type: MoonThemeType?,
+    val name: String,
+    val color: Color,
+    val isCustom: Boolean = false
+)
 
 /**
  * Stateful Route Component
@@ -44,37 +53,58 @@ fun ThemeCalendarRoute(
     val uiState by storeViewModel.uiState.collectAsState()
     val mainUiState by mainViewModel.uiState.collectAsState()
     val currentThemeType = mainUiState.themeType
+    val currentThemeId = mainUiState.activeTheme?.id
     val isDarkModePref = mainUiState.isDarkMode
     val defaultThemeName = stringResource(R.string.theme_calendar_classic_yellow)
     val themeUpdatedMessage = stringResource(R.string.theme_updated_success)
+    val currentSelectionKey = currentThemeId ?: currentThemeType.name
 
     // Track initial values to enable/disable Done button
-    val initialThemeType = remember { currentThemeType }
+    val initialSelectionKey = remember { currentSelectionKey }
     val initialDarkMode = remember { isDarkModePref }
-    val hasChanges = currentThemeType != initialThemeType || isDarkModePref != initialDarkMode
+    val hasChanges = currentSelectionKey != initialSelectionKey || isDarkModePref != initialDarkMode
 
     // 1. Define Local Default Themes
     val systemThemes = listOf(
-        Triple(MoonThemeType.DEFAULT, defaultThemeName, Color(0xFFFFC547))
+        ThemePickerItem(
+            id = ThemeConstants.DEFAULT_THEME_ID,
+            type = MoonThemeType.DEFAULT,
+            name = defaultThemeName,
+            color = Color(0xFFFFC547)
+        )
     )
 
     // 2. Map API Owned Themes (Purchased)
     val ownedThemes = remember(uiState.ownedThemes) {
-        uiState.ownedThemes.filter { it.id != ThemeConstants.DEFAULT_THEME_ID }.map { theme ->
+        uiState.ownedThemes.filter { it.id != ThemeConstants.DEFAULT_THEME_ID && !it.isCustomTheme() }.map { theme ->
             val type = theme.id.toMoonThemeTypeOrNull()
                 ?: theme.decoration.toMoonThemeTypeOrNull()
                 ?: MoonThemeType.DEFAULT
-            val color = ThemeConstants.THEMES.find { it.id == theme.id }?.thumbnailUrl.toColorOrNull()
-                ?: theme.primaryColor.toColorOrNull()
-                ?: theme.thumbnailUrl.toColorOrNull()
-                ?: theme.backgroundUrl.toColorOrNull()
-                ?: Color(0xFFFFC547)
-            Triple(type, theme.name, color)
+            ThemePickerItem(
+                id = theme.id,
+                type = type,
+                name = theme.name,
+                color = theme.themePickerColor()
+            )
         }
     }
 
+    val customThemes = remember(uiState.ownedThemes, uiState.customThemes) {
+        (uiState.customThemes + uiState.ownedThemes.filter { it.isCustomTheme() })
+            .distinctBy { it.id }
+            .map { theme ->
+                ThemePickerItem(
+                    id = theme.id,
+                    type = null,
+                    name = theme.name,
+                    color = theme.themePickerColor(),
+                    isCustom = true
+                )
+            }
+    }
+
     // 3. Combined List (System + Purchased)
-    val allSelectableThemes = (systemThemes + ownedThemes).distinctBy { it.first }
+    val allSelectableThemes = (systemThemes + ownedThemes + customThemes).distinctBy { it.id }
 
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(Unit) {
@@ -97,14 +127,10 @@ fun ThemeCalendarRoute(
     ThemePickerContent(
         availableThemes = allSelectableThemes,
         currentThemeType = currentThemeType,
+        currentThemeId = currentThemeId,
         isDarkMode = isDarkModePref,
-        onThemeSelected = { type ->
-            val theme = if (type == MoonThemeType.DEFAULT) {
-                uiState.ownedThemes.find { it.id == ThemeConstants.DEFAULT_THEME_ID }
-            } else {
-                uiState.ownedThemes.find { it.decoration.toMoonThemeType() == type }
-            }
-            theme?.let { storeViewModel.activateTheme(it.id) }
+        onThemeSelected = { item ->
+            storeViewModel.activateTheme(item.id)
         },
         onDarkModeToggled = { mainViewModel.setDarkMode(it) },
         onApply = onActivated,
@@ -124,11 +150,12 @@ fun ThemeCalendarRoute(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ThemePickerContent(
-    availableThemes: List<Triple<MoonThemeType, String, Color>>,
+private fun ThemePickerContent(
+    availableThemes: List<ThemePickerItem>,
     currentThemeType: MoonThemeType,
+    currentThemeId: String?,
     isDarkMode: Boolean?,
-    onThemeSelected: (MoonThemeType) -> Unit,
+    onThemeSelected: (ThemePickerItem) -> Unit,
     onDarkModeToggled: (Boolean?) -> Unit,
     onApply: () -> Unit,
     onNavigateBack: () -> Unit,
@@ -249,39 +276,43 @@ fun ThemePickerContent(
                     )
                 }
 
-                items(availableThemes) { (type, name, color) ->
-                    val isSelected = currentThemeType == type
+                items(availableThemes) { item ->
+                    val isSelected = if (currentThemeId != null) {
+                        currentThemeId == item.id
+                    } else {
+                        item.type != null && currentThemeType == item.type
+                    }
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(20.dp))
-                            .clickable { onThemeSelected(type) },
+                            .clickable { onThemeSelected(item) },
                         shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (isSelected) color.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                            containerColor = if (isSelected) item.color.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
                         ),
-                        border = if (isSelected) BorderStroke(2.dp, color) else null
+                        border = if (isSelected) BorderStroke(2.dp, item.color) else null
                     ) {
                         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                             Box(
                                 modifier = Modifier
                                     .size(48.dp)
-                                    .background(color.copy(alpha = 0.2f), CircleShape),
+                                    .background(item.color.copy(alpha = 0.2f), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Rounded.Circle, null, tint = color, modifier = Modifier.size(24.dp))
+                                Icon(Icons.Rounded.Circle, null, tint = item.color, modifier = Modifier.size(24.dp))
                             }
                             Spacer(modifier = Modifier.width(16.dp))
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
+                                Text(item.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
                                 Text(
-                                    text = if (type == MoonThemeType.DEFAULT) classicMoonBeansText else customColoredBeansText,
+                                    text = if (item.type == MoonThemeType.DEFAULT && !item.isCustom) classicMoonBeansText else customColoredBeansText,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
                             }
                             if (isSelected) {
-                                Icon(Icons.Rounded.CheckCircle, null, tint = color)
+                                Icon(Icons.Rounded.CheckCircle, null, tint = item.color)
                             }
                         }
                     }
@@ -296,20 +327,30 @@ fun ThemePickerContent(
             )
 
             if (showConfirmActivation) {
-                val themeData = availableThemes.find { it.first == temporarySelectedThemeId?.toMoonThemeType() }
+                val themeData = availableThemes.find { it.id == temporarySelectedThemeId }
                 ConfirmActivationDialog(
-                    themeName = themeData?.second ?: fallbackThemeText,
+                    themeName = themeData?.name ?: fallbackThemeText,
                     onConfirm = onConfirmActivation,
                     onCancel = onCancelActivation,
-                    primaryColor = themeData?.third
+                    primaryColor = themeData?.color
                 )
             }
         }
     }
 }
 
-private fun String.toMoonThemeType(): MoonThemeType {
-    return toMoonThemeTypeOrNull() ?: MoonThemeType.DEFAULT
+private fun Theme.isCustomTheme(): Boolean {
+    return id.startsWith("custom_") ||
+        decoration.equals("CUSTOM", ignoreCase = true) ||
+        collection.equals("Custom Theme", ignoreCase = true)
+}
+
+private fun Theme.themePickerColor(): Color {
+    return ThemeConstants.THEMES.find { it.id == id }?.thumbnailUrl.toColorOrNull()
+        ?: primaryColor.toColorOrNull()
+        ?: backgroundUrl.toColorOrNull()
+        ?: thumbnailUrl.toColorOrNull()
+        ?: Color(0xFFFFC547)
 }
 
 private fun String.toMoonThemeTypeOrNull(): MoonThemeType? {
