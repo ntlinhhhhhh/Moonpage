@@ -24,7 +24,8 @@ import com.diary.moonpage.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WidgetsScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToCustomization: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val backText = stringResource(R.string.back)
@@ -109,7 +110,7 @@ fun WidgetsScreen(
             Spacer(modifier = Modifier.height(48.dp))
             
             Button(
-                onClick = { /* Could open widget picker if API allows, but usually just info */ },
+                onClick = onNavigateToCustomization,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {

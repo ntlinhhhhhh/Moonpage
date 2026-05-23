@@ -30,6 +30,9 @@ sealed class Screen (val route: String) {
     object Gallery: Screen("gallery_screen")
     object ThemeCalendar: Screen("theme_calendar_screen")
     object Widgets: Screen("widgets_screen")
+    object WidgetCustomization: Screen("widget_customization_screen")
+    object DailySummaryWidgetEdit: Screen("daily_summary_widget_edit_screen")
+    object PhotoMomentWidgetEdit: Screen("photo_moment_widget_edit_screen")
     object InviteFriend: Screen("invite_friend_screen")
     object StreakStats: Screen("streak_stats_screen")
 

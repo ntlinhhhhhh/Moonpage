@@ -38,6 +38,7 @@ import androidx.glance.text.TextStyle
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.unit.ColorProvider
 import com.diary.moonpage.R
+import kotlinx.coroutines.flow.firstOrNull
 
 private val photoIndexKey = intPreferencesKey("photo_moment_index")
 private val photoDirectionKey = ActionParameters.Key<Int>("photo_direction")
@@ -54,6 +55,10 @@ class PhotoMomentWidget : GlanceAppWidget() {
         val photoCount = snapshot.photoUris.size
         val resolvedIndex = if (photoCount == 0) 0 else currentIndex.mod(photoCount)
         val bitmap = dataSource.loadBitmap(snapshot.photoUris.getOrNull(resolvedIndex))
+        
+        val widgetPrefs = dataSource.getWidgetPreferences()
+        val showStreak = widgetPrefs.showPhotoStreak.firstOrNull() ?: true
+        val displayMode = widgetPrefs.photoDisplayMode.firstOrNull() ?: "CROP"
 
         provideContent {
             Box(
@@ -72,7 +77,7 @@ class PhotoMomentWidget : GlanceAppWidget() {
                     Image(
                         provider = ImageProvider(bitmap),
                         contentDescription = null,
-                        contentScale = ContentScale.Crop,
+                        contentScale = if (displayMode == "CROP") ContentScale.Crop else ContentScale.Fit,
                         modifier = GlanceModifier.fillMaxSize()
                     )
                 }
@@ -95,24 +100,26 @@ class PhotoMomentWidget : GlanceAppWidget() {
                     }
                 }
 
-                Text(
-                    text = "\uD83D\uDD25 ${snapshot.streakCount}",
-                    modifier = GlanceModifier
-                        .cornerRadius(18.dp)
-                        .background(
-                            ColorProvider(
-                                if (dataSource.isNightMode()) snapshot.palette.nightBadge else snapshot.palette.dayBadge
+                if (showStreak) {
+                    Text(
+                        text = "\uD83D\uDD25 ${snapshot.streakCount}",
+                        modifier = GlanceModifier
+                            .cornerRadius(18.dp)
+                            .background(
+                                ColorProvider(
+                                    if (dataSource.isNightMode()) snapshot.palette.nightBadge else snapshot.palette.dayBadge
+                                )
                             )
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        style = TextStyle(
+                            color = ColorProvider(
+                                if (dataSource.isNightMode()) snapshot.palette.nightBadgeText else snapshot.palette.dayBadgeText
+                            ),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
                         )
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                    style = TextStyle(
-                        color = ColorProvider(
-                            if (dataSource.isNightMode()) snapshot.palette.nightBadgeText else snapshot.palette.dayBadgeText
-                        ),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
                     )
-                )
+                }
 
                 if (photoCount > 1) {
                     Row(

@@ -610,6 +610,33 @@ fun AppNavigation(
                 composable(Screen.Widgets.route) {
                     ScreenWrapper(Screen.Widgets.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         WidgetsScreen(
+                            onNavigateBack = { navController.popBackStack() },
+                            onNavigateToCustomization = { navController.navigate(Screen.WidgetCustomization.route) }
+                        )
+                    }
+                }
+
+                composable(Screen.WidgetCustomization.route) {
+                    ScreenWrapper(Screen.WidgetCustomization.route, mainAppRoutes, totalBottomPadding, paddingValues) {
+                        WidgetCustomizationScreen(
+                            onNavigateBack = { navController.popBackStack() },
+                            onNavigateToDailySummaryEdit = { navController.navigate(Screen.DailySummaryWidgetEdit.route) },
+                            onNavigateToPhotoMomentEdit = { navController.navigate(Screen.PhotoMomentWidgetEdit.route) }
+                        )
+                    }
+                }
+
+                composable(Screen.DailySummaryWidgetEdit.route) {
+                    ScreenWrapper(Screen.DailySummaryWidgetEdit.route, mainAppRoutes, totalBottomPadding, paddingValues) {
+                        DailySummaryWidgetEditScreen(
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+                }
+
+                composable(Screen.PhotoMomentWidgetEdit.route) {
+                    ScreenWrapper(Screen.PhotoMomentWidgetEdit.route, mainAppRoutes, totalBottomPadding, paddingValues) {
+                        PhotoMomentWidgetEditScreen(
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }

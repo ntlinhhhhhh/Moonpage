@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
@@ -324,14 +325,12 @@ class CustomThemeEditorViewModel @Inject constructor(
                             thumbnailUrl = previewPath,
                             backgroundUrl = previewPath,
                             isOfficial = false,
-                            isActive = false,
+                            isActive = true,
                             moods = state.lightAppearance.toMoodPayloads()
                         )
                     )
                 ).getOrThrow()
-                val myThemes = themeRepository.getMyThemes().getOrThrow()
-                val serverThemeId = myThemes.findCreatedThemeId(
-                    fallbackId = themeId,
+                val serverThemeId = resolveServerThemeId(
                     fileName = fileName,
                     previewPath = previewPath,
                     themeName = themeName
@@ -378,20 +377,32 @@ class CustomThemeEditorViewModel @Inject constructor(
 
     private fun Long.toColorHex(): String = "#%08X".format(this)
 
-    private fun List<com.diary.moonpage.domain.model.Theme>.findCreatedThemeId(
-        fallbackId: String,
+    private suspend fun resolveServerThemeId(
         fileName: String,
         previewPath: String,
         themeName: String
     ): String {
-        val matchedTheme = firstOrNull { theme ->
-            theme.id == fallbackId ||
+        repeat(CREATE_THEME_LOOKUP_RETRIES) { attempt ->
+            val myThemes = themeRepository.getMyThemes().getOrThrow()
+            val matchedTheme = myThemes.firstOrNull { theme ->
                 theme.thumbnailUrl == previewPath ||
-                theme.backgroundUrl == previewPath ||
-                theme.thumbnailUrl?.contains(fileName) == true ||
-                theme.backgroundUrl?.contains(fileName) == true
-        } ?: lastOrNull { it.name == themeName }
+                    theme.backgroundUrl == previewPath ||
+                    theme.thumbnailUrl?.contains(fileName) == true ||
+                    theme.backgroundUrl?.contains(fileName) == true
+            } ?: myThemes.lastOrNull { it.name == themeName }
 
-        return matchedTheme?.id ?: fallbackId
+            if (matchedTheme != null) {
+                return matchedTheme.id
+            }
+
+            if (attempt < CREATE_THEME_LOOKUP_RETRIES - 1) {
+                delay(CREATE_THEME_LOOKUP_DELAY_MS)
+            }
+        }
+
+        throw IllegalStateException("Created theme is not visible from server yet")
     }
 }
+
+private const val CREATE_THEME_LOOKUP_RETRIES = 6
+private const val CREATE_THEME_LOOKUP_DELAY_MS = 350L

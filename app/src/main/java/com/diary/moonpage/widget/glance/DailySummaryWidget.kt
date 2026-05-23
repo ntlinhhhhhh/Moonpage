@@ -18,6 +18,7 @@ import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
+import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.padding
@@ -28,6 +29,7 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.diary.moonpage.R
 import com.diary.moonpage.ui.MainActivity
+import kotlinx.coroutines.flow.firstOrNull
 
 class DailySummaryWidget : GlanceAppWidget() {
     override val sizeMode = SizeMode.Single
@@ -36,6 +38,11 @@ class DailySummaryWidget : GlanceAppWidget() {
         val dataSource = MoonpageWidgetDataSource(context)
         val snapshot = dataSource.loadTodaySnapshot()
         val isNightMode = dataSource.isNightMode()
+        
+        val widgetPrefs = dataSource.getWidgetPreferences()
+        val showStreak = widgetPrefs.showDailyStreak.firstOrNull() ?: true
+        val showNote = widgetPrefs.showDailyNote.firstOrNull() ?: true
+        val showStats = widgetPrefs.showDailyStats.firstOrNull() ?: true
 
         provideContent {
             Column(
@@ -60,24 +67,26 @@ class DailySummaryWidget : GlanceAppWidget() {
                     modifier = GlanceModifier.fillMaxWidth(),
                     contentAlignment = Alignment.TopStart
                 ) {
-                    Text(
-                        text = "\uD83D\uDD25 ${snapshot.streakCount}",
-                        modifier = GlanceModifier
-                            .cornerRadius(18.dp)
-                            .background(
-                                ColorProvider(
-                                    if (isNightMode) snapshot.palette.nightBadge else snapshot.palette.dayBadge
+                    if (showStreak) {
+                        Text(
+                            text = "\uD83D\uDD25 ${snapshot.streakCount}",
+                            modifier = GlanceModifier
+                                .cornerRadius(18.dp)
+                                .background(
+                                    ColorProvider(
+                                        if (isNightMode) snapshot.palette.nightBadge else snapshot.palette.dayBadge
+                                    )
                                 )
+                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                            style = TextStyle(
+                                color = ColorProvider(
+                                    if (isNightMode) snapshot.palette.nightBadgeText else snapshot.palette.dayBadgeText
+                                ),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
                             )
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        style = TextStyle(
-                            color = ColorProvider(
-                                if (isNightMode) snapshot.palette.nightBadgeText else snapshot.palette.dayBadgeText
-                            ),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
                         )
-                    )
+                    }
                     Box(
                         modifier = GlanceModifier.fillMaxWidth(),
                         contentAlignment = Alignment.TopEnd
@@ -92,35 +101,41 @@ class DailySummaryWidget : GlanceAppWidget() {
                     }
                 }
 
-                Box(
-                    modifier = GlanceModifier.fillMaxWidth().padding(top = 14.dp, bottom = 12.dp),
-                    contentAlignment = Alignment.TopStart
-                ) {
+                if (showNote) {
+                    Box(
+                        modifier = GlanceModifier.fillMaxWidth().padding(top = 14.dp, bottom = 12.dp),
+                        contentAlignment = Alignment.TopStart
+                    ) {
+                        Text(
+                            text = snapshot.note.ifBlank { context.getString(R.string.widget_summary_empty_note) },
+                            maxLines = 3,
+                            style = TextStyle(
+                                color = ColorProvider(
+                                    if (isNightMode) snapshot.palette.nightOnSurface else snapshot.palette.dayOnSurface
+                                ),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        )
+                    }
+                } else {
+                    Spacer(modifier = GlanceModifier.defaultWeight())
+                }
+
+                if (showStats) {
                     Text(
-                        text = snapshot.note.ifBlank { context.getString(R.string.widget_summary_empty_note) },
-                        maxLines = 3,
+                        text = snapshot.footerItems.ifEmpty { listOf(context.getString(R.string.widget_daily_summary_name)) }
+                            .take(4)
+                            .joinToString("  |  "),
+                        modifier = GlanceModifier.fillMaxWidth(),
                         style = TextStyle(
                             color = ColorProvider(
                                 if (isNightMode) snapshot.palette.nightOnSurface else snapshot.palette.dayOnSurface
                             ),
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
+                            fontSize = 12.sp
                         )
                     )
                 }
-
-                Text(
-                    text = snapshot.footerItems.ifEmpty { listOf(context.getString(R.string.widget_daily_summary_name)) }
-                        .take(4)
-                        .joinToString("  |  "),
-                    modifier = GlanceModifier.fillMaxWidth(),
-                    style = TextStyle(
-                        color = ColorProvider(
-                            if (isNightMode) snapshot.palette.nightOnSurface else snapshot.palette.dayOnSurface
-                        ),
-                        fontSize = 12.sp
-                    )
-                )
             }
         }
     }

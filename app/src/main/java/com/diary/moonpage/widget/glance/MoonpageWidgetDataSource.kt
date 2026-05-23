@@ -78,6 +78,8 @@ class MoonpageWidgetDataSource(private val context: Context) {
         return currentNightMode == Configuration.UI_MODE_NIGHT_YES
     }
 
+    fun getWidgetPreferences() = entryPoint.widgetPreferencesManager()
+
     suspend fun loadBitmap(model: String?): Bitmap? = withContext(Dispatchers.IO) {
         if (model.isNullOrBlank()) {
             return@withContext null

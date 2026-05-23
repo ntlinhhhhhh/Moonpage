@@ -34,3 +34,9 @@ proguard-project.txt
 # Android Studio/IDEA
 *.iml
 .idea
+.aiexclude
+.geminiignore
+AGENTS.md
+gemini.md
+.antigravity/
+.kotlin/errors/

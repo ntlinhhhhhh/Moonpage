@@ -2,7 +2,6 @@ package com.diary.moonpage.ui.screens.stats
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.diary.moonpage.domain.repository.DailyLogRepository
 import com.diary.moonpage.domain.repository.StatisticsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -12,7 +11,6 @@ import javax.inject.Inject
 @HiltViewModel
 class StatisticsViewModel @Inject constructor(
     private val repository: StatisticsRepository,
-    private val dailyLogRepository: DailyLogRepository,
     private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
     private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager
 ) : ViewModel() {
@@ -29,12 +27,6 @@ class StatisticsViewModel @Inject constructor(
         viewModelScope.launch {
             userRepository.currentUser.collect { user ->
                 _uiState.update { it.copy(gender = user?.gender) }
-            }
-        }
-        // Observe local logs and recompute insights whenever they change
-        viewModelScope.launch {
-            dailyLogRepository.getAllDailyLogsFlow().collect { allLogs ->
-                recomputeInsights(allLogs)
             }
         }
         loadStatistics()
@@ -57,14 +49,21 @@ class StatisticsViewModel @Inject constructor(
                 )
                 if (response.isSuccessful && response.body() != null) {
                     val stats = response.body()!!
+                    
+                    val freq = stats.bestActivities.sortedByDescending { it.occurrence }.take(3)
+                    
+                    // Apply initial filtering and sorting
+                    val filtered = filterAndSortActivities(
+                        stats.bestActivities,
+                        _uiState.value.activityFilter,
+                        _uiState.value.sortOrder
+                    )
 
-                    val freq = stats.bestActivities.sortedByDescending { it.occurrence }
-
-                    // Legacy fallback sort (averageMoodScore) — will be overridden by engine
+                    // Improved Correlation Algorithm for Best/Worst
                     val relevantActivities = stats.bestActivities.filter { it.occurrence >= 1 }
                     val best = relevantActivities.sortedByDescending { it.averageMoodScore }.take(3)
                     val worst = relevantActivities.sortedBy { it.averageMoodScore }.take(3)
-
+                    
                     // Calculate Average Wake Up Time based on average bedtime and sleep hours
                     val avgWakeUpTime = stats.averageWakeupTime ?: if (stats.averageSleepStartTime != null && stats.averageSleepHours != null) {
                         try {
@@ -78,21 +77,16 @@ class StatisticsViewModel @Inject constructor(
                         } catch (e: Exception) { null }
                     } else null
 
-
+                    
                     _uiState.update { it.copy(
-                        stats = stats,
+                        stats = stats, 
                         frequentlyRecorded = freq,
+                        filteredActivities = filtered,
                         bestActivities = best,
                         worstActivities = worst,
                         averageWakeUpTime = avgWakeUpTime,
                         isLoading = false
                     ) }
-
-                    // After stats loaded, trigger insight recomputation with current logs
-                    viewModelScope.launch {
-                        val allLogs = dailyLogRepository.getAllDailyLogsFlow().first()
-                        recomputeInsights(allLogs)
-                    }
                 } else {
                     _uiState.update { it.copy(error = "Failed to load statistics", isLoading = false) }
                 }
@@ -102,69 +96,57 @@ class StatisticsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Recompute all client-side insights using local DailyLog data.
-     * Called after stats load or when local logs change.
-     */
-    private fun recomputeInsights(allLogs: List<com.diary.moonpage.domain.model.DailyLog>) {
-        val currentState = _uiState.value
-        val activities = currentState.stats?.bestActivities ?: return
-        if (activities.isEmpty()) return
-
-        android.util.Log.d("StatisticsVM", "recomputeInsights: totalLogs in DB=${allLogs.size}, activities from API=${activities.size}")
-        android.util.Log.d("StatisticsVM", "Period: isMonthly=${currentState.isMonthly}, year=${currentState.selectedYear}, month=${currentState.selectedMonth}")
-
-        // Filter logs by current period
-        val periodLogs = ActivityInsightsEngine.filterLogsByPeriod(
-            allLogs,
-            currentState.selectedYear,
-            currentState.selectedMonth,
-            currentState.isMonthly
-        )
-
-        android.util.Log.d("StatisticsVM", "Logs after period filter: ${periodLogs.size}")
-        periodLogs.take(3).forEach { log ->
-            android.util.Log.d("StatisticsVM", "  Log date=${log.date} mood=${log.baseMoodId} activityIds=${log.activityIds}")
+    fun updateFilter(category: String, isSelected: Boolean) {
+        _uiState.update { currentState ->
+            val newFilter = if (isSelected) {
+                currentState.activityFilter + category
+            } else {
+                currentState.activityFilter - category
+            }
+            currentState.copy(
+                activityFilter = newFilter,
+                filteredActivities = filterAndSortActivities(
+                    currentState.stats?.bestActivities ?: emptyList(),
+                    newFilter,
+                    currentState.sortOrder
+                )
+            )
         }
-
-        // Compute Best/Worst correlations
-        val (bestCorr, worstCorr) = ActivityInsightsEngine.computeBestWorst(periodLogs, activities)
-        android.util.Log.d("StatisticsVM", "Correlations: best=${bestCorr.size}, worst=${worstCorr.size}")
-
-        // Compute Icon Deep Dive for currently selected activity
-        val deepDive = ActivityInsightsEngine.computeIconDeepDive(
-            activityId = currentState.selectedIconId,
-            logs = periodLogs,
-            activities = activities
-        )
-
-        _uiState.update { it.copy(
-            bestCorrelations = bestCorr,
-            worstCorrelations = worstCorr,
-            iconDeepDive = deepDive
-        ) }
     }
+
+    fun toggleSortOrder() {
+        _uiState.update { currentState ->
+            val newSortOrder = if (currentState.sortOrder == SortOrder.MOST_RECORDED) {
+                SortOrder.LEAST_RECORDED
+            } else {
+                SortOrder.MOST_RECORDED
+            }
+            currentState.copy(
+                sortOrder = newSortOrder,
+                filteredActivities = filterAndSortActivities(
+                    currentState.stats?.bestActivities ?: emptyList(),
+                    currentState.activityFilter,
+                    newSortOrder
+                )
+            )
+        }
+    }
+
+    private fun filterAndSortActivities(
+        activities: List<com.diary.moonpage.data.remote.dto.stats.BestActivityDto>,
+        filter: Set<String>,
+        sortOrder: SortOrder
+    ): List<com.diary.moonpage.data.remote.dto.stats.BestActivityDto> {
+        val filtered = if (filter.isEmpty()) activities else activities.filter { filter.contains(it.activityName) }
+        return when (sortOrder) {
+            SortOrder.MOST_RECORDED -> filtered.sortedByDescending { it.occurrence }
+            SortOrder.LEAST_RECORDED -> filtered.sortedBy { it.occurrence }
+        }
+    }
+
 
     fun onIconClick(id: String?) {
         _uiState.update { it.copy(selectedIconId = id) }
-        // Recompute deep dive for newly selected icon
-        viewModelScope.launch {
-            val allLogs = dailyLogRepository.getAllDailyLogsFlow().first()
-            val currentState = _uiState.value
-            val activities = currentState.stats?.bestActivities ?: return@launch
-            val periodLogs = ActivityInsightsEngine.filterLogsByPeriod(
-                allLogs,
-                currentState.selectedYear,
-                currentState.selectedMonth,
-                currentState.isMonthly
-            )
-            val deepDive = ActivityInsightsEngine.computeIconDeepDive(
-                activityId = id,
-                logs = periodLogs,
-                activities = activities
-            )
-            _uiState.update { it.copy(iconDeepDive = deepDive) }
-        }
     }
 
     fun onMonthSelected(year: Int, month: Int) {
