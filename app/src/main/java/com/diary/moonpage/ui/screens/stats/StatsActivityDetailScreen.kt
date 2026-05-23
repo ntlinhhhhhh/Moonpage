@@ -28,7 +28,9 @@ fun StatsActivityDetailRoute(
     StatsActivityDetailScreen(
         uiState = uiState,
         onNavigateBack = onNavigateBack,
-        onIconClick = viewModel::onIconClick
+        onIconClick = viewModel::onIconClick,
+        onFilterChange = viewModel::updateFilter,
+        onSortToggle = viewModel::toggleSortOrder
     )
 }
 
@@ -37,10 +39,12 @@ fun StatsActivityDetailRoute(
 fun StatsActivityDetailScreen(
     uiState: StatisticsUiState,
     onNavigateBack: () -> Unit,
-    onIconClick: (String?) -> Unit
+    onIconClick: (String?) -> Unit,
+    onFilterChange: (String, Boolean) -> Unit,
+    onSortToggle: () -> Unit
 ) {
-    val scrollState = rememberScrollState()
     val backText = stringResource(R.string.back)
+    var showFilterModal by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -51,33 +55,34 @@ fun StatsActivityDetailScreen(
                         Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = backText)
                     }
                 },
+                actions = {
+                    FilterToggle(onClick = { showFilterModal = true })
+                    SortToggle(currentOrder = uiState.sortOrder, onClick = onSortToggle)
+                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
+        if (showFilterModal) {
+            val categories = uiState.stats?.bestActivities?.map { it.activityName }?.toSet() ?: emptySet()
+            ActivityFilterModal(
+                categories = categories,
+                selectedFilter = uiState.activityFilter,
+                onFilterChange = onFilterChange,
+                onDismiss = { showFilterModal = false }
+            )
+        }
+
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .verticalScroll(scrollState)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                StatsCard(title = stringResource(R.string.activity_stats)) {
-                    FrequentlyRecordedView(
-                        activities = uiState.frequentlyRecorded,
-                        onIconClick = onIconClick
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-            }
+            RankedActivityList(
+                activities = uiState.filteredActivities,
+                modifier = Modifier.padding(padding)
+            )
         }
     }
 }

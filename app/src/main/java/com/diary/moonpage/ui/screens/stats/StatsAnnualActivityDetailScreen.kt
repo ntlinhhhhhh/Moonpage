@@ -6,7 +6,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -23,8 +27,10 @@ fun StatsAnnualActivityDetailRoute(
     
     StatsAnnualActivityDetailScreen(
         uiState = uiState,
-        onBack = onBack,
-        onIconClick = viewModel::onIconClick
+        onNavigateBack = onBack,
+        onIconClick = viewModel::onIconClick,
+        onFilterChange = viewModel::updateFilter,
+        onSortToggle = viewModel::toggleSortOrder
     )
 }
 
@@ -32,41 +38,50 @@ fun StatsAnnualActivityDetailRoute(
 @Composable
 fun StatsAnnualActivityDetailScreen(
     uiState: StatisticsUiState,
-    onBack: () -> Unit,
-    onIconClick: (String?) -> Unit
+    onNavigateBack: () -> Unit,
+    onIconClick: (String?) -> Unit,
+    onFilterChange: (String, Boolean) -> Unit,
+    onSortToggle: () -> Unit
 ) {
+    var showFilterModal by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Annual Activities", fontWeight = FontWeight.Bold, fontSize = 20.sp) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Rounded.ArrowBack, contentDescription = "Back")
                     }
+                },
+                actions = {
+                    FilterToggle(onClick = { showFilterModal = true })
+                    SortToggle(currentOrder = uiState.sortOrder, onClick = onSortToggle)
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Column(
-            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(padding).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            StatsCard(title = "Top Activities of the Year") {
-                FrequentlyRecordedView(
-                    activities = uiState.frequentlyRecorded,
-                    onIconClick = onIconClick
-                )
+        if (showFilterModal) {
+            val categories = uiState.stats?.bestActivities?.map { it.activityName }?.toSet() ?: emptySet()
+            ActivityFilterModal(
+                categories = categories,
+                selectedFilter = uiState.activityFilter,
+                onFilterChange = onFilterChange,
+                onDismiss = { showFilterModal = false }
+            )
+        }
+
+        if (uiState.isLoading) {
+            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
-            
-            uiState.selectedIconId?.let { iconId ->
-                IconDeepDiveView(
-                    activityId = iconId,
-                    allActivities = uiState.stats?.bestActivities ?: emptyList(),
-                    themeType = uiState.themeType
-                )
-            }
+        } else {
+            RankedActivityList(
+                activities = uiState.filteredActivities,
+                modifier = Modifier.padding(padding)
+            )
         }
     }
 }

@@ -10,6 +10,9 @@ data class StatisticsUiState(
     val error: String? = null,
     val stats: StatisticsResponse? = null,
     val frequentlyRecorded: List<BestActivityDto> = emptyList(),
+    val filteredActivities: List<BestActivityDto> = emptyList(),
+    val activityFilter: Set<String> = emptySet(),
+    val sortOrder: SortOrder = SortOrder.MOST_RECORDED,
     val bestActivities: List<BestActivityDto> = emptyList(),
     val worstActivities: List<BestActivityDto> = emptyList(),
     val selectedYear: Int = java.time.LocalDate.now().year,
@@ -22,3 +25,7 @@ data class StatisticsUiState(
     val isCapturing: Boolean = false,
     val captureError: String? = null
 )
+
+enum class SortOrder {
+    MOST_RECORDED, LEAST_RECORDED
+}

@@ -52,8 +52,14 @@ class StatisticsViewModel @Inject constructor(
                     
                     val freq = stats.bestActivities.sortedByDescending { it.occurrence }.take(3)
                     
+                    // Apply initial filtering and sorting
+                    val filtered = filterAndSortActivities(
+                        stats.bestActivities, 
+                        _uiState.value.activityFilter, 
+                        _uiState.value.sortOrder
+                    )
+                    
                     // Improved Correlation Algorithm for Best/Worst
-                    // Filter activities that occurred at least 2 times (for better correlation)
                     val relevantActivities = stats.bestActivities.filter { it.occurrence >= 1 }
                     val best = relevantActivities.sortedByDescending { it.averageMoodScore }.take(3)
                     val worst = relevantActivities.sortedBy { it.averageMoodScore }.take(3)
@@ -75,6 +81,7 @@ class StatisticsViewModel @Inject constructor(
                     _uiState.update { it.copy(
                         stats = stats, 
                         frequentlyRecorded = freq,
+                        filteredActivities = filtered,
                         bestActivities = best,
                         worstActivities = worst,
                         averageWakeUpTime = avgWakeUpTime,
@@ -88,6 +95,55 @@ class StatisticsViewModel @Inject constructor(
             }
         }
     }
+
+    fun updateFilter(category: String, isSelected: Boolean) {
+        _uiState.update { currentState ->
+            val newFilter = if (isSelected) {
+                currentState.activityFilter + category
+            } else {
+                currentState.activityFilter - category
+            }
+            currentState.copy(
+                activityFilter = newFilter,
+                filteredActivities = filterAndSortActivities(
+                    currentState.stats?.bestActivities ?: emptyList(),
+                    newFilter,
+                    currentState.sortOrder
+                )
+            )
+        }
+    }
+
+    fun toggleSortOrder() {
+        _uiState.update { currentState ->
+            val newSortOrder = if (currentState.sortOrder == SortOrder.MOST_RECORDED) {
+                SortOrder.LEAST_RECORDED
+            } else {
+                SortOrder.MOST_RECORDED
+            }
+            currentState.copy(
+                sortOrder = newSortOrder,
+                filteredActivities = filterAndSortActivities(
+                    currentState.stats?.bestActivities ?: emptyList(),
+                    currentState.activityFilter,
+                    newSortOrder
+                )
+            )
+        }
+    }
+
+    private fun filterAndSortActivities(
+        activities: List<com.diary.moonpage.data.remote.dto.stats.BestActivityDto>,
+        filter: Set<String>,
+        sortOrder: SortOrder
+    ): List<com.diary.moonpage.data.remote.dto.stats.BestActivityDto> {
+        val filtered = if (filter.isEmpty()) activities else activities.filter { filter.contains(it.activityName) }
+        return when (sortOrder) {
+            SortOrder.MOST_RECORDED -> filtered.sortedByDescending { it.occurrence }
+            SortOrder.LEAST_RECORDED -> filtered.sortedBy { it.occurrence }
+        }
+    }
+
 
     fun onIconClick(id: String?) {
         _uiState.update { it.copy(selectedIconId = id) }

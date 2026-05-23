@@ -3,6 +3,8 @@ package com.diary.moonpage.ui.screens.stats.components
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -37,6 +39,7 @@ import com.diary.moonpage.data.remote.dto.stats.BestActivityDto
 import com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto
 import com.diary.moonpage.data.remote.dto.stats.MoodFlowDto
 import com.diary.moonpage.core.theme.*
+import com.diary.moonpage.ui.screens.stats.SortOrder
 import java.time.YearMonth
 import java.util.Calendar
 import java.util.Locale
@@ -44,6 +47,25 @@ import kotlin.math.roundToInt
 
 import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
 import com.diary.moonpage.ui.screens.tutorial.TutorialStep
+
+@Composable
+fun MoonActivityIcon(icon: com.diary.moonpage.core.util.MoonIcon, size: androidx.compose.ui.unit.Dp = 44.dp) {
+    if (icon.drawableRes != null) {
+        Image(
+            painter = painterResource(id = icon.drawableRes),
+            contentDescription = null,
+            modifier = Modifier.size(size)
+        )
+    } else if (icon.vector != null) {
+        Icon(
+            imageVector = icon.vector,
+            contentDescription = null,
+            modifier = Modifier.size(size),
+            tint = icon.color
+        )
+    }
+}
+
 
 @Composable
 fun TabItem(text: String, isSelected: Boolean, onClick: () -> Unit) {
@@ -1239,22 +1261,92 @@ fun IconDeepDiveView(
 }
 
 @Composable
-fun MoonActivityIcon(icon: com.diary.moonpage.core.util.MoonIcon, size: androidx.compose.ui.unit.Dp = 44.dp) {
-    if (icon.drawableRes != null) {
-        Image(
-            painter = painterResource(id = icon.drawableRes),
-            contentDescription = null,
-            modifier = Modifier.size(size)
+fun ActivityListItem(rank: Int, activity: BestActivityDto, modifier: Modifier = Modifier) {
+    val icon = MoonIcons.getIconForActivity(activity.activityName)
+    Row(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "$rank.",
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.width(32.dp)
         )
-    } else if (icon.vector != null) {
+        Box(
+            modifier = Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            MoonActivityIcon(icon = icon, size = 24.dp)
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(activity.activityName, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+            Text("${activity.occurrence} records", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+fun RankedActivityList(activities: List<BestActivityDto>, modifier: Modifier = Modifier) {
+    LazyColumn(modifier = modifier.fillMaxWidth()) {
+        itemsIndexed(activities) { index, activity ->
+            ActivityListItem(rank = index + 1, activity = activity)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+        }
+    }
+}
+
+@Composable
+fun FilterToggle(onClick: () -> Unit) {
+    IconButton(onClick = onClick) {
+        Icon(Icons.Rounded.FilterList, contentDescription = "Filter", tint = MaterialTheme.colorScheme.onSurface)
+    }
+}
+
+@Composable
+fun SortToggle(currentOrder: SortOrder, onClick: () -> Unit) {
+    IconButton(onClick = onClick) {
         Icon(
-            imageVector = icon.vector,
-            contentDescription = null,
-            modifier = Modifier.size(size),
-            tint = icon.color
+            if (currentOrder == SortOrder.MOST_RECORDED) Icons.Rounded.ArrowDownward else Icons.Rounded.ArrowUpward,
+            contentDescription = "Sort",
+            tint = MaterialTheme.colorScheme.onSurface
         )
     }
 }
+
+@Composable
+fun ActivityFilterModal(
+    categories: Set<String>,
+    selectedFilter: Set<String>,
+    onFilterChange: (String, Boolean) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Filter Activities") },
+        text = {
+            Column {
+                categories.forEach { category ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().clickable { onFilterChange(category, !selectedFilter.contains(category)) }
+                    ) {
+                        Checkbox(
+                            checked = selectedFilter.contains(category),
+                            onCheckedChange = { onFilterChange(category, it) }
+                        )
+                        Text(category.ifBlank { "Uncategorized" })
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Apply") }
+        }
+    )
+}
+
 
 @Composable
 fun FrequentlyRecordedView(activities: List<BestActivityDto>, onIconClick: (String?) -> Unit = {}) {
