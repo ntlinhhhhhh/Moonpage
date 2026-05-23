@@ -20,6 +20,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.json.JSONArray
+import org.json.JSONObject
 import java.util.UUID
 import javax.inject.Inject
 
@@ -330,6 +332,9 @@ class CustomThemeEditorViewModel @Inject constructor(
                             price = CUSTOM_THEME_SLOT_PRICE,
                             thumbnailUrl = previewPath,
                             backgroundUrl = previewPath,
+                            primaryColor = state.lightAppearance.primaryColor.toColorHex(),
+                            backgroundColor = state.lightAppearance.themeBackgroundColor().toColorHex(),
+                            description = state.toThemeConfigJson(),
                             isOfficial = false,
                             isActive = true,
                             moods = state.lightAppearance.toMoodPayloads()
@@ -382,6 +387,36 @@ class CustomThemeEditorViewModel @Inject constructor(
     }
 
     private fun Long.toColorHex(): String = "#%08X".format(this)
+
+    private fun ThemeAppearanceState.themeBackgroundColor(): Long {
+        return when (backgroundFillMode) {
+            BackgroundFillMode.Gradient -> gradientStartColor
+            BackgroundFillMode.Solid -> solidBackgroundColor
+        }
+    }
+
+    private fun CustomThemeEditorUiState.toThemeConfigJson(): String {
+        return JSONObject()
+            .put("light", lightAppearance.toJson())
+            .put("dark", darkAppearance.toJson())
+            .toString()
+    }
+
+    private fun ThemeAppearanceState.toJson(): JSONObject {
+        return JSONObject()
+            .put("backgroundUri", backgroundUri)
+            .put("backgroundScale", backgroundScale)
+            .put("backgroundRotation", backgroundRotation)
+            .put("backgroundOffsetX", backgroundOffsetX)
+            .put("backgroundOffsetY", backgroundOffsetY)
+            .put("backgroundFillMode", backgroundFillMode.name)
+            .put("solidBackgroundColor", solidBackgroundColor.toColorHex())
+            .put("gradientStartColor", gradientStartColor.toColorHex())
+            .put("gradientEndColor", gradientEndColor.toColorHex())
+            .put("primaryColor", primaryColor.toColorHex())
+            .put("iconColor", iconColor.toColorHex())
+            .put("iconColors", JSONArray(iconColors.map { it.toColorHex() }))
+    }
 
     private suspend fun resolveServerThemeId(
         fileName: String,

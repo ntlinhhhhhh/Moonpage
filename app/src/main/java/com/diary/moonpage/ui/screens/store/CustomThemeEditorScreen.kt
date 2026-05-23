@@ -632,7 +632,7 @@ private fun ThemeCalendarMockScreen(
     onDarkModeSelected: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val calendarCardColor = panelColor
+    val calendarCardColor = if (isDarkMode) panelColor else Color.White
 
     Box(modifier = modifier) {
         Column(
@@ -685,8 +685,8 @@ private fun ThemeCalendarMockScreen(
                 modifier = Modifier.fillMaxWidth().weight(1f),
                 shape = RoundedCornerShape(28.dp),
                 color = calendarCardColor,
-                tonalElevation = 6.dp,
-                shadowElevation = 14.dp
+                tonalElevation = if (isDarkMode) 6.dp else 0.dp,
+                shadowElevation = if (isDarkMode) 14.dp else 0.dp
             ) {
                 Column(
                     modifier = Modifier
@@ -699,7 +699,7 @@ private fun ThemeCalendarMockScreen(
                         primary = primary,
                         iconColors = iconColors,
                         contentColor = contentColor,
-                        panelColor = panelColor,
+                        panelColor = calendarCardColor,
                         transparentBackground = false,
                         modifier = Modifier.weight(1f)
                     )
