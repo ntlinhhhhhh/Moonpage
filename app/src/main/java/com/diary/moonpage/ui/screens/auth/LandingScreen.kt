@@ -46,7 +46,14 @@ fun LandingScreen(
 
     // Auto-scroll logic: Loops back to start after the last slide
     LaunchedEffect(pagerState.currentPage) {
-        delay(6000) // 6 seconds per slide for reading and animation
+        val duration = when (pagerState.currentPage) {
+            0 -> 8000L // Slide 1: Mood Logging (complex animation)
+            1 -> 4000L // Slide 2: Beautiful Logging (single screen)
+            2 -> 10000L // Slide 3: Monthly Themes (5 themes)
+            3 -> 8000L // Slide 4: Advanced Stats (2 frames)
+            else -> 6000L
+        }
+        delay(duration)
         scope.launch {
             val nextPage = (pagerState.currentPage + 1) % 4
             pagerState.animateScrollToPage(nextPage)

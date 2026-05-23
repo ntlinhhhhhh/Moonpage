@@ -22,6 +22,22 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import android.app.Activity
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.Indication
+import androidx.compose.foundation.IndicationNodeFactory
+import androidx.compose.foundation.interaction.InteractionSource
+import androidx.compose.ui.node.DelegatableNode
+import androidx.compose.ui.Modifier
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalRippleConfiguration
+
+private object NoIndication : IndicationNodeFactory {
+    override fun create(interactionSource: InteractionSource): DelegatableNode {
+        return object : Modifier.Node() {}
+    }
+    override fun equals(other: Any?): Boolean = other === this
+    override fun hashCode(): Int = System.identityHashCode(this)
+}
 
 val LocalLocale = staticCompositionLocalOf { "en" }
 
@@ -425,9 +441,12 @@ fun MoonPageTheme(
         }
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     CompositionLocalProvider(
         LocalMoonCustomColors provides customColors,
-        LocalLocale provides "en" // This should be updated in MainActivity to provide the real value
+        LocalLocale provides "en", // This should be updated in MainActivity to provide the real value
+        LocalIndication provides NoIndication,
+        LocalRippleConfiguration provides null
     ) {
         MaterialTheme(
             colorScheme = colorScheme,

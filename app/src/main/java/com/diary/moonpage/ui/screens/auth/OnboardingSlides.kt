@@ -59,17 +59,17 @@ fun MoodLoggingSlide(isVisible: Boolean) {
             
             delay(1000)
             selectedMoodIdx = 3 // Click Happy
-            delay(800)
+            delay(1000)
             step = 1 // Show Mood + Weather
-            delay(800)
+            delay(1000)
             selectedActivityIdxs = selectedActivityIdxs + 0 // Click Sunny
-            delay(800)
+            delay(1000)
             step = 2 // Show Weather + Social
-            delay(800)
+            delay(1000)
             selectedActivityIdxs = selectedActivityIdxs + 5 // Click Group
-            delay(800)
+            delay(1000)
             step = 3 // Show Social + Feelings
-            delay(800)
+            delay(1000)
             selectedActivityIdxs = selectedActivityIdxs + 10 // Click Excited
         } else {
             step = 0
@@ -566,15 +566,15 @@ fun AnnualLookBackSlide(isVisible: Boolean) {
         if (isVisible) {
             while (true) {
                 activeThemeIdx = 0
-                delay(1200)
+                delay(2000)
                 activeThemeIdx = 1
-                delay(1200)
+                delay(2000)
                 activeThemeIdx = 2
-                delay(1200)
+                delay(2000)
                 activeThemeIdx = 3
-                delay(1200)
+                delay(2000)
                 activeThemeIdx = 4
-                delay(1200)
+                delay(2000)
             }
         }
     }

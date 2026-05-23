@@ -265,7 +265,7 @@ class CustomThemeEditorViewModel @Inject constructor(
     }
 
     fun setBrushType(type: BrushType) {
-        _uiState.update { it.copy(brushType = type, hasUnsavedChanges = true) }
+        _uiState.update { it.copy(brushType = type, isEraser = false, hasUnsavedChanges = true) }
     }
 
     fun setEraser(enabled: Boolean) {
@@ -292,6 +292,12 @@ class CustomThemeEditorViewModel @Inject constructor(
 
     fun undoStroke() {
         _uiState.update { it.copy(strokes = it.strokes.dropLast(1), hasUnsavedChanges = true) }
+    }
+
+    fun clearStrokes() {
+        _uiState.update { state ->
+            if (state.strokes.isEmpty()) state else state.copy(strokes = emptyList(), hasUnsavedChanges = true)
+        }
     }
 
     fun onBackRequested(onNavigateBack: () -> Unit) {

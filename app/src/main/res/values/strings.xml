@@ -504,6 +504,7 @@
     <string name="custom_theme_eyedropper_placeholder">Eyedropper coming soon</string>
     <string name="custom_theme_active_now">Active</string>
     <string name="custom_theme_eraser">Eraser</string>
+    <string name="custom_theme_clear_strokes">Clear strokes</string>
     <string name="custom_theme_brush_fine">Fine</string>
     <string name="custom_theme_brush_bold">Bold</string>
     <string name="custom_theme_brush_pencil">Pencil</string>
