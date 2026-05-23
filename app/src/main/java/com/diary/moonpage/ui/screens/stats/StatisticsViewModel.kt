@@ -3,6 +3,7 @@ package com.diary.moonpage.ui.screens.stats
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.domain.repository.StatisticsRepository
+import com.diary.moonpage.domain.repository.DailyLogRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -11,6 +12,7 @@ import javax.inject.Inject
 @HiltViewModel
 class StatisticsViewModel @Inject constructor(
     private val repository: StatisticsRepository,
+    private val logRepository: DailyLogRepository,
     private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
     private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager
 ) : ViewModel() {
@@ -42,16 +44,33 @@ class StatisticsViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
                 val isMonthly = _uiState.value.isMonthly
+                val selectedYear = _uiState.value.selectedYear
+                val selectedMonth = _uiState.value.selectedMonth
+
                 val response = repository.getStatisticsSummary(
-                    _uiState.value.selectedYear,
-                    if (isMonthly) _uiState.value.selectedMonth else null,
+                    selectedYear,
+                    if (isMonthly) selectedMonth else null,
                     isMonthly
                 )
+                
+                // Fetch logs for correlation computing
+                val allLogs = logRepository.getAllDailyLogsFlow().first()
+                val periodLogs = ActivityInsightsEngine.filterLogsByPeriod(
+                    allLogs, selectedYear, if (isMonthly) selectedMonth else null, isMonthly
+                )
+
                 if (response.isSuccessful && response.body() != null) {
                     val stats = response.body()!!
                     
                     val freq = stats.bestActivities.sortedByDescending { it.occurrence }.take(3)
                     
+                    // Compute correlations using the engine
+                    val (bestCorr, worstCorr) = ActivityInsightsEngine.computeBestWorst(periodLogs, stats.bestActivities)
+                    
+                    // Compute initial deep dive
+                    val targetIconId = _uiState.value.selectedIconId ?: stats.bestActivities.firstOrNull()?.activityId
+                    val deepDive = ActivityInsightsEngine.computeIconDeepDive(targetIconId, periodLogs, stats.bestActivities)
+
                     // Apply initial filtering and sorting
                     val filtered = filterAndSortActivities(
                         stats.bestActivities,
@@ -59,10 +78,10 @@ class StatisticsViewModel @Inject constructor(
                         _uiState.value.sortOrder
                     )
 
-                    // Improved Correlation Algorithm for Best/Worst
+                    // Legacy best/worst for fallback
                     val relevantActivities = stats.bestActivities.filter { it.occurrence >= 1 }
-                    val best = relevantActivities.sortedByDescending { it.averageMoodScore }.take(3)
-                    val worst = relevantActivities.sortedBy { it.averageMoodScore }.take(3)
+                    val bestLegacy = relevantActivities.sortedByDescending { it.averageMoodScore }.take(3)
+                    val worstLegacy = relevantActivities.sortedBy { it.averageMoodScore }.take(3)
                     
                     // Calculate Average Wake Up Time based on average bedtime and sleep hours
                     val avgWakeUpTime = stats.averageWakeupTime ?: if (stats.averageSleepStartTime != null && stats.averageSleepHours != null) {
@@ -82,8 +101,11 @@ class StatisticsViewModel @Inject constructor(
                         stats = stats, 
                         frequentlyRecorded = freq,
                         filteredActivities = filtered,
-                        bestActivities = best,
-                        worstActivities = worst,
+                        bestActivities = bestLegacy,
+                        worstActivities = worstLegacy,
+                        bestCorrelations = bestCorr,
+                        worstCorrelations = worstCorr,
+                        iconDeepDive = deepDive,
                         averageWakeUpTime = avgWakeUpTime,
                         isLoading = false
                     ) }
@@ -146,7 +168,24 @@ class StatisticsViewModel @Inject constructor(
 
 
     fun onIconClick(id: String?) {
-        _uiState.update { it.copy(selectedIconId = id) }
+        viewModelScope.launch {
+            _uiState.update { it.copy(selectedIconId = id) }
+            
+            // Recompute deep dive for selected icon
+            val allLogs = logRepository.getAllDailyLogsFlow().first()
+            val periodLogs = ActivityInsightsEngine.filterLogsByPeriod(
+                allLogs, 
+                _uiState.value.selectedYear, 
+                if (_uiState.value.isMonthly) _uiState.value.selectedMonth else null, 
+                _uiState.value.isMonthly
+            )
+            val deepDive = ActivityInsightsEngine.computeIconDeepDive(
+                id, 
+                periodLogs, 
+                _uiState.value.stats?.bestActivities ?: emptyList()
+            )
+            _uiState.update { it.copy(iconDeepDive = deepDive) }
+        }
     }
 
     fun onMonthSelected(year: Int, month: Int) {

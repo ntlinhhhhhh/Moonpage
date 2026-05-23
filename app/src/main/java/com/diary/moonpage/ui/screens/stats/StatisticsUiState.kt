@@ -23,7 +23,10 @@ data class StatisticsUiState(
     val selectedIconId: String? = null,
     val averageWakeUpTime: String? = null,
     val isCapturing: Boolean = false,
-    val captureError: String? = null
+    val captureError: String? = null,
+    val bestCorrelations: List<ActivityCorrelation> = emptyList(),
+    val worstCorrelations: List<ActivityCorrelation> = emptyList(),
+    val iconDeepDive: IconDeepDiveResult? = null
 )
 
 enum class SortOrder {
