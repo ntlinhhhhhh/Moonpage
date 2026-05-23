@@ -1,6 +1,5 @@
 package com.diary.moonpage.ui.screens.calendar
 
-import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -17,11 +16,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -31,7 +33,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.diary.moonpage.R
-import com.diary.moonpage.core.util.ComposeCaptureUtils
 import com.diary.moonpage.core.util.ImageUtils
 import com.diary.moonpage.core.util.MoonIcons
 import kotlinx.coroutines.launch
@@ -51,10 +52,8 @@ fun ShareLogRoute(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val view = LocalView.current
-    val compositionContext = rememberCompositionContext()
     val snackbarHostState = remember { SnackbarHostState() }
-    val density = androidx.compose.ui.platform.LocalDensity.current
+    val graphicsLayer = rememberGraphicsLayer()
 
     LaunchedEffect(dateString) {
         viewModel.setInitialDate(LocalDate.parse(dateString))
@@ -85,28 +84,14 @@ fun ShareLogRoute(
                         enabled = !uiState.isLoading,
                         onClick = {
                             scope.launch {
-                                val width = 1080
-                                ComposeCaptureUtils.captureComposable(
-                                    view = view,
-                                    parentContext = compositionContext,
-                                    content = {
-                                        Box(
-                                            modifier = Modifier
-                                                .width(with(density) { 1080.toDp() })
-                                                .background(Color(0xFFF7F7F5))
-                                                .padding(16.dp),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            ShareLogCard(uiState = uiState)
-                                        }
-                                    },
-                                    width = width,
-                                    onBitmapCaptured = { bitmap ->
-                                        scope.launch {
-                                            ImageUtils.saveBitmapToGallery(context, bitmap)
-                                        }
-                                    }
-                                )
+                                runCatching {
+                                    graphicsLayer.toImageBitmap().asAndroidBitmap()
+                                }.onSuccess { bitmap ->
+                                    ImageUtils.saveBitmapToGallery(context, bitmap)
+                                    snackbarHostState.showSnackbar("Saved to gallery")
+                                }.onFailure { error ->
+                                    snackbarHostState.showSnackbar("Save failed: ${error.message ?: "unknown error"}")
+                                }
                             }
                         }
                     ) {
@@ -128,28 +113,13 @@ fun ShareLogRoute(
                     enabled = !uiState.isLoading,
                     onClick = {
                         scope.launch {
-                            val width = 1080
-                            ComposeCaptureUtils.captureComposable(
-                                view = view,
-                                parentContext = compositionContext,
-                                content = {
-                                    Box(
-                                        modifier = Modifier
-                                            .width(with(density) { 1080.toDp() })
-                                            .background(Color(0xFFF7F7F5))
-                                            .padding(24.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        ShareLogCard(uiState = uiState)
-                                    }
-                                },
-                                width = width,
-                                onBitmapCaptured = { bitmap ->
-                                    scope.launch {
-                                        ImageUtils.shareImage(context, bitmap, "My Daily Log")
-                                    }
-                                }
-                            )
+                            runCatching {
+                                graphicsLayer.toImageBitmap().asAndroidBitmap()
+                            }.onSuccess { bitmap ->
+                                ImageUtils.shareImage(context, bitmap, "My Daily Log")
+                            }.onFailure { error ->
+                                snackbarHostState.showSnackbar("Share failed: ${error.message ?: "unknown error"}")
+                            }
                         }
                     },
                     modifier = Modifier
@@ -195,6 +165,12 @@ fun ShareLogRoute(
                         .width(360.dp)
                         .clip(RoundedCornerShape(24.dp))
                         .background(Color(0xFFF1F1ED))
+                        .drawWithContent {
+                            graphicsLayer.record {
+                                this@drawWithContent.drawContent()
+                            }
+                            drawLayer(graphicsLayer)
+                        }
                 ) {
                     ShareLogCard(uiState = uiState)
                 }
