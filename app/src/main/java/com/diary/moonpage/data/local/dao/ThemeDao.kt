@@ -26,6 +26,9 @@ interface ThemeDao {
     suspend fun setActiveTheme(id: String, timestamp: Long)
 
     @Query("SELECT * FROM themes WHERE isActive = 1 LIMIT 1")
+    fun observeActiveTheme(): Flow<ThemeEntity?>
+
+    @Query("SELECT * FROM themes WHERE isActive = 1 LIMIT 1")
     suspend fun getActiveTheme(): com.diary.moonpage.data.local.entity.ThemeEntity?
 
     @Query("DELETE FROM themes")

@@ -31,6 +31,8 @@ class ThemeRepositoryImpl @Inject constructor(
         entities.map { it.toDomain() }
     }
 
+    override val activeTheme: Flow<Theme?> = dao.observeActiveTheme().map { it?.toDomain() }
+
     override val allThemes: Flow<List<Theme>> = dao.getAllThemes().map { entities ->
         entities.map { it.toDomain() }
     }

@@ -30,6 +30,7 @@ import androidx.compose.ui.node.DelegatableNode
 import androidx.compose.ui.Modifier
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalRippleConfiguration
+import com.diary.moonpage.domain.model.Theme
 
 private object NoIndication : IndicationNodeFactory {
     override fun create(interactionSource: InteractionSource): DelegatableNode {
@@ -196,10 +197,16 @@ fun getThemeShades(themeType: MoonThemeType): List<Color> {
 @Composable
 fun MoonPageTheme(
     themeType: MoonThemeType = MoonThemeType.DEFAULT,
+    activeTheme: Theme? = null,
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
+    val customThemePrimary = activeTheme
+        ?.takeIf { it.isCustomTheme() }
+        ?.primaryColor
+        .toThemeColorOrNull()
+
     val themePrimary = if (darkTheme) {
         when (themeType) {
             MoonThemeType.DEFAULT -> Color(0xFFE8D5C4) // More sophisticated cream/gold for dark
@@ -226,7 +233,7 @@ fun MoonPageTheme(
             MoonThemeType.WEATHER_CYCLE -> Color(0xFF607D8B)
         }
     } else {
-        when (themeType) {
+        customThemePrimary ?: when (themeType) {
             MoonThemeType.DEFAULT -> Color(0xFF8C7E6A) // Deep elegant taupe for light
             else -> MoonActionLight // Fallback to original
         }
@@ -235,155 +242,162 @@ fun MoonPageTheme(
     val targetColorScheme = if (darkTheme) {
         DarkColorScheme.copy(primary = themePrimary)
     } else {
-        when (themeType) {
-            MoonThemeType.DEFAULT -> LightColorScheme
-            MoonThemeType.SPROUT -> lightColorScheme(
+        when {
+            customThemePrimary != null -> {
+                LightColorScheme.copy(
+                    primary = customThemePrimary,
+                    surfaceVariant = customThemePrimary.copy(alpha = 0.05f)
+                )
+            }
+            themeType == MoonThemeType.DEFAULT -> LightColorScheme
+            themeType == MoonThemeType.SPROUT -> lightColorScheme(
                 primary = Color(0xFF66BB6A),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFF1F8E9)
             )
-            MoonThemeType.BLUSHING -> lightColorScheme(
+            themeType == MoonThemeType.BLUSHING -> lightColorScheme(
                 primary = Color(0xFFD2847A),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFFFF0F3)
             )
-            MoonThemeType.KITTY -> lightColorScheme(
+            themeType == MoonThemeType.KITTY -> lightColorScheme(
                 primary = Color(0xFF8A9AFF),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFF0F3FF)
             )
-            MoonThemeType.SUNNY -> lightColorScheme(
+            themeType == MoonThemeType.SUNNY -> lightColorScheme(
                 primary = Color(0xFFFFB300),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFFFF8E1)
             )
-            MoonThemeType.SKY -> lightColorScheme(
+            themeType == MoonThemeType.SKY -> lightColorScheme(
                 primary = Color(0xFF29B6F6),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFE1F5FE)
             )
-            MoonThemeType.FOREST -> lightColorScheme(
+            themeType == MoonThemeType.FOREST -> lightColorScheme(
                 primary = Color(0xFF26A69A),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFE0F2F1)
             )
-            MoonThemeType.COFFEE -> lightColorScheme(
+            themeType == MoonThemeType.COFFEE -> lightColorScheme(
                 primary = Color(0xFF8D6E63),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFEFEBE9)
             )
-            MoonThemeType.LEMON -> lightColorScheme(
+            themeType == MoonThemeType.LEMON -> lightColorScheme(
                 primary = Color(0xFFCDDC39),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFF9FBE7)
             )
-            MoonThemeType.CHERRY -> lightColorScheme(
+            themeType == MoonThemeType.CHERRY -> lightColorScheme(
                 primary = Color(0xFFEF5350),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFFFEBEE)
             )
-            MoonThemeType.LAVENDER -> lightColorScheme(
+            themeType == MoonThemeType.LAVENDER -> lightColorScheme(
                 primary = Color(0xFFAB47BC),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFF3E5F5)
             )
-            MoonThemeType.OCEAN -> lightColorScheme(
+            themeType == MoonThemeType.OCEAN -> lightColorScheme(
                 primary = Color(0xFF42A5F5),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFE3F2FD)
             )
-            MoonThemeType.MIDNIGHT -> lightColorScheme(
+            themeType == MoonThemeType.MIDNIGHT -> lightColorScheme(
                 primary = Color(0xFF1A1B26),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFE0E2EA)
             )
-            MoonThemeType.NEBULA -> lightColorScheme(
+            themeType == MoonThemeType.NEBULA -> lightColorScheme(
                 primary = Color(0xFF9C27B0),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFF3E5F5)
             )
-            MoonThemeType.MATCHA -> lightColorScheme(
+            themeType == MoonThemeType.MATCHA -> lightColorScheme(
                 primary = Color(0xFF4CAF50),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFE8F5E9)
             )
-            MoonThemeType.SUNSET -> lightColorScheme(
+            themeType == MoonThemeType.SUNSET -> lightColorScheme(
                 primary = Color(0xFFFF9800),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFFFF3E0)
             )
-            MoonThemeType.GALAXY -> lightColorScheme(
+            themeType == MoonThemeType.GALAXY -> lightColorScheme(
                 primary = Color(0xFF3F51B5),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFE8EAF6)
             )
-            MoonThemeType.AUTUMN -> lightColorScheme(
+            themeType == MoonThemeType.AUTUMN -> lightColorScheme(
                 primary = Color(0xFFD32F2F),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFFDF5E6)
             )
-            MoonThemeType.GRAY_BROWN -> lightColorScheme(
+            themeType == MoonThemeType.GRAY_BROWN -> lightColorScheme(
                 primary = Color(0xFF6D4C41),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFEFEBE9)
             )
-            MoonThemeType.COOKIE_BATCH -> lightColorScheme(
+            themeType == MoonThemeType.COOKIE_BATCH -> lightColorScheme(
                 primary = Color(0xFF8D6E63),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFFFF8E1)
             )
-            MoonThemeType.HEART_FELT -> lightColorScheme(
+            themeType == MoonThemeType.HEART_FELT -> lightColorScheme(
                 primary = Color(0xFFC2185B),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFFCE4EC)
             )
-            MoonThemeType.WEATHER_CYCLE -> lightColorScheme(
+            themeType == MoonThemeType.WEATHER_CYCLE -> lightColorScheme(
                 primary = Color(0xFF455A64),
                 onPrimary = Color.White,
                 background = MoonBgLight,
                 surface = Color.White,
                 surfaceVariant = Color(0xFFECEFF1)
             )
+            else -> LightColorScheme
         }
     }
     val colorScheme = targetColorScheme
@@ -454,6 +468,20 @@ fun MoonPageTheme(
             content = content
         )
     }
+}
+
+private fun Theme.isCustomTheme(): Boolean {
+    return id.startsWith("custom_") ||
+        decoration.equals("CUSTOM", ignoreCase = true) ||
+        collection.equals("Custom Theme", ignoreCase = true)
+}
+
+private fun String?.toThemeColorOrNull(): Color? {
+    if (isNullOrBlank()) return null
+    return runCatching {
+        val value = if (startsWith("#")) this else "#$this"
+        Color(android.graphics.Color.parseColor(value))
+    }.getOrNull()
 }
 
 @Composable

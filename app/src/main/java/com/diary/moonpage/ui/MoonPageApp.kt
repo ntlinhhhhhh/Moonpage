@@ -77,6 +77,7 @@ fun MoonPageAppContent(
 
     MoonPageTheme(
         themeType = uiState.themeType,
+        activeTheme = uiState.activeTheme,
         darkTheme = isDark
     ) {
         CompositionLocalProvider(

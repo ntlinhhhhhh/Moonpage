@@ -31,6 +31,7 @@ interface ThemeRepository {
     suspend fun getMoodsForTheme(themeId: String): List<com.diary.moonpage.data.local.entity.ThemeMoodEntity>
     suspend fun getActiveThemeId(): String?
     
+    val activeTheme: Flow<Theme?>
     val ownedThemes: Flow<List<Theme>>
     val allThemes: Flow<List<Theme>>
     val myThemes: Flow<List<Theme>>

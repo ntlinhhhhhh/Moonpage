@@ -25,6 +25,7 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val themePreferencesManager: ThemePreferencesManager,
+    private val themeRepository: com.diary.moonpage.domain.repository.ThemeRepository,
     private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
     private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository,
     private val settingsPreferencesManager: SettingsPreferencesManager,
@@ -85,12 +86,14 @@ class MainViewModel @Inject constructor(
             combine(
                 themePreferencesManager.themeType,
                 themePreferencesManager.isDarkMode,
-                settingsPreferencesManager.language
-            ) { themeType, isDarkMode, language ->
+                settingsPreferencesManager.language,
+                themeRepository.activeTheme
+            ) { themeType, isDarkMode, language, activeTheme ->
                 _uiState.update { it.copy(
                     themeType = themeType,
                     isDarkMode = isDarkMode,
-                    language = language
+                    language = language,
+                    activeTheme = activeTheme
                 ) }
             }.launchIn(viewModelScope)
 
