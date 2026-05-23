@@ -4,6 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -183,6 +184,7 @@ fun StoreTopBar(
         }
     }
 }
+
 @Composable
 fun ThemeCard(
     theme: Theme,
@@ -193,11 +195,25 @@ fun ThemeCard(
 ) {
     val onSurface = MaterialTheme.colorScheme.onBackground
 
+    val cardBg = if (isSelected) {
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+    } else {
+        MoonTheme.customColors.logCardBg
+    }
+
+    val thumbnailBg = if (isSelected) {
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    }
+
+    val badgeBg = MaterialTheme.colorScheme.surfaceVariant
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
-            .background(if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f) else MoonTheme.customColors.logCardBg)
+            .background(cardBg)
             .clickable { onClick() }
             .padding(vertical = 12.dp, horizontal = 8.dp)
     ) {
@@ -212,10 +228,7 @@ fun ThemeCard(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(
-                            if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
-                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                        ),
+                        .background(thumbnailBg),
                     contentAlignment = Alignment.Center
                 ) {
                     CuteBeanIcon(
@@ -226,7 +239,7 @@ fun ThemeCard(
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
-                
+
                 Column {
                     Text(
                         text = theme.name,
@@ -245,20 +258,20 @@ fun ThemeCard(
             if (theme.isOwned) {
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant
+                    color = badgeBg
                 ) {
                     Text(
                         text = "Purchased",
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = onSurface,
                         fontSize = 12.sp
                     )
                 }
             } else {
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant
+                    color = badgeBg
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -281,7 +294,7 @@ fun ThemeCard(
                         Text(
                             text = "${theme.price}",
                             style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = onSurface
                         )
                     }
                 }
@@ -291,40 +304,26 @@ fun ThemeCard(
         Spacer(modifier = Modifier.height(12.dp))
 
         val shades = getThemeShades(theme)
+        val isAppDarkTheme = MoonTheme.customColors.isDark
 
         val defaultBg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-        val lightPreviewBg = run {
-            val predefined = ThemeConstants.THEMES.find { it.id == theme.id }
-            val source = predefined?.backgroundUrl ?: theme.backgroundUrl ?: theme.primaryColor
+        val themeOverlayColor = if (!theme.primaryColor.isNullOrBlank()) {
             try {
-                if (!source.isNullOrBlank()) {
-                    val colorStr = if (source.startsWith("#")) source else "#$source"
-                    Color(android.graphics.Color.parseColor(colorStr)).copy(alpha = 0.28f)
-                } else if (theme.id == ThemeConstants.DEFAULT_THEME_ID) {
-                    Color(0xFFFFF2C2).copy(alpha = 0.2f)
-                } else {
-                    Color(0xFFFFFBF4)
-                }
+                val colorStr = if (theme.primaryColor.startsWith("#")) theme.primaryColor else "#${theme.primaryColor}"
+                Color(android.graphics.Color.parseColor(colorStr)).copy(alpha = 0.15f)
             } catch (e: Exception) {
-                if (theme.id == ThemeConstants.DEFAULT_THEME_ID) Color(0xFFFFF2C2).copy(alpha = 0.2f) else Color(0xFFFFFBF4)
-            }
-        }
-        val darkPreviewBg = Color(0xFF1F222A)
-        val previewBg = when (previewDarkMode) {
-            true -> darkPreviewBg
-            false -> lightPreviewBg
-            null -> if (!theme.primaryColor.isNullOrBlank()) {
-                try {
-                    val colorStr = if (theme.primaryColor.startsWith("#")) theme.primaryColor else "#${theme.primaryColor}"
-                    Color(android.graphics.Color.parseColor(colorStr)).copy(alpha = 0.15f)
-                } catch (e: Exception) {
-                    defaultBg
-                }
-            } else if (theme.id == ThemeConstants.DEFAULT_THEME_ID) {
-                Color(0xFFFFF2C2).copy(alpha = 0.2f)
-            } else {
                 defaultBg
             }
+        } else if (theme.id == ThemeConstants.DEFAULT_THEME_ID) {
+            Color(0xFFFFF2C2).copy(alpha = 0.2f)
+        } else {
+            defaultBg
+        }
+
+        val baseBoxBg = when (previewDarkMode) {
+            true -> Color(0xFF343434)
+            false -> Color(0xFFF4F5F9)
+            null -> if (isAppDarkTheme) Color(0xFF343434) else Color(0xFFF4F5F9)
         }
 
         Box(
@@ -332,7 +331,7 @@ fun ThemeCard(
                 .fillMaxWidth()
                 .height(160.dp)
                 .clip(RoundedCornerShape(24.dp))
-                .background(previewBg),
+                .background(baseBoxBg),
             contentAlignment = Alignment.Center
         ) {
             Row(

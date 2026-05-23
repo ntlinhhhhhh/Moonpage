@@ -310,50 +310,37 @@ class StoreViewModel @Inject constructor(
 
     private fun performActivateTheme(themeId: String) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            // Optimistically update the UI state in the store screen
+            val theme = (_uiState.value.ownedThemes + _uiState.value.customThemes)
+                .distinctBy { it.id }
+                .find { it.id == themeId }
             
-            setActiveThemeUseCase(themeId).onSuccess {
-                val theme = (_uiState.value.ownedThemes + _uiState.value.customThemes)
-                    .distinctBy { it.id }
-                    .find { it.id == themeId }
-                
-                _uiState.update { state ->
-                    val updatedOwned = state.ownedThemes.map { t ->
-                        t.copy(isActive = t.id == themeId)
-                    }
-                    val updatedCustomThemes = state.customThemes.map { t ->
-                        t.copy(isActive = t.id == themeId)
-                    }
-                    
-                    val updatedDetail = state.selectedThemeDetail?.copy(
-                        isActive = state.selectedThemeDetail.id == themeId
-                    )
-
-                    state.copy(
-                        ownedThemes = updatedOwned, 
-                        customThemes = updatedCustomThemes,
-                        isLoading = false,
-                        selectedThemeDetail = updatedDetail,
-                        activationSuccess = true
-                    )
+            _uiState.update { state ->
+                val updatedOwned = state.ownedThemes.map { t ->
+                    t.copy(isActive = t.id == themeId)
                 }
-                
-                // Emit effect immediately to trigger UI with a custom message
-                val themeName = theme?.name ?: "theme"
-                _uiEffect.emit(StoreUiEffect.ThemeActivated(message = "Theme \"$themeName\" has been activated successfully!"))
-                
-                // Sufficient delay to allow UI to show snackbar before theme change (which causes global recomposition)
-                delay(600)
-
-                // Map theme and save locally
-                theme?.let {
-                    if (!it.id.startsWith("custom_")) {
-                        themePreferencesManager.setThemeType(it.toMoonThemeType())
-                    }
+                val updatedCustomThemes = state.customThemes.map { t ->
+                    t.copy(isActive = t.id == themeId)
                 }
-            }.onFailure { error ->
-                _uiState.update { it.copy(isLoading = false) }
-                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Activation failed"))
+                val updatedDetail = state.selectedThemeDetail?.copy(
+                    isActive = state.selectedThemeDetail.id == themeId
+                )
+
+                state.copy(
+                    ownedThemes = updatedOwned,
+                    customThemes = updatedCustomThemes,
+                    selectedThemeDetail = updatedDetail,
+                    activationSuccess = true
+                )
+            }
+
+            // Emit effect immediately for instant feedback
+            val themeName = theme?.name ?: "theme"
+            _uiEffect.emit(StoreUiEffect.ThemeActivated(message = "Theme \"$themeName\" has been activated successfully!"))
+
+            // Call the UseCase (which now handles optimistic DB/DataStore updates)
+            setActiveThemeUseCase(themeId).onFailure { error ->
+                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Failed to sync theme activation"))
             }
         }
     }
