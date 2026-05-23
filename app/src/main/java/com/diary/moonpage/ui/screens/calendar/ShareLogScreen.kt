@@ -174,8 +174,6 @@ fun ShareLogRoute(
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                         .drawWithContent {
                             graphicsLayer.record {
                                 this@drawWithContent.drawContent()
@@ -194,332 +192,49 @@ fun ShareLogRoute(
 
 @Composable
 fun ShareLogCard(uiState: DailyLogUiState) {
-    val date = uiState.date
-    val themeType = uiState.themeType
-
-    // Formatting date: Monday, May 4
-    val dayOfWeek = date.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, Locale.ENGLISH)
-    val monthName = date.month.getDisplayName(java.time.format.TextStyle.FULL, Locale.ENGLISH)
-    val dayOfMonth = date.dayOfMonth
-    val dateText = "$dayOfWeek, $monthName $dayOfMonth"
-
-    val moodVisual = MoonIcons.Moods.getMoodVisual(uiState.selectedMood ?: 3, themeType, uiState.customMoods)
-    val themeColor = MaterialTheme.colorScheme.primary
-    
-    val isDark = MoonTheme.customColors.isDark
-    val cardBg = if (isDark) Color(0xFF2C2C2C) else Color(0xFFF1F1ED)
-    val textColor = if (isDark) Color(0xFFEEEEEE) else Color(0xFF424242)
-    val secondaryTextColor = if (isDark) Color(0xFFAAAAAA) else Color(0xFF9E9E9E)
-    val pillBg = if (isDark) Color.White.copy(alpha = 0.15f) else Color.White.copy(alpha = 0.6f)
-    val pillText = if (isDark) Color(0xFFDDDDDD) else Color(0xFF616161)
-    val dividerColor = if (isDark) Color(0xFF444444) else Color(0xFFD1D1CB)
-    val musicCardBg = if (isDark) Color.White.copy(alpha = 0.1f) else Color.White.copy(alpha = 0.8f)
-    val unknownArtist = stringResource(R.string.daily_log_unknown_artist)
-    val noteText = uiState.noteText.ifBlank { uiState.existingLog?.note.orEmpty() }
-    val menstruationText = when {
-        uiState.isMenstruation && uiState.menstruationDay != null -> stringResource(R.string.on_day_x, uiState.menstruationDay)
-        uiState.isMenstruation && !uiState.menstruationPhase.isNullOrBlank() -> uiState.menstruationPhase
-        uiState.isMenstruation -> stringResource(R.string.daily_log_menstrual_tracking_enabled)
-        else -> null
+    val existingLog = uiState.existingLog
+    val moodVisual = MoonIcons.Moods.getMoodVisual(
+        uiState.selectedMood ?: existingLog?.baseMoodId ?: 3,
+        uiState.themeType,
+        uiState.customMoods
+    )
+    val activityNames = uiState.selectedActivities.mapNotNull { id ->
+        uiState.dynamicActivities.find { it.id == id }?.name
+    }
+    val photos = (uiState.dailyPhotos + uiState.momentPhotos).distinct()
+    val noteSnippet = uiState.noteText.takeIf { it.isNotBlank() } ?: existingLog?.note
+    val musicRecord = when {
+        !uiState.musicTitle.isNullOrBlank() && !uiState.artistName.isNullOrBlank() ->
+            "${uiState.musicTitle} - ${uiState.artistName}"
+        !uiState.musicTitle.isNullOrBlank() -> uiState.musicTitle
+        else -> existingLog?.musicRecord
     }
 
-    Column(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .background(cardBg)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.Start 
+            .padding(vertical = 8.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MoonTheme.customColors.logCardBg
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        // Header with Logo
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.logo),
-                contentDescription = null,
-                modifier = Modifier.size(28.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                "MoonPage",
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = themeColor
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Text(
-                text = date.format(DateTimeFormatter.ofPattern("yyyy")),
-                fontSize = 14.sp,
-                color = secondaryTextColor,
-                fontWeight = FontWeight.Medium
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Mood Icon (Centered)
-        Box(
-            modifier = Modifier
-                .size(72.dp)
-                .clip(CircleShape)
-                .background(moodVisual.color.copy(alpha = 0.8f))
-                .align(Alignment.CenterHorizontally),
-            contentAlignment = Alignment.Center
-        ) {
-            if (moodVisual.drawableRes != null) {
-                Image(
-                    painter = painterResource(id = moodVisual.drawableRes),
-                    contentDescription = null,
-                    modifier = Modifier.size(48.dp)
-                )
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Date Pill (Centered)
-        Surface(
-            color = pillBg,
-            shape = RoundedCornerShape(10.dp),
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        ) {
-            Text(
-                text = dateText,
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-                fontSize = 14.sp,
-                color = pillText,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        // Dashed Line Divider
-        com.diary.moonpage.ui.screens.moment.components.DashedDivider(
-            color = dividerColor,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
+        com.diary.moonpage.ui.screens.calendar.components.DayDetailArea(
+            date = uiState.date,
+            moodIcon = moodVisual.vector,
+            moodDrawable = moodVisual.drawableRes,
+            moodColor = moodVisual.color,
+            moodLabel = moodVisual.name,
+            noteSnippet = noteSnippet,
+            activityNames = activityNames,
+            dailyPhotos = photos,
+            sleepHours = existingLog?.sleepHours ?: uiState.sleepHours.toDouble(),
+            isMenstruation = uiState.isMenstruation,
+            steps = existingLog?.steps ?: uiState.steps,
+            musicRecord = musicRecord,
+            weather = existingLog?.weather,
+            temperature = existingLog?.temperature
         )
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        // Content Section (Activities, Note, Photos, Music)
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.Start // Left aligned content
-        ) {
-            // Activities (Max 6, Left Aligned)
-            val activities = uiState.selectedActivities.mapNotNull { id ->
-                uiState.dynamicActivities.find { it.id == id }
-            }.take(6)
-            
-            if (activities.isNotEmpty()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    activities.forEachIndexed { index, activity ->
-                        val icon = MoonIcons.getIconForActivity(activity.name)
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(icon.color.copy(alpha = 0.1f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (icon.drawableRes != null) {
-                                Image(painterResource(id = icon.drawableRes), null, modifier = Modifier.size(22.dp))
-                            } else {
-                                Icon(icon.vector!!, null, modifier = Modifier.size(20.dp), tint = icon.color)
-                            }
-                        }
-                        if (index < activities.size - 1) Spacer(modifier = Modifier.width(10.dp))
-                    }
-                }
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-
-            if (noteText.isNotBlank()) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    color = musicCardBg
-                ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        Text(
-                            text = stringResource(R.string.daily_log_todays_note),
-                            fontSize = 12.sp,
-                            color = secondaryTextColor,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = noteText,
-                            modifier = Modifier.fillMaxWidth(),
-                            fontSize = 15.sp,
-                            color = textColor,
-                            textAlign = TextAlign.Start,
-                            lineHeight = 22.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-
-            if (menstruationText != null) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    color = musicCardBg
-                ) {
-                    Row(
-                        modifier = Modifier.padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFFEF5350).copy(alpha = if (isDark) 0.22f else 0.12f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                Icons.Rounded.WaterDrop,
-                                contentDescription = null,
-                                tint = Color(0xFFEF5350),
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = stringResource(R.string.daily_log_menstruation),
-                                fontSize = 12.sp,
-                                color = secondaryTextColor,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                text = menstruationText,
-                                fontSize = 14.sp,
-                                color = textColor,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-
-            // Music Card (Left Aligned, below Note)
-            if (!uiState.musicTitle.isNullOrBlank()) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    color = musicCardBg
-                ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (uiState.albumArtUrl != null) {
-                            AsyncImage(
-                                model = uiState.albumArtUrl,
-                                contentDescription = null,
-                                modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            Box(
-                                modifier = Modifier.size(48.dp).background(Color(0xFFE0E0E0), RoundedCornerShape(8.dp)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(Icons.Rounded.MusicNote, null, tint = Color.Gray, modifier = Modifier.size(24.dp))
-                            }
-                        }
-                        
-                        Spacer(modifier = Modifier.width(16.dp))
-                        
-                        Column {
-                            Text(
-                                text = uiState.musicTitle,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
-                                color = textColor,
-                                maxLines = 1
-                            )
-                            Text(
-                                text = uiState.artistName ?: unknownArtist,
-                                fontSize = 12.sp,
-                                color = secondaryTextColor,
-                                maxLines = 1
-                            )
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-
-            // Photos Grid (Max 3 per row, Left Aligned, below Music)
-            if (uiState.dailyPhotos.isNotEmpty()) {
-                val photos = uiState.dailyPhotos
-                photos.chunked(3).forEachIndexed { rowIndex, chunk ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Start
-                    ) {
-                        chunk.forEachIndexed { colIndex, photoUrl ->
-                            AsyncImage(
-                                model = photoUrl,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(96.dp)
-                                    .clip(RoundedCornerShape(12.dp)),
-                                contentScale = ContentScale.Crop
-                            )
-                            if (colIndex < chunk.size - 1) Spacer(modifier = Modifier.width(8.dp))
-                        }
-                    }
-                    if (rowIndex < (photos.size - 1) / 3) Spacer(modifier = Modifier.height(8.dp))
-                }
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-        }
-        
-        // Another Dashed Divider
-        com.diary.moonpage.ui.screens.moment.components.DashedDivider(
-            color = dividerColor,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
-        )
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        // Footer Info
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    stringResource(R.string.share_log_footer),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = themeColor
-                )
-                Text(
-                    text = stringResource(R.string.share_log_reference, System.currentTimeMillis() / 1000),
-                    fontSize = 10.sp,
-                    color = secondaryTextColor
-                )
-            }
-            
-            Image(
-                painter = painterResource(id = R.drawable.logo),
-                contentDescription = null,
-                modifier = Modifier.size(36.dp).alpha(0.4f)
-            )
-        }
     }
 }
