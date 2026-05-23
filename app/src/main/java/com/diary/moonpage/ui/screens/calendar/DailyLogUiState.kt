@@ -9,6 +9,7 @@ import java.time.LocalTime
 data class DailyLogUiState(
     val date: LocalDate = LocalDate.now(),
     val isLoading: Boolean = false,
+    val isFetchingWeather: Boolean = false,
     val isImportingHealth: Boolean = false,
     val existingLog: DailyLog? = null,
     val selectedMood: Int? = null,

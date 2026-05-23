@@ -1,6 +1,10 @@
 package com.diary.moonpage.ui.screens.calendar
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.location.LocationManager
+import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -115,22 +119,40 @@ fun DailyLogRoute(
 
     val snackbarHostState = remember { SnackbarHostState() }
     var showLocationWarningDialog by remember { mutableStateOf(false) }
+    var showLocationServicesDialog by remember { mutableStateOf(false) }
 
-    // Auto-trigger weather fetch for any selected date if it's a new log
-    LaunchedEffect(uiState.isInitialized, uiState.date, uiState.existingLog) {
-        if (uiState.isInitialized && uiState.existingLog == null) {
-            if (locationPermissionState.allPermissionsGranted) {
-                viewModel.onEvent(DailyLogUiEvent.OnLocationPermissionGranted)
-            } else {
-                showLocationWarningDialog = true
-            }
+    val locationSettingsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) {
+        if (
+            locationPermissionState.allPermissionsGranted &&
+            uiState.isInitialized &&
+            uiState.existingLog == null &&
+            isLocationServiceEnabled(context)
+        ) {
+            viewModel.onEvent(DailyLogUiEvent.OnLocationPermissionGranted)
         }
     }
 
-    LaunchedEffect(locationPermissionState.allPermissionsGranted) {
-        if (locationPermissionState.allPermissionsGranted && uiState.isInitialized && uiState.existingLog == null) {
+    fun requestWeatherFetchIfReady() {
+        if (!uiState.isInitialized || uiState.existingLog != null) return
+
+        if (!locationPermissionState.allPermissionsGranted) {
+            showLocationWarningDialog = true
+        } else if (!isLocationServiceEnabled(context)) {
+            showLocationServicesDialog = true
+        } else {
             viewModel.onEvent(DailyLogUiEvent.OnLocationPermissionGranted)
         }
+    }
+
+    // Auto-trigger weather fetch for any selected date if it's a new log
+    LaunchedEffect(uiState.isInitialized, uiState.date, uiState.existingLog) {
+        requestWeatherFetchIfReady()
+    }
+
+    LaunchedEffect(locationPermissionState.allPermissionsGranted) {
+        requestWeatherFetchIfReady()
     }
 
     LaunchedEffect(Unit) {
@@ -230,6 +252,22 @@ fun DailyLogRoute(
             }
         )
     }
+
+    if (showLocationServicesDialog) {
+        DailyLogLocationServicesDialog(
+            onDismiss = { showLocationServicesDialog = false },
+            onOpenSettings = {
+                showLocationServicesDialog = false
+                locationSettingsLauncher.launch(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+            }
+        )
+    }
+}
+
+private fun isLocationServiceEnabled(context: Context): Boolean {
+    val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+        locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
 }
 
 /**
@@ -575,6 +613,7 @@ private fun DailyLogMainContent(
                 themeType = themeType,
                 customMoods = uiState.customMoods,
                 suggestedWeather = uiState.suggestedWeather,
+                isFetchingWeather = uiState.isFetchingWeather,
                 onMoodSelected = { onMoodId ->
                     if (onMoodId != 0) {
                         onEvent(DailyLogUiEvent.OnMoodSelected(onMoodId))
@@ -736,6 +775,7 @@ private fun DailyMoodSection(
     themeType: MoonThemeType,
     customMoods: Map<Int, MoonIcon>? = null,
     suggestedWeather: com.diary.moonpage.domain.repository.WeatherData? = null,
+    isFetchingWeather: Boolean = false,
     onMoodSelected: (Int) -> Unit
 ) {
     Card(
@@ -744,7 +784,19 @@ private fun DailyMoodSection(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
-            if (suggestedWeather != null) {
+            if (isFetchingWeather) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        strokeWidth = 2.5.dp
+                    )
+                }
+            } else if (suggestedWeather != null) {
                 val weatherIcon = when {
                     suggestedWeather.condition.contains("Sunny") -> "☀️"
                     suggestedWeather.condition.contains("Cloudy") -> "☁️"
@@ -1777,6 +1829,35 @@ fun SpotifyAuthDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
             }
         }
     }
+}
+
+@Composable
+private fun DailyLogLocationServicesDialog(
+    onDismiss: () -> Unit,
+    onOpenSettings: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = MoonTheme.customColors.popupBgColor,
+        title = { Text("Location Services Off") },
+        text = { Text("Please enable Location Services to fetch weather and temperature.") },
+        confirmButton = {
+            TextButton(
+                onClick = onOpenSettings,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)
+            ) {
+                Text("Open Settings")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(contentColor = MoonTheme.customColors.cancelBtnTextColor)
+            ) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 @Composable

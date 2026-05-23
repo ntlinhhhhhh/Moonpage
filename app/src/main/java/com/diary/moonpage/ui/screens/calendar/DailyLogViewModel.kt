@@ -578,14 +578,17 @@ class DailyLogViewModel @Inject constructor(
             
             // Check if we already have weather for THIS specific date to avoid double notification
             val currentState = _uiState.value
-            if (currentState.suggestedWeather != null && 
+            if (currentState.isFetchingWeather ||
+                (currentState.suggestedWeather != null &&
                 currentState.suggestedWeather?.cityName == "Detected" &&
-                currentState.date == date) {
+                currentState.date == date)) {
                 android.util.Log.d("WeatherFetch", "Skipping: already fetched for this date.")
                 return@launch
             }
 
-            val location = try {
+            _uiState.update { it.copy(isFetchingWeather = true) }
+            try {
+                val location = try {
                 locationTracker.getCurrentLocation()
             } catch (e: Exception) {
                 android.util.Log.e("WeatherFetch", "Location error", e)
@@ -597,7 +600,6 @@ class DailyLogViewModel @Inject constructor(
                 
                 // Ensure UI is ready
                 delay(500)
-                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Updating weather conditions..."))
                 
                 val cached = weatherRepository.getCachedWeather(date)
                 val weatherResult = if (cached != null) {
@@ -646,18 +648,17 @@ class DailyLogViewModel @Inject constructor(
                         )
                     ) }
                     
-                    if (addedCount > 0) {
-                        delay(300)
-                        val tempText = String.format(java.util.Locale.ENGLISH, "%.1f°C", temp)
-                        _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Weather data fetched: ${weatherNames.joinToString(", ")} ($tempText)"))
-                    } else {
+                    if (addedCount == 0) {
                         android.util.Log.d("WeatherFetch", "No new activities added.")
                     }
                 }.onFailure { e ->
                     android.util.Log.e("WeatherFetch", "API Error", e)
                 }
-            } else {
-                android.util.Log.d("WeatherFetch", "Weather auto-fill skipped: location unavailable or permission not granted.")
+                } else {
+                    android.util.Log.d("WeatherFetch", "Weather auto-fill skipped: location unavailable or permission not granted.")
+                }
+            } finally {
+                _uiState.update { it.copy(isFetchingWeather = false) }
             }
         }
     }
