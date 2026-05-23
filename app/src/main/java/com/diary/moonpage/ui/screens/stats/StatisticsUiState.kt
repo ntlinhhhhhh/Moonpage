@@ -12,6 +12,8 @@ data class StatisticsUiState(
     val frequentlyRecorded: List<BestActivityDto> = emptyList(),
     val filteredActivities: List<BestActivityDto> = emptyList(),
     val activityFilter: Set<String> = emptySet(),
+    val availableActivityCategories: Set<String> = emptySet(),
+    val activityCategoriesById: Map<String, String> = emptyMap(),
     val sortOrder: SortOrder = SortOrder.MOST_RECORDED,
     val bestActivities: List<BestActivityDto> = emptyList(),
     val worstActivities: List<BestActivityDto> = emptyList(),
