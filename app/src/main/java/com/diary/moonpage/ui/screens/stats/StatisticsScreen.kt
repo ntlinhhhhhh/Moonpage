@@ -26,6 +26,8 @@ import com.diary.moonpage.ui.screens.calendar.components.MonthYearPickerDialog
 import com.diary.moonpage.ui.screens.stats.components.*
 import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
 import com.diary.moonpage.ui.screens.tutorial.TutorialStep
+import com.diary.moonpage.core.util.MoonIcons
+import androidx.compose.ui.res.painterResource
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
@@ -246,6 +248,17 @@ fun StatisticsScreen(
                         )
 
                         // 4. Year in Moonpage (Overview) Card
+                        val annualDominantMoodId = remember(stats) {
+                            val dist = stats?.moodDistribution ?: emptyList()
+                            val fromDist = dist.maxByOrNull { it.percentage }?.baseMoodId
+                            if (fromDist != null && fromDist != 0) fromDist
+                            else {
+                                val flow = stats?.moodFlow ?: emptyList()
+                                if (flow.isNotEmpty()) flow.groupBy { it.moodId.toInt() }.maxByOrNull { it.value.size }?.key ?: 3 else 3
+                            }
+                        }
+                        val annualMoodVisual = MoonIcons.Moods.getMoodVisual(annualDominantMoodId, uiState.themeType)
+
                         Card(
                             modifier = Modifier.fillMaxWidth()
                                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onNavigateToAnnualBeansDetail() },
@@ -256,8 +269,21 @@ fun StatisticsScreen(
                             Column(modifier = Modifier.padding(24.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
-                                            Icon(Icons.Rounded.GridView, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                                        Box(
+                                            modifier = Modifier.size(36.dp).clip(CircleShape)
+                                                .background(annualMoodVisual.color.copy(alpha = 0.12f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            if (annualMoodVisual.drawableRes != null) {
+                                                Image(
+                                                    painter = painterResource(id = annualMoodVisual.drawableRes),
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(22.dp),
+                                                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(annualMoodVisual.color)
+                                                )
+                                            } else {
+                                                Icon(Icons.Rounded.GridView, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                                            }
                                         }
                                         Spacer(modifier = Modifier.width(12.dp))
                                         Text(stringResource(R.string.year_in_beans), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f))

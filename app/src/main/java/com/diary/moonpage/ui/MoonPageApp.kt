@@ -18,12 +18,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.core.theme.MoonPageTheme
+import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.navigation.AppNavigation
+import coil.compose.AsyncImage
+import java.io.File
 
 /**
  * Stateful Component
@@ -80,24 +84,57 @@ fun MoonPageAppContent(
         activeTheme = uiState.activeTheme,
         darkTheme = isDark
     ) {
+        val customBackgroundModel = remember(uiState.activeTheme) {
+            uiState.activeTheme.customBackgroundModel()
+        }
         CompositionLocalProvider(
             com.diary.moonpage.core.theme.LocalLocale provides uiState.language
         ) {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background
-            ) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    if (uiState.isReady) {
-                        AppNavigation()
-                    }
-                    
-                    MoonSnackbarHost(
-                        hostState = snackbarHostState,
-                        modifier = Modifier.align(Alignment.TopCenter)
+            Box(modifier = Modifier.fillMaxSize()) {
+                if (customBackgroundModel != null) {
+                    AsyncImage(
+                        model = customBackgroundModel,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
                     )
+                }
+
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        if (uiState.isReady) {
+                            AppNavigation()
+                        }
+
+                        MoonSnackbarHost(
+                            hostState = snackbarHostState,
+                            modifier = Modifier.align(Alignment.TopCenter)
+                        )
+                    }
                 }
             }
         }
     }
+}
+
+private fun Theme?.customBackgroundModel(): Any? {
+    val theme = this ?: return null
+    if (!theme.isCustomTheme()) return null
+    val path = theme.thumbnailUrl?.takeIf { it.isNotBlank() && !it.isThemeColor() } ?: return null
+    val file = File(path)
+    return if (file.exists()) file else path
+}
+
+private fun Theme.isCustomTheme(): Boolean {
+    return id.startsWith("custom_") ||
+        decoration.equals("CUSTOM", ignoreCase = true) ||
+        collection.equals("Custom Theme", ignoreCase = true)
+}
+
+private fun String.isThemeColor(): Boolean {
+    val value = if (startsWith("#")) drop(1) else this
+    return (value.length == 6 || value.length == 8) && value.all { it in '0'..'9' || it in 'a'..'f' || it in 'A'..'F' }
 }

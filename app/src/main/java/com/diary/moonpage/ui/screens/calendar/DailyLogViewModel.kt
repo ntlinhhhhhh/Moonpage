@@ -69,6 +69,11 @@ class DailyLogViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
+            themeRepository.activeTheme.collect {
+                loadCustomMoods()
+            }
+        }
+        viewModelScope.launch {
             tokenManager.getSpotifyToken().collect { token ->
                 _uiState.update { it.copy(isSpotifyLinked = token != null) }
             }
@@ -283,11 +288,21 @@ class DailyLogViewModel @Inject constructor(
                 val currentTheme = _uiState.value.themeType
                 val customMoods = moodEntities.associate { entity ->
                     val level = when (entity.baseMoodId) {
+                        "1" -> 1
+                        "2" -> 2
+                        "3" -> 3
+                        "4" -> 4
+                        "5" -> 5
                         "Awful" -> 1
                         "Bad" -> 2
                         "Meh" -> 3
                         "Good" -> 4
                         "Rad" -> 5
+                        "Very Sad" -> 1
+                        "Sad" -> 2
+                        "Neutral" -> 3
+                        "Happy" -> 4
+                        "Very Happy" -> 5
                         else -> 3
                     }
                     

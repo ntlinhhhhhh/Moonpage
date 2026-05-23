@@ -2041,9 +2041,39 @@ fun MoodOverviewCard(
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
 
     val moodDistribution = stats?.moodDistribution ?: emptyList()
-    val dominantDist = moodDistribution.maxByOrNull { it.percentage }
-    val dominantMoodId = dominantDist?.baseMoodId ?: 3
-    val dominantMoodPercent = dominantDist?.percentage?.roundToInt() ?: 0
+    val moodFlow = stats?.moodFlow ?: emptyList()
+    
+    val (dominantMoodId, dominantMoodPercent) = remember(stats) {
+        val moodAliases = listOf(
+            5 to listOf("Very Happy", "Rad", "Extreme Happy", "Excellent"),
+            4 to listOf("Happy", "Good", "Glad", "Content", "Nice"),
+            3 to listOf("Neutral", "Meh", "Normal", "Okay"),
+            2 to listOf("Sad", "Gloomy", "Low", "Bad", "Down"),
+            1 to listOf("Very Sad", "Angry", "Awful", "Terrible", "Depressed")
+        )
+
+        val resolvedDistribution = moodDistribution.map { dist ->
+            val resolvedId = dist.baseMoodId ?: moodAliases.find { (_, aliases) ->
+                dist.label != null && aliases.any { it.equals(dist.label, ignoreCase = true) }
+            }?.first ?: 3
+            dist.copy(baseMoodId = resolvedId)
+        }
+
+        val fromDist = resolvedDistribution.maxByOrNull { it.percentage }
+        if (fromDist != null && fromDist.percentage > 0) {
+            (fromDist.baseMoodId ?: 3) to fromDist.percentage.roundToInt()
+        } else if (moodFlow.isNotEmpty()) {
+            val total = moodFlow.size.toFloat()
+            val moodCounts = moodFlow.groupBy { it.moodId.toInt() }
+            val dominantEntry = moodCounts.maxByOrNull { it.value.size }
+            val id = dominantEntry?.key ?: 3
+            val percent = ((dominantEntry?.value?.size ?: 0) / total * 100).roundToInt()
+            id to percent
+        } else {
+            3 to 0
+        }
+    }
+    
     val dominantMoodVisual = MoonIcons.Moods.getMoodVisual(dominantMoodId, themeType)
 
     val moodText = when (dominantMoodId) {
@@ -2054,7 +2084,6 @@ fun MoodOverviewCard(
         else -> if (isMonthly) "This month has been quite heavy. 🌙" else "This year has been quite heavy. 🌙"
     }
 
-    val moodFlow = stats?.moodFlow ?: emptyList()
     val processedMoodFlow = remember(moodFlow, isMonthly, year) {
         if (isMonthly) {
             moodFlow
