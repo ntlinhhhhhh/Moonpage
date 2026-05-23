@@ -2,6 +2,9 @@ package com.diary.moonpage.ui.screens.stats
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.diary.moonpage.core.util.MoonIcons
+import com.diary.moonpage.data.remote.dto.stats.BestActivityDto
+import com.diary.moonpage.domain.repository.ActivityRepository
 import com.diary.moonpage.domain.repository.StatisticsRepository
 import com.diary.moonpage.domain.repository.DailyLogRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -12,6 +15,7 @@ import javax.inject.Inject
 @HiltViewModel
 class StatisticsViewModel @Inject constructor(
     private val repository: StatisticsRepository,
+    private val activityRepository: ActivityRepository,
     private val logRepository: DailyLogRepository,
     private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
     private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager
@@ -61,6 +65,10 @@ class StatisticsViewModel @Inject constructor(
 
                 if (response.isSuccessful && response.body() != null) {
                     val stats = response.body()!!
+                    val activityCategoriesById = buildActivityCategoriesById(stats.bestActivities)
+                    val availableActivityCategories = stats.bestActivities
+                        .mapNotNull { activityCategoriesById[it.activityId] }
+                        .toCollection(linkedSetOf())
                     
                     val freq = stats.bestActivities.sortedByDescending { it.occurrence }.take(3)
                     
@@ -74,8 +82,9 @@ class StatisticsViewModel @Inject constructor(
                     // Apply initial filtering and sorting
                     val filtered = filterAndSortActivities(
                         stats.bestActivities,
-                        _uiState.value.activityFilter,
-                        _uiState.value.sortOrder
+                        availableActivityCategories,
+                        _uiState.value.sortOrder,
+                        activityCategoriesById
                     )
 
                     // Legacy best/worst for fallback
@@ -101,6 +110,9 @@ class StatisticsViewModel @Inject constructor(
                         stats = stats, 
                         frequentlyRecorded = freq,
                         filteredActivities = filtered,
+                        activityFilter = availableActivityCategories,
+                        availableActivityCategories = availableActivityCategories,
+                        activityCategoriesById = activityCategoriesById,
                         bestActivities = bestLegacy,
                         worstActivities = worstLegacy,
                         bestCorrelations = bestCorr,
@@ -130,7 +142,8 @@ class StatisticsViewModel @Inject constructor(
                 filteredActivities = filterAndSortActivities(
                     currentState.stats?.bestActivities ?: emptyList(),
                     newFilter,
-                    currentState.sortOrder
+                    currentState.sortOrder,
+                    currentState.activityCategoriesById
                 )
             )
         }
@@ -148,21 +161,57 @@ class StatisticsViewModel @Inject constructor(
                 filteredActivities = filterAndSortActivities(
                     currentState.stats?.bestActivities ?: emptyList(),
                     currentState.activityFilter,
-                    newSortOrder
+                    newSortOrder,
+                    currentState.activityCategoriesById
                 )
             )
         }
     }
 
     private fun filterAndSortActivities(
-        activities: List<com.diary.moonpage.data.remote.dto.stats.BestActivityDto>,
+        activities: List<BestActivityDto>,
         filter: Set<String>,
-        sortOrder: SortOrder
+        sortOrder: SortOrder,
+        activityCategoriesById: Map<String, String>
     ): List<com.diary.moonpage.data.remote.dto.stats.BestActivityDto> {
-        val filtered = if (filter.isEmpty()) activities else activities.filter { filter.contains(it.activityName) }
+        val filtered = activities.filter { activity ->
+            activityCategoriesById[activity.activityId] in filter
+        }
         return when (sortOrder) {
             SortOrder.MOST_RECORDED -> filtered.sortedByDescending { it.occurrence }
             SortOrder.LEAST_RECORDED -> filtered.sortedBy { it.occurrence }
+        }
+    }
+
+    private suspend fun buildActivityCategoriesById(
+        activities: List<BestActivityDto>
+    ): Map<String, String> {
+        val categoriesByRepositoryId = runCatching {
+            activityRepository.activities.first()
+                .associate { it.id to it.category.toFilterCategoryLabel() }
+        }.getOrDefault(emptyMap())
+        val fallbackCategoriesByName = MoonIcons.getAllCategories()
+            .flatMap { (category, icons) ->
+                icons.map { normalizeActivityName(it.name) to category.toFilterCategoryLabel() }
+            }
+            .toMap()
+
+        return activities.associate { activity ->
+            val category = categoriesByRepositoryId[activity.activityId]
+                ?: fallbackCategoriesByName[normalizeActivityName(activity.activityName)]
+                ?: "Other"
+            activity.activityId to category
+        }
+    }
+
+    private fun normalizeActivityName(activityName: String): String {
+        return activityName.filterNot(Char::isWhitespace).lowercase()
+    }
+
+    private fun String.toFilterCategoryLabel(): String {
+        return when (trim()) {
+            "SelfCare", "Self-Care" -> "Self-Care"
+            else -> trim()
         }
     }
 

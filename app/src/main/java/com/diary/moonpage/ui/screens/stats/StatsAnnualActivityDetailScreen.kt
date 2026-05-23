@@ -64,9 +64,8 @@ fun StatsAnnualActivityDetailScreen(
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         if (showFilterModal) {
-            val categories = uiState.stats?.bestActivities?.map { it.activityName }?.toSet() ?: emptySet()
             ActivityFilterModal(
-                categories = categories,
+                categories = uiState.availableActivityCategories,
                 selectedFilter = uiState.activityFilter,
                 onFilterChange = onFilterChange,
                 onDismiss = { showFilterModal = false }
