@@ -95,6 +95,63 @@ object MoonTheme {
         get() = LocalMoonCustomColors.current
 }
 
+private data class VisualBackgroundProtection(
+    val background: Color,
+    val surface: Color,
+    val surfaceVariant: Color,
+    val onBackground: Color,
+    val onSurface: Color,
+    val logItemBg: Color,
+    val logItemSelect: Color,
+    val logItemAccent: Color,
+    val logCardBg: Color,
+    val popupBg: Color,
+    val cancelButtonBg: Color,
+    val cancelButtonText: Color,
+    val bottomNavBg: Color,
+    val bottomNavUnselected: Color
+)
+
+private fun visualBackgroundProtection(darkTheme: Boolean): VisualBackgroundProtection {
+    return if (darkTheme) {
+        val text = Color(0xFFF7F2EA)
+        VisualBackgroundProtection(
+            background = Color.Transparent,
+            surface = Color(0xEE1E1E1E),
+            surfaceVariant = Color(0xE62F2F2F),
+            onBackground = text,
+            onSurface = text,
+            logItemBg = Color(0xE62B2B2B),
+            logItemSelect = Color(0x4DFFFFFF),
+            logItemAccent = Color(0xE63A3A3A),
+            logCardBg = Color(0xEE1F1F1F),
+            popupBg = Color(0xF2242424),
+            cancelButtonBg = Color(0xE63A3A3A),
+            cancelButtonText = Color(0xFFE6E0D8),
+            bottomNavBg = Color(0xF0262626),
+            bottomNavUnselected = Color(0xFFAAA39A)
+        )
+    } else {
+        val text = Color(0xFF2E261F)
+        VisualBackgroundProtection(
+            background = Color.Transparent,
+            surface = Color(0xF2FFFCF6),
+            surfaceVariant = Color(0xEAF3EDE2),
+            onBackground = text,
+            onSurface = text,
+            logItemBg = Color(0xEFFFFFFB),
+            logItemSelect = Color(0x4D2E261F),
+            logItemAccent = Color(0xE8E7DDD1),
+            logCardBg = Color(0xF2FFFCF6),
+            popupBg = Color(0xF7FFFCF6),
+            cancelButtonBg = Color(0xEAF2ECE3),
+            cancelButtonText = Color(0xFF4E443B),
+            bottomNavBg = Color(0xF5FFFCF6),
+            bottomNavUnselected = Color(0xFF7F756B)
+        )
+    }
+}
+
 private val DarkColorScheme = darkColorScheme(
     primary = MoonActionDark,
     onPrimary = MoonTextDark,
@@ -210,6 +267,7 @@ fun MoonPageTheme(
     val hasCustomBackgroundImage = customTheme.hasCustomBackgroundImage()
     val hasCustomGradientBackground = customTheme.hasCustomGradientBackground(darkTheme)
     val hasCustomVisualBackground = hasCustomBackgroundImage || hasCustomGradientBackground
+    val visualProtection = visualBackgroundProtection(darkTheme).takeIf { hasCustomVisualBackground }
 
     val themePrimary = customThemePrimary ?: if (darkTheme) {
         when (themeType) {
@@ -254,23 +312,28 @@ fun MoonPageTheme(
     val targetColorScheme = if (darkTheme) {
         DarkColorScheme.copy(
             primary = themePrimary,
-            background = if (hasCustomVisualBackground) {
-                Color.Transparent
-            } else {
-                customThemeBackground ?: customThemeFallbackBackground ?: MoonBgDark
-            }
+            background = visualProtection?.background
+                ?: customThemeBackground
+                ?: customThemeFallbackBackground
+                ?: MoonBgDark,
+            onBackground = visualProtection?.onBackground ?: DarkColorScheme.onBackground,
+            surface = visualProtection?.surface ?: DarkColorScheme.surface,
+            onSurface = visualProtection?.onSurface ?: DarkColorScheme.onSurface,
+            surfaceVariant = visualProtection?.surfaceVariant ?: DarkColorScheme.surfaceVariant
         )
     } else {
         when {
             customTheme != null -> {
                 LightColorScheme.copy(
                     primary = themePrimary,
-                    background = if (hasCustomVisualBackground) {
-                        Color.Transparent
-                    } else {
-                        customThemeBackground ?: customThemeFallbackBackground ?: MoonBgLight
-                    },
-                    surfaceVariant = themePrimary.copy(alpha = 0.05f)
+                    background = visualProtection?.background
+                        ?: customThemeBackground
+                        ?: customThemeFallbackBackground
+                        ?: MoonBgLight,
+                    onBackground = visualProtection?.onBackground ?: LightColorScheme.onBackground,
+                    surface = visualProtection?.surface ?: LightColorScheme.surface,
+                    onSurface = visualProtection?.onSurface ?: LightColorScheme.onSurface,
+                    surfaceVariant = visualProtection?.surfaceVariant ?: themePrimary.copy(alpha = 0.05f)
                 )
             }
             themeType == MoonThemeType.DEFAULT -> LightColorScheme
@@ -428,44 +491,44 @@ fun MoonPageTheme(
 
     val customColors = if (darkTheme) {
         MoonCustomColors(
-            logItemBg = Color(0xFF333333),
-            logItemSelect = colorScheme.primary.copy(alpha = 0.25f),
-            logItemAccent = Color(0xFF424242),
+            logItemBg = visualProtection?.logItemBg ?: Color(0xFF333333),
+            logItemSelect = visualProtection?.logItemSelect ?: colorScheme.primary.copy(alpha = 0.25f),
+            logItemAccent = visualProtection?.logItemAccent ?: Color(0xFF424242),
             logItemIconUnselected = Color(0xFF888888),
             logItemIconSelected = colorScheme.primary,
-            logCardBg = MoonCardBgDark,
+            logCardBg = visualProtection?.logCardBg ?: MoonCardBgDark,
             logCardOnBg = Color(0xFFF5F5F5),
             snackbarBg = Color(0xFFF5F5F5),
             snackbarOnBg = Color(0xFF1A1A1A),
             successColor = Color(0xFF81C784),
             warningColor = Color(0xFFFFD54F),
             errorColor = Color(0xFFE57373),
-            popupBgColor = Color(0xFF262626),
-            cancelBtnBgColor = Color(0xFF383838),
-            cancelBtnTextColor = Color(0xFFBDBDBD),
-            bottomNavBg = MoonBottomNavBgDark,
-            bottomNavUnselected = MoonUnselectedDark,
+            popupBgColor = visualProtection?.popupBg ?: Color(0xFF262626),
+            cancelBtnBgColor = visualProtection?.cancelButtonBg ?: Color(0xFF383838),
+            cancelBtnTextColor = visualProtection?.cancelButtonText ?: Color(0xFFBDBDBD),
+            bottomNavBg = visualProtection?.bottomNavBg ?: MoonBottomNavBgDark,
+            bottomNavUnselected = visualProtection?.bottomNavUnselected ?: MoonUnselectedDark,
             isDark = true
         )
     } else {
         MoonCustomColors(
-            logItemBg = Color(0xFFF8F9FA),
-            logItemSelect = colorScheme.primary.copy(alpha = 0.12f),
-            logItemAccent = Color(0xFFE9ECEF),
+            logItemBg = visualProtection?.logItemBg ?: Color(0xFFF8F9FA),
+            logItemSelect = visualProtection?.logItemSelect ?: colorScheme.primary.copy(alpha = 0.12f),
+            logItemAccent = visualProtection?.logItemAccent ?: Color(0xFFE9ECEF),
             logItemIconUnselected = Color(0xFFADB5BD),
             logItemIconSelected = colorScheme.primary,
-            logCardBg = Color.White,
+            logCardBg = visualProtection?.logCardBg ?: Color.White,
             logCardOnBg = Color(0xFF212529),
             snackbarBg = Color(0xFF343A40),
             snackbarOnBg = Color.White,
             successColor = Color(0xFF28A745),
             warningColor = Color(0xFFFFC107),
             errorColor = Color(0xFFDC3545),
-            popupBgColor = Color.White,
-            cancelBtnBgColor = Color(0xFFF1F3F5),
-            cancelBtnTextColor = Color(0xFF495057),
-            bottomNavBg = Color.White,
-            bottomNavUnselected = MoonUnselectedLight,
+            popupBgColor = visualProtection?.popupBg ?: Color.White,
+            cancelBtnBgColor = visualProtection?.cancelButtonBg ?: Color(0xFFF1F3F5),
+            cancelBtnTextColor = visualProtection?.cancelButtonText ?: Color(0xFF495057),
+            bottomNavBg = visualProtection?.bottomNavBg ?: Color.White,
+            bottomNavUnselected = visualProtection?.bottomNavUnselected ?: MoonUnselectedLight,
             isDark = false
         )
     }

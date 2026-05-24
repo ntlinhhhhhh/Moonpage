@@ -34,7 +34,7 @@ fun MoonBottomNavBar(
     modifier: Modifier = Modifier
 ) {
     val navBgColor = MoonTheme.customColors.bottomNavBg
-    val cameraBgColor = MaterialTheme.colorScheme.background
+    val cameraBgColor = MaterialTheme.colorScheme.surface
     val activeColor = MaterialTheme.colorScheme.primary
     val inactiveColor = MoonTheme.customColors.bottomNavUnselected
 

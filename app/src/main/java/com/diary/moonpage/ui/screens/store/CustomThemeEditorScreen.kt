@@ -79,9 +79,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.diary.moonpage.R
-import com.diary.moonpage.core.theme.MoonBgDark
-import com.diary.moonpage.core.theme.MoonBgLight
-import com.diary.moonpage.core.theme.MoonBottomNavBgDark
 import com.diary.moonpage.core.theme.MoonTheme
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 
@@ -416,10 +413,17 @@ private fun ThemePreviewCapture(
     val solidBackground = uiState.solidBackgroundColor.toComposeColor()
     val isDarkMode = uiState.editingMode == EditorAppearanceMode.Dark
     val isPreviewBackgroundDark = uiState.isPreviewBackgroundDark(fallbackDark = isDarkMode)
-    val contentColor = if (isPreviewBackgroundDark) Color(0xFFF7F2EA) else Color(0xFF2E261F)
-    val panelColor = if (isPreviewBackgroundDark) Color(0xFF151515) else Color.White
     val safeBackgroundScale = uiState.backgroundScale * rotationCoverMultiplier(uiState.backgroundRotation)
     val hasImageBackground = !uiState.backgroundUri.isNullOrBlank()
+    val hasVisualBackground = hasImageBackground || uiState.backgroundFillMode == BackgroundFillMode.Gradient
+    val previewProtection = remember(isPreviewBackgroundDark, hasVisualBackground) {
+        previewProtectionColors(
+            darkBackground = isPreviewBackgroundDark,
+            hasVisualBackground = hasVisualBackground
+        )
+    }
+    val contentColor = previewProtection.contentColor
+    val panelColor = previewProtection.panelColor
     val gradientBrush = remember(uiState.gradientStartColor, uiState.gradientEndColor) {
         Brush.verticalGradient(
             colors = listOf(
@@ -433,8 +437,8 @@ private fun ThemePreviewCapture(
         uiState.backgroundFillMode == BackgroundFillMode.Gradient -> gradientBrush
         else -> null
     }
-    val bottomBarColor = if (isPreviewBackgroundDark) MoonBottomNavBgDark else Color.White
-    val bottomBarCutoutColor = if (isPreviewBackgroundDark) MoonBgDark else MoonBgLight
+    val bottomBarColor = previewProtection.bottomBarColor
+    val bottomBarCutoutColor = previewProtection.cameraCutoutColor
 
     Box(
         modifier = modifier
@@ -509,13 +513,11 @@ private fun ThemePreviewCapture(
                     },
                 contentScale = ContentScale.Crop
             )
-            if (isDarkMode) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.32f))
-                )
-            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(previewImageScrim(isDarkMode))
+            )
         }
 
         Canvas(
@@ -625,7 +627,7 @@ private fun ThemeCalendarMockScreen(
     onDarkModeSelected: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val calendarCardColor = if (isDarkMode) panelColor else Color.White
+    val calendarCardColor = panelColor
 
     Box(modifier = modifier) {
         Column(
@@ -1890,6 +1892,42 @@ private fun hexToColorOrNull(value: String): Long? {
     val normalized = value.removePrefix("#")
     if (normalized.length != 6) return null
     return normalized.toLongOrNull(16)?.let { 0xFF000000L or it }
+}
+
+private data class PreviewProtectionColors(
+    val contentColor: Color,
+    val panelColor: Color,
+    val bottomBarColor: Color,
+    val cameraCutoutColor: Color
+)
+
+private fun previewProtectionColors(
+    darkBackground: Boolean,
+    hasVisualBackground: Boolean
+): PreviewProtectionColors {
+    return if (darkBackground) {
+        PreviewProtectionColors(
+            contentColor = Color(0xFFF7F2EA),
+            panelColor = if (hasVisualBackground) Color(0xEE1E1E1E) else Color(0xFF151515),
+            bottomBarColor = if (hasVisualBackground) Color(0xF0262626) else Color(0xFF424242),
+            cameraCutoutColor = if (hasVisualBackground) Color(0xEE1E1E1E) else Color(0xFF1C1C1C)
+        )
+    } else {
+        PreviewProtectionColors(
+            contentColor = Color(0xFF2E261F),
+            panelColor = if (hasVisualBackground) Color(0xF2FFFCF6) else Color.White,
+            bottomBarColor = if (hasVisualBackground) Color(0xF5FFFCF6) else Color.White,
+            cameraCutoutColor = if (hasVisualBackground) Color(0xF2FFFCF6) else Color(0xFFF4F6F1)
+        )
+    }
+}
+
+private fun previewImageScrim(isDarkMode: Boolean): Color {
+    return if (isDarkMode) {
+        Color.Black.copy(alpha = 0.42f)
+    } else {
+        Color.White.copy(alpha = 0.16f)
+    }
 }
 
 private fun rotationCoverMultiplier(rotation: Float): Float {

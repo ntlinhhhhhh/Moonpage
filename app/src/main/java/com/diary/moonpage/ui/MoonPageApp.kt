@@ -94,8 +94,8 @@ fun MoonPageAppContent(
         val customBackgroundBrush = remember(uiState.activeTheme, isDark) {
             uiState.activeTheme.customBackgroundBrush(isDark)
         }
-        val hasCustomImageBackground = remember(uiState.activeTheme) {
-            uiState.activeTheme.hasCustomImageBackground()
+        val customImageScrim = remember(uiState.activeTheme, isDark) {
+            uiState.activeTheme.customImageScrim(isDark)
         }
         val hasCustomVisualBackground = customBackgroundModel != null || customBackgroundBrush != null
         CompositionLocalProvider(
@@ -109,18 +109,18 @@ fun MoonPageAppContent(
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
-                    if (isDark && hasCustomImageBackground) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.Black.copy(alpha = 0.32f))
-                        )
-                    }
                 } else if (customBackgroundBrush != null) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(customBackgroundBrush)
+                    )
+                }
+                customImageScrim?.let { scrim ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(scrim)
                     )
                 }
 
@@ -171,6 +171,15 @@ private fun Theme?.hasCustomImageBackground(): Boolean {
     return theme.backgroundUrl.isThemeAssetPath() ||
         theme.description.appearanceObject("light")?.optString("backgroundUri").isThemeAssetPath() ||
         theme.description.appearanceObject("dark")?.optString("backgroundUri").isThemeAssetPath()
+}
+
+private fun Theme?.customImageScrim(isDark: Boolean): Color? {
+    if (!hasCustomImageBackground()) return null
+    return if (isDark) {
+        Color.Black.copy(alpha = 0.46f)
+    } else {
+        Color.White.copy(alpha = 0.22f)
+    }
 }
 
 private fun Theme.isCustomTheme(): Boolean {

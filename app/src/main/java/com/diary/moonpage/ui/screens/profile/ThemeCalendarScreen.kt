@@ -289,7 +289,7 @@ private fun ThemePickerContent(
                             .clickable { onThemeSelected(item) },
                         shape = RoundedCornerShape(20.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (isSelected) item.color.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                            containerColor = MaterialTheme.colorScheme.surface
                         ),
                         border = if (isSelected) BorderStroke(2.dp, item.color) else null
                     ) {
@@ -392,7 +392,7 @@ fun AppThemeItem(
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
-            .background(if (isSelected) colorScheme.primary.copy(alpha = 0.1f) else colorScheme.surfaceVariant.copy(alpha = 0.3f))
+            .background(colorScheme.surface)
             .border(
                 width = if (isSelected) 2.dp else 0.dp,
                 color = if (isSelected) colorScheme.primary else Color.Transparent,
