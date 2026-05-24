@@ -119,7 +119,7 @@ fun MomentUploadScreen(
     ) {
         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp).height(56.dp)) {
             Text(
-                text = "Upload",
+                text = stringResource(R.string.share),
                 color = onBgColor,
                 fontSize = 22.sp,
                 fontFamily = nunitoFontFamily,

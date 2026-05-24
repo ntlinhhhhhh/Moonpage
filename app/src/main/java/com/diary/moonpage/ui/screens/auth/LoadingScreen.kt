@@ -64,14 +64,13 @@ fun LoadingScreen(
         }
     }
 
-    val isDarkTheme = com.diary.moonpage.core.theme.MoonTheme.customColors.isDark
+    val isSystemDark = isSystemInDarkTheme()
+    val backgroundColor = if (isSystemDark) com.diary.moonpage.core.theme.MoonBgDark else com.diary.moonpage.core.theme.MoonBgLight
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                color = MaterialTheme.colorScheme.background
-            ),
+            .background(color = backgroundColor),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {

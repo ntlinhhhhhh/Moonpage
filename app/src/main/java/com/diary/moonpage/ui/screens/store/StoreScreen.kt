@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AcUnit
@@ -780,19 +781,28 @@ fun CustomThemeCard(
     onActivateClick: () -> Unit = {},
     onRenameClick: () -> Unit = {}
 ) {
+    val gradientColors = remember(theme.backgroundUrl, theme.thumbnailUrl) {
+        val raw = theme.backgroundUrl ?: theme.thumbnailUrl
+        if (raw != null && raw.contains(",")) {
+            raw.split(",").mapNotNull { parseThemePreviewColor(it) }
+        } else null
+    }
+
     val previewColor = remember(theme.primaryColor, theme.thumbnailUrl, theme.backgroundUrl) {
         parseThemePreviewColor(theme.primaryColor)
             ?: parseThemePreviewColor(theme.thumbnailUrl)
             ?: parseThemePreviewColor(theme.backgroundUrl)
             ?: Color(0xFFE8E1DA)
     }
+
     val iconColors = remember(theme.id, theme.primaryColor, theme.thumbnailUrl, theme.backgroundUrl) {
         val shades = getThemeShades(theme)
         if (shades.size >= 5) shades.take(5) else List(5) { previewColor }
     }
+    
     val previewPath = remember(theme.backgroundUrl, theme.thumbnailUrl) {
         listOf(theme.backgroundUrl, theme.thumbnailUrl).firstOrNull { candidate ->
-            !candidate.isNullOrBlank() && parseThemePreviewColor(candidate) == null
+            !candidate.isNullOrBlank() && parseThemePreviewColor(candidate) == null && !candidate.contains(",")
         }
     }
     val savedPreviewFile = remember(previewPath) { previewPath?.let(::File) }
@@ -811,7 +821,17 @@ fun CustomThemeCard(
     ) {
         Column(modifier = Modifier.fillMaxSize().padding(12.dp)) {
             Box(
-                modifier = Modifier.fillMaxWidth().weight(1f).clip(RoundedCornerShape(16.dp)).background(previewColor.copy(alpha = 0.22f)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .clip(RoundedCornerShape(16.dp))
+                    .then(
+                        if (gradientColors != null && gradientColors.size >= 2) {
+                            Modifier.background(Brush.linearGradient(gradientColors))
+                        } else {
+                            Modifier.background(previewColor.copy(alpha = 0.22f))
+                        }
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 if (previewModel != null) {
@@ -821,20 +841,21 @@ fun CustomThemeCard(
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
-                } else {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY").forEachIndexed { index, mood ->
-                            CuteBeanIcon(
-                                modifier = Modifier.size(28.dp),
-                                emotion = mood,
-                                decoration = "NONE",
-                                color = iconColors[index]
-                            )
-                        }
+                }
+                
+                // Mood icons overlay (Bug 2)
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY").forEachIndexed { index, mood ->
+                        CuteBeanIcon(
+                            modifier = Modifier.size(20.dp),
+                            emotion = mood,
+                            decoration = "NONE",
+                            color = iconColors.getOrElse(index) { previewColor }
+                        )
                     }
                 }
             }

@@ -229,24 +229,32 @@ fun CalendarScreen(
 
                                 Spacer(modifier = Modifier.height(24.dp))
 
-                                CalendarSelectedLogDetail(
-                                    selectedDate = uiState.selectedDate,
-                                    dailyLogs = uiState.dailyLogs,
-                                    menstruationDays = uiState.menstruationDays,
-                                    dynamicActivities = uiState.dynamicActivities,
-                                    themeType = uiState.themeType,
-                                    customMoods = uiState.customMoods,
-                                    onEditLog = { date -> onNavigateToDailyLog(date.toString()) },
-                                    onDeleteLog = { date -> 
-                                        dateToDelete = date
-                                        showDeleteConfirmDialog = true
-                                    },
-                                    onShareClick = { 
-                                        uiState.selectedDate?.let { date ->
-                                            onNavigateToShareLog(date.toString())
+                                AnimatedVisibility(
+                                    visible = uiState.selectedDate != null && 
+                                             java.time.YearMonth.from(uiState.selectedDate) == pageYearMonth &&
+                                             uiState.dailyLogs[uiState.selectedDate] != null,
+                                    enter = fadeIn() + expandVertically(),
+                                    exit = fadeOut() + shrinkVertically()
+                                ) {
+                                    CalendarSelectedLogDetail(
+                                        selectedDate = uiState.selectedDate,
+                                        dailyLogs = uiState.dailyLogs,
+                                        menstruationDays = uiState.menstruationDays,
+                                        dynamicActivities = uiState.dynamicActivities,
+                                        themeType = uiState.themeType,
+                                        customMoods = uiState.customMoods,
+                                        onEditLog = { date -> onNavigateToDailyLog(date.toString()) },
+                                        onDeleteLog = { date -> 
+                                            dateToDelete = date
+                                            showDeleteConfirmDialog = true
+                                        },
+                                        onShareClick = { 
+                                            uiState.selectedDate?.let { date ->
+                                                onNavigateToShareLog(date.toString())
+                                            }
                                         }
-                                    }
-                                )
+                                    )
+                                }
 
                                                 Spacer(modifier = Modifier.height(100.dp))
                                             }

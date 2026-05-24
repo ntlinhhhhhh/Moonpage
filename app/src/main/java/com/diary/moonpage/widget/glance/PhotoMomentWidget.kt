@@ -1,6 +1,7 @@
 package com.diary.moonpage.widget.glance
 
 import android.content.Context
+import android.content.Intent
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.MutablePreferences
@@ -17,6 +18,7 @@ import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
+import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.state.getAppWidgetState
@@ -32,17 +34,28 @@ import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.padding
+import androidx.glance.layout.size
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.unit.ColorProvider
 import com.diary.moonpage.R
+import com.diary.moonpage.core.theme.MoonThemeType
+import com.diary.moonpage.ui.MainActivity
 import kotlinx.coroutines.flow.firstOrNull
 
 private val photoIndexKey = intPreferencesKey("photo_moment_index")
 private val photoDirectionKey = ActionParameters.Key<Int>("photo_direction")
 
+/**
+ * Widget 1: Photo Moment (2×2) – Style Locket
+ * - Ảnh fill 100% với ContentScale.Crop
+ * - Bo góc 32dp cực tròn
+ * - Tự động chuyển ảnh hôm nay
+ * - Streak Badge TopEnd
+ * - Click → mở app
+ */
 class PhotoMomentWidget : GlanceAppWidget() {
     override val stateDefinition = PreferencesGlanceStateDefinition
     override val sizeMode = SizeMode.Single
@@ -53,103 +66,102 @@ class PhotoMomentWidget : GlanceAppWidget() {
         val state = getAppWidgetState(context, PreferencesGlanceStateDefinition, id)
         var currentIndex = state[photoIndexKey] ?: 0
         val photoCount = snapshot.photoUris.size
-        
+
         if (currentIndex >= photoCount) {
             currentIndex = 0
-            updateAppWidgetState(context, id) { prefs ->
-                prefs[photoIndexKey] = 0
-            }
+            updateAppWidgetState(context, id) { prefs -> prefs[photoIndexKey] = 0 }
         }
-        
+
         val resolvedIndex = if (photoCount == 0) 0 else currentIndex.mod(photoCount)
         val bitmap = dataSource.loadBitmap(snapshot.photoUris.getOrNull(resolvedIndex))
-        
-        val widgetPrefs = dataSource.getWidgetPreferences()
-        val showStreak = widgetPrefs.showPhotoStreak.firstOrNull() ?: true
-        val displayMode = widgetPrefs.photoDisplayMode.firstOrNull() ?: "CROP"
+        val isNight = dataSource.isNightMode()
+        val palette = snapshot.palette
+
+        val openAppAction = actionStartActivity(
+            Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+        )
 
         provideContent {
             Box(
                 modifier = GlanceModifier
                     .fillMaxSize()
-                    .cornerRadius(28.dp)
+                    .cornerRadius(32.dp)  // Locket-style extreme rounded corners
                     .background(
-                        ColorProvider(
-                            if (dataSource.isNightMode()) snapshot.palette.nightSurface else snapshot.palette.daySurface
-                        )
+                        ColorProvider(if (isNight) palette.nightSurface else palette.daySurface)
                     )
-                    .padding(14.dp),
+                    .clickable(openAppAction),
                 contentAlignment = Alignment.TopStart
             ) {
-            if (bitmap != null) {
-                Image(
-                    provider = ImageProvider(bitmap),
-                    contentDescription = null,
-                    contentScale = if (displayMode == "CROP") ContentScale.Crop else ContentScale.Fit,
-                    modifier = GlanceModifier.fillMaxSize()
-                )
-            }
-            if (photoCount > 1) {
-                Row(
-                    modifier = GlanceModifier.fillMaxSize(),
-                ) {
-                    Spacer(
-                        modifier = GlanceModifier
-                            .defaultWeight()
-                            .fillMaxHeight()
-                            .clickable(
-                                actionRunCallback<PhotoIndexAction>(
-                                    actionParametersOf(photoDirectionKey to -1)
-                                )
-                            )
+                // Photo fill 100%
+                if (bitmap != null) {
+                    Image(
+                        provider = ImageProvider(bitmap),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = GlanceModifier.fillMaxSize()
                     )
-                    Spacer(
-                        modifier = GlanceModifier
-                            .defaultWeight()
-                            .fillMaxHeight()
-                            .clickable(
-                                actionRunCallback<PhotoIndexAction>(
-                                    actionParametersOf(photoDirectionKey to 1)
-                                )
-                            )
-                    )
-                }
-            }
-            if (bitmap == null) {
+                } else {
+                    // Placeholder khi chưa có ảnh
                     Column(
                         modifier = GlanceModifier.fillMaxSize(),
                         verticalAlignment = Alignment.Vertical.CenterVertically,
                         horizontalAlignment = Alignment.Horizontal.CenterHorizontally
                     ) {
                         Text(
+                            text = "📷",
+                            style = TextStyle(fontSize = 28.sp)
+                        )
+                        Text(
                             text = context.getString(R.string.widget_photo_empty),
                             style = TextStyle(
                                 color = ColorProvider(
-                                    if (dataSource.isNightMode()) snapshot.palette.nightOnSurface else snapshot.palette.dayOnSurface
+                                    if (isNight) palette.nightOnSurface else palette.dayOnSurface
                                 ),
-                                fontSize = 13.sp,
+                                fontSize = 11.sp,
                                 fontWeight = FontWeight.Medium
                             )
                         )
                     }
                 }
 
-                if (showStreak) {
+                // Tap zones for previous/next photo
+                if (photoCount > 1) {
+                    Row(modifier = GlanceModifier.fillMaxSize()) {
+                        Spacer(
+                            modifier = GlanceModifier
+                                .defaultWeight()
+                                .fillMaxHeight()
+                                .clickable(actionRunCallback<PhotoIndexAction>(
+                                    actionParametersOf(photoDirectionKey to -1)
+                                ))
+                        )
+                        Spacer(
+                            modifier = GlanceModifier
+                                .defaultWeight()
+                                .fillMaxHeight()
+                                .clickable(actionRunCallback<PhotoIndexAction>(
+                                    actionParametersOf(photoDirectionKey to 1)
+                                ))
+                        )
+                    }
+                }
+
+                // ── Streak Badge – TOP END ──
+                Box(
+                    modifier = GlanceModifier.fillMaxSize().padding(top = 12.dp, end = 12.dp),
+                    contentAlignment = Alignment.TopEnd
+                ) {
                     Text(
-                        text = "\uD83D\uDD25 ${snapshot.streakCount}",
+                        text = "🔥 ${snapshot.streakCount}",
                         modifier = GlanceModifier
-                            .cornerRadius(18.dp)
-                            .background(
-                                ColorProvider(
-                                    if (dataSource.isNightMode()) snapshot.palette.nightBadge else snapshot.palette.dayBadge
-                                )
-                            )
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                            .cornerRadius(50.dp)
+                            .background(ColorProvider(if (isNight) palette.nightBadge else palette.dayBadge))
+                            .padding(horizontal = 10.dp, vertical = 5.dp),
                         style = TextStyle(
-                            color = ColorProvider(
-                                if (dataSource.isNightMode()) snapshot.palette.nightBadgeText else snapshot.palette.dayBadgeText
-                            ),
-                            fontSize = 12.sp,
+                            color = ColorProvider(if (isNight) palette.nightBadgeText else palette.dayBadgeText),
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
                         )
                     )
@@ -168,11 +180,9 @@ class PhotoIndexAction : ActionCallback {
         val direction = parameters[photoDirectionKey] ?: 0
         val photoCount = MoonpageWidgetDataSource(context).loadTodaySnapshot().photoUris.size
         if (photoCount <= 1) return
-
         updateAppWidgetState(context, glanceId) { prefs: MutablePreferences ->
             val currentIndex = prefs[photoIndexKey] ?: 0
-            val nextIndex = (currentIndex + direction).mod(photoCount)
-            prefs[photoIndexKey] = nextIndex
+            prefs[photoIndexKey] = (currentIndex + direction).mod(photoCount)
         }
         PhotoMomentWidget().updateAll(context)
     }

@@ -42,7 +42,7 @@ class MomentViewModel @Inject constructor(
     private val _uiEffect = Channel<MomentUiEffect>()
     val uiEffect = _uiEffect.receiveAsFlow()
 
-    val allTags = listOf(
+    val allTags get() = listOf(
         MomentTag("text", null, context.getString(R.string.moment_tag_message)),
         MomentTag("review", Icons.Rounded.Star, context.getString(R.string.moment_tag_review)),
         MomentTag("location", Icons.Rounded.LocationOn, context.getString(R.string.moment_tag_location)),

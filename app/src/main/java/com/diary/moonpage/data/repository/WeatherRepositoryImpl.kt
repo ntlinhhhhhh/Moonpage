@@ -112,10 +112,12 @@ class WeatherRepositoryImpl @Inject constructor(
             0 -> "Sunny"
             1, 2, 3 -> "Cloudy"
             45, 48 -> "Cloudy"
-            51, 53, 55, 61, 63, 65, 80, 81, 82 -> "Rainy"
+            51, 53, 55, 61, 63, 65 -> "Rainy"
+            80, 81, 82 -> "Rainy"
             71, 73, 75, 77, 85, 86 -> "Snowy"
-            95, 96, 99 -> "Stormy"
-            else -> "Sunny"
+            95 -> "Stormy"
+            96, 99 -> "Stormy"
+            else -> if (code < 40) "Sunny" else "Cloudy"
         }
     }
 }

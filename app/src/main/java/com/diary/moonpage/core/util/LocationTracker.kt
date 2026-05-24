@@ -36,13 +36,13 @@ class LocationTracker @Inject constructor(
         
         return try {
             val lastLocation = locationClient.lastLocation.await()
-            if (lastLocation != null && (System.currentTimeMillis() - lastLocation.time) < 30 * 60 * 1000) {
+            if (lastLocation != null && (System.currentTimeMillis() - lastLocation.time) < 15 * 60 * 1000) {
                 return lastLocation
             }
 
-            withTimeoutOrNull(3000) {
+            withTimeoutOrNull(2500) {
                 locationClient.getCurrentLocation(
-                    Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+                    Priority.PRIORITY_HIGH_ACCURACY,
                     CancellationTokenSource().token
                 ).await()
             } ?: lastLocation

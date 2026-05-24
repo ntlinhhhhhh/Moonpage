@@ -6,6 +6,9 @@ import androidx.glance.appwidget.updateAll
 object MoonpageWidgets {
     suspend fun refreshAll(context: Context) {
         PhotoMomentWidget().updateAll(context)
+        QuickMoodWidget().updateAll(context)
+        WeeklyMoodWidget().updateAll(context)
+        MonthlyMoodWidget().updateAll(context)
         DailySummaryWidget().updateAll(context)
     }
 }

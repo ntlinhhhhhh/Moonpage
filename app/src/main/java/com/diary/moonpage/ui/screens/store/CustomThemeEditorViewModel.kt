@@ -161,6 +161,12 @@ class CustomThemeEditorViewModel @Inject constructor(
     }
 
     fun setBackgroundUri(uri: String?) {
+        if (uri != null && uri.startsWith("content://")) {
+            runCatching {
+                val flags = android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                context.contentResolver.takePersistableUriPermission(Uri.parse(uri), flags)
+            }
+        }
         _uiState.update { it.copy(pendingBackgroundUri = uri) }
     }
 

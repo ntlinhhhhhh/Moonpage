@@ -1,12 +1,10 @@
 package com.diary.moonpage.ui.screens.moment.components
 
+import android.content.Context
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -43,7 +41,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun MomentFeedItem(
     moment: Moment, 
@@ -94,9 +91,6 @@ fun MomentFeedItem(
         Box(modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 24.dp, vertical = 16.dp).height(56.dp))
         Spacer(modifier = Modifier.height(60.dp))
 
-        var scale by remember { mutableFloatStateOf(1f) }
-        var offset by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
-
         Box(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
@@ -116,15 +110,15 @@ fun MomentFeedItem(
             
             val inferredTag = remember(moment) {
                 when {
-                    moment.rating != null && moment.rating > 0 -> MomentTag("review", Icons.Rounded.Star, "Review", Color.White, Color.Yellow.copy(0.6f))
-                    moment.caption?.startsWith("Rating: ") == true -> MomentTag("review", Icons.Rounded.Star, "Review", Color.White, Color.Yellow.copy(0.6f))
-                    moment.location != null -> MomentTag("location", Icons.Rounded.LocationOn, "Location", Color.White, Color.Blue.copy(0.6f))
-                    moment.weather != null -> MomentTag("weather", Icons.Rounded.Cloud, "Weather", Color.White, Color.Cyan.copy(0.6f))
-                    moment.caption in listOf("Sunny ☀️", "Cloudy ☁️", "Rainy 🌧️", "Snowy ❄️", "Windy 💨") -> MomentTag("weather", Icons.Rounded.Cloud, "Weather", Color.White, Color.Cyan.copy(0.6f))
-                    moment.caption == "Party Time!" -> MomentTag("party", null, "Party Time!", containerColor = Color(0xFF80FFE8), contentColor = Color.Black)
-                    moment.caption == "OOTD" -> MomentTag("ootd", null, "OOTD", containerColor = Color.White, contentColor = Color.Black)
-                    moment.caption == "Miss you" -> MomentTag("missyou", null, "Miss you", containerColor = Color(0xFFFF4B4B), contentColor = Color.White)
-                    else -> MomentTag("text", null, "Message", Color.White, Color.Black.copy(0.75f))
+                    moment.rating != null && moment.rating > 0 -> MomentTag("review", Icons.Rounded.Star, context.getString(R.string.moment_tag_review), Color.White, Color.Yellow.copy(0.6f))
+                    moment.caption?.startsWith("Rating: ") == true -> MomentTag("review", Icons.Rounded.Star, context.getString(R.string.moment_tag_review), Color.White, Color.Yellow.copy(0.6f))
+                    moment.location != null -> MomentTag("location", Icons.Rounded.LocationOn, context.getString(R.string.moment_tag_location), Color.White, Color.Blue.copy(0.6f))
+                    moment.weather != null -> MomentTag("weather", Icons.Rounded.Cloud, context.getString(R.string.moment_tag_weather), Color.White, Color.Cyan.copy(0.6f))
+                    moment.caption in listOf("Sunny ☀️", "Cloudy ☁️", "Rainy 🌧️", "Snowy ❄️", "Windy 💨") -> MomentTag("weather", Icons.Rounded.Cloud, context.getString(R.string.moment_tag_weather), Color.White, Color.Cyan.copy(0.6f))
+                    moment.caption == "Party Time!" -> MomentTag("party", null, context.getString(R.string.moment_tag_party_time), containerColor = Color(0xFF80FFE8), contentColor = Color.Black)
+                    moment.caption == "OOTD" -> MomentTag("ootd", null, context.getString(R.string.moment_tag_ootd), containerColor = Color.White, contentColor = Color.Black)
+                    moment.caption == "Miss you" -> MomentTag("missyou", null, context.getString(R.string.moment_tag_miss_you), containerColor = Color(0xFFFF4B4B), contentColor = Color.White)
+                    else -> MomentTag("text", null, context.getString(R.string.moment_tag_message), Color.White, Color.Black.copy(0.75f))
                 }
             }
 
@@ -236,7 +230,7 @@ fun MomentFeedItem(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = formatRelativeTime(moment.capturedAt),
+                text = formatRelativeTime(moment.capturedAt, context),
                 color = onBgColor.copy(alpha = 0.5f),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
@@ -257,7 +251,7 @@ private fun formatShortTime(dateString: String): String {
     }
 }
 
-private fun formatRelativeTime(dateString: String): String {
+private fun formatRelativeTime(dateString: String, context: Context): String {
     return try {
         val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
             timeZone = TimeZone.getTimeZone("UTC")
@@ -271,9 +265,9 @@ private fun formatRelativeTime(dateString: String): String {
         val days = TimeUnit.MILLISECONDS.toDays(diffMillis)
 
         when {
-            minutes < 1 -> "now"
-            minutes < 60 -> "${minutes}m"
-            hours < 24 -> "${hours}h"
+            minutes < 1 -> context.getString(R.string.just_now)
+            minutes < 60 -> context.getString(R.string.minutes_ago, minutes)
+            hours < 24 -> context.getString(R.string.hours_ago, hours)
             else -> "${days}d"
         }
     } catch (e: Exception) {

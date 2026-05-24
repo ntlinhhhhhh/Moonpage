@@ -96,7 +96,8 @@
         <receiver android:name=".service.ReminderReceiver" />
         <receiver
             android:name=".widget.glance.PhotoMomentWidgetReceiver"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/widget_photo_moment_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -105,8 +106,42 @@
                 android:resource="@xml/photo_moment_widget_info" />
         </receiver>
         <receiver
+            android:name=".widget.glance.QuickMoodWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_quick_mood_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/quick_mood_widget_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.glance.WeeklyMoodWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_weekly_mood_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/weekly_mood_widget_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.glance.MonthlyMoodWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_monthly_mood_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/monthly_mood_widget_info" />
+        </receiver>
+        <receiver
             android:name=".widget.glance.DailySummaryWidgetReceiver"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/widget_daily_summary_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>

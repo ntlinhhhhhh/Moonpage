@@ -747,6 +747,20 @@ fun getThemeShades(theme: Theme): List<Color> {
             }
         }
     }
+
+    // Attempt to parse from description JSON (for custom themes)
+    if (!theme.description.isNullOrBlank() && theme.id.startsWith("custom_")) {
+        runCatching {
+            val json = org.json.JSONObject(theme.description)
+            val light = json.optJSONObject("light")
+            val iconColorsArray = light?.optJSONArray("iconColors")
+            if (iconColorsArray != null && iconColorsArray.length() >= 5) {
+                return List(5) { i ->
+                    Color(android.graphics.Color.parseColor(iconColorsArray.getString(i)))
+                }
+            }
+        }
+    }
     
     return when (theme.decoration) {
         "BLUSHING" -> listOf(

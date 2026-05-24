@@ -18,6 +18,7 @@ import com.diary.moonpage.core.util.TokenManager
 import com.diary.moonpage.data.remote.api.SpotifyApi
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -96,6 +97,13 @@ class MainViewModel @Inject constructor(
                     language = language,
                     activeTheme = activeTheme
                 ) }
+            }.onStart {
+                // Ensure we wait for the first emission before declaring ready
+            }.onEach {
+                if (!_uiState.value.isReady) {
+                    delay(400)
+                    _uiState.update { it.copy(isReady = true) }
+                }
             }.launchIn(viewModelScope)
 
             if (settingsPreferencesManager.isPasscodeEnabled.first()) {
@@ -109,9 +117,6 @@ class MainViewModel @Inject constructor(
                     reminderManager.scheduleDailyReminder(time[0].toInt(), time[1].toInt())
                 }
             }
-            
-            kotlinx.coroutines.delay(600)
-            _uiState.update { it.copy(isReady = true) }
         }
     }
 
