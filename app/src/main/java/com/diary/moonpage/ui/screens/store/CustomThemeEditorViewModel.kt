@@ -2,9 +2,22 @@ package com.diary.moonpage.ui.screens.store
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.ImageDecoder
+import android.graphics.LinearGradient
+import android.graphics.Matrix
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.RectF
+import android.graphics.Shader
+import android.net.Uri
+import android.os.Build
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.diary.moonpage.R
+import com.diary.moonpage.core.util.customThemeImageFormat
 import com.diary.moonpage.core.util.saveBitmapToInternalStorage
 import com.diary.moonpage.domain.repository.CreateThemeMoodPayload
 import com.diary.moonpage.domain.repository.CreateThemePayload
@@ -22,8 +35,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
-import java.util.UUID
 import javax.inject.Inject
+import kotlin.math.max
 
 data class DrawStroke(
     val points: List<Offset>,
@@ -325,29 +338,48 @@ class CustomThemeEditorViewModel @Inject constructor(
         _uiState.update { it.copy(showDiscardDialog = false) }
     }
 
-    fun saveTheme(bitmap: Bitmap) {
+    fun saveTheme() {
         val state = _uiState.value
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true) }
-            val fileName = "custom_theme_${System.currentTimeMillis()}.png"
-            val themeId = "custom_${UUID.randomUUID()}"
+            val timestamp = System.currentTimeMillis()
+            val thumbnailFileName = "custom_theme_thumb_$timestamp.webp"
+            val backgroundFileName = "custom_theme_bg_$timestamp.webp"
             val themeName = state.name.ifBlank { "My Custom Theme" }
             runCatching {
-                context.saveBitmapToInternalStorage(bitmap, fileName)
-            }.mapCatching { previewPath ->
+                val user = userRepository.currentUser.value ?: userRepository.getCurrentUser().getOrThrow()
+                val themeId = "custom_${user.userId.toThemeIdPart()}_$timestamp"
+                val backgroundAppearance = state.imageBackgroundAppearance()
+                val backgroundPath = backgroundAppearance?.backgroundUri?.takeIf { it.isNotBlank() }?.let {
+                    context.saveBitmapToInternalStorage(
+                        state.createBackgroundBitmap(backgroundAppearance),
+                        backgroundFileName,
+                        format = customThemeImageFormat(),
+                        quality = CUSTOM_THEME_IMAGE_QUALITY
+                    )
+                }
+                val thumbnailPath = context.saveBitmapToInternalStorage(
+                    state.createThumbnailBitmap(),
+                    thumbnailFileName,
+                    format = customThemeImageFormat(),
+                    quality = CUSTOM_THEME_IMAGE_QUALITY
+                )
+                Triple(thumbnailPath, backgroundPath, themeId)
+            }.mapCatching { (thumbnailPath, backgroundPath, themeId) ->
+                val hasImageBackground = backgroundPath != null
                 themeRepository.createThemes(
                     listOf(
                         CreateThemePayload(
                             id = themeId,
                             name = themeName,
                             price = CUSTOM_THEME_SLOT_PRICE,
-                            thumbnailUrl = previewPath,
-                            backgroundUrl = previewPath,
+                            thumbnailUrl = thumbnailPath,
+                            backgroundUrl = backgroundPath,
                             primaryColor = state.lightAppearance.primaryColor.toColorHex(),
-                            backgroundColor = state.lightAppearance.themeBackgroundColor().toColorHex(),
-                            backgroundLightColor = state.lightAppearance.themeBackgroundColor().toApiColorHex(),
-                            backgroundDarkColor = state.darkAppearance.themeBackgroundColor().toApiColorHex(),
-                            description = state.toThemeConfigJson(),
+                            backgroundColor = null,
+                            backgroundLightColor = if (hasImageBackground) null else state.lightAppearance.themeBackgroundPayload(),
+                            backgroundDarkColor = if (hasImageBackground) null else state.darkAppearance.themeBackgroundPayload(),
+                            description = state.toThemeConfigJson(backgroundPath),
                             isOfficial = false,
                             isActive = true,
                             moods = state.lightAppearance.toMoodPayloads()
@@ -355,11 +387,14 @@ class CustomThemeEditorViewModel @Inject constructor(
                     )
                 ).getOrThrow()
                 val serverThemeId = resolveServerThemeId(
-                    fileName = fileName,
-                    previewPath = previewPath,
+                    thumbnailFileName = thumbnailFileName,
+                    thumbnailPath = thumbnailPath,
+                    backgroundFileName = backgroundFileName,
+                    backgroundPath = backgroundPath,
                     themeName = themeName
                 )
                 buyThemeUseCase(serverThemeId, CUSTOM_THEME_SLOT_PRICE).getOrThrow()
+                themeRepository.setActiveTheme(serverThemeId).getOrThrow()
                 themeRepository.getMyThemes().getOrThrow()
                 userRepository.getCurrentUser()
             }.onSuccess {
@@ -403,23 +438,28 @@ class CustomThemeEditorViewModel @Inject constructor(
 
     private fun Long.toApiColorHex(): String = "0x%08X".format(this)
 
-    private fun ThemeAppearanceState.themeBackgroundColor(): Long {
+    private fun ThemeAppearanceState.themeBackgroundPayload(): String {
         return when (backgroundFillMode) {
-            BackgroundFillMode.Gradient -> gradientStartColor
-            BackgroundFillMode.Solid -> solidBackgroundColor
+            BackgroundFillMode.Gradient -> "${gradientStartColor.toApiColorHex()},${gradientEndColor.toApiColorHex()}"
+            BackgroundFillMode.Solid -> solidBackgroundColor.toApiColorHex()
         }
     }
 
-    private fun CustomThemeEditorUiState.toThemeConfigJson(): String {
+    private fun CustomThemeEditorUiState.imageBackgroundAppearance(): ThemeAppearanceState? {
+        return lightAppearance.takeIf { !it.backgroundUri.isNullOrBlank() }
+            ?: darkAppearance.takeIf { !it.backgroundUri.isNullOrBlank() }
+    }
+
+    private fun CustomThemeEditorUiState.toThemeConfigJson(backgroundPath: String?): String {
         return JSONObject()
-            .put("light", lightAppearance.toJson())
-            .put("dark", darkAppearance.toJson())
+            .put("light", lightAppearance.toJson(backgroundPath))
+            .put("dark", darkAppearance.toJson(backgroundPath))
             .toString()
     }
 
-    private fun ThemeAppearanceState.toJson(): JSONObject {
+    private fun ThemeAppearanceState.toJson(backgroundPath: String?): JSONObject {
         return JSONObject()
-            .put("backgroundUri", backgroundUri)
+            .put("backgroundUri", backgroundPath ?: backgroundUri)
             .put("backgroundScale", backgroundScale)
             .put("backgroundRotation", backgroundRotation)
             .put("backgroundOffsetX", backgroundOffsetX)
@@ -433,18 +473,175 @@ class CustomThemeEditorViewModel @Inject constructor(
             .put("iconColors", JSONArray(iconColors.map { it.toColorHex() }))
     }
 
+    private fun CustomThemeEditorUiState.createThumbnailBitmap(): Bitmap {
+        val bitmap = Bitmap.createBitmap(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        canvas.drawThemeBackground(lightAppearance, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, strokes)
+        canvas.drawMoodIconStrip(lightAppearance.iconColors, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT)
+        return bitmap
+    }
+
+    private fun CustomThemeEditorUiState.createBackgroundBitmap(
+        appearance: ThemeAppearanceState = lightAppearance
+    ): Bitmap {
+        val bitmap = Bitmap.createBitmap(BACKGROUND_WIDTH, BACKGROUND_HEIGHT, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        canvas.drawThemeBackground(appearance, BACKGROUND_WIDTH, BACKGROUND_HEIGHT, strokes)
+        return bitmap
+    }
+
+    private fun Canvas.drawThemeBackground(
+        appearance: ThemeAppearanceState,
+        width: Int,
+        height: Int,
+        strokes: List<DrawStroke>
+    ) {
+        val image = appearance.backgroundUri?.let { context.decodeThemeBitmap(it) }
+        if (image != null) {
+            drawBitmap(
+                image,
+                appearance.backgroundMatrix(image.width, image.height, width, height),
+                Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+            )
+        } else if (appearance.backgroundFillMode == BackgroundFillMode.Gradient) {
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                shader = LinearGradient(
+                    0f,
+                    0f,
+                    0f,
+                    height.toFloat(),
+                    appearance.gradientStartColor.toArgbInt(),
+                    appearance.gradientEndColor.toArgbInt(),
+                    Shader.TileMode.CLAMP
+                )
+            }
+            drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
+        } else {
+            drawColor(appearance.solidBackgroundColor.toArgbInt())
+        }
+        drawEditorStrokes(strokes, width, height)
+    }
+
+    private fun ThemeAppearanceState.backgroundMatrix(
+        sourceWidth: Int,
+        sourceHeight: Int,
+        targetWidth: Int,
+        targetHeight: Int
+    ): Matrix {
+        val baseScale = max(
+            targetWidth.toFloat() / sourceWidth.toFloat(),
+            targetHeight.toFloat() / sourceHeight.toFloat()
+        )
+        val targetScale = baseScale * backgroundScale * rotationCoverMultiplier(backgroundRotation)
+        return Matrix().apply {
+            postTranslate(-sourceWidth / 2f, -sourceHeight / 2f)
+            postScale(targetScale, targetScale)
+            postRotate(backgroundRotation)
+            postTranslate(
+                targetWidth / 2f + backgroundOffsetX * (targetWidth / PREVIEW_BASE_WIDTH),
+                targetHeight / 2f + backgroundOffsetY * (targetHeight / PREVIEW_BASE_HEIGHT)
+            )
+        }
+    }
+
+    private fun Canvas.drawEditorStrokes(strokes: List<DrawStroke>, width: Int, height: Int) {
+        if (strokes.isEmpty()) return
+        val scaleX = width / PREVIEW_BASE_WIDTH
+        val scaleY = height / PREVIEW_BASE_HEIGHT
+        strokes.filterNot { it.isEraser }.forEach { stroke ->
+            val path = Path()
+            stroke.points.forEachIndexed { index, point ->
+                val x = point.x * scaleX
+                val y = point.y * scaleY
+                if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+            }
+            val widthMultiplier = when (stroke.brushType) {
+                BrushType.Fine -> 1f
+                BrushType.Bold -> 1.8f
+                BrushType.Pencil -> 0.8f
+                BrushType.Spray -> 2.2f
+            }
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = stroke.color.toArgbInt()
+                alpha = if (stroke.brushType == BrushType.Pencil) 174 else 255
+                style = Paint.Style.STROKE
+                strokeWidth = stroke.strokeWidth * widthMultiplier * ((scaleX + scaleY) / 2f)
+                strokeCap = Paint.Cap.ROUND
+                strokeJoin = Paint.Join.ROUND
+            }
+            drawPath(path, paint)
+        }
+    }
+
+    private fun Canvas.drawMoodIconStrip(iconColors: List<Long>, width: Int, height: Int) {
+        val iconResources = listOf(
+            R.drawable.very_happy,
+            R.drawable.happy,
+            R.drawable.neutral,
+            R.drawable.sad,
+            R.drawable.very_sad
+        )
+        val iconSize = width * 0.13f
+        val centerY = height * 0.55f
+        val startX = width * 0.18f
+        val gap = (width - startX * 2f) / 4f
+        val circlePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+        val imagePaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+
+        iconResources.forEachIndexed { index, resId ->
+            val centerX = startX + gap * index
+            circlePaint.color = iconColors.getOrElse(index) { 0xFF8D6E63 }.toArgbInt()
+            drawCircle(centerX, centerY, iconSize / 2f, circlePaint)
+
+            val icon = BitmapFactory.decodeResource(context.resources, resId) ?: return@forEachIndexed
+            val inset = iconSize * 0.22f
+            drawBitmap(
+                icon,
+                null,
+                RectF(
+                    centerX - iconSize / 2f + inset,
+                    centerY - iconSize / 2f + inset,
+                    centerX + iconSize / 2f - inset,
+                    centerY + iconSize / 2f - inset
+                ),
+                imagePaint
+            )
+        }
+    }
+
+    private fun Context.decodeThemeBitmap(value: String): Bitmap? {
+        return runCatching {
+            val uri = Uri.parse(value)
+            when {
+                value.startsWith("content://") || value.startsWith("android.resource://") -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        ImageDecoder.decodeBitmap(ImageDecoder.createSource(contentResolver, uri)) { decoder, _, _ ->
+                            decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+                        }
+                    } else {
+                        contentResolver.openInputStream(uri)?.use { stream -> BitmapFactory.decodeStream(stream) }
+                    }
+                }
+                value.startsWith("file://") -> BitmapFactory.decodeFile(uri.path)
+                else -> BitmapFactory.decodeFile(value)
+            }
+        }.getOrNull()
+    }
+
     private suspend fun resolveServerThemeId(
-        fileName: String,
-        previewPath: String,
+        thumbnailFileName: String,
+        thumbnailPath: String,
+        backgroundFileName: String,
+        backgroundPath: String?,
         themeName: String
     ): String {
         repeat(CREATE_THEME_LOOKUP_RETRIES) { attempt ->
             val myThemes = themeRepository.getMyThemes().getOrThrow()
             val matchedTheme = myThemes.firstOrNull { theme ->
-                theme.thumbnailUrl == previewPath ||
-                    theme.backgroundUrl == previewPath ||
-                    theme.thumbnailUrl?.contains(fileName) == true ||
-                    theme.backgroundUrl?.contains(fileName) == true
+                theme.thumbnailUrl == thumbnailPath ||
+                    (backgroundPath != null && theme.backgroundUrl == backgroundPath) ||
+                    theme.thumbnailUrl?.contains(thumbnailFileName) == true ||
+                    (backgroundPath != null && theme.backgroundUrl?.contains(backgroundFileName) == true)
             } ?: myThemes.lastOrNull { it.name == themeName }
 
             if (matchedTheme != null) {
@@ -460,5 +657,26 @@ class CustomThemeEditorViewModel @Inject constructor(
     }
 }
 
+private fun Long.toArgbInt(): Int = toInt()
+
+private fun String.toThemeIdPart(): String {
+    return trim()
+        .replace(Regex("[^A-Za-z0-9_-]"), "_")
+        .trim('_')
+        .ifBlank { "user" }
+}
+
+private fun rotationCoverMultiplier(rotation: Float): Float {
+    val normalized = kotlin.math.abs(rotation) / 45f
+    return 1f + normalized.coerceIn(0f, 1f) * 0.34f
+}
+
+private const val THUMBNAIL_WIDTH = 640
+private const val THUMBNAIL_HEIGHT = 360
+private const val BACKGROUND_WIDTH = 720
+private const val BACKGROUND_HEIGHT = 1280
+private const val PREVIEW_BASE_WIDTH = 360f
+private const val PREVIEW_BASE_HEIGHT = 580f
+private const val CUSTOM_THEME_IMAGE_QUALITY = 80
 private const val CREATE_THEME_LOOKUP_RETRIES = 6
 private const val CREATE_THEME_LOOKUP_DELAY_MS = 350L

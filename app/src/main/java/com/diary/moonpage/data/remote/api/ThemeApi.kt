@@ -6,6 +6,8 @@ import com.diary.moonpage.data.remote.dto.theme.CreateThemeResponse
 import com.diary.moonpage.data.remote.dto.theme.SetActiveThemeRequest
 import com.diary.moonpage.data.remote.dto.theme.ThemeMoodResponseDTO
 import com.diary.moonpage.data.remote.dto.theme.ThemeResponseDTO
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -32,21 +34,51 @@ interface ThemeApi {
     @POST("api/users/me/store/buy-theme")
     suspend fun buyTheme(
         @Body request: BuyThemeRequest
-    ): Response<Unit>
+    ): Response<CreateThemeResponse>
 
-    @POST("api/themes")
+    @Multipart
+    @POST("api/themes/upload")
+    suspend fun uploadTheme(
+        @Part("Id") id: RequestBody,
+        @Part("Name") name: RequestBody,
+        @Part("Price") price: RequestBody,
+        @Part thumbnail: MultipartBody.Part? = null,
+        @Part background: MultipartBody.Part? = null,
+        @Part("BackgroundDarkColor") backgroundDarkColor: RequestBody? = null,
+        @Part("BackgroundLightColor") backgroundLightColor: RequestBody? = null,
+        @Part("IsOfficial") isOfficial: RequestBody? = null,
+        @Part("IsActive") isActive: RequestBody? = null,
+        @Part("Moods") moods: RequestBody? = null
+    ): Response<CreateThemeResponse>
+
+    @POST("api/themes/list")
     suspend fun createThemes(
         @Body request: List<CreateThemeRequest>
     ): Response<CreateThemeResponse>
 
+    @Multipart
     @PUT("api/themes/{id}")
     suspend fun updateTheme(
         @Path("id") id: String,
-        @Body request: CreateThemeRequest
-    ): Response<Unit>
+        @Part("Id") formId: RequestBody? = null,
+        @Part("Name") name: RequestBody? = null,
+        @Part("Price") price: RequestBody? = null,
+        @Part thumbnail: MultipartBody.Part? = null,
+        @Part background: MultipartBody.Part? = null,
+        @Part("BackgroundDarkColor") backgroundDarkColor: RequestBody? = null,
+        @Part("BackgroundLightColor") backgroundLightColor: RequestBody? = null,
+        @Part("IsOfficial") isOfficial: RequestBody? = null,
+        @Part("IsActive") isActive: RequestBody? = null,
+        @Part("Moods") moods: RequestBody? = null
+    ): Response<CreateThemeResponse>
+
+    @DELETE("api/themes/{id}")
+    suspend fun deleteTheme(
+        @Path("id") id: String
+    ): Response<CreateThemeResponse>
 
     @PUT("api/users/me/themes/active")
     suspend fun setActiveTheme(
         @Body request: SetActiveThemeRequest
-    ): Response<Unit>
+    ): Response<CreateThemeResponse>
 }

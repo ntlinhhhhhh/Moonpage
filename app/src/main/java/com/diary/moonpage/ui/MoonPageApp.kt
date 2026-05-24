@@ -19,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -90,9 +91,13 @@ fun MoonPageAppContent(
         val customBackgroundModel = remember(uiState.activeTheme) {
             uiState.activeTheme.customBackgroundModel()
         }
+        val customBackgroundBrush = remember(uiState.activeTheme, isDark) {
+            uiState.activeTheme.customBackgroundBrush(isDark)
+        }
         val hasCustomImageBackground = remember(uiState.activeTheme) {
             uiState.activeTheme.hasCustomImageBackground()
         }
+        val hasCustomVisualBackground = customBackgroundModel != null || customBackgroundBrush != null
         CompositionLocalProvider(
             com.diary.moonpage.core.theme.LocalLocale provides uiState.language
         ) {
@@ -111,11 +116,17 @@ fun MoonPageAppContent(
                                 .background(Color.Black.copy(alpha = 0.32f))
                         )
                     }
+                } else if (customBackgroundBrush != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(customBackgroundBrush)
+                    )
                 }
 
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    color = if (hasCustomVisualBackground) Color.Transparent else MaterialTheme.colorScheme.background
                 ) {
                     Box(modifier = Modifier.fillMaxSize()) {
                         if (uiState.isReady) {
@@ -136,15 +147,29 @@ fun MoonPageAppContent(
 private fun Theme?.customBackgroundModel(): Any? {
     val theme = this ?: return null
     if (!theme.isCustomTheme()) return null
-    val path = theme.thumbnailUrl?.takeIf { it.isNotBlank() && !it.isThemeColor() } ?: return null
+    val path = theme.backgroundUrl?.takeIf { it.isNotBlank() && !it.isThemeColor() }
+        ?: theme.description.appearanceObject("light")?.optString("backgroundUri")?.takeIf { it.isThemeAssetPath() }
+        ?: return null
     val file = File(path)
     return if (file.exists()) file else path
+}
+
+private fun Theme?.customBackgroundBrush(isDark: Boolean): Brush? {
+    val theme = this ?: return null
+    if (!theme.isCustomTheme() || theme.hasCustomImageBackground()) return null
+    val mode = if (isDark) "dark" else "light"
+    val appearance = theme.description.appearanceObject(mode) ?: return null
+    if (!appearance.optString("backgroundFillMode").equals("Gradient", ignoreCase = true)) return null
+    val start = appearance.optString("gradientStartColor").toThemeColorOrNull() ?: return null
+    val end = appearance.optString("gradientEndColor").toThemeColorOrNull() ?: return null
+    return Brush.verticalGradient(listOf(start, end))
 }
 
 private fun Theme?.hasCustomImageBackground(): Boolean {
     val theme = this ?: return false
     if (!theme.isCustomTheme()) return false
-    return theme.description.appearanceObject("light")?.optString("backgroundUri").isThemeAssetPath() ||
+    return theme.backgroundUrl.isThemeAssetPath() ||
+        theme.description.appearanceObject("light")?.optString("backgroundUri").isThemeAssetPath() ||
         theme.description.appearanceObject("dark")?.optString("backgroundUri").isThemeAssetPath()
 }
 
@@ -170,4 +195,16 @@ private fun String?.appearanceObject(mode: String): JSONObject? {
 
 private fun String?.isThemeAssetPath(): Boolean {
     return !isNullOrBlank() && !isThemeColor()
+}
+
+private fun String?.toThemeColorOrNull(): Color? {
+    if (isNullOrBlank()) return null
+    return runCatching {
+        val normalized = when {
+            startsWith("0x", ignoreCase = true) -> "#${drop(2)}"
+            startsWith("#") -> this
+            else -> "#$this"
+        }
+        Color(android.graphics.Color.parseColor(normalized))
+    }.getOrNull()
 }

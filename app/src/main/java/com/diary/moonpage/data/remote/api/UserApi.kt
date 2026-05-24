@@ -2,7 +2,6 @@ package com.diary.moonpage.data.remote.api
 
 import com.diary.moonpage.data.remote.dto.auth.UpdateProfileRequestDto
 import com.diary.moonpage.data.remote.dto.auth.UserResponseDto
-import com.diary.moonpage.data.remote.dto.theme.ThemeResponseDTO
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.*
@@ -17,7 +16,7 @@ interface UserApi {
     ): Response<UserResponseDto>
 
     @GET("api/users/me/themes")
-    suspend fun getMyThemes(): Response<List<ThemeResponseDTO>>
+    suspend fun getOwnedThemeIds(): Response<List<String>>
 
     @DELETE("api/users/{id}")
     suspend fun deleteUser(

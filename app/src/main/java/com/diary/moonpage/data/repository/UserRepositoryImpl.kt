@@ -1,12 +1,16 @@
 package com.diary.moonpage.data.repository
 
 import com.diary.moonpage.core.util.ImageUtils
+import com.diary.moonpage.core.util.PredefinedTheme
+import com.diary.moonpage.core.util.ThemeConstants
 import com.diary.moonpage.core.util.TokenManager
 import com.diary.moonpage.core.util.UserManager
+import com.diary.moonpage.data.remote.api.ThemeApi
 import com.diary.moonpage.data.remote.api.UserApi
 import com.diary.moonpage.data.remote.dto.auth.UpdateProfileRequestDto
 import com.diary.moonpage.data.remote.dto.auth.UserResponseDto
 import com.diary.moonpage.domain.model.Theme
+import com.diary.moonpage.domain.model.ThemeType
 import com.diary.moonpage.domain.model.User
 import com.diary.moonpage.domain.repository.UserRepository
 import kotlinx.coroutines.CoroutineScope
@@ -20,6 +24,7 @@ import javax.inject.Singleton
 @Singleton
 class UserRepositoryImpl @Inject constructor(
     private val userApi: UserApi,
+    private val themeApi: ThemeApi,
     private val userManager: UserManager,
     private val tokenManager: TokenManager,
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
@@ -88,14 +93,32 @@ class UserRepositoryImpl @Inject constructor(
         if (token.isNullOrBlank()) return Result.success(emptyList())
 
         return try {
-            val response = userApi.getMyThemes()
+            val response = userApi.getOwnedThemeIds()
             if (response.isSuccessful && response.body() != null) {
-                Result.success(response.body()!!.map { it.toDomain() })
+                val themes = response.body()!!.map { themeId ->
+                    resolveOwnedTheme(themeId)
+                }
+                Result.success(themes)
             } else {
                 Result.failure(Exception("Failed to fetch themes"))
             }
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    private suspend fun resolveOwnedTheme(themeId: String): Theme {
+        ThemeConstants.THEMES.find { it.id == themeId }?.let { return it.toOwnedTheme() }
+
+        return try {
+            val response = themeApi.getThemeDetail(themeId)
+            if (response.isSuccessful && response.body() != null) {
+                response.body()!!.toDomain().copy(isOwned = true)
+            } else {
+                themeId.toFallbackOwnedTheme()
+            }
+        } catch (e: Exception) {
+            themeId.toFallbackOwnedTheme()
         }
     }
 
@@ -252,4 +275,36 @@ class UserRepositoryImpl @Inject constructor(
         )
         return Result.success(updated)
     }
+}
+
+private fun PredefinedTheme.toOwnedTheme(): Theme {
+    return Theme(
+        id = id,
+        name = name,
+        collection = "Collection",
+        price = price,
+        isFree = price == 0,
+        thumbnailUrl = thumbnailUrl,
+        backgroundUrl = backgroundUrl,
+        isOwned = true,
+        isActive = id == ThemeConstants.DEFAULT_THEME_ID,
+        type = ThemeType.THEME,
+        icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
+        primaryColor = thumbnailUrl,
+        decoration = decoration
+    )
+}
+
+private fun String.toFallbackOwnedTheme(): Theme {
+    return Theme(
+        id = this,
+        name = replace('_', ' '),
+        collection = "Collection",
+        price = 0,
+        isFree = true,
+        thumbnailUrl = null,
+        backgroundUrl = null,
+        isOwned = true,
+        type = ThemeType.THEME
+    )
 }

@@ -10,6 +10,7 @@ import com.diary.moonpage.data.remote.dto.theme.SetActiveThemeRequest
 import com.diary.moonpage.core.theme.MoonThemeType
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.domain.model.ThemeType
+import com.diary.moonpage.domain.repository.CreateThemeMoodPayload
 import com.diary.moonpage.domain.repository.CreateThemePayload
 import com.diary.moonpage.domain.repository.ThemeRepository
 import com.google.gson.Gson
@@ -20,7 +21,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import com.diary.moonpage.core.util.ThemeConstants
 import com.diary.moonpage.core.util.PredefinedTheme
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import javax.inject.Inject
 
 class ThemeRepositoryImpl @Inject constructor(
@@ -124,6 +131,12 @@ class ThemeRepositoryImpl @Inject constructor(
             val response = api.getMyThemes()
             if (response.isSuccessful && response.body() != null) {
                 val cachedThemes = dao.getAllThemes().first()
+                val currentActive = dao.getActiveTheme()
+                val recentActiveThemeId = currentActive
+                    ?.takeIf { entity ->
+                        entity.activatedAt?.let { System.currentTimeMillis() - it < ACTIVE_THEME_SYNC_GRACE_MS } == true
+                    }
+                    ?.id
                 val myThemes = response.body()!!
                     .map { dto ->
                         val networkTheme = dto.toDomain().copy(
@@ -131,7 +144,7 @@ class ThemeRepositoryImpl @Inject constructor(
                             price = CUSTOM_THEME_PRICE,
                             isFree = false,
                             isOwned = true,
-                            isActive = dto.isActive,
+                            isActive = if (recentActiveThemeId != null) dto.id == recentActiveThemeId else dto.isActive,
                             decoration = "CUSTOM",
                             primaryColor = dto.thumbnailUrl.takeIfThemeColor()
                         )
@@ -144,9 +157,12 @@ class ThemeRepositoryImpl @Inject constructor(
                             null
                         }
                         networkTheme.copy(
-                            thumbnailUrl = networkTheme.thumbnailUrl ?: cachedTheme?.thumbnailUrl,
-                            backgroundUrl = cachedTheme?.backgroundUrl?.takeIfThemeColor()
-                                ?: networkTheme.backgroundUrl,
+                            thumbnailUrl = cachedTheme?.thumbnailUrl.takeIfLocalThemeAsset()
+                                ?: networkTheme.thumbnailUrl
+                                ?: cachedTheme?.thumbnailUrl,
+                            backgroundUrl = cachedTheme?.backgroundUrl.takeIfLocalThemeAsset()
+                                ?: networkTheme.backgroundUrl
+                                ?: cachedTheme?.backgroundUrl,
                             primaryColor = cachedPrimary ?: networkPrimary ?: moodPrimary,
                             description = cachedTheme?.description ?: networkTheme.description,
                             activatedAt = cachedTheme?.activatedAt
@@ -180,7 +196,7 @@ class ThemeRepositoryImpl @Inject constructor(
                         themeId = themeId,
                         baseMoodId = dto.baseMoodId,
                         iconUrl = dto.iconUrl,
-                        customName = dto.customName
+                        customName = dto.customName.orEmpty()
                     )
                 }
                 if (moods.isNotEmpty()) {
@@ -197,108 +213,164 @@ class ThemeRepositoryImpl @Inject constructor(
 
     override suspend fun createThemes(themes: List<CreateThemePayload>): Result<Unit> {
         return try {
-            val request = themes.map { theme ->
-                CreateThemeRequest(
-                    id = theme.id,
-                    name = theme.name,
-                    price = theme.price,
-                    thumbnailUrl = theme.thumbnailUrl,
-                    backgroundUrl = theme.backgroundUrl,
-                    backgroundDarkColor = theme.backgroundDarkColor,
-                    backgroundLightColor = theme.backgroundLightColor,
-                    isOfficial = theme.isOfficial,
-                    isActive = theme.isActive,
-                    moods = theme.moods.map { mood ->
-                        CreateThemeMoodRequest(
-                            baseMoodId = mood.baseMoodId,
+            val uploadThemes = themes.filter { it.hasLocalThemeFile() }
+            val listThemes = themes.filterNot { it.hasLocalThemeFile() }
+
+            if (listThemes.isNotEmpty()) {
+                val response = api.createThemes(listThemes.toCreateThemeRequests())
+                if (!response.isSuccessful) {
+                    return Result.failure(Exception(parseErrorResponse(response.errorBody()?.string())))
+                }
+            }
+
+            uploadThemes.forEach { theme ->
+                val response = api.uploadTheme(
+                    id = theme.id.toTextRequestBody(),
+                    name = theme.name.toTextRequestBody(),
+                    price = theme.price.toString().toTextRequestBody(),
+                    thumbnail = theme.thumbnailUrl.toLocalFileOrNull()?.toImagePart("Thumbnail"),
+                    background = theme.backgroundUrl.toLocalFileOrNull()?.toImagePart("Background"),
+                    backgroundDarkColor = theme.backgroundDarkColor?.toTextRequestBody(),
+                    backgroundLightColor = theme.backgroundLightColor?.toTextRequestBody(),
+                    isOfficial = theme.isOfficial.toString().toTextRequestBody(),
+                    isActive = theme.isActive.toString().toTextRequestBody(),
+                    moods = theme.moods.toUploadMoodsJson().toTextRequestBody()
+                )
+                if (!response.isSuccessful) {
+                    return Result.failure(Exception(parseErrorResponse(response.errorBody()?.string())))
+                }
+            }
+
+            themes.forEach { theme ->
+                dao.insertThemes(
+                    listOf(
+                        ThemeEntity(
+                            id = theme.id,
+                            name = theme.name,
+                            collection = "Custom Theme",
+                            price = theme.price,
+                            isFree = theme.price == 0,
+                            thumbnailUrl = theme.thumbnailUrl,
+                            backgroundUrl = theme.backgroundUrl,
+                            isOwned = false,
+                            isActive = theme.isActive,
+                            description = theme.description,
+                            type = ThemeType.THEME.name,
+                            icons = "VERY_HAPPY,HAPPY,NEUTRAL,SAD,ANGRY",
+                            primaryColor = theme.primaryColor
+                                ?: theme.thumbnailUrl.takeIfThemeColor()
+                                ?: theme.backgroundColor
+                                ?: theme.backgroundLightColor
+                                ?: theme.backgroundUrl.takeIfThemeColor(),
+                            decoration = "CUSTOM",
+                            activatedAt = null
+                        )
+                    )
+                )
+                dao.insertThemeMoods(
+                    theme.moods.map { mood ->
+                        ThemeMoodEntity(
+                            themeId = theme.id,
+                            baseMoodId = mood.baseMoodId.toThemeMoodName(),
                             iconUrl = mood.iconUrl,
                             customName = mood.customName
                         )
                     }
                 )
             }
-
-            val response = api.createThemes(request)
-            if (response.isSuccessful) {
-                themes.forEach { theme ->
-                    dao.insertThemes(
-                        listOf(
-                            ThemeEntity(
-                                id = theme.id,
-                                name = theme.name,
-                                collection = "Custom Theme",
-                                price = theme.price,
-                                isFree = theme.price == 0,
-                                thumbnailUrl = theme.thumbnailUrl,
-                                backgroundUrl = theme.backgroundColor ?: theme.backgroundUrl,
-                                isOwned = false,
-                                isActive = theme.isActive,
-                                description = theme.description,
-                                type = ThemeType.THEME.name,
-                                icons = "VERY_HAPPY,HAPPY,NEUTRAL,SAD,ANGRY",
-                                primaryColor = theme.primaryColor
-                                    ?: theme.thumbnailUrl.takeIfThemeColor()
-                                    ?: theme.backgroundColor
-                                    ?: theme.backgroundLightColor
-                                    ?: theme.backgroundUrl.takeIfThemeColor(),
-                                decoration = "CUSTOM",
-                                activatedAt = null
-                            )
-                        )
-                    )
-                    dao.insertThemeMoods(
-                        theme.moods.map { mood ->
-                            ThemeMoodEntity(
-                                themeId = theme.id,
-                                baseMoodId = mood.baseMoodId.toThemeMoodName(),
-                                iconUrl = mood.iconUrl,
-                                customName = mood.customName
-                            )
-                        }
-                    )
-                }
-                getMyThemes()
-                Result.success(Unit)
-            } else {
-                Result.failure(Exception(parseErrorResponse(response.errorBody()?.string())))
-            }
+            getMyThemes()
+            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
+    private fun List<CreateThemePayload>.toCreateThemeRequests(): List<CreateThemeRequest> {
+        return map { theme ->
+            CreateThemeRequest(
+                id = theme.id,
+                name = theme.name,
+                price = theme.price,
+                thumbnailUrl = theme.thumbnailUrl,
+                backgroundUrl = theme.backgroundUrl,
+                backgroundDarkColor = theme.backgroundDarkColor,
+                backgroundLightColor = theme.backgroundLightColor,
+                isOfficial = theme.isOfficial,
+                isActive = theme.isActive,
+                moods = theme.moods.map { mood ->
+                    CreateThemeMoodRequest(
+                        baseMoodId = mood.baseMoodId,
+                        iconUrl = mood.iconUrl,
+                        customName = mood.customName
+                    )
+                }
+            )
+        }
+    }
+
+    private fun CreateThemePayload.hasLocalThemeFile(): Boolean {
+        return thumbnailUrl.toLocalFileOrNull() != null || backgroundUrl.toLocalFileOrNull() != null
+    }
+
+    private fun String.toTextRequestBody() = toRequestBody("text/plain".toMediaTypeOrNull())
+
+    private fun String?.toLocalFileOrNull(): File? {
+        if (isNullOrBlank()) return null
+        return File(this).takeIf { it.isFile }
+    }
+
+    private fun File.toImagePart(name: String): MultipartBody.Part {
+        val mediaType = when (extension.lowercase()) {
+            "webp" -> "image/webp"
+            "jpg", "jpeg" -> "image/jpeg"
+            "png" -> "image/png"
+            else -> "image/*"
+        }
+        return MultipartBody.Part.createFormData(
+            name,
+            this.name,
+            asRequestBody(mediaType.toMediaTypeOrNull())
+        )
+    }
+
+    private fun List<CreateThemeMoodPayload>.toUploadMoodsJson(): String {
+        return JSONArray().apply {
+            forEach { mood ->
+                put(
+                    JSONObject()
+                        .put("BaseMoodId", mood.baseMoodId)
+                        .put("IconColor", mood.iconUrl)
+                        .put("CustomName", mood.customName)
+                )
+            }
+        }.toString()
+    }
+
     override suspend fun renameTheme(themeId: String, name: String): Result<Unit> {
+        val normalizedThemeId = themeId.trim()
         val trimmedName = name.trim()
+        if (normalizedThemeId.isBlank()) {
+            return Result.failure(IllegalArgumentException("Theme id cannot be empty"))
+        }
         if (trimmedName.isBlank()) {
             return Result.failure(IllegalArgumentException("Theme name cannot be empty"))
         }
 
         return try {
-            val cachedEntity = dao.getThemeById(themeId)
-            val theme = cachedEntity?.toDomain()
-                ?: myThemesState.value.firstOrNull { it.id == themeId }
-                ?: return Result.failure(IllegalStateException("Theme not found"))
+            val cachedEntity = dao.getThemeById(normalizedThemeId)
+            if (cachedEntity == null && myThemesState.value.none { it.id == normalizedThemeId }) {
+                return Result.failure(IllegalStateException("Theme not found"))
+            }
 
-            val request = CreateThemeRequest(
-                id = theme.id,
-                name = trimmedName,
-                price = theme.price,
-                thumbnailUrl = theme.thumbnailUrl,
-                backgroundUrl = theme.backgroundUrl,
-                backgroundDarkColor = theme.description.backgroundColorForMode("dark")
-                    ?: theme.backgroundUrl.takeIfThemeColor()?.toApiColorHex(),
-                backgroundLightColor = theme.description.backgroundColorForMode("light")
-                    ?: theme.backgroundUrl.takeIfThemeColor()?.toApiColorHex(),
-                isOfficial = false,
-                isActive = theme.isActive,
-                moods = buildThemeMoodRequests(theme)
+            val response = api.updateTheme(
+                id = normalizedThemeId,
+                formId = normalizedThemeId.toTextRequestBody(),
+                name = trimmedName.toTextRequestBody()
             )
-
-            val response = api.updateTheme(themeId, request)
             if (response.isSuccessful) {
                 cachedEntity?.let { dao.insertThemes(listOf(it.copy(name = trimmedName))) }
                 myThemesState.value = myThemesState.value.map { customTheme ->
-                    if (customTheme.id == themeId) customTheme.copy(name = trimmedName) else customTheme
+                    if (customTheme.id == normalizedThemeId) customTheme.copy(name = trimmedName) else customTheme
                 }
                 Result.success(Unit)
             } else {
@@ -335,7 +407,7 @@ class ThemeRepositoryImpl @Inject constructor(
                             themeId = themeId,
                             baseMoodId = moodDto.baseMoodId,
                             iconUrl = moodDto.iconUrl,
-                            customName = moodDto.customName
+                            customName = moodDto.customName.orEmpty()
                         )
                     }
                     dao.insertThemeMoods(moods)
@@ -458,7 +530,7 @@ class ThemeRepositoryImpl @Inject constructor(
                 CreateThemeMoodRequest(
                     baseMoodId = mood.baseMoodId.toThemeMoodIdOrNull() ?: DEFAULT_MOOD_IDS[index.coerceIn(DEFAULT_MOOD_IDS.indices)],
                     iconUrl = mood.iconUrl,
-                    customName = mood.customName
+                    customName = mood.customName.orEmpty()
                 )
             }
         }
@@ -475,7 +547,7 @@ class ThemeRepositoryImpl @Inject constructor(
                 CreateThemeMoodRequest(
                     baseMoodId = mood.baseMoodId.toThemeMoodIdOrNull() ?: DEFAULT_MOOD_IDS[index.coerceIn(DEFAULT_MOOD_IDS.indices)],
                     iconUrl = mood.iconUrl,
-                    customName = mood.customName
+                    customName = mood.customName.orEmpty()
                 )
             }
         }
@@ -520,7 +592,7 @@ class ThemeRepositoryImpl @Inject constructor(
                             themeId = themeId,
                             baseMoodId = dto.baseMoodId,
                             iconUrl = dto.iconUrl,
-                            customName = dto.customName
+                            customName = dto.customName.orEmpty()
                         )
                     }
                     dao.insertThemeMoods(moods)
@@ -588,6 +660,16 @@ private fun ThemeEntity.isCustomThemeEntity(): Boolean {
 
 private fun String?.takeIfThemeColor(): String? {
     return takeIf { it.isThemeColor() }
+}
+
+private fun String?.takeIfLocalThemeAsset(): String? {
+    if (isNullOrBlank()) return null
+    return takeIf {
+        File(it).isFile ||
+            it.startsWith("content://", ignoreCase = true) ||
+            it.startsWith("file://", ignoreCase = true) ||
+            it.startsWith("android.resource://", ignoreCase = true)
+    }
 }
 
 private fun String?.isThemeColor(): Boolean {
@@ -667,3 +749,4 @@ private fun String.toThemeMoodIdOrNull(): Int? {
 private val DEFAULT_MOOD_IDS = listOf(5, 4, 3, 2, 1)
 
 private const val CUSTOM_THEME_PRICE = 500
+private const val ACTIVE_THEME_SYNC_GRACE_MS = 5 * 60 * 1000L

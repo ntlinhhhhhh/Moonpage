@@ -207,7 +207,9 @@ fun MoonPageTheme(
     val customTheme = activeTheme?.takeIf { it.isCustomTheme() }
     val customThemePrimary = customTheme?.customPrimaryColor(darkTheme)
     val customThemeBackground = customTheme?.customBackgroundColor(darkTheme)
-    val hasCustomBackgroundImage = customTheme?.thumbnailUrl.isThemeAssetPath()
+    val hasCustomBackgroundImage = customTheme.hasCustomBackgroundImage()
+    val hasCustomGradientBackground = customTheme.hasCustomGradientBackground(darkTheme)
+    val hasCustomVisualBackground = hasCustomBackgroundImage || hasCustomGradientBackground
 
     val themePrimary = customThemePrimary ?: if (darkTheme) {
         when (themeType) {
@@ -252,16 +254,22 @@ fun MoonPageTheme(
     val targetColorScheme = if (darkTheme) {
         DarkColorScheme.copy(
             primary = themePrimary,
-            background = (customThemeBackground ?: customThemeFallbackBackground ?: MoonBgDark)
-                .withBackgroundImageAlpha(hasCustomBackgroundImage)
+            background = if (hasCustomVisualBackground) {
+                Color.Transparent
+            } else {
+                customThemeBackground ?: customThemeFallbackBackground ?: MoonBgDark
+            }
         )
     } else {
         when {
             customTheme != null -> {
                 LightColorScheme.copy(
                     primary = themePrimary,
-                    background = (customThemeBackground ?: customThemeFallbackBackground ?: MoonBgLight)
-                        .withBackgroundImageAlpha(hasCustomBackgroundImage),
+                    background = if (hasCustomVisualBackground) {
+                        Color.Transparent
+                    } else {
+                        customThemeBackground ?: customThemeFallbackBackground ?: MoonBgLight
+                    },
                     surfaceVariant = themePrimary.copy(alpha = 0.05f)
                 )
             }
@@ -502,6 +510,21 @@ private fun Theme.customBackgroundColor(darkTheme: Boolean): Color? {
     return description.appearanceBackgroundColor(mode) ?: backgroundUrl.toThemeColorOrNull()
 }
 
+private fun Theme?.hasCustomBackgroundImage(): Boolean {
+    val theme = this ?: return false
+    return theme.backgroundUrl.isThemeAssetPath() ||
+        theme.description.appearanceObject("light")?.optString("backgroundUri").isThemeAssetPath() ||
+        theme.description.appearanceObject("dark")?.optString("backgroundUri").isThemeAssetPath()
+}
+
+private fun Theme?.hasCustomGradientBackground(darkTheme: Boolean): Boolean {
+    val theme = this ?: return false
+    val mode = if (darkTheme) "dark" else "light"
+    return theme.description.appearanceObject(mode)
+        ?.optString("backgroundFillMode")
+        ?.equals("Gradient", ignoreCase = true) == true
+}
+
 private fun String?.appearanceBackgroundColor(mode: String): Color? {
     val appearance = appearanceObject(mode) ?: return null
     val fillMode = appearance.optString("backgroundFillMode", "Solid")
@@ -536,10 +559,6 @@ private fun String?.toThemeColorOrNull(): Color? {
 
 private fun String?.isThemeAssetPath(): Boolean {
     return !isNullOrBlank() && toThemeColorOrNull() == null
-}
-
-private fun Color.withBackgroundImageAlpha(hasBackgroundImage: Boolean): Color {
-    return if (hasBackgroundImage) copy(alpha = 0.88f) else this
 }
 
 @Composable

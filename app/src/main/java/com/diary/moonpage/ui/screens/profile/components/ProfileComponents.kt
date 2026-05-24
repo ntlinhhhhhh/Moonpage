@@ -31,7 +31,12 @@ data class AvatarOption(
  * A section of avatars with a title (previously BeanSection)
  */
 @Composable
-fun ProfileAvatarGroup(title: String, avatars: List<AvatarOption>) {
+fun ProfileAvatarGroup(
+    title: String,
+    avatars: List<AvatarOption>,
+    selectedId: Int?,
+    onSelect: (Int) -> Unit
+) {
     val colorScheme = MaterialTheme.colorScheme
     Column(modifier = Modifier.padding(vertical = 12.dp)) {
         Text(
@@ -46,7 +51,11 @@ fun ProfileAvatarGroup(title: String, avatars: List<AvatarOption>) {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             avatars.forEach { avatar ->
-                ProfileAvatarItem(avatar)
+                ProfileAvatarItem(
+                    avatar = avatar,
+                    isSelected = selectedId == avatar.id,
+                    onClick = { onSelect(avatar.id) }
+                )
             }
         }
     }
@@ -56,18 +65,31 @@ fun ProfileAvatarGroup(title: String, avatars: List<AvatarOption>) {
  * Individual avatar item (previously BeanItem)
  */
 @Composable
-fun ProfileAvatarItem(avatar: AvatarOption) {
+fun ProfileAvatarItem(
+    avatar: AvatarOption,
+    isSelected: Boolean = false,
+    onClick: () -> Unit = {}
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    
     Box(
         modifier = Modifier
             .size(80.dp)
-            .background(avatar.color.copy(alpha = 0.2f), CircleShape)
+            .background(
+                if (isSelected) avatar.color.copy(alpha = 0.4f) else avatar.color.copy(alpha = 0.2f),
+                CircleShape
+            )
             .clip(CircleShape)
-            .clickable { },
+            .clickable { onClick() }
+            .then(
+                if (isSelected) Modifier.background(colorScheme.primary.copy(alpha = 0.1f), CircleShape)
+                else Modifier
+            ),
         contentAlignment = Alignment.Center
     ) {
         Box(
             modifier = Modifier
-                .size(50.dp)
+                .size(if (isSelected) 56.dp else 50.dp)
                 .background(avatar.color, CircleShape),
             contentAlignment = Alignment.Center
         ) {

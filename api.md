@@ -1501,7 +1501,9 @@ PUT /api/themes/:id
 
 ### Request body (multipart/form-data):
 
-- Same as Create Theme (Upload). All fields except `Id` are effectively optional for partial update.
+- Same as Create Theme (Upload).
+- `Id` (string, Required): Must match the `:id` path parameter.
+- All other fields are optional for partial update.
 
 ### Responses:
 

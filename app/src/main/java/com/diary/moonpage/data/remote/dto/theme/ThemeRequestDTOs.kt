@@ -26,10 +26,11 @@ data class CreateThemeRequest(
 
 data class CreateThemeMoodRequest(
     @SerializedName("baseMoodId") val baseMoodId: Int,
-    @SerializedName("iconUrl") val iconUrl: String,
+    @SerializedName(value = "iconColor", alternate = ["iconUrl"]) val iconUrl: String,
     @SerializedName("customName") val customName: String
 )
 
 data class CreateThemeResponse(
-    @SerializedName("message") val message: String
+    @SerializedName("success") val success: Boolean? = null,
+    @SerializedName("message") val message: String? = null
 )

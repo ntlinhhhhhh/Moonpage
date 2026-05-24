@@ -364,11 +364,16 @@ class StoreViewModel @Inject constructor(
 
     private fun performRenameCustomTheme(theme: Theme, name: String) {
         viewModelScope.launch {
+            val themeId = theme.id.trim()
+            if (themeId.isBlank()) {
+                _uiEffect.emit(StoreUiEffect.ShowSnackBar("Theme id is missing"))
+                return@launch
+            }
             _uiState.update { it.copy(isRenamingTheme = true) }
-            themeRepository.renameTheme(theme.id, name).onSuccess {
+            themeRepository.renameTheme(themeId, name).onSuccess {
                 _uiState.update { state ->
                     val rename: (Theme) -> Theme = { current ->
-                        if (current.id == theme.id) current.copy(name = name) else current
+                        if (current.id == themeId) current.copy(name = name) else current
                     }
                     state.copy(
                         customThemes = state.customThemes.map(rename),

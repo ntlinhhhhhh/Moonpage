@@ -137,7 +137,7 @@ fun AccountRoute(
             onLogoutClick = { showLogoutDialog = true },
             onBirthdayClick = { currentBottomSheet = BottomSheetType.BIRTHDAY },
             onGenderClick = { currentBottomSheet = BottomSheetType.GENDER },
-            onAvatarEditClick = { avatarLauncher.launch("image/*") },
+            onAvatarEditClick = onNavigateToChangeAvatar,
             onUsernameEditClick = { currentBottomSheet = BottomSheetType.USERNAME },
             onChangePasswordClick = { currentBottomSheet = BottomSheetType.CHANGE_PASSWORD },
             snackbarHostState = snackbarHostState
