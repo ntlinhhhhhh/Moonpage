@@ -30,6 +30,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.diary.moonpage.R
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.core.theme.*
+import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.core.util.ThemeConstants
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -740,11 +741,7 @@ fun getThemeShades(theme: Theme): List<Color> {
     val predefined = ThemeConstants.THEMES.find { it.id == theme.id }
     if (predefined != null) {
         return predefined.moods.map { mood ->
-            try {
-                Color(android.graphics.Color.parseColor(mood.iconUrl))
-            } catch (e: Exception) {
-                Color.LightGray
-            }
+            MoonIcons.parseThemeColor(mood.iconUrl) ?: Color.LightGray
         }
     }
 
@@ -756,7 +753,7 @@ fun getThemeShades(theme: Theme): List<Color> {
             val iconColorsArray = light?.optJSONArray("iconColors")
             if (iconColorsArray != null && iconColorsArray.length() >= 5) {
                 return List(5) { i ->
-                    Color(android.graphics.Color.parseColor(iconColorsArray.getString(i)))
+                    MoonIcons.parseThemeColor(iconColorsArray.getString(i)) ?: Color.LightGray
                 }
             }
         }

@@ -13,10 +13,12 @@ import android.graphics.RectF
 import android.graphics.Shader
 import android.net.Uri
 import android.os.Build
+import androidx.annotation.StringRes
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.R
+import com.diary.moonpage.core.util.LocaleUtils
 import com.diary.moonpage.core.util.customThemeImageFormat
 import com.diary.moonpage.core.util.saveBitmapToInternalStorage
 import com.diary.moonpage.domain.repository.CreateThemeMoodPayload
@@ -150,7 +152,7 @@ class CustomThemeEditorViewModel @Inject constructor(
     private val userRepository: com.diary.moonpage.domain.repository.UserRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(CustomThemeEditorUiState(name = context.getString(R.string.my_custom_theme)))
+    private val _uiState = MutableStateFlow(CustomThemeEditorUiState(name = localizedString(R.string.my_custom_theme)))
     val uiState: StateFlow<CustomThemeEditorUiState> = _uiState.asStateFlow()
 
     private val _effect = MutableSharedFlow<CustomThemeEditorEffect>(extraBufferCapacity = 1)
@@ -351,7 +353,7 @@ class CustomThemeEditorViewModel @Inject constructor(
             val timestamp = System.currentTimeMillis()
             val thumbnailFileName = "custom_theme_thumb_$timestamp.webp"
             val backgroundFileName = "custom_theme_bg_$timestamp.webp"
-            val themeName = state.name.ifBlank { context.getString(R.string.my_custom_theme) }
+            val themeName = state.name.ifBlank { localizedString(R.string.my_custom_theme) }
             runCatching {
                 val user = userRepository.currentUser.value ?: userRepository.getCurrentUser().getOrThrow()
                 val themeId = "custom_${user.userId.toThemeIdPart()}_$timestamp"
@@ -408,7 +410,7 @@ class CustomThemeEditorViewModel @Inject constructor(
                 _effect.emit(CustomThemeEditorEffect.Saved)
             }.onFailure { error ->
                 _uiState.update { it.copy(isSaving = false) }
-                _effect.emit(CustomThemeEditorEffect.Error(error.message ?: context.getString(R.string.could_not_save_custom_theme)))
+                _effect.emit(CustomThemeEditorEffect.Error(error.message ?: localizedString(R.string.could_not_save_custom_theme)))
             }
         }
     }
@@ -434,7 +436,7 @@ class CustomThemeEditorViewModel @Inject constructor(
         return moodConfigs.mapIndexed { index, (moodId, customName) ->
             CreateThemeMoodPayload(
                 baseMoodId = moodId,
-                iconUrl = iconColors.getOrElse(index) { primaryColor }.toColorHex(),
+                iconUrl = iconColors.getOrElse(index) { primaryColor }.toRgbColorHex(),
                 customName = customName
             )
         }
@@ -442,7 +444,14 @@ class CustomThemeEditorViewModel @Inject constructor(
 
     private fun Long.toColorHex(): String = "#%08X".format(this)
 
+    private fun Long.toRgbColorHex(): String = "#%06X".format(this and 0x00FFFFFF)
+
     private fun Long.toApiColorHex(): String = "0x%08X".format(this)
+
+    private fun localizedString(@StringRes resId: Int): String {
+        val localizedContext = LocaleUtils.applyLocale(context, LocaleUtils.getCurrentLanguage())
+        return localizedContext.getString(resId)
+    }
 
     private fun ThemeAppearanceState.themeBackgroundPayload(): String {
         return when (backgroundFillMode) {

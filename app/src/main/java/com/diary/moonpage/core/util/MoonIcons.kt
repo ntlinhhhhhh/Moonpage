@@ -38,6 +38,20 @@ data class MoonIcon(
 )
 
 object MoonIcons {
+    fun parseThemeColor(value: String?): Color? {
+        val raw = value?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        val hex = when {
+            raw.startsWith("#") -> raw.drop(1)
+            raw.startsWith("0x", ignoreCase = true) -> raw.drop(2)
+            else -> raw
+        }
+        if ((hex.length != 6 && hex.length != 8) || hex.any { !it.isDigit() && it.lowercaseChar() !in 'a'..'f' }) {
+            return null
+        }
+        return runCatching {
+            Color(android.graphics.Color.parseColor("#$hex"))
+        }.getOrNull()
+    }
 
     object Moods {
         val VeryHappy = MoonIcon(null, Color.Unspecified, "Very Happy", R.drawable.very_happy)

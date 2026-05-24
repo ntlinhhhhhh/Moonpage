@@ -308,24 +308,14 @@ class DailyLogViewModel @Inject constructor(
                         else -> 3
                     }
                     
-                    val isHexColor = !entity.iconUrl.isNullOrBlank() && (entity.iconUrl.startsWith("#") || entity.iconUrl.length == 6 || entity.iconUrl.length == 8)
-                    
-                    val color = try {
-                        if (isHexColor) {
-                            val colorStr = if (entity.iconUrl.startsWith("#")) entity.iconUrl else "#${entity.iconUrl}"
-                            androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor(colorStr))
-                        } else {
-                            MoonIcons.Moods.getMoodColor(level, currentTheme)
-                        }
-                    } catch (e: Exception) {
-                        MoonIcons.Moods.getMoodColor(level, currentTheme)
-                    }
+                    val parsedColor = MoonIcons.parseThemeColor(entity.iconUrl)
+                    val color = parsedColor ?: MoonIcons.Moods.getMoodColor(level, currentTheme)
 
                     level to com.diary.moonpage.core.util.MoonIcon(
                         color = color,
                         name = entity.customName,
-                        imageUrl = if (!isHexColor && !entity.iconUrl.isNullOrBlank()) entity.iconUrl else null,
-                        drawableRes = if (isHexColor || entity.iconUrl.isNullOrBlank()) {
+                        imageUrl = if (parsedColor == null && entity.iconUrl.isNotBlank()) entity.iconUrl else null,
+                        drawableRes = if (parsedColor != null || entity.iconUrl.isBlank()) {
                             when (level) {
                                 1 -> com.diary.moonpage.R.drawable.very_sad
                                 2 -> com.diary.moonpage.R.drawable.sad

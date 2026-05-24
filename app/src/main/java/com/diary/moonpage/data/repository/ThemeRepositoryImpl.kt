@@ -191,6 +191,11 @@ class ThemeRepositoryImpl @Inject constructor(
     }
 
     private suspend fun loadThemeMoodPrimaryColor(themeId: String): String? {
+        dao.getThemeById(themeId)
+            ?.customMoodEntitiesFromDescription()
+            ?.firstNotNullOfOrNull { it.iconUrl.takeIfThemeColor() }
+            ?.let { return it }
+
         val cachedMoodColor = dao.getMoodsForTheme(themeId)
             .firstNotNullOfOrNull { it.iconUrl.takeIfThemeColor() }
         if (cachedMoodColor != null) return cachedMoodColor
@@ -580,6 +585,14 @@ class ThemeRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getMoodsForTheme(themeId: String): List<ThemeMoodEntity> {
+        val descriptionMoods = dao.getThemeById(themeId)
+            ?.customMoodEntitiesFromDescription()
+            .orEmpty()
+        if (descriptionMoods.isNotEmpty()) {
+            dao.insertThemeMoods(descriptionMoods)
+            return descriptionMoods
+        }
+
         val cachedMoods = dao.getMoodsForTheme(themeId)
         if (cachedMoods.isEmpty()) {
             // Check predefined first
@@ -671,6 +684,45 @@ private fun ThemeEntity.isCustomThemeEntity(): Boolean {
         collection.equals("Custom Theme", ignoreCase = true)
 }
 
+private fun ThemeEntity.customMoodEntitiesFromDescription(): List<ThemeMoodEntity> {
+    if (!isCustomThemeEntity()) return emptyList()
+    val colors = description.iconColorsFromThemeDescription()
+    if (colors.size < 5) return emptyList()
+
+    return colors.take(5).mapIndexed { index, color ->
+        ThemeMoodEntity(
+            themeId = id,
+            baseMoodId = DEFAULT_MOOD_NAMES[index],
+            iconUrl = color,
+            customName = DEFAULT_MOOD_DISPLAY_NAMES[index]
+        )
+    }
+}
+
+private fun String?.iconColorsFromThemeDescription(): List<String> {
+    if (isNullOrBlank()) return emptyList()
+    val root = runCatching { JSONObject(this) }.getOrNull() ?: return emptyList()
+    val modes = listOf(root.optJSONObject("light"), root.optJSONObject("dark"))
+
+    modes.forEach { appearance ->
+        val iconColors = appearance?.optJSONArray("iconColors")
+            ?.toColorList()
+            .orEmpty()
+        if (iconColors.size >= 5) return iconColors
+    }
+
+    val fallbackColor = modes.firstNotNullOfOrNull { appearance ->
+        appearance?.optString("iconColor")?.toCanonicalThemeColorHex()
+    } ?: return emptyList()
+    return List(5) { fallbackColor }
+}
+
+private fun JSONArray.toColorList(): List<String> {
+    return List(length()) { index ->
+        optString(index).toCanonicalThemeColorHex()
+    }.filterNotNull()
+}
+
 private fun String?.takeIfThemeColor(): String? {
     return takeIf { it.isThemeColor() }
 }
@@ -687,12 +739,24 @@ private fun String?.takeIfLocalThemeAsset(): String? {
 
 private fun String?.isThemeColor(): Boolean {
     if (isNullOrBlank()) return false
+    val raw = trim()
     val value = when {
-        startsWith("#") -> drop(1)
-        startsWith("0x", ignoreCase = true) -> drop(2)
-        else -> this
+        raw.startsWith("#") -> raw.drop(1)
+        raw.startsWith("0x", ignoreCase = true) -> raw.drop(2)
+        else -> raw
     }
     return (value.length == 6 || value.length == 8) && value.all { it in '0'..'9' || it in 'a'..'f' || it in 'A'..'F' }
+}
+
+private fun String?.toCanonicalThemeColorHex(): String? {
+    if (!isThemeColor()) return null
+    val raw = this?.trim() ?: return null
+    val value = when {
+        raw.startsWith("#") -> raw.drop(1)
+        raw.startsWith("0x", ignoreCase = true) -> raw.drop(2)
+        else -> raw
+    }
+    return "#$value"
 }
 
 private fun String.toMoonThemeTypeOrNull(): MoonThemeType? {
@@ -744,7 +808,7 @@ private fun String?.primaryColorForMode(mode: String): String? {
 
 private fun String?.toApiColorHex(): String? {
     if (!isThemeColor()) return null
-    val raw = this ?: return null
+    val raw = this?.trim() ?: return null
     val value = when {
         raw.startsWith("#") -> raw.drop(1)
         raw.startsWith("0x", ignoreCase = true) -> raw.drop(2)
@@ -766,6 +830,8 @@ private fun String.toThemeMoodIdOrNull(): Int? {
 }
 
 private val DEFAULT_MOOD_IDS = listOf(5, 4, 3, 2, 1)
+private val DEFAULT_MOOD_NAMES = listOf("Rad", "Good", "Meh", "Bad", "Awful")
+private val DEFAULT_MOOD_DISPLAY_NAMES = listOf("Very Happy", "Happy", "Neutral", "Sad", "Very Sad")
 
 private const val CUSTOM_THEME_PRICE = 500
 private const val ACTIVE_THEME_SYNC_GRACE_MS = 5 * 60 * 1000L

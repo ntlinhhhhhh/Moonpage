@@ -795,7 +795,7 @@ fun CustomThemeCard(
             ?: Color(0xFFE8E1DA)
     }
 
-    val iconColors = remember(theme.id, theme.primaryColor, theme.thumbnailUrl, theme.backgroundUrl) {
+    val iconColors = remember(theme.id, theme.primaryColor, theme.thumbnailUrl, theme.backgroundUrl, theme.description) {
         val shades = getThemeShades(theme)
         if (shades.size >= 5) shades.take(5) else List(5) { previewColor }
     }
@@ -1288,6 +1288,7 @@ private fun parseThemePreviewColor(value: String?): Color? {
     val raw = value.trim()
     val normalized = when {
         raw.startsWith("#") -> raw
+        raw.startsWith("0x", ignoreCase = true) -> "#${raw.drop(2)}"
         raw.length == 6 || raw.length == 8 -> "#$raw"
         else -> return null
     }

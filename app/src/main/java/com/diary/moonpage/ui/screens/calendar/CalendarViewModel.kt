@@ -130,16 +130,8 @@ class CalendarViewModel @Inject constructor(
                 else -> 3
             }
 
-            val color = try {
-                if (entity.iconUrl.isNotBlank() && (entity.iconUrl.startsWith("#") || entity.iconUrl.length == 6 || entity.iconUrl.length == 8)) {
-                    val colorStr = if (entity.iconUrl.startsWith("#")) entity.iconUrl else "#${entity.iconUrl}"
-                    androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor(colorStr))
-                } else {
-                    MoonIcons.Moods.getMoodColor(level, currentTheme)
-                }
-            } catch (e: Exception) {
-                MoonIcons.Moods.getMoodColor(level, currentTheme)
-            }
+            val color = MoonIcons.parseThemeColor(entity.iconUrl)
+                ?: MoonIcons.Moods.getMoodColor(level, currentTheme)
 
             level to com.diary.moonpage.core.util.MoonIcon(
                 color = color,
