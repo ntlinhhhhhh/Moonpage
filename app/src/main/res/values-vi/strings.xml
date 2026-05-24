@@ -652,9 +652,9 @@
     <string name="theme_id_missing">Thiếu mã giao diện</string>
     <string name="theme_renamed">Đã đổi tên giao diện</string>
     <string name="failed_rename_theme">Không thể đổi tên giao diện</string>
-    <string name="profile_updated_success">Đã cập nhật hồ sơ thành công</string>
+    <string name="profile_updated_success">Cập nhật hồ sơ thành công</string>
     <string name="update_failed">Cập nhật thất bại</string>
-    <string name="avatar_updated_success">Đã cập nhật ảnh đại diện thành công</string>
+    <string name="avatar_updated_success">Cập nhật ảnh đại diện thành công</string>
     <string name="avatar_update_failed">Cập nhật ảnh đại diện thất bại</string>
     <string name="delete_failed">Xóa thất bại</string>
     <string name="add_message">Thêm lời nhắn</string>

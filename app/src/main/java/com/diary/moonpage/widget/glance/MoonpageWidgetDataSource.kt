@@ -52,6 +52,7 @@ data class WidgetDaySnapshot(
     val note: String,
     val photoUris: List<String>,
     val footerItems: List<WidgetFooterItem>,
+    val activityItems: List<WidgetActivityItem>,
     val palette: WidgetPalette,
     val steps: Int? = null,
     val sleep: Double? = null,
@@ -63,6 +64,11 @@ data class WidgetDaySnapshot(
 data class WidgetFooterItem(
     val emoji: String,
     val label: String
+)
+
+data class WidgetActivityItem(
+    val name: String,
+    val iconResId: Int
 )
 
 data class WeekDayMood(
@@ -104,6 +110,7 @@ class MoonpageWidgetDataSource(private val context: Context) {
             note = log?.note?.trim().orEmpty(),
             photoUris = log?.dailyPhotos.orEmpty().map(::normalizePhotoPath),
             footerItems = buildFooterItems(log, activities),
+            activityItems = buildActivityItems(log, activities),
             palette = resolvePalette(themeType),
             steps = log?.steps,
             sleep = log?.sleepHours,
@@ -243,6 +250,20 @@ class MoonpageWidgetDataSource(private val context: Context) {
             .forEach { name -> items += WidgetFooterItem("•", name) }
 
         return items.take(6)
+    }
+
+    private fun buildActivityItems(log: DailyLog?, activities: List<Activity>): List<WidgetActivityItem> {
+        if (log == null) return emptyList()
+        return log.activityIds.orEmpty()
+            .mapNotNull { id -> activities.firstOrNull { it.id == id } }
+            .distinctBy { it.id }
+            .take(6)
+            .map { activity ->
+                WidgetActivityItem(
+                    name = activity.name,
+                    iconResId = R.drawable.ic_widget_activity
+                )
+            }
     }
 
     private fun normalizePhotoPath(path: String): String {

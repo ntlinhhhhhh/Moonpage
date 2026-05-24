@@ -2,13 +2,19 @@ package com.diary.moonpage.ui.screens.profile.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Bedtime
+import androidx.compose.material.icons.rounded.Coffee
 import androidx.compose.material.icons.rounded.DirectionsRun
 import androidx.compose.material.icons.rounded.DirectionsWalk
 import androidx.compose.material.icons.rounded.LocalFireDepartment
+import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.rounded.Restaurant
 import androidx.compose.material.icons.rounded.Route
+import androidx.compose.material.icons.rounded.Spa
+import androidx.compose.material.icons.rounded.Work
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -28,6 +34,7 @@ import com.diary.moonpage.R
 
 private val ThemeDefaultPreviewSurface = Color(0xFFF4F6F1)
 private val ThemeDefaultPreviewIcon = Color(0xFFDB9D1F)
+private val ThemeDefaultMoodCircle = Color(0xFFFFF2C2)
 
 @Composable
 fun DailySummaryWidgetPreview(
@@ -42,16 +49,24 @@ fun DailySummaryWidgetPreview(
         colors = CardDefaults.cardColors(containerColor = ThemeDefaultPreviewSurface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Box(modifier = Modifier.fillMaxSize().padding(horizontal = 14.dp, vertical = 10.dp)) {
+        Box(modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp)) {
             Column(
                 modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.very_happy),
-                    contentDescription = null,
-                    modifier = Modifier.size(42.dp)
-                )
+                Surface(
+                    shape = CircleShape,
+                    color = ThemeDefaultMoodCircle,
+                    modifier = Modifier.size(46.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Image(
+                            painter = painterResource(id = R.drawable.very_happy),
+                            contentDescription = null,
+                            modifier = Modifier.size(36.dp)
+                        )
+                    }
+                }
 
                 if (showNote) {
                     Text(
@@ -59,7 +74,7 @@ fun DailySummaryWidgetPreview(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)
-                            .padding(top = 8.dp),
+                            .padding(top = 6.dp),
                         style = MaterialTheme.typography.bodySmall,
                         fontWeight = FontWeight.SemiBold,
                         color = Color(0xFF333333),
@@ -71,15 +86,29 @@ fun DailySummaryWidgetPreview(
 
                 if (showStats) {
                     Row(
-                        modifier = Modifier.fillMaxWidth().height(42.dp),
+                        modifier = Modifier.fillMaxWidth().height(24.dp),
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        DailyPreviewStatItem(Icons.Rounded.DirectionsRun, "Activity", "Gym", Modifier.weight(1f))
-                        DailyPreviewStatItem(Icons.Rounded.Bedtime, "Sleep", "7.5h", Modifier.weight(1f))
-                        DailyPreviewStatItem(Icons.Rounded.DirectionsWalk, "Steps", "8.5k", Modifier.weight(1f))
-                        DailyPreviewStatItem(Icons.Rounded.LocalFireDepartment, "Kcal", "2,150", Modifier.weight(1f))
-                        DailyPreviewStatItem(Icons.Rounded.Route, "Dist", "5.2km", Modifier.weight(1f))
+                        PreviewActivityIcon(Icons.Rounded.DirectionsRun, Modifier.weight(1f))
+                        PreviewActivityIcon(Icons.Rounded.Coffee, Modifier.weight(1f))
+                        PreviewActivityIcon(Icons.Rounded.Work, Modifier.weight(1f))
+                        PreviewActivityIcon(Icons.Rounded.Restaurant, Modifier.weight(1f))
+                        PreviewActivityIcon(Icons.Rounded.MusicNote, Modifier.weight(1f))
+                        PreviewActivityIcon(Icons.Rounded.Spa, Modifier.weight(1f))
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().height(28.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        DailyMetricPreviewItem(Icons.Rounded.Bedtime, "7.5h", Modifier.weight(1f))
+                        DailyMetricPreviewItem(Icons.Rounded.DirectionsWalk, "8.5k", Modifier.weight(1f))
+                        DailyMetricPreviewItem(Icons.Rounded.LocalFireDepartment, "2,150", Modifier.weight(1f))
+                        DailyMetricPreviewItem(Icons.Rounded.Route, "5.2km", Modifier.weight(1f))
                     }
                 }
             }
@@ -104,9 +133,23 @@ fun DailySummaryWidgetPreview(
 }
 
 @Composable
-private fun DailyPreviewStatItem(
+private fun PreviewActivityIcon(icon: ImageVector, modifier: Modifier = Modifier) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        Surface(
+            shape = CircleShape,
+            color = ThemeDefaultPreviewIcon.copy(alpha = 0.18f),
+            modifier = Modifier.size(24.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(icon, contentDescription = null, modifier = Modifier.size(15.dp), tint = ThemeDefaultPreviewIcon)
+            }
+        }
+    }
+}
+
+@Composable
+private fun DailyMetricPreviewItem(
     icon: ImageVector,
-    label: String,
     value: String,
     modifier: Modifier = Modifier
 ) {
@@ -114,8 +157,7 @@ private fun DailyPreviewStatItem(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp), tint = ThemeDefaultPreviewIcon)
-        Text(label, style = MaterialTheme.typography.labelSmall, color = Color(0xFF888888), maxLines = 1)
+        Icon(icon, contentDescription = null, modifier = Modifier.size(17.dp), tint = ThemeDefaultPreviewIcon)
         Text(value, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = Color(0xFF333333), maxLines = 1)
     }
 }

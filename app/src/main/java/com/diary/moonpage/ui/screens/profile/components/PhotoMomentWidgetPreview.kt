@@ -23,7 +23,7 @@ fun PhotoMomentWidgetPreview(
 ) {
     val previewSurface = Color(0xFFF4F6F1)
     Card(
-        modifier = modifier.fillMaxWidth().height(140.dp),
+        modifier = modifier.fillMaxWidth().aspectRatio(1f),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {

@@ -14,8 +14,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import android.content.Context
 import android.net.Uri
+import androidx.annotation.StringRes
 import com.diary.moonpage.R
 import com.diary.moonpage.core.util.ImageUtils
+import com.diary.moonpage.core.util.LocaleUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -143,12 +145,12 @@ class ProfileViewModel @Inject constructor(
             userRepository.updateProfile(request)
                 .onSuccess {
                     _uiEvent.emit(ProfileUiEffect.UpdateSuccess)
-                    _uiEvent.emit(ProfileUiEffect.ShowSnackBar(appContext.getString(R.string.profile_updated_success)))
+                    _uiEvent.emit(ProfileUiEffect.ShowSnackBar(localizedString(R.string.profile_updated_success)))
                     _uiState.update { it.copy(isUpdating = false) }
                 }
                 .onFailure { e ->
                     _uiState.update { it.copy(isUpdating = false) }
-                    _uiEvent.emit(ProfileUiEffect.ShowSnackBar(e.message ?: appContext.getString(R.string.update_failed)))
+                    _uiEvent.emit(ProfileUiEffect.ShowSnackBar(e.message ?: localizedString(R.string.update_failed)))
                 }
         }
     }
@@ -170,20 +172,20 @@ class ProfileViewModel @Inject constructor(
                     userRepository.updateAvatar(imagePart, compressedFile)
                         .onSuccess {
                             _uiEvent.emit(ProfileUiEffect.UpdateSuccess)
-                            _uiEvent.emit(ProfileUiEffect.ShowSnackBar(appContext.getString(R.string.avatar_updated_success)))
+                            _uiEvent.emit(ProfileUiEffect.ShowSnackBar(localizedString(R.string.avatar_updated_success)))
                             _uiState.update { it.copy(isUpdating = false) }
                         }
                         .onFailure { e ->
                             _uiState.update { it.copy(isUpdating = false) }
-                            _uiEvent.emit(ProfileUiEffect.ShowSnackBar(e.message ?: appContext.getString(R.string.avatar_update_failed)))
+                            _uiEvent.emit(ProfileUiEffect.ShowSnackBar(e.message ?: localizedString(R.string.avatar_update_failed)))
                         }
                 } else {
                     _uiState.update { it.copy(isUpdating = false) }
-                    _uiEvent.emit(ProfileUiEffect.ShowSnackBar(appContext.getString(R.string.failed_to_process_image)))
+                    _uiEvent.emit(ProfileUiEffect.ShowSnackBar(localizedString(R.string.failed_to_process_image)))
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isUpdating = false) }
-                _uiEvent.emit(ProfileUiEffect.ShowSnackBar(e.message ?: appContext.getString(R.string.error_unknown)))
+                _uiEvent.emit(ProfileUiEffect.ShowSnackBar(e.message ?: localizedString(R.string.error_unknown)))
             }
         }
     }
@@ -195,7 +197,7 @@ class ProfileViewModel @Inject constructor(
                     onDeleted()
                 }
                 .onFailure { e ->
-                    _uiEvent.emit(ProfileUiEffect.ShowSnackBar(e.message ?: appContext.getString(R.string.delete_failed)))
+                    _uiEvent.emit(ProfileUiEffect.ShowSnackBar(e.message ?: localizedString(R.string.delete_failed)))
                 }
         }
     }
@@ -206,13 +208,18 @@ class ProfileViewModel @Inject constructor(
             userRepository.changePassword(old, new)
                 .onSuccess {
                     _uiState.update { it.copy(isUpdating = false) }
-                    _uiEvent.emit(ProfileUiEffect.ShowSnackBar(appContext.getString(R.string.password_changed_successfully)))
+                    _uiEvent.emit(ProfileUiEffect.ShowSnackBar(localizedString(R.string.password_changed_successfully)))
                     onSuccess()
                 }
                 .onFailure { e ->
                     _uiState.update { it.copy(isUpdating = false) }
-                    _uiEvent.emit(ProfileUiEffect.ShowSnackBar(e.message ?: appContext.getString(R.string.change_password_failed)))
+                    _uiEvent.emit(ProfileUiEffect.ShowSnackBar(e.message ?: localizedString(R.string.change_password_failed)))
                 }
         }
+    }
+
+    private fun localizedString(@StringRes resId: Int): String {
+        val localizedContext = LocaleUtils.applyLocale(appContext, LocaleUtils.getCurrentLanguage())
+        return localizedContext.getString(resId)
     }
 }

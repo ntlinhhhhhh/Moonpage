@@ -67,6 +67,11 @@ class DailySummaryWidget : GlanceAppWidget() {
             }
             val iconTint = ColorProvider(ThemeDefaultIconColor)
             val note = snapshot.note.ifBlank { "-" }
+            val moodCircleColor = if (snapshot.moodLevel > 0) {
+                palette.moodColors[(snapshot.moodLevel - 1).coerceIn(0, 4)]
+            } else {
+                ThemeDefaultIconColor.copy(alpha = 0.22f)
+            }
 
             Box(
                 modifier = GlanceModifier
@@ -74,32 +79,40 @@ class DailySummaryWidget : GlanceAppWidget() {
                     .cornerRadius(16.dp)
                     .background(ColorProvider(bg))
                     .clickable(openAppAction)
-                    .padding(horizontal = 14.dp, vertical = 12.dp)
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
             ) {
                 Column(
                     modifier = GlanceModifier.fillMaxSize(),
                     horizontalAlignment = Alignment.Horizontal.CenterHorizontally
                 ) {
-                    Image(
-                        provider = ImageProvider(snapshot.moodResId ?: R.drawable.ic_widget_stat),
-                        contentDescription = null,
-                        modifier = GlanceModifier.size(42.dp),
-                        colorFilter = if (snapshot.moodResId == null) {
-                            ColorFilter.tint(iconTint)
-                        } else {
-                            null
-                        }
-                    )
+                    Box(
+                        modifier = GlanceModifier
+                            .size(46.dp)
+                            .cornerRadius(23.dp)
+                            .background(ColorProvider(moodCircleColor)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            provider = ImageProvider(snapshot.moodResId ?: R.drawable.ic_widget_stat),
+                            contentDescription = null,
+                            modifier = GlanceModifier.size(36.dp),
+                            colorFilter = if (snapshot.moodResId == null) {
+                                ColorFilter.tint(iconTint)
+                            } else {
+                                null
+                            }
+                        )
+                    }
 
                     if (showNote) {
                         Text(
                             text = note,
                             modifier = GlanceModifier
                                 .fillMaxWidth()
-                                .padding(top = 8.dp),
+                                .padding(top = 6.dp),
                             style = TextStyle(
                                 color = ColorProvider(textColor),
-                                fontSize = 12.sp,
+                                fontSize = 11.sp,
                                 fontWeight = FontWeight.Medium
                             ),
                             maxLines = 2
@@ -109,48 +122,41 @@ class DailySummaryWidget : GlanceAppWidget() {
                     Spacer(modifier = GlanceModifier.defaultWeight())
 
                     if (showStats) {
+                        ActivityIconRow(
+                            items = snapshot.activityItems,
+                            iconTint = iconTint
+                        )
+                        Spacer(modifier = GlanceModifier.size(4.dp))
                         Row(
                             modifier = GlanceModifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            DailySummaryFooterItem(
+                            DailyMetricItem(
                                 modifier = GlanceModifier.defaultWeight(),
-                                label = "Activity",
-                                value = snapshot.firstActivity ?: "-",
-                                textColor = textColor,
-                                subColor = subColor,
-                                iconTint = iconTint
-                            )
-                            DailySummaryFooterItem(
-                                modifier = GlanceModifier.defaultWeight(),
-                                label = "Sleep",
+                                iconRes = R.drawable.ic_widget_sleep,
                                 value = snapshot.sleep?.let { String.format(Locale.ENGLISH, "%.1fh", it) } ?: "-",
                                 textColor = textColor,
-                                subColor = subColor,
                                 iconTint = iconTint
                             )
-                            DailySummaryFooterItem(
+                            DailyMetricItem(
                                 modifier = GlanceModifier.defaultWeight(),
-                                label = "Steps",
+                                iconRes = R.drawable.ic_widget_steps,
                                 value = snapshot.steps?.let { String.format(Locale.ENGLISH, "%,d", it) } ?: "-",
                                 textColor = textColor,
-                                subColor = subColor,
                                 iconTint = iconTint
                             )
-                            DailySummaryFooterItem(
+                            DailyMetricItem(
                                 modifier = GlanceModifier.defaultWeight(),
-                                label = "Kcal",
+                                iconRes = R.drawable.ic_widget_kcal,
                                 value = snapshot.calories?.let { String.format(Locale.ENGLISH, "%,d", it) } ?: "-",
                                 textColor = textColor,
-                                subColor = subColor,
                                 iconTint = iconTint
                             )
-                            DailySummaryFooterItem(
+                            DailyMetricItem(
                                 modifier = GlanceModifier.defaultWeight(),
-                                label = "Dist",
+                                iconRes = R.drawable.ic_widget_distance,
                                 value = snapshot.distance?.let { String.format(Locale.ENGLISH, "%.1fkm", it / 1000.0) } ?: "-",
                                 textColor = textColor,
-                                subColor = subColor,
                                 iconTint = iconTint
                             )
                         }
@@ -182,12 +188,49 @@ class DailySummaryWidget : GlanceAppWidget() {
 }
 
 @androidx.compose.runtime.Composable
-private fun DailySummaryFooterItem(
+private fun ActivityIconRow(
+    items: List<WidgetActivityItem>,
+    iconTint: ColorProvider
+) {
+    Row(
+        modifier = GlanceModifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        repeat(6) { index ->
+            Box(
+                modifier = GlanceModifier.defaultWeight(),
+                contentAlignment = Alignment.Center
+            ) {
+                val item = items.getOrNull(index)
+                if (item != null) {
+                    Box(
+                        modifier = GlanceModifier
+                            .size(24.dp)
+                            .cornerRadius(12.dp)
+                            .background(ColorProvider(ThemeDefaultIconColor.copy(alpha = 0.18f))),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            provider = ImageProvider(item.iconResId),
+                            contentDescription = null,
+                            modifier = GlanceModifier.size(15.dp),
+                            colorFilter = ColorFilter.tint(iconTint)
+                        )
+                    }
+                } else {
+                    Spacer(modifier = GlanceModifier.size(24.dp))
+                }
+            }
+        }
+    }
+}
+
+@androidx.compose.runtime.Composable
+private fun DailyMetricItem(
     modifier: GlanceModifier,
-    label: String,
+    iconRes: Int,
     value: String,
     textColor: Color,
-    subColor: Color,
     iconTint: ColorProvider
 ) {
     Column(
@@ -195,19 +238,14 @@ private fun DailySummaryFooterItem(
         horizontalAlignment = Alignment.Horizontal.CenterHorizontally
     ) {
         Image(
-            provider = ImageProvider(R.drawable.ic_widget_stat),
+            provider = ImageProvider(iconRes),
             contentDescription = null,
-            modifier = GlanceModifier.size(18.dp),
+            modifier = GlanceModifier.size(17.dp),
             colorFilter = ColorFilter.tint(iconTint)
         )
         Text(
-            text = label,
-            style = TextStyle(color = ColorProvider(subColor), fontSize = 7.sp),
-            maxLines = 1
-        )
-        Text(
             text = value,
-            style = TextStyle(color = ColorProvider(textColor), fontSize = 9.sp, fontWeight = FontWeight.Bold),
+            style = TextStyle(color = ColorProvider(textColor), fontSize = 8.sp, fontWeight = FontWeight.Bold),
             maxLines = 1
         )
     }
