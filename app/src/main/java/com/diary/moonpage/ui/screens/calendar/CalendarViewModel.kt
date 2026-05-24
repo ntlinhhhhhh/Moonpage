@@ -2,6 +2,8 @@ package com.diary.moonpage.ui.screens.calendar
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.content.Context
+import com.diary.moonpage.R
 import com.diary.moonpage.core.util.normalizeAppImageUrl
 import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.domain.repository.DailyLogRepository
@@ -19,6 +21,7 @@ import java.time.YearMonth
 import javax.inject.Inject
 
 import com.diary.moonpage.core.util.ActivityPreferencesManager
+import dagger.hilt.android.qualifiers.ApplicationContext
 
 @HiltViewModel
 class CalendarViewModel @Inject constructor(
@@ -30,7 +33,8 @@ class CalendarViewModel @Inject constructor(
     private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository,
     private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
     private val locationTracker: com.diary.moonpage.core.util.LocationTracker,
-    private val weatherRepository: com.diary.moonpage.domain.repository.WeatherRepository
+    private val weatherRepository: com.diary.moonpage.domain.repository.WeatherRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CalendarUiState())
@@ -273,10 +277,10 @@ class CalendarViewModel @Inject constructor(
                 statisticsRepository.triggerRefresh()
                 _uiState.update { currentState ->
                     val newLogs = currentState.dailyLogs.filterKeys { it != date }
-                    currentState.copy(dailyLogs = newLogs, selectedDate = null, snackbarMessage = "Record deleted successfully!")
+                    currentState.copy(dailyLogs = newLogs, selectedDate = null, snackbarMessage = context.getString(R.string.record_deleted_success))
                 }
             }.onFailure { exception ->
-                _uiState.update { it.copy(snackbarMessage = exception.message ?: "Failed to delete log") }
+                _uiState.update { it.copy(snackbarMessage = exception.message ?: context.getString(R.string.failed_delete_log)) }
             }
         }
     }

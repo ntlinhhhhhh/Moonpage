@@ -82,7 +82,7 @@ data class ThemeAppearanceState(
 )
 
 data class CustomThemeEditorUiState(
-    val name: String = "My Custom Theme",
+    val name: String = "",
     val pendingBackgroundUri: String? = null,
     val editingMode: EditorAppearanceMode = EditorAppearanceMode.Light,
     val lightAppearance: ThemeAppearanceState = ThemeAppearanceState(),
@@ -150,7 +150,7 @@ class CustomThemeEditorViewModel @Inject constructor(
     private val userRepository: com.diary.moonpage.domain.repository.UserRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(CustomThemeEditorUiState())
+    private val _uiState = MutableStateFlow(CustomThemeEditorUiState(name = context.getString(R.string.my_custom_theme)))
     val uiState: StateFlow<CustomThemeEditorUiState> = _uiState.asStateFlow()
 
     private val _effect = MutableSharedFlow<CustomThemeEditorEffect>(extraBufferCapacity = 1)
@@ -345,7 +345,7 @@ class CustomThemeEditorViewModel @Inject constructor(
             val timestamp = System.currentTimeMillis()
             val thumbnailFileName = "custom_theme_thumb_$timestamp.webp"
             val backgroundFileName = "custom_theme_bg_$timestamp.webp"
-            val themeName = state.name.ifBlank { "My Custom Theme" }
+            val themeName = state.name.ifBlank { context.getString(R.string.my_custom_theme) }
             runCatching {
                 val user = userRepository.currentUser.value ?: userRepository.getCurrentUser().getOrThrow()
                 val themeId = "custom_${user.userId.toThemeIdPart()}_$timestamp"
@@ -402,7 +402,7 @@ class CustomThemeEditorViewModel @Inject constructor(
                 _effect.emit(CustomThemeEditorEffect.Saved)
             }.onFailure { error ->
                 _uiState.update { it.copy(isSaving = false) }
-                _effect.emit(CustomThemeEditorEffect.Error(error.message ?: "Could not save custom theme"))
+                _effect.emit(CustomThemeEditorEffect.Error(error.message ?: context.getString(R.string.could_not_save_custom_theme)))
             }
         }
     }

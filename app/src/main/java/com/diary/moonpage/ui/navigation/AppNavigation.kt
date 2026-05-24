@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -15,6 +16,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.diary.moonpage.R
 import com.diary.moonpage.ui.components.navigation.MoonBottomNavBar
 import com.diary.moonpage.ui.screens.auth.*
 import com.diary.moonpage.ui.screens.calendar.DailyLogRoute
@@ -341,11 +343,12 @@ fun AppNavigation(
                         )
 
                         val viewModel: com.diary.moonpage.ui.screens.calendar.DailyLogViewModel = hiltViewModel()
+                        val unknownArtist = stringResource(R.string.unknown_artist)
                         LaunchedEffect(selectedSongTitle) {
                             if (selectedSongTitle != null) {
                                 viewModel.onEvent(com.diary.moonpage.ui.screens.calendar.DailyLogUiEvent.OnMusicSelected(
                                     selectedSongTitle,
-                                    selectedSongArtist ?: "Unknown",
+                                    selectedSongArtist ?: unknownArtist,
                                     selectedSongUrl
                                 ))
                                 savedStateHandle.remove<String>("selected_song_title")

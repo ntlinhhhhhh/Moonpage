@@ -3,7 +3,9 @@ package com.diary.moonpage.ui.screens.profile.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.diary.moonpage.R
 
 @Composable
 fun ProfileStatsBox(
@@ -16,12 +18,12 @@ fun ProfileStatsBox(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         StatCard(
-            title = "Posts",
+            title = stringResource(R.string.posts),
             value = postsCount,
             modifier = Modifier.weight(1f)
         )
         StatCard(
-            title = "Streak",
+            title = stringResource(R.string.streak),
             value = streakCount,
             modifier = Modifier.weight(1f)
         )

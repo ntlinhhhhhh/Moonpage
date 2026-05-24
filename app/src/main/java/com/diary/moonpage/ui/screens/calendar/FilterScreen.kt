@@ -168,7 +168,7 @@ fun FilterScreen(
                     ) {
                         Icon(
                             Icons.Rounded.Cancel,
-                            contentDescription = "Clear all",
+                            contentDescription = stringResource(R.string.clear_all),
                             tint = textColor.copy(alpha = 0.3f),
                             modifier = Modifier.size(20.dp)
                         )

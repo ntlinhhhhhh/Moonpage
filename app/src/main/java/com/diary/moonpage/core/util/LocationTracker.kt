@@ -35,20 +35,17 @@ class LocationTracker @Inject constructor(
         }
         
         return try {
-            // 1. Try last known location first - it's immediate
             val lastLocation = locationClient.lastLocation.await()
             if (lastLocation != null && (System.currentTimeMillis() - lastLocation.time) < 30 * 60 * 1000) {
-                // If last location is less than 30 mins old, use it immediately
                 return lastLocation
             }
 
-            // 2. If no fresh last location, request a new one but with a strict 3-second timeout
             withTimeoutOrNull(3000) {
                 locationClient.getCurrentLocation(
                     Priority.PRIORITY_BALANCED_POWER_ACCURACY,
                     CancellationTokenSource().token
                 ).await()
-            } ?: lastLocation // Fallback to whatever last location we had if fresh request timed out
+            } ?: lastLocation
         } catch (e: Exception) {
             null
         }

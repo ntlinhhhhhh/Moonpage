@@ -148,7 +148,7 @@ fun RegisterScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.Rounded.ArrowBackIosNew,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.back),
                             tint = backIconColor
                         )
                     }
@@ -175,15 +175,15 @@ fun RegisterScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         AuthHeader(
-                            title = "Your Space",
-                            subtitle = "Create a sacred space for your\nthoughts and emotions today."
+                            title = stringResource(R.string.your_space_title),
+                            subtitle = stringResource(R.string.register_subtitle)
                         )
 
                         MoonTextField(
                             value = uiState.usernameInput ?: "",
                             onValueChange = onUsernameChange,
                             placeholderText = stringResource(R.string.placeholder_username),
-                            label = "Username",
+                            label = stringResource(R.string.username),
                             iconVector = Icons.Outlined.Person,
                             errorText = uiState.usernameError,
                             keyboardOptions = KeyboardOptions(
@@ -198,7 +198,7 @@ fun RegisterScreen(
                         MoonTextField(
                             value = uiState.emailInput,
                             onValueChange = onEmailChange,
-                            label = "Email address",
+                            label = stringResource(R.string.email_address),
                             placeholderText = stringResource(R.string.placeholder_email),
                             iconVector = Icons.Outlined.Email,
                             errorText = uiState.emailError,
@@ -214,7 +214,7 @@ fun RegisterScreen(
                         MoonTextField(
                             value = uiState.passwordInput,
                             onValueChange = onPasswordChange,
-                            label = "Password",
+                            label = stringResource(R.string.password_label),
                             placeholderText = stringResource(R.string.placeholder_password),
                             isPassword = true,
                             errorText = uiState.passwordError,
@@ -230,7 +230,7 @@ fun RegisterScreen(
                         MoonTextField(
                             value = uiState.confirmPasswordInput,
                             onValueChange = onConfirmPasswordChange,
-                            label = "Confirm Password",
+                            label = stringResource(R.string.confirm_password),
                             placeholderText = stringResource(R.string.placeholder_confirm_password),
                             isPassword = true,
                             errorText = uiState.confirmPasswordError,
@@ -298,7 +298,7 @@ fun RegisterScreen(
                                     } catch (e: GetCredentialCancellationException) {
                                         Log.d("Auth", "User cancelled")
                                     } catch (e: NoCredentialException) {
-                                        snackBarHostState.showSnackbar("Please sign in to a Google account.")
+                                        snackBarHostState.showSnackbar(context.getString(R.string.google_sign_in_required))
                                     } catch (e: Exception) {
                                         Log.e("Auth", "Error: ${e.message}")
                                     }

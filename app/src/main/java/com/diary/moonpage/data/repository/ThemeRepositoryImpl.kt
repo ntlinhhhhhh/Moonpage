@@ -139,18 +139,25 @@ class ThemeRepositoryImpl @Inject constructor(
                     ?.id
                 val myThemes = response.body()!!
                     .map { dto ->
-                        val networkTheme = dto.toDomain().copy(
+                        val dtoTheme = dto.toDomain()
+                        val networkTheme = dtoTheme.copy(
                             collection = "Custom Theme",
                             price = CUSTOM_THEME_PRICE,
                             isFree = false,
                             isOwned = true,
                             isActive = if (recentActiveThemeId != null) dto.id == recentActiveThemeId else dto.isActive,
                             decoration = "CUSTOM",
-                            primaryColor = dto.thumbnailUrl.takeIfThemeColor()
+                            primaryColor = dtoTheme.primaryColor.takeIfThemeColor()
+                                ?: dtoTheme.description.primaryColorForMode("light")
+                                ?: dtoTheme.description.primaryColorForMode("dark")
                         )
                         val cachedTheme = cachedThemes.findCachedCustomTheme(networkTheme)
                         val cachedPrimary = cachedTheme?.primaryColor.takeIfThemeColor()
+                            ?: cachedTheme?.description.primaryColorForMode("light")
+                            ?: cachedTheme?.description.primaryColorForMode("dark")
                         val networkPrimary = networkTheme.primaryColor.takeIfThemeColor()
+                            ?: networkTheme.description.primaryColorForMode("light")
+                            ?: networkTheme.description.primaryColorForMode("dark")
                         val moodPrimary = if (cachedPrimary == null && networkPrimary == null) {
                             loadThemeMoodPrimaryColor(networkTheme.id)
                         } else {
@@ -230,8 +237,10 @@ class ThemeRepositoryImpl @Inject constructor(
                     price = theme.price.toString().toTextRequestBody(),
                     thumbnail = theme.thumbnailUrl.toLocalFileOrNull()?.toImagePart("Thumbnail"),
                     background = theme.backgroundUrl.toLocalFileOrNull()?.toImagePart("Background"),
+                    primaryColor = theme.primaryColor?.toTextRequestBody(),
                     backgroundDarkColor = theme.backgroundDarkColor?.toTextRequestBody(),
                     backgroundLightColor = theme.backgroundLightColor?.toTextRequestBody(),
+                    description = theme.description?.toTextRequestBody(),
                     isOfficial = theme.isOfficial.toString().toTextRequestBody(),
                     isActive = theme.isActive.toString().toTextRequestBody(),
                     moods = theme.moods.toUploadMoodsJson().toTextRequestBody()
@@ -258,6 +267,8 @@ class ThemeRepositoryImpl @Inject constructor(
                             type = ThemeType.THEME.name,
                             icons = "VERY_HAPPY,HAPPY,NEUTRAL,SAD,ANGRY",
                             primaryColor = theme.primaryColor
+                                ?: theme.description.primaryColorForMode("light")
+                                ?: theme.description.primaryColorForMode("dark")
                                 ?: theme.thumbnailUrl.takeIfThemeColor()
                                 ?: theme.backgroundColor
                                 ?: theme.backgroundLightColor
@@ -293,8 +304,10 @@ class ThemeRepositoryImpl @Inject constructor(
                 price = theme.price,
                 thumbnailUrl = theme.thumbnailUrl,
                 backgroundUrl = theme.backgroundUrl,
+                primaryColor = theme.primaryColor,
                 backgroundDarkColor = theme.backgroundDarkColor,
                 backgroundLightColor = theme.backgroundLightColor,
+                description = theme.description,
                 isOfficial = theme.isOfficial,
                 isActive = theme.isActive,
                 moods = theme.moods.map { mood ->
@@ -721,6 +734,12 @@ private fun String?.backgroundColorForMode(mode: String): String? {
         "solidBackgroundColor"
     }
     return appearance.optString(key).toApiColorHex()
+}
+
+private fun String?.primaryColorForMode(mode: String): String? {
+    if (isNullOrBlank()) return null
+    val appearance = runCatching { JSONObject(this).optJSONObject(mode) }.getOrNull() ?: return null
+    return appearance.optString("primaryColor").takeIfThemeColor()
 }
 
 private fun String?.toApiColorHex(): String? {

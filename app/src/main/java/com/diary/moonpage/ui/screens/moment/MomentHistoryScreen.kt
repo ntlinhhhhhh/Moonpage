@@ -23,9 +23,11 @@ import coil.request.CachePolicy
 import coil.request.ImageRequest
 import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
 import com.diary.moonpage.core.theme.MoonPageTheme
 import com.diary.moonpage.domain.model.Moment
+import com.diary.moonpage.R
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -71,10 +73,10 @@ fun MomentHistoryRoute(
                         val result = context.imageLoader.execute(request)
                         if (result is coil.request.SuccessResult) {
                             val bitmap = result.drawable.toBitmap()
-                            com.diary.moonpage.core.util.ImageUtils.shareImage(context, bitmap, "Share Moment")
+                            com.diary.moonpage.core.util.ImageUtils.shareImage(context, bitmap, context.getString(R.string.share_moment))
                         } else {
                             android.util.Log.e("MomentHistory", "Failed to load image")
-                            snackbarHostState.showSnackbar("Failed to load image for sharing")
+                            snackbarHostState.showSnackbar(context.getString(R.string.failed_to_load_image_for_sharing))
                         }
                     }
                 }
@@ -188,8 +190,8 @@ fun MomentHistoryScreen(
 
     if (momentToDelete != null) {
         MoonDeleteConfirmDialog(
-            title = "Delete Moment",
-            message = "Are you sure you want to delete this moment? This action cannot be undone.",
+            title = stringResource(R.string.delete_moment),
+            message = stringResource(R.string.delete_moment_full_confirmation),
             onConfirm = {
                 onDelete(momentToDelete!!)
                 momentToDelete = null
@@ -220,7 +222,7 @@ fun MomentHistoryScreen(
     ) {
         if (sortedMoments.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No moments yet", color = onBgColor.copy(alpha = 0.6f))
+                    Text(stringResource(R.string.no_moments_yet), color = onBgColor.copy(alpha = 0.6f))
                 }
             } else {
                 VerticalPager(
@@ -258,7 +260,7 @@ fun MomentHistoryScreen(
                 ) {
                     AsyncImage(
                         model = localAvatarPath ?: avatarUrl,
-                        contentDescription = "Avatar",
+                        contentDescription = stringResource(R.string.content_desc_avatar),
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
@@ -327,7 +329,7 @@ fun MomentHistoryScreen(
                         ) {
                             Icon(Icons.Rounded.Share, null, tint = onBgColor)
                             Spacer(modifier = Modifier.width(16.dp))
-                            Text("Share", color = onBgColor, fontSize = 16.sp)
+                            Text(stringResource(R.string.share), color = onBgColor, fontSize = 16.sp)
                         }
                         Row(
                             modifier = Modifier
@@ -343,7 +345,7 @@ fun MomentHistoryScreen(
                         ) {
                             Icon(Icons.Rounded.Download, null, tint = onBgColor)
                             Spacer(modifier = Modifier.width(16.dp))
-                            Text("Download", color = onBgColor, fontSize = 16.sp)
+                            Text(stringResource(R.string.download), color = onBgColor, fontSize = 16.sp)
                         }
                         Row(
                             modifier = Modifier
@@ -359,7 +361,7 @@ fun MomentHistoryScreen(
                         ) {
                             Icon(Icons.Rounded.Delete, null, tint = MaterialTheme.colorScheme.error)
                             Spacer(modifier = Modifier.width(16.dp))
-                            Text("Delete", color = MaterialTheme.colorScheme.error, fontSize = 16.sp)
+                            Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error, fontSize = 16.sp)
                         }
                     }
                 }

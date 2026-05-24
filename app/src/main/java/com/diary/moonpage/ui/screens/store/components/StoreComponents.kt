@@ -20,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -125,7 +126,7 @@ fun StoreTopBar(
     ) {
 
         Text(
-            text = "Store",
+            text = stringResource(R.string.theme_store),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground
         )
@@ -177,7 +178,7 @@ fun StoreTopBar(
         ) {
             Icon(
                 imageVector = Icons.Rounded.AcUnit,
-                contentDescription = "Streak Freeze",
+                contentDescription = stringResource(R.string.streak_freeze),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp)
             )
@@ -261,7 +262,7 @@ fun ThemeCard(
                     color = badgeBg
                 ) {
                     Text(
-                        text = "Purchased",
+                        text = stringResource(R.string.custom_theme_purchased),
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.labelLarge,
                         color = onSurface,
@@ -392,7 +393,7 @@ fun IconPackCard(pack: Theme, onClick: () -> Unit) {
             
             if (pack.isOwned) {
                 Text(
-                    text = "Purchased", 
+                    text = stringResource(R.string.custom_theme_purchased),
                     style = MaterialTheme.typography.bodySmall, 
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -568,7 +569,7 @@ fun ConfirmPurchaseDialog(
                             contentColor = MoonTheme.customColors.cancelBtnTextColor
                         )
                     ) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.cancel))
                     }
                     Button(
                         onClick = onConfirm,
@@ -576,7 +577,7 @@ fun ConfirmPurchaseDialog(
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                         shape = RoundedCornerShape(24.dp)
                     ) {
-                        Text("Proceed")
+                        Text(stringResource(R.string.proceed))
                     }
                 }
             }
@@ -600,7 +601,7 @@ fun PurchaseSuccessDialog(
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 )
             ) {
-                Text("Continue")
+                Text(stringResource(R.string.continue_btn))
             }
         },
         title = {
@@ -618,7 +619,7 @@ fun PurchaseSuccessDialog(
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Purchased", 
+                    text = stringResource(R.string.custom_theme_purchased),
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -626,7 +627,7 @@ fun PurchaseSuccessDialog(
         },
         text = {
             Text(
-                text = "$themeName is now glowing in your archive with the warmth of the sun.",
+                text = stringResource(R.string.purchase_success_archive_msg, themeName),
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.onSurface

@@ -176,9 +176,9 @@ private fun Theme?.hasCustomImageBackground(): Boolean {
 private fun Theme?.customImageScrim(isDark: Boolean): Color? {
     if (!hasCustomImageBackground()) return null
     return if (isDark) {
-        Color.Black.copy(alpha = 0.46f)
+        Color.Black.copy(alpha = 0.58f)
     } else {
-        Color.White.copy(alpha = 0.38f)
+        Color.White.copy(alpha = 0.50f)
     }
 }
 

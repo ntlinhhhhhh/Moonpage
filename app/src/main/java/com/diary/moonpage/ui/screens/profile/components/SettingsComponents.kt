@@ -92,7 +92,7 @@ fun SettingsMenuItem(
             Icon(
                 imageVector = Icons.Rounded.ChevronRight,
                 contentDescription = null,
-                tint = colorScheme.onSurface.copy(alpha = 0.3f),
+                tint = colorScheme.onSurface.copy(alpha = 0.8f),
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -224,7 +224,7 @@ fun SwitchSettingItem(
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = if (enabled) colorScheme.primary else colorScheme.primary.copy(alpha = 0.4f),
+                    tint = colorScheme.primary.copy(alpha = 0.8f),
                     modifier = Modifier.size(22.dp)
                 )
             }
@@ -291,7 +291,7 @@ fun LanguageDialog(
                 Spacer(modifier = Modifier.height(24.dp))
                 
                 LanguageOption(
-                    label = "English",
+                    label = stringResource(R.string.language_english),
                     selected = currentLanguage == "en",
                     onClick = { onLanguageSelected("en"); onDismiss() }
                 )
@@ -299,7 +299,7 @@ fun LanguageDialog(
                 Spacer(modifier = Modifier.height(12.dp))
                 
                 LanguageOption(
-                    label = "Tiếng Việt",
+                    label = stringResource(R.string.language_vietnamese),
                     selected = currentLanguage == "vi",
                     onClick = { onLanguageSelected("vi"); onDismiss() }
                 )
@@ -567,7 +567,7 @@ fun ChangePasswordDialog(
                 OutlinedTextField(
                     value = oldPassword,
                     onValueChange = { oldPassword = it },
-                    label = { Text("Old Password") },
+                    label = { Text(stringResource(R.string.old_password)) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     visualTransformation = if (showOldPassword) androidx.compose.ui.text.input.VisualTransformation.None else androidx.compose.ui.text.input.PasswordVisualTransformation(),
@@ -576,7 +576,7 @@ fun ChangePasswordDialog(
                             Icon(
                                 imageVector = if (showOldPassword) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
                                 contentDescription = null,
-                                tint = colorScheme.onSurface.copy(alpha = 0.6f)
+                                tint = colorScheme.onSurface.copy(alpha = 0.8f)
                             )
                         }
                     },
@@ -588,7 +588,7 @@ fun ChangePasswordDialog(
                 OutlinedTextField(
                     value = newPassword,
                     onValueChange = { newPassword = it },
-                    label = { Text("New Password (min 6 chars)") },
+                    label = { Text(stringResource(R.string.new_password_min_chars)) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     visualTransformation = if (showNewPassword) androidx.compose.ui.text.input.VisualTransformation.None else androidx.compose.ui.text.input.PasswordVisualTransformation(),
@@ -597,7 +597,7 @@ fun ChangePasswordDialog(
                             Icon(
                                 imageVector = if (showNewPassword) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
                                 contentDescription = null,
-                                tint = colorScheme.onSurface.copy(alpha = 0.6f)
+                                tint = colorScheme.onSurface.copy(alpha = 0.8f)
                             )
                         }
                     },
@@ -609,7 +609,7 @@ fun ChangePasswordDialog(
                 OutlinedTextField(
                     value = confirmPassword,
                     onValueChange = { confirmPassword = it },
-                    label = { Text("Confirm New Password") },
+                    label = { Text(stringResource(R.string.confirm_new_password)) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     visualTransformation = if (showConfirmPassword) androidx.compose.ui.text.input.VisualTransformation.None else androidx.compose.ui.text.input.PasswordVisualTransformation(),
@@ -618,7 +618,7 @@ fun ChangePasswordDialog(
                             Icon(
                                 imageVector = if (showConfirmPassword) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
                                 contentDescription = null,
-                                tint = colorScheme.onSurface.copy(alpha = 0.6f)
+                                tint = colorScheme.onSurface.copy(alpha = 0.8f)
                             )
                         }
                     },
@@ -654,7 +654,7 @@ fun ChangePasswordDialog(
                         ),
                         shape = RoundedCornerShape(14.dp)
                     ) {
-                        Text("Change", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.change), fontWeight = FontWeight.Bold)
                     }
                 }
             }

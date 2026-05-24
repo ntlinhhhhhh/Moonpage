@@ -13,7 +13,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.diary.moonpage.R
 
 @Composable
 fun TopCircularIcon() {
@@ -29,7 +31,7 @@ fun TopCircularIcon() {
     ) {
         Icon(
             imageVector =  Icons.Outlined.LockReset,
-            contentDescription = "Reset Icon",
+            contentDescription = stringResource(R.string.content_desc_reset_icon),
             tint = iconColor,
             modifier = Modifier.size(32.dp)
         )

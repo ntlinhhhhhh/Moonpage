@@ -17,10 +17,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.diary.moonpage.R
 
 @Composable
 fun UserInfoCard(
@@ -59,7 +61,7 @@ fun UserInfoCard(
                 if (avatarUrl != null) {
                     AsyncImage(
                         model = avatarUrl,
-                        contentDescription = "Avatar",
+                        contentDescription = stringResource(R.string.content_desc_avatar),
                         modifier = Modifier
                             .size(56.dp)
                             .clip(CircleShape),
@@ -117,7 +119,7 @@ fun UserInfoCard(
 
             Icon(
                 Icons.Rounded.ChevronRight,
-                contentDescription = "Detail",
+                contentDescription = stringResource(R.string.content_desc_navigate),
                 tint = textColor.copy(alpha = 0.3f)
             )
         }

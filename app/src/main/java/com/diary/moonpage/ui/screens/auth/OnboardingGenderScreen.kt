@@ -26,14 +26,15 @@ import androidx.compose.ui.res.stringResource
 import com.diary.moonpage.R
 
 private data class GenderOption(
-    val label: String,
+    val value: String,
+    val labelRes: Int,
     val icon: ImageVector
 )
 
 private val GENDER_OPTIONS = listOf(
-    GenderOption("Female", Icons.Rounded.Female),
-    GenderOption("Male",   Icons.Rounded.Male),
-    GenderOption("Other",  Icons.Rounded.Transgender)
+    GenderOption("Female", R.string.gender_female, Icons.Rounded.Female),
+    GenderOption("Male", R.string.gender_male, Icons.Rounded.Male),
+    GenderOption("Other", R.string.gender_other, Icons.Rounded.Transgender)
 )
 
 /**
@@ -92,7 +93,7 @@ fun OnboardingGenderScreen(
                 IconButton(onClick = onNavigateBack) {
                     Icon(
                         Icons.Rounded.ArrowBackIosNew,
-                        contentDescription = "Back",
+                        contentDescription = stringResource(R.string.back),
                         tint = colorScheme.onBackground
                     )
                 }
@@ -136,11 +137,11 @@ fun OnboardingGenderScreen(
 
                 // Options
                 GENDER_OPTIONS.forEach { option ->
-                    val isSelected = selectedGender == option.label
+                    val isSelected = selectedGender == option.value
                     GenderCard(
                         option = option,
                         isSelected = isSelected,
-                        onClick = { onGenderSelect(option.label) }
+                        onClick = { onGenderSelect(option.value) }
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                 }
@@ -210,7 +211,7 @@ private fun GenderCard(
             )
             Spacer(modifier = Modifier.width(16.dp))
             Text(
-                text = option.label,
+                text = stringResource(option.labelRes),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                 color = if (isSelected) colorScheme.primary else colorScheme.onBackground

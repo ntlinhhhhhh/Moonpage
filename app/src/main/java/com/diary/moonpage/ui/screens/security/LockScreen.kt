@@ -199,7 +199,7 @@ fun LockScreen(
                 extraButton = if (isBiometricEnabled && isBiometricAvailable) {
                     {
                         KeypadButton(
-                            icon = { Icon(Icons.Default.Fingerprint, contentDescription = "Biometric") },
+                            icon = { Icon(Icons.Default.Fingerprint, contentDescription = stringResource(R.string.content_desc_biometric)) },
                             onClick = onBiometricClick
                         )
                     }

@@ -148,7 +148,7 @@ fun LoginScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.Rounded.ArrowBackIosNew,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.back),
                             tint = backIconColor
                         )
                     }
@@ -176,13 +176,13 @@ fun LoginScreen(
                     ) {
                         AuthHeader(
                             title = stringResource(R.string.sign_in),
-                            subtitle = "Continue your journey of self-\nreflection and mindful awareness."
+                            subtitle = stringResource(R.string.login_subtitle)
                         )
 
                         MoonTextField(
                             value = uiState.emailInput,
                             onValueChange = onEmailChange,
-                            label = "Email address",
+                            label = stringResource(R.string.email_address),
                             placeholderText = stringResource(R.string.placeholder_email),
                             iconVector = Icons.Outlined.Email,
                             errorText = uiState.emailError,
@@ -198,7 +198,7 @@ fun LoginScreen(
                         MoonTextField(
                             value = uiState.passwordInput,
                             onValueChange = onPasswordChange,
-                            label = "Password",
+                            label = stringResource(R.string.password_label),
                             isPassword = true,
                             trailingLabel = stringResource(R.string.forgot_password_label),
                             placeholderText = stringResource(R.string.placeholder_password),
@@ -261,7 +261,7 @@ fun LoginScreen(
                                     } catch (e: GetCredentialCancellationException) {
                                         Log.d("Auth", "User cancelled")
                                     } catch (e: NoCredentialException) {
-                                        snackBarHostState.showSnackbar("Please sign in to a Google account.")
+                                        snackBarHostState.showSnackbar(context.getString(R.string.google_sign_in_required))
                                     } catch (e: Exception) {
                                         Log.e("Auth", "Error: ${e.message}")
                                     }

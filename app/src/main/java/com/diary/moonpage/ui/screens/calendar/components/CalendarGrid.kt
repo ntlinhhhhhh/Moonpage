@@ -100,6 +100,7 @@ fun CalendarGrid(
                                 isDimmed = isDimmed,
                                 isFiltered = isFiltered,
                                 themeType = themeType,
+                                customMoods = customMoods,
                                 isActuallyDark = isActuallyDark,
                                 modifier = Modifier.tutorialTarget(TutorialStep.HighlightCurrentDay, enabled = isToday),
                                 onClick = { if (!isReadOnly) onDateSelected(date) }

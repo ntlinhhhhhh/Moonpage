@@ -39,7 +39,6 @@ import androidx.compose.ui.focus.FocusDirection
 
 private const val INFINITE_MULTIPLIER = 1000
 
-private val MONTH_NAMES = listOf("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
 private val YEAR_LIST = (1950..java.time.LocalDate.now().year).map { it.toString() }
 
 @Composable
@@ -62,7 +61,7 @@ fun BottomSheetHeader(title: String, onClose: () -> Unit) {
         ) {
             Icon(
                 imageVector = Icons.Default.Close, 
-                contentDescription = "Close",
+                contentDescription = stringResource(R.string.close),
                 tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
                 modifier = Modifier.size(20.dp)
             )
@@ -95,7 +94,7 @@ fun UsernameBottomSheetContent(
             .imePadding()
             .padding(bottom = 24.dp)
     ) {
-        BottomSheetHeader(title = "Change Username", onClose = onClose)
+        BottomSheetHeader(title = stringResource(R.string.change_username), onClose = onClose)
 
         OutlinedTextField(
             value = text,
@@ -146,7 +145,7 @@ fun UsernameBottomSheetContent(
             shape = RoundedCornerShape(20.dp),
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
         ) {
-            Text("Change", color = if (isChanged) colorScheme.onPrimary else colorScheme.onPrimary.copy(alpha = 0.6f), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Text(stringResource(R.string.change), color = if (isChanged) colorScheme.onPrimary else colorScheme.onPrimary.copy(alpha = 0.6f), fontWeight = FontWeight.Bold, fontSize = 16.sp)
         }
     }
 }
@@ -157,7 +156,11 @@ fun GenderBottomSheetContent(
     onGenderSelected: (String) -> Unit,
     onClose: () -> Unit
 ) {
-    val options = listOf("Female", "Male", "Other")
+    val options = listOf(
+        "Female" to stringResource(R.string.gender_female),
+        "Male" to stringResource(R.string.gender_male),
+        "Other" to stringResource(R.string.gender_other)
+    )
     var selectedOption by remember { mutableStateOf(if (currentGender.isBlank()) "Female" else currentGender) }
     val colorScheme = MaterialTheme.colorScheme
     val haptic = LocalHapticFeedback.current
@@ -168,12 +171,12 @@ fun GenderBottomSheetContent(
             .background(colorScheme.surface)
             .padding(bottom = 32.dp)
     ) {
-        BottomSheetHeader(title = "Gender", onClose = onClose)
+        BottomSheetHeader(title = stringResource(R.string.gender), onClose = onClose)
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        options.forEach { text ->
-            val isSelected = text.equals(selectedOption, ignoreCase = true)
+        options.forEach { (value, label) ->
+            val isSelected = value.equals(selectedOption, ignoreCase = true)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -184,13 +187,13 @@ fun GenderBottomSheetContent(
                         else colorScheme.surface
                     )
                     .clickable { 
-                        selectedOption = text 
+                        selectedOption = value
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     }
                     .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
                 Text(
-                    text = text,
+                    text = label,
                     color = if (isSelected) colorScheme.onSurface else colorScheme.onSurface.copy(alpha = 0.45f),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
@@ -216,7 +219,7 @@ fun GenderBottomSheetContent(
             shape = RoundedCornerShape(28.dp),
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
         ) {
-            Text("Done", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Text(stringResource(R.string.done), fontWeight = FontWeight.Bold, fontSize = 16.sp)
         }
     }
 }
@@ -265,7 +268,7 @@ fun BirthdayBottomSheetContent(
             .padding(bottom = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        BottomSheetHeader(title = "Birthday", onClose = onClose)
+        BottomSheetHeader(title = stringResource(R.string.birthday), onClose = onClose)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -288,7 +291,20 @@ fun BirthdayBottomSheetContent(
             ) {
                 // Month – circular
                 BirthdayWheelCircular(
-                    items = MONTH_NAMES,
+                    items = listOf(
+                        stringResource(R.string.month_jan_short),
+                        stringResource(R.string.month_feb_short),
+                        stringResource(R.string.month_mar_short),
+                        stringResource(R.string.month_apr_short),
+                        stringResource(R.string.month_may_short),
+                        stringResource(R.string.month_jun_short),
+                        stringResource(R.string.month_jul_short),
+                        stringResource(R.string.month_aug_short),
+                        stringResource(R.string.month_sep_short),
+                        stringResource(R.string.month_oct_short),
+                        stringResource(R.string.month_nov_short),
+                        stringResource(R.string.month_dec_short)
+                    ),
                     initialIndex = selectedMonthIndex,
                     onIndexChange = { selectedMonthIndex = it },
                     modifier = Modifier.weight(1.2f)
@@ -328,7 +344,7 @@ fun BirthdayBottomSheetContent(
             shape = RoundedCornerShape(16.dp),
             elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
         ) {
-            Text("Done", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Text(stringResource(R.string.done), fontWeight = FontWeight.Bold, fontSize = 16.sp)
         }
     }
 }

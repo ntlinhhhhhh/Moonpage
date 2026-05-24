@@ -30,10 +30,6 @@ import com.diary.moonpage.R
 import kotlinx.coroutines.launch
 import java.time.YearMonth
 
-private val MONTHS = listOf(
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-)
 private val YEARS = (1950..java.time.LocalDate.now().year).map { it.toString() }
 
 // Large multiplier for infinite circular effect
@@ -125,7 +121,7 @@ fun OnboardingBirthdayScreen(
                 IconButton(onClick = onNavigateBack) {
                     Icon(
                         Icons.Rounded.ArrowBackIosNew,
-                        contentDescription = "Back",
+                        contentDescription = stringResource(R.string.back),
                         tint = colorScheme.onBackground
                     )
                 }
@@ -193,7 +189,20 @@ fun OnboardingBirthdayScreen(
                     // Month
                     Box(modifier = Modifier.weight(1f)) {
                         InfiniteCircularList(
-                            items = MONTHS,
+                            items = listOf(
+                                stringResource(R.string.month_jan_short),
+                                stringResource(R.string.month_feb_short),
+                                stringResource(R.string.month_mar_short),
+                                stringResource(R.string.month_apr_short),
+                                stringResource(R.string.month_may_short),
+                                stringResource(R.string.month_jun_short),
+                                stringResource(R.string.month_jul_short),
+                                stringResource(R.string.month_aug_short),
+                                stringResource(R.string.month_sep_short),
+                                stringResource(R.string.month_oct_short),
+                                stringResource(R.string.month_nov_short),
+                                stringResource(R.string.month_dec_short)
+                            ),
                             initialIndex = selectedMonthIndex,
                             onIndexChange = { onMonthChange(it) }
                         )

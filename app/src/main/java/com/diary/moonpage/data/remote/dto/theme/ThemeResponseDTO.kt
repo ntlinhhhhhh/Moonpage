@@ -11,8 +11,10 @@ data class ThemeResponseDTO(
     @SerializedName(value = "price", alternate = ["Price"]) val price: Int,
     @SerializedName(value = "thumbnailUrl", alternate = ["ThumbnailUrl"]) val thumbnailUrl: String?,
     @SerializedName(value = "backgroundUrl", alternate = ["BackgroundUrl"]) val backgroundUrl: String?,
+    @SerializedName(value = "primaryColor", alternate = ["PrimaryColor"]) val primaryColor: String? = null,
     @SerializedName(value = "backgroundDarkColor", alternate = ["BackgroundDarkColor"]) val backgroundDarkColor: String? = null,
     @SerializedName(value = "backgroundLightColor", alternate = ["BackgroundLightColor"]) val backgroundLightColor: String? = null,
+    @SerializedName(value = "description", alternate = ["Description"]) val description: String? = null,
     @SerializedName(value = "authorId", alternate = ["AuthorId"]) val authorId: String? = null,
     @SerializedName(value = "isOfficial", alternate = ["IsOfficial"]) val isOfficial: Boolean? = null,
     @SerializedName(value = "category", alternate = ["Category"]) val category: String? = "LIGHT",
@@ -32,12 +34,13 @@ data class ThemeResponseDTO(
             isOwned = false,
             isActive = isActive,
             description = buildAppearanceDescription(
+                description = description,
                 backgroundLightColor = backgroundLightColor,
                 backgroundDarkColor = backgroundDarkColor
             ),
             type = ThemeType.THEME,
             icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
-            primaryColor = thumbnailUrl,
+            primaryColor = primaryColor ?: thumbnailUrl,
             decoration = if (isOfficialTheme) decorationName else "CUSTOM",
             category = category ?: "LIGHT"
         )
@@ -51,19 +54,30 @@ data class ThemeMoodResponseDTO(
 )
 
 private fun buildAppearanceDescription(
+    description: String?,
     backgroundLightColor: String?,
     backgroundDarkColor: String?
 ): String? {
-    if (backgroundLightColor.isNullOrBlank() && backgroundDarkColor.isNullOrBlank()) return null
+    val root = description
+        ?.takeIf { it.isNotBlank() }
+        ?.let { runCatching { JSONObject(it) }.getOrNull() }
+        ?: JSONObject()
+    var hasAppearance = root.length() > 0
 
-    return JSONObject().apply {
-        backgroundLightColor?.takeIf { it.isNotBlank() }?.let { color ->
-            put("light", JSONObject().backgroundColorAppearance(color))
-        }
-        backgroundDarkColor?.takeIf { it.isNotBlank() }?.let { color ->
-            put("dark", JSONObject().backgroundColorAppearance(color))
-        }
-    }.toString()
+    backgroundLightColor?.takeIf { it.isNotBlank() }?.let { color ->
+        val light = root.optJSONObject("light") ?: JSONObject()
+        light.backgroundColorAppearance(color)
+        root.put("light", light)
+        hasAppearance = true
+    }
+    backgroundDarkColor?.takeIf { it.isNotBlank() }?.let { color ->
+        val dark = root.optJSONObject("dark") ?: JSONObject()
+        dark.backgroundColorAppearance(color)
+        root.put("dark", dark)
+        hasAppearance = true
+    }
+
+    return if (hasAppearance) root.toString() else null
 }
 
 private fun JSONObject.backgroundColorAppearance(color: String): JSONObject {

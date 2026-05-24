@@ -81,7 +81,7 @@ fun StatsAnnualBeansDetailScreen(
                         text = if (!showRecapDetail) {
                             stringResource(id = com.diary.moonpage.R.string.year_in_beans)
                         } else {
-                            "Your Recap"
+                            stringResource(com.diary.moonpage.R.string.your_recap)
                         },
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp
@@ -93,7 +93,7 @@ fun StatsAnnualBeansDetailScreen(
                             if (showRecapDetail) showRecapDetail = false else onBack()
                         }
                     ) {
-                        Icon(Icons.Rounded.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Rounded.ArrowBack, contentDescription = stringResource(com.diary.moonpage.R.string.back))
                     }
                 },
                 actions = {
@@ -105,14 +105,14 @@ fun StatsAnnualBeansDetailScreen(
                                         val layer = if (selectedTab == 0) graphicsLayerEntire else graphicsLayerMonth
                                         val bitmap = layer.toImageBitmap().asAndroidBitmap()
                                         ImageUtils.saveBitmapToGallery(context, bitmap)
-                                        snackbarHostState.showSnackbar("Saved to gallery!")
+                                        snackbarHostState.showSnackbar(context.getString(com.diary.moonpage.R.string.share_saved_to_gallery))
                                     } catch (e: Exception) {
-                                        snackbarHostState.showSnackbar("Save failed: ${e.message}")
+                                        snackbarHostState.showSnackbar(context.getString(com.diary.moonpage.R.string.share_save_failed, e.message ?: ""))
                                     }
                                 }
                             }
                         ) {
-                            Icon(Icons.Rounded.Download, "Download", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Icon(Icons.Rounded.Download, stringResource(com.diary.moonpage.R.string.download), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 },
@@ -136,9 +136,9 @@ fun StatsAnnualBeansDetailScreen(
                                     val layer = if (selectedTab == 0) graphicsLayerEntire else graphicsLayerMonth
                                     val bitmap = layer.toImageBitmap().asAndroidBitmap()
                                     val roundedBitmap = ImageUtils.applyRoundedCorners(bitmap, 32.dp.value * context.resources.displayMetrics.density)
-                                    ImageUtils.shareImage(context, roundedBitmap, "My Yearly Recap")
+                                    ImageUtils.shareImage(context, roundedBitmap, context.getString(com.diary.moonpage.R.string.my_yearly_recap))
                                 } catch (e: Exception) {
-                                    snackbarHostState.showSnackbar("Share failed: ${e.message}")
+                                    snackbarHostState.showSnackbar(context.getString(com.diary.moonpage.R.string.share_failed, e.message ?: ""))
                                 }
                             }
                         },
@@ -151,7 +151,7 @@ fun StatsAnnualBeansDetailScreen(
                             contentColor = MaterialTheme.colorScheme.onPrimary
                         )
                     ) {
-                        Text("Share", fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                        Text(stringResource(com.diary.moonpage.R.string.share), fontWeight = FontWeight.Bold, fontSize = 17.sp)
                     }
                 }
             }

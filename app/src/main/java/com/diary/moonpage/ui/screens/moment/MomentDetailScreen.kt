@@ -11,11 +11,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.imageLoader
 import coil.request.ImageRequest
+import com.diary.moonpage.R
 import com.diary.moonpage.ui.screens.moment.components.MomentFeedItem
 import com.diary.moonpage.ui.screens.moment.components.MomentZoomOverlay
 import com.diary.moonpage.domain.model.Moment
@@ -43,8 +45,8 @@ fun MomentDetailRoute(
         AlertDialog(
             onDismissRequest = { momentToDelete = null },
             containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor,
-            title = { Text("Delete Moment", fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) },
-            text = { Text("Are you sure you want to delete this moment? This action cannot be undone.") },
+            title = { Text(stringResource(R.string.delete_moment), fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) },
+            text = { Text(stringResource(R.string.delete_moment_full_confirmation)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -53,13 +55,13 @@ fun MomentDetailRoute(
                         onNavigateBack() 
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                ) { Text("Delete") }
+                ) { Text(stringResource(R.string.delete)) }
             },
             dismissButton = {
                 TextButton(
                     onClick = { momentToDelete = null },
                     colors = ButtonDefaults.textButtonColors(contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor)
-                ) { Text("Cancel") }
+                ) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -75,7 +77,7 @@ fun MomentDetailRoute(
                         val result = context.imageLoader.execute(request)
                         if (result is coil.request.SuccessResult) {
                             val bitmap = (result.drawable as android.graphics.drawable.BitmapDrawable).bitmap
-                            com.diary.moonpage.core.util.ImageUtils.shareImage(context, bitmap, "Share Moment")
+                            com.diary.moonpage.core.util.ImageUtils.shareImage(context, bitmap, context.getString(R.string.share_moment))
                         }
                     }
                 }
@@ -130,9 +132,9 @@ fun MomentDetailScreen(
 
     if (moment == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Moment not found")
+            Text(stringResource(R.string.moment_not_found))
             IconButton(onClick = onNavigateBack, modifier = Modifier.align(Alignment.TopStart).padding(16.dp)) {
-                Icon(Icons.Rounded.Close, "Back")
+                Icon(Icons.Rounded.Close, stringResource(R.string.back))
             }
         }
         return
@@ -155,15 +157,15 @@ fun MomentDetailScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onNavigateBack) {
-                Icon(Icons.Rounded.Close, "Close", tint = androidx.compose.ui.graphics.Color.White)
+                Icon(Icons.Rounded.Close, stringResource(R.string.close), tint = androidx.compose.ui.graphics.Color.White)
             }
             
             Row {
                 IconButton(onClick = { onShare(moment) }) {
-                    Icon(Icons.Rounded.Share, "Share", tint = androidx.compose.ui.graphics.Color.White)
+                    Icon(Icons.Rounded.Share, stringResource(R.string.share), tint = androidx.compose.ui.graphics.Color.White)
                 }
                 IconButton(onClick = { onDelete(moment) }) {
-                    Icon(Icons.Rounded.Delete, "Delete", tint = androidx.compose.ui.graphics.Color.White)
+                    Icon(Icons.Rounded.Delete, stringResource(R.string.delete), tint = androidx.compose.ui.graphics.Color.White)
                 }
             }
         }

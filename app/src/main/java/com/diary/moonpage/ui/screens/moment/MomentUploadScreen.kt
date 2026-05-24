@@ -42,6 +42,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -50,6 +51,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.diary.moonpage.R
 import com.diary.moonpage.core.util.ImageUtils
 import com.diary.moonpage.ui.screens.moment.components.MomentTag
 import com.diary.moonpage.core.theme.nunitoFontFamily
@@ -190,10 +192,10 @@ fun MomentUploadScreen(
                                 val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
                                 if (bitmap != null) {
                                     ImageUtils.saveBitmapToGallery(context, bitmap)
-                                    Toast.makeText(context, "Image saved to gallery", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.image_saved_to_gallery), Toast.LENGTH_SHORT).show()
                                 }
                             } catch (e: Exception) {
-                                Toast.makeText(context, "Failed to save image", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.failed_to_save_image), Toast.LENGTH_SHORT).show()
                             }
                         }
                     }
@@ -257,7 +259,7 @@ fun MomentUploadScreen(
                                                 keyboardController?.hide()
                                             }),
                                             decorationBox = { innerTextField ->
-                                                if (userMessage.isEmpty()) Text("Add a message", color = tag.contentColor.copy(alpha = 0.6f), fontSize = 16.sp)
+                                                if (userMessage.isEmpty()) Text(stringResource(R.string.add_message), color = tag.contentColor.copy(alpha = 0.6f), fontSize = 16.sp)
                                                 innerTextField()
                                             }
                                         )
@@ -289,7 +291,7 @@ fun MomentUploadScreen(
                                     }
                                     "location" -> {
                                         Text(
-                                            text = if (userLocation.isNotEmpty()) userLocation else "Tap to add location", 
+                                            text = if (userLocation.isNotEmpty()) userLocation else stringResource(R.string.tap_to_add_location),
                                             color = tag.contentColor, 
                                             fontWeight = FontWeight.Medium, 
                                             maxLines = 1,
@@ -336,7 +338,7 @@ fun MomentUploadScreen(
                         val currentTag = allTags[pagerState.currentPage]
                         val caption = when(currentTag.id) {
                             "text" -> userMessage
-                            "review" -> "Rating: $userRating stars"
+                            "review" -> context.getString(R.string.rating_stars, userRating)
                             "location" -> userLocation
                             "weather" -> userWeather
                             else -> currentTag.text
@@ -351,7 +353,7 @@ fun MomentUploadScreen(
                         if (compressedFile != null) {
                             onUpload(compressedFile, caption)
                         } else {
-                            Toast.makeText(context, "Failed to process image", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.failed_to_process_image), Toast.LENGTH_SHORT).show()
                         }
                     }
                 },

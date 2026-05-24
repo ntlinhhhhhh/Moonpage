@@ -11,9 +11,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.diary.moonpage.R
 
 @Composable
 fun PremiumBanner() {
@@ -39,7 +41,7 @@ fun PremiumBanner() {
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
-                        text = "Limited Offer!",
+                        text = stringResource(R.string.premium_limited_offer),
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelMedium.copy(
                             color = onBanner,
@@ -52,7 +54,7 @@ fun PremiumBanner() {
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "Premium Pass",
+                        text = stringResource(R.string.premium_pass),
                         style = MaterialTheme.typography.titleLarge.copy(
                             color = onBanner,
                             fontWeight = FontWeight.Bold
@@ -67,7 +69,7 @@ fun PremiumBanner() {
                 }
 
                 Text(
-                    text = "Spring is here, celebrate with a special discount!",
+                    text = stringResource(R.string.premium_spring_discount),
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = onBanner.copy(alpha = 0.9f),
                         fontSize = 12.sp
@@ -84,7 +86,7 @@ fun PremiumBanner() {
                     .background(onBanner.copy(alpha = 0.2f)),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Icon", color = onBanner)
+                Text(stringResource(R.string.premium_icon_placeholder), color = onBanner)
             }
         }
     }

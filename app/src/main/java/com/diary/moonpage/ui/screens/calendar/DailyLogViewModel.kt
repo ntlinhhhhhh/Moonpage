@@ -2,6 +2,7 @@ package com.diary.moonpage.ui.screens.calendar
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.diary.moonpage.R
 import com.diary.moonpage.core.util.ActivityPreferencesManager
 import com.diary.moonpage.core.util.normalizeAppImageUrl
 import com.diary.moonpage.domain.model.DailyLog
@@ -444,7 +445,7 @@ class DailyLogViewModel @Inject constructor(
                         } else if (healthConnectManager.hasAllPermissions()) {
                             val data = healthConnectManager.readHealthData(_uiState.value.date)
                             if (data.steps == 0 && data.calories == 0 && data.distance == 0.0 && data.sleepHours == 0.0) {
-                                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("No health data found for this day in Health Connect. Make sure Google Fit is syncing."))
+                                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(context.getString(R.string.no_health_data_found)))
                             } else {
                                 val msg = buildString {
                                     append("Imported:")
@@ -470,7 +471,7 @@ class DailyLogViewModel @Inject constructor(
                         }
                     } catch (e: Exception) {
                         android.util.Log.e("DailyLogVM", "Import failed", e)
-                        _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Import failed: ${e.localizedMessage ?: "Unknown error"}"))
+                        _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(context.getString(R.string.import_failed, e.localizedMessage ?: context.getString(R.string.error_unknown))))
                         _uiState.update { it.copy(isImportingHealth = false) }
                     }
                 }
@@ -660,10 +661,10 @@ class DailyLogViewModel @Inject constructor(
                     _uiState.update { it.copy(
                         selectedActivities = currentActivities.toList(),
                         suggestedWeather = com.diary.moonpage.domain.repository.WeatherData(
-                            condition = weatherNames.firstOrNull() ?: "Unknown",
-                            description = "Weather auto-filled",
+                            condition = weatherNames.firstOrNull() ?: context.getString(R.string.unknown),
+                            description = context.getString(R.string.weather_auto_filled),
                             temp = temp,
-                            cityName = "Detected",
+                            cityName = context.getString(R.string.detected),
                             iconUrl = ""
                         )
                     ) }
@@ -687,7 +688,7 @@ class DailyLogViewModel @Inject constructor(
         val state = _uiState.value
         if (state.selectedMood == null || state.selectedMood == 0) {
             viewModelScope.launch {
-                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar("Please select a mood first!"))
+                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(context.getString(R.string.select_mood_first)))
             }
             return
         }
@@ -769,7 +770,7 @@ class DailyLogViewModel @Inject constructor(
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false) }
                 existingPhotoFiles.forEach { it.delete() }
-                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(error.message ?: "Failed to save log"))
+                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(error.message ?: context.getString(R.string.failed_to_save_log)))
             }
         }
     }

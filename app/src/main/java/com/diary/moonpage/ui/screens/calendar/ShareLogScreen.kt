@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -70,7 +71,7 @@ fun ShareLogRoute(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        "Share",
+                        stringResource(R.string.share),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         fontStyle = FontStyle.Normal,
@@ -79,7 +80,7 @@ fun ShareLogRoute(
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Rounded.ArrowBackIosNew, "Back", modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
+                        Icon(Icons.Rounded.ArrowBackIosNew, stringResource(R.string.back), modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
                     }
                 },
                 actions = {
@@ -93,12 +94,12 @@ fun ShareLogRoute(
                                 }.onSuccess { bitmap ->
                                     ImageUtils.saveBitmapToGallery(context, bitmap)
                                 }.onFailure { error ->
-                                    snackbarHostState.showSnackbar("Save failed: ${error.message ?: "unknown error"}")
+                                    snackbarHostState.showSnackbar(context.getString(R.string.share_save_failed, error.message ?: context.getString(R.string.error_unknown)))
                                 }
                             }
                         }
                     ) {
-                        Icon(Icons.Rounded.Download, "Save", tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
+                        Icon(Icons.Rounded.Download, stringResource(R.string.save), tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -119,9 +120,9 @@ fun ShareLogRoute(
                             runCatching {
                                 graphicsLayer.toImageBitmap().asAndroidBitmap()
                             }.onSuccess { bitmap ->
-                                ImageUtils.shareImage(context, bitmap, "My Daily Log")
+                                ImageUtils.shareImage(context, bitmap, context.getString(R.string.my_daily_log))
                             }.onFailure { error ->
-                                snackbarHostState.showSnackbar("Share failed: ${error.message ?: "unknown error"}")
+                                snackbarHostState.showSnackbar(context.getString(R.string.share_failed, error.message ?: context.getString(R.string.error_unknown)))
                             }
                         }
                     },
@@ -135,7 +136,7 @@ fun ShareLogRoute(
                     ),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
                 ) {
-                    Text("Share", fontSize = 18.sp, fontWeight = FontWeight.Bold, fontStyle = FontStyle.Normal, color = Color.White)
+                    Text(stringResource(R.string.share), fontSize = 18.sp, fontWeight = FontWeight.Bold, fontStyle = FontStyle.Normal, color = Color.White)
                 }
             }
         },
@@ -267,7 +268,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                         painter = painterResource(id = moodVisual.drawableRes),
                         contentDescription = null,
                         modifier = Modifier.size(42.dp),
-                        colorFilter = if (moodVisual.color != Color.Unspecified) androidx.compose.ui.graphics.ColorFilter.tint(Color.White) else null
+                        colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.Black)
                     )
                 }
             }
@@ -391,7 +392,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                         ShareInfoItem(
                             icon = Icons.Rounded.Bedtime,
                             value = String.format("%.1fh", uiState.sleepHours),
-                            label = "Sleep",
+                            label = stringResource(R.string.sleep_label),
                             color = Color(0xFF5C6BC0),
                             textColor = textColor,
                             secondaryTextColor = secondaryTextColor
@@ -401,7 +402,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                         ShareInfoItem(
                             icon = Icons.AutoMirrored.Rounded.DirectionsWalk,
                             value = String.format("%,d", uiState.steps),
-                            label = "Steps",
+                            label = stringResource(R.string.steps),
                             color = Color(0xFF66BB6A),
                             textColor = textColor,
                             secondaryTextColor = secondaryTextColor
@@ -475,7 +476,7 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                                 maxLines = 1
                             )
                             Text(
-                                text = uiState.artistName ?: "Unknown Artist",
+                                text = uiState.artistName ?: stringResource(R.string.unknown_artist),
                                 fontSize = 12.sp,
                                 fontStyle = FontStyle.Normal,
                                 color = secondaryTextColor,

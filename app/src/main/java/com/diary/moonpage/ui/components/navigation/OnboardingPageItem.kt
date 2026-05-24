@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -78,7 +79,7 @@ fun OnboardingPageItem(
             ) {
                 Image(
                     painter = painterResource(id = pageData.imageRes),
-                    contentDescription = "Onboarding Image",
+                    contentDescription = stringResource(R.string.content_desc_onboarding_image),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -113,11 +114,11 @@ fun OnboardingPageItem(
 @Composable
 fun OnboardingPageItemPreview() {
     val pageData = OnboardingPage(
-        title = "Share moment",
-        subtitle = "Gently observe your emotions and\nfind your daily center.",
+        title = stringResource(R.string.onboarding_page_share_moment_title),
+        subtitle = stringResource(R.string.onboarding_page_share_moment_subtitle),
         imageRes = R.drawable.logo,
-        cardTitle = "Track your daily vibes",
-        cardDescription = "Log your mood with organic shapes\nand soft colors that mirror your internal state."
+        cardTitle = stringResource(R.string.onboarding_page_track_vibes_title),
+        cardDescription = stringResource(R.string.onboarding_page_track_vibes_desc)
     )
     MoonPageTheme {
         OnboardingPageItem(pageData)
@@ -131,11 +132,11 @@ fun OnboardingPageItemPreview() {
 @Composable
 fun OnboardingPageIteDarkModePreview() {
     val pageData = OnboardingPage(
-        title = "Share moment",
-        subtitle = "Gently observe your emotions and\nfind your daily center.",
+        title = stringResource(R.string.onboarding_page_share_moment_title),
+        subtitle = stringResource(R.string.onboarding_page_share_moment_subtitle),
         imageRes = R.drawable.logo,
-        cardTitle = "Track your daily vibes",
-        cardDescription = "Log your mood with organic shapes\nand soft colors that mirror your internal state."
+        cardTitle = stringResource(R.string.onboarding_page_track_vibes_title),
+        cardDescription = stringResource(R.string.onboarding_page_track_vibes_desc)
     )
     MoonPageTheme {
         OnboardingPageItem(pageData)

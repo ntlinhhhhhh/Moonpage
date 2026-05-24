@@ -131,7 +131,7 @@ fun ResetPasswordScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.ArrowBackIosNew,
-                        contentDescription = "Back",
+                        contentDescription = stringResource(R.string.back),
                         tint = iconColor
                     )
                 }
@@ -142,8 +142,8 @@ fun ResetPasswordScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             AuthHeader(
-                title = "New Password",
-                subtitle = "Set a strong password to protect\nyour personal sanctuary."
+                title = stringResource(R.string.reset_password_title),
+                subtitle = stringResource(R.string.reset_password_subtitle)
             )
 
             Card(
@@ -164,7 +164,7 @@ fun ResetPasswordScreen(
                     MoonTextField(
                         value = uiState.passwordInput,
                         onValueChange = onPasswordChange,
-                        label = "New Password",
+                        label = stringResource(R.string.new_password),
                         placeholderText = stringResource(R.string.placeholder_at_least_8),
                         isPassword = true,
                         errorText = uiState.passwordError,
@@ -182,7 +182,7 @@ fun ResetPasswordScreen(
                     MoonTextField(
                         value = uiState.confirmPasswordInput,
                         onValueChange = onConfirmPasswordChange,
-                        label = "Confirm Password",
+                        label = stringResource(R.string.confirm_password),
                         placeholderText = stringResource(R.string.placeholder_repeat_password),
                         isPassword = true,
                         errorText = uiState.confirmPasswordError,

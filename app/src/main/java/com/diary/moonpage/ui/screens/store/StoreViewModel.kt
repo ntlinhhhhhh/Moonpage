@@ -12,11 +12,13 @@ import com.diary.moonpage.domain.usecase.theme.GetThemesUseCase
 import com.diary.moonpage.domain.usecase.theme.SetActiveThemeUseCase
 import com.diary.moonpage.core.theme.MoonThemeType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import android.content.Context
 
 @HiltViewModel
 class StoreViewModel @Inject constructor(
@@ -27,7 +29,8 @@ class StoreViewModel @Inject constructor(
     private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager,
     private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
     private val themeRepository: com.diary.moonpage.domain.repository.ThemeRepository,
-    private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository
+    private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(StoreUiState())
@@ -225,7 +228,7 @@ class StoreViewModel @Inject constructor(
                 _uiEffect.emit(StoreUiEffect.RecoverSuccess)
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false) }
-                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Recovery failed"))
+                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: context.getString(R.string.recovery_failed)))
             }
         }
     }
@@ -239,7 +242,7 @@ class StoreViewModel @Inject constructor(
                 _uiEffect.emit(StoreUiEffect.PurchaseSuccess)
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false) }
-                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Purchase failed"))
+                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: context.getString(R.string.purchase_failed)))
             }
         }
     }
@@ -266,20 +269,20 @@ class StoreViewModel @Inject constructor(
             // 2. Fetch All Themes for Store (Background refresh)
             getThemesUseCase().onFailure { error ->
                 if (_uiState.value.themes.isEmpty()) {
-                    _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Failed to load store themes"))
+                    _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: context.getString(R.string.failed_load_store_themes)))
                 }
             }
 
             // 3. Fetch Owned Themes (Background refresh)
             getOwnedThemesUseCase().onFailure { error ->
                 if (_uiState.value.ownedThemes.isEmpty()) {
-                    _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Failed to load owned themes"))
+                    _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: context.getString(R.string.failed_load_owned_themes)))
                 }
             }
 
             // 4. Fetch custom themes created by the current user
             themeRepository.getMyThemes().onFailure { error ->
-                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Failed to load custom themes"))
+                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: context.getString(R.string.failed_load_custom_themes)))
             }
 
             _uiState.update { it.copy(isLoading = false) }
@@ -320,7 +323,7 @@ class StoreViewModel @Inject constructor(
                 _uiEffect.emit(StoreUiEffect.PurchaseSuccess)
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false) }
-                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Purchase failed"))
+                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: context.getString(R.string.purchase_failed)))
             }
         }
     }
@@ -352,12 +355,12 @@ class StoreViewModel @Inject constructor(
             }
 
             // Emit effect immediately for instant feedback
-            val themeName = theme?.name ?: "theme"
-            _uiEffect.emit(StoreUiEffect.ThemeActivated(message = "Theme \"$themeName\" has been activated successfully!"))
+            val themeName = theme?.name ?: context.getString(R.string.theme_fallback)
+            _uiEffect.emit(StoreUiEffect.ThemeActivated(message = context.getString(R.string.theme_activated_success, themeName)))
 
             // Call the UseCase (which now handles optimistic DB/DataStore updates)
             setActiveThemeUseCase(themeId).onFailure { error ->
-                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Failed to sync theme activation"))
+                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: context.getString(R.string.failed_sync_theme_activation)))
             }
         }
     }
@@ -366,7 +369,7 @@ class StoreViewModel @Inject constructor(
         viewModelScope.launch {
             val themeId = theme.id.trim()
             if (themeId.isBlank()) {
-                _uiEffect.emit(StoreUiEffect.ShowSnackBar("Theme id is missing"))
+                _uiEffect.emit(StoreUiEffect.ShowSnackBar(context.getString(R.string.theme_id_missing)))
                 return@launch
             }
             _uiState.update { it.copy(isRenamingTheme = true) }
@@ -386,10 +389,10 @@ class StoreViewModel @Inject constructor(
                         isRenamingTheme = false
                     )
                 }
-                _uiEffect.emit(StoreUiEffect.ShowSnackBar("Theme renamed"))
+                _uiEffect.emit(StoreUiEffect.ShowSnackBar(context.getString(R.string.theme_renamed)))
             }.onFailure { error ->
                 _uiState.update { it.copy(isRenamingTheme = false) }
-                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: "Failed to rename theme"))
+                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: context.getString(R.string.failed_rename_theme)))
             }
         }
     }

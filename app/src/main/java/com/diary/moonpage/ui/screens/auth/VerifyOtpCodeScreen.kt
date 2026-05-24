@@ -133,7 +133,7 @@ fun VerifyOtpCodeScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.ArrowBackIosNew,
-                        contentDescription = "Back",
+                        contentDescription = stringResource(R.string.back),
                         tint = iconColor
                     )
                 }
@@ -144,8 +144,11 @@ fun VerifyOtpCodeScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             AuthHeader(
-                title = "Verify Code",
-                subtitle = "We've sent a code to\n${uiState.savedEmailForOtp.takeIf { it.isNotBlank() } ?: "your email"}"
+                title = stringResource(R.string.verify_code_title),
+                subtitle = stringResource(
+                    R.string.verify_code_subtitle,
+                    uiState.savedEmailForOtp.takeIf { it.isNotBlank() } ?: stringResource(R.string.your_email)
+                )
             )
 
             Card(
@@ -164,7 +167,7 @@ fun VerifyOtpCodeScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     MoonOtpField(
-                        label = "Verification Code",
+                        label = stringResource(R.string.verification_code),
                         otpText = uiState.otpCodeInput,
                         onOtpTextChange = onOtpCodeChange,
                         keyboardOptions = KeyboardOptions(

@@ -57,7 +57,7 @@ fun SocialLoginButton(text: String, iconResId: Int, onClick: () -> Unit) {
         ) {
             Image(
                 painter = painterResource(id = iconResId),
-                contentDescription = "$text Icon",
+                contentDescription = text,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))

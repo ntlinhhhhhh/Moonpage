@@ -10,8 +10,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.diary.moonpage.R
 
 @Composable
 fun DailySummaryWidgetPreview(
@@ -35,7 +37,7 @@ fun DailySummaryWidgetPreview(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Daily Summary", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.daily_summary_title), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (showStreak) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Rounded.Whatshot, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
@@ -47,7 +49,7 @@ fun DailySummaryWidgetPreview(
 
             if (showNote) {
                 Text(
-                    text = "Reflecting on a beautiful day with friends...",
+                    text = stringResource(R.string.daily_summary_preview_note),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                 )
@@ -60,7 +62,7 @@ fun DailySummaryWidgetPreview(
                 ) {
                     StatItem(Icons.Rounded.DirectionsWalk, "5k")
                     StatItem(Icons.Rounded.Bedtime, "7h")
-                    StatItem(Icons.Rounded.Favorite, "High")
+                    StatItem(Icons.Rounded.Favorite, stringResource(R.string.high))
                 }
             }
         }

@@ -13,8 +13,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.diary.moonpage.R
 
 @Composable
 fun AccountAvatar(
@@ -41,7 +43,7 @@ fun AccountAvatar(
             if (displayImage != null) {
                 AsyncImage(
                     model = displayImage,
-                    contentDescription = "Avatar",
+                    contentDescription = stringResource(R.string.content_desc_avatar),
                     modifier = Modifier
                         .size(110.dp)
                         .clip(CircleShape),
@@ -79,7 +81,7 @@ fun AccountAvatar(
         ) {
             Icon(
                 imageVector = Icons.Rounded.Edit,
-                contentDescription = "Edit Avatar",
+                contentDescription = stringResource(R.string.content_desc_edit_avatar),
                 tint = colorScheme.surface,
                 modifier = Modifier.size(16.dp)
             )

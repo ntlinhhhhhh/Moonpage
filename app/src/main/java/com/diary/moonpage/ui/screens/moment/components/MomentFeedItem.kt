@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -35,6 +36,7 @@ import coil.request.ImageRequest
 import coil.size.Precision
 import coil.size.Scale
 import coil.size.Size
+import com.diary.moonpage.R
 import com.diary.moonpage.domain.model.Moment
 import java.io.File
 import java.text.SimpleDateFormat
@@ -220,14 +222,14 @@ fun MomentFeedItem(
             ) {
                 AsyncImage(
                     model = localAvatarPath ?: avatarUrl,
-                    contentDescription = "Avatar",
+                    contentDescription = stringResource(R.string.content_desc_avatar),
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
             }
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = "Me",
+                text = stringResource(R.string.me),
                 color = onBgColor,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp

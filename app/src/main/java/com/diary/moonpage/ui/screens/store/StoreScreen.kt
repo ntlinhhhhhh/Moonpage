@@ -238,7 +238,7 @@ fun StoreScreen(
                     tempTheme?.let { getThemeShades(it).lastOrNull() }
                 }
                 ConfirmActivationDialog(
-                    themeName = tempTheme?.name ?: "this theme",
+                    themeName = tempTheme?.name ?: stringResource(R.string.theme_calendar_this_theme),
                     onConfirm = onConfirmActivation,
                     onCancel = onCancelActivation,
                     primaryColor = tempThemePrimaryColor
@@ -626,7 +626,7 @@ fun FreezePurchaseItem(
                     tint = Color.White
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("200", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.custom_theme_price, 250), fontWeight = FontWeight.Bold)
             }
         }
     }

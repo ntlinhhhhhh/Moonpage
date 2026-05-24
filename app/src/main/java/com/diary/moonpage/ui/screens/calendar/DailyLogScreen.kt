@@ -235,8 +235,8 @@ fun DailyLogRoute(
 
     if (photoToDelete != null) {
         MoonDeleteConfirmDialog(
-            title = "Delete Photo",
-            message = "Are you sure you want to remove this photo from your log?",
+            title = stringResource(R.string.delete_photo_title),
+            message = stringResource(R.string.delete_photo_confirmation),
             onConfirm = {
                 viewModel.onEvent(DailyLogUiEvent.OnPhotoRemoved(photoToDelete!!))
                 photoToDelete = null
@@ -1844,14 +1844,14 @@ private fun DailyLogLocationServicesDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = MoonTheme.customColors.popupBgColor,
-        title = { Text("Location Services Off") },
-        text = { Text("Please enable Location Services to fetch weather and temperature.") },
+        title = { Text(stringResource(R.string.location_services_off)) },
+        text = { Text(stringResource(R.string.location_services_weather_desc)) },
         confirmButton = {
             TextButton(
                 onClick = onOpenSettings,
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("Open Settings")
+                Text(stringResource(R.string.open_settings))
             }
         },
         dismissButton = {
@@ -1859,7 +1859,7 @@ private fun DailyLogLocationServicesDialog(
                 onClick = onDismiss,
                 colors = ButtonDefaults.textButtonColors(contentColor = MoonTheme.customColors.cancelBtnTextColor)
             ) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

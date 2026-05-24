@@ -8,10 +8,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.diary.moonpage.R
 import com.diary.moonpage.ui.screens.stats.components.*
 
 import com.diary.moonpage.data.remote.dto.stats.MusicSummaryDto
@@ -45,10 +47,10 @@ fun StatsAnnualMusicDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Annual Top Music", fontWeight = FontWeight.Bold, fontSize = 20.sp) },
+                title = { Text(stringResource(R.string.annual_top_music), fontWeight = FontWeight.Bold, fontSize = 20.sp) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Rounded.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Rounded.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
@@ -64,10 +66,10 @@ fun StatsAnnualMusicDetailScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            StatsCard(title = "Top Tracks of the Year") {
+            StatsCard(title = stringResource(R.string.top_tracks_of_year)) {
                 if (musicSummary.isNullOrEmpty()) {
                     Text(
-                        "No music data available for this year.",
+                        stringResource(R.string.no_music_data_year),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {

@@ -8,10 +8,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.diary.moonpage.R
 import com.diary.moonpage.ui.screens.stats.components.*
 
 @Composable
@@ -38,10 +40,10 @@ fun StatsAnnualSleepDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Annual Sleep & Health", fontWeight = FontWeight.Bold, fontSize = 20.sp) },
+                title = { Text(stringResource(R.string.annual_sleep_health), fontWeight = FontWeight.Bold, fontSize = 20.sp) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Rounded.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Rounded.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
@@ -62,7 +64,7 @@ fun StatsAnnualSleepDetailScreen(
                 avgDistance = stats?.averageDistance ?: 0.0
             )
             
-            StatsCard(title = "Sleep Analysis") {
+            StatsCard(title = stringResource(R.string.sleep_analysis)) {
                 SleepAnalysisChart(
                     sleepData = stats?.sleepAnalysis ?: emptyList(),
                     year = uiState.selectedYear,
@@ -72,7 +74,7 @@ fun StatsAnnualSleepDetailScreen(
                 )
             }
             
-            StatsCard(title = "Moods by Sleep") {
+            StatsCard(title = stringResource(R.string.moods_by_sleep)) {
                 SleepMoodCorrelationChart(
                     sleepData = stats?.sleepAnalysis ?: emptyList(),
                     themeType = uiState.themeType

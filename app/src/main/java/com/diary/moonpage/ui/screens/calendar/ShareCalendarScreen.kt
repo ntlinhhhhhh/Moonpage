@@ -352,7 +352,7 @@ fun ShareCalendarContent(
                                                     painter = painterResource(id = mv.drawableRes),
                                                     contentDescription = null,
                                                     modifier = Modifier.fillMaxSize(0.65f),
-                                                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White)
+                                                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.Black)
                                                 )
                                             }
                                         }

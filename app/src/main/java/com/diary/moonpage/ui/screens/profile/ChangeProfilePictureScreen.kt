@@ -16,7 +16,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.diary.moonpage.R
 import com.diary.moonpage.ui.screens.profile.components.AvatarOption
 import com.diary.moonpage.ui.screens.profile.components.ProfileAvatarGroup
 import com.diary.moonpage.ui.screens.profile.components.ProfileAvatarItem
@@ -130,7 +132,7 @@ fun ChangeProfilePictureContent(
             CenterAlignedTopAppBar(
                 title = { 
                     Text(
-                        "Change profile picture", 
+                        stringResource(R.string.change_profile_picture),
                         fontWeight = FontWeight.Bold, 
                         fontSize = 18.sp,
                         color = colorScheme.onBackground
@@ -140,7 +142,7 @@ fun ChangeProfilePictureContent(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             Icons.Rounded.ArrowBackIosNew, 
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.back),
                             tint = colorScheme.onBackground
                         )
                     }
@@ -169,7 +171,7 @@ fun ChangeProfilePictureContent(
                     ),
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    Text("Apply", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text(stringResource(R.string.apply), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             }
         }

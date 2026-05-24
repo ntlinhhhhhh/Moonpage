@@ -124,8 +124,8 @@ fun PhotoMomentWidgetEditScreen(
             )
 
             EditToggleItem(
-                title = "Show Streak Badge",
-                description = "Display your current streak on top of your photo.",
+                title = stringResource(R.string.show_streak_badge),
+                description = stringResource(R.string.show_streak_badge_photo_desc),
                 icon = Icons.Rounded.Whatshot,
                 checked = uiState.showStreak,
                 onCheckedChange = { viewModel.setShowStreak(it) }
@@ -134,13 +134,13 @@ fun PhotoMomentWidgetEditScreen(
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = colorScheme.outlineVariant)
 
             Text(
-                text = "Image Display Mode",
+                text = stringResource(R.string.image_display_mode),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
             Text(
-                text = "Choose how your photo is displayed in the widget.",
+                text = stringResource(R.string.image_display_mode_desc),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 16.dp)
@@ -151,13 +151,13 @@ fun PhotoMomentWidgetEditScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 DisplayModeCard(
-                    title = "Crop to Fill",
+                    title = stringResource(R.string.crop_to_fill),
                     selected = uiState.photoDisplayMode == "CROP",
                     onClick = { viewModel.setPhotoDisplayMode("CROP") },
                     modifier = Modifier.weight(1f)
                 )
                 DisplayModeCard(
-                    title = "Fit to Widget",
+                    title = stringResource(R.string.fit_to_widget),
                     selected = uiState.photoDisplayMode == "FIT",
                     onClick = { viewModel.setPhotoDisplayMode("FIT") },
                     modifier = Modifier.weight(1f)

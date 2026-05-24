@@ -10,9 +10,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.diary.moonpage.R
 
 @Composable
 fun ProfileHeader(
@@ -50,15 +52,15 @@ fun ProfileHeader(
             IconButton(onClick = onNotificationClick) {
                 Icon(
                     imageVector = Icons.Rounded.Notifications,
-                    contentDescription = "Notifications",
-                    tint = textColor.copy(alpha = 0.6f)
+                    contentDescription = stringResource(R.string.notifications),
+                    tint = textColor.copy(alpha = 0.8f)
                 )
             }
             IconButton(onClick = onSettingsClick) {
                 Icon(
                     imageVector = Icons.Rounded.Settings,
-                    contentDescription = "Settings",
-                    tint = textColor.copy(alpha = 0.6f)
+                    contentDescription = stringResource(R.string.settings),
+                    tint = textColor.copy(alpha = 0.8f)
                 )
             }
         }

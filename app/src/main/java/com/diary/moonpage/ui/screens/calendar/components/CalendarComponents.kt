@@ -39,6 +39,7 @@ import com.diary.moonpage.core.theme.LocalLocale
 import com.diary.moonpage.core.theme.MoonTheme
 import kotlinx.coroutines.launch
 import com.diary.moonpage.core.util.MoonIcons
+import com.diary.moonpage.core.util.MoonIcon
 import com.diary.moonpage.core.theme.MoonThemeType
 
 import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
@@ -171,33 +172,21 @@ fun CalendarHeader(
         stringResource(R.string.fri),
         stringResource(R.string.sat)
     )
-    val currentDayIndex = LocalDate.now().dayOfWeek.value % 7 // Sun=0, Mon=1, ..., Sat=6
-    val shades = com.diary.moonpage.core.theme.getThemeShades(themeType)
-    val highlightColor = if (shades.size > 3) shades[3] else MaterialTheme.colorScheme.primary
+    val dayTextColor = MaterialTheme.colorScheme.onSurfaceVariant
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp, vertical = 4.dp)
     ) {
-        val isDark = MoonTheme.customColors.isDark
-        daysOfWeek.forEachIndexed { index, day ->
-            val isCurrentDay = index == currentDayIndex
+        daysOfWeek.forEach { day ->
             Text(
                 text = day,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.labelSmall,
-                fontWeight = if (isCurrentDay) FontWeight.Bold else FontWeight.Medium,
-                color = when {
-                    isCurrentDay -> if (isDark) {
-                        if (shades.size > 1) shades[1] else highlightColor
-                    } else {
-                        if (shades.size > 4) shades[4] else highlightColor
-                    }
-                    isDark -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
-                    else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                }
+                fontWeight = FontWeight.Medium,
+                color = dayTextColor
             )
         }
     }
@@ -215,6 +204,7 @@ fun DayItem(
     isDimmed: Boolean = false,
     isFiltered: Boolean = false,
     themeType: MoonThemeType = MoonThemeType.DEFAULT,
+    customMoods: Map<Int, MoonIcon>? = null,
     isActuallyDark: Boolean = false,
     onClick: () -> Unit
 ) {
@@ -240,6 +230,20 @@ fun DayItem(
             else -> if (isActuallyDark) Color(0xFF505457) else shades[0].copy(alpha = 0.4f)
         }
     }
+    val todayIndicatorShape = RoundedCornerShape(18.dp)
+    val todayIndicatorMood = remember(themeType, customMoods, isActuallyDark) {
+        MoonIcons.Moods.getMoodVisual(
+            level = if (isActuallyDark) 3 else 4,
+            themeType = themeType,
+            customMoods = customMoods
+        )
+    }
+    val todayBorderColor = if (todayIndicatorMood.color != Color.Unspecified) {
+        todayIndicatorMood.color
+    } else {
+        colorScheme.primary
+    }
+    val todayTextColor = if (isActuallyDark) Color.White else Color.Black
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -283,22 +287,35 @@ fun DayItem(
 
         Spacer(modifier = Modifier.height(2.dp))
 
-        Text(
-            text = day.toString(),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = if (isToday || isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = when {
-                isToday -> if (isActuallyDark) {
-                    if (shades.size > 1) shades[1] else shades[0]
-                } else {
-                    if (shades.size > 4) shades[4] else shades[0]
+        Box(
+            modifier = Modifier
+                .height(20.dp)
+                .defaultMinSize(minWidth = 34.dp)
+                .then(
+                    if (isToday) {
+                        Modifier
+                            .background(todayBorderColor, todayIndicatorShape)
+                            .border(BorderStroke(2.dp, todayBorderColor), todayIndicatorShape)
+                            .padding(horizontal = 9.dp, vertical = 1.dp)
+                    } else {
+                        Modifier.padding(horizontal = 9.dp, vertical = 1.dp)
+                    }
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = day.toString(),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = if (isToday || isSelected) FontWeight.Bold else FontWeight.Normal,
+                color = when {
+                    isToday -> todayTextColor
+                    isFiltered && isDimmed -> colorScheme.onSurface.copy(alpha = 0.2f)
+                    isSelected -> colorScheme.primary
+                    isActuallyDark -> Color.White.copy(alpha = 0.85f)
+                    else -> colorScheme.onSurface.copy(alpha = 0.6f)
                 }
-                isFiltered && isDimmed -> colorScheme.onSurface.copy(alpha = 0.2f)
-                isSelected -> colorScheme.primary
-                isActuallyDark -> Color.White.copy(alpha = 0.85f)
-                else -> colorScheme.onSurface.copy(alpha = 0.6f)
-            }
-        )
+            )
+        }
     }
 }
 
@@ -729,7 +746,7 @@ fun DayDetailBottomSheet(
                         shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = cs.onSurface)
                     ) {
-                        Icon(Icons.Rounded.IosShare, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Rounded.IosShare, contentDescription = null, modifier = Modifier.size(16.dp), tint = cs.onSurface.copy(alpha = 0.8f))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(stringResource(R.string.share), fontSize = 13.sp)
                     }
@@ -739,7 +756,7 @@ fun DayDetailBottomSheet(
                         shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = cs.primary)
                     ) {
-                        Icon(Icons.Rounded.Edit, contentDescription = null, modifier = Modifier.size(16.dp), tint = cs.onPrimary)
+                        Icon(Icons.Rounded.Edit, contentDescription = null, modifier = Modifier.size(16.dp), tint = cs.onPrimary.copy(alpha = 0.8f))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(stringResource(R.string.edit), color = cs.onPrimary, fontSize = 13.sp)
                     }
@@ -748,9 +765,9 @@ fun DayDetailBottomSheet(
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(14.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = cs.error),
-                        border = BorderStroke(1.dp, cs.error.copy(alpha = 0.5f))
+                        border = BorderStroke(1.dp, cs.error.copy(alpha = 0.8f))
                     ) {
-                        Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Rounded.Delete, contentDescription = null, modifier = Modifier.size(16.dp), tint = cs.error.copy(alpha = 0.8f))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(stringResource(R.string.delete), fontSize = 13.sp)
                     }

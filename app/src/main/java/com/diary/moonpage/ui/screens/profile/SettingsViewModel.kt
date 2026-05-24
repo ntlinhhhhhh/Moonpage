@@ -66,7 +66,7 @@ class SettingsViewModel @Inject constructor(
             isBiometricEnabled = params.isBiometricEnabled,
             isReminderEnabled = params.isReminderEnabled,
             reminderTime = params.reminderTime,
-            authProvider = currentUser?.authProvider ?: "Password"
+            authProvider = currentUser?.authProvider ?: context.getString(R.string.auth_provider_password)
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 

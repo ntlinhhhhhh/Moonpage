@@ -126,7 +126,7 @@ fun AccountRoute(
             birthday = user?.birthday ?: stringResource(R.string.not_specified),
             userIdFull = user?.userId ?: "",
             email = user?.email ?: "",
-            authProvider = user?.authProvider ?: "Password",
+            authProvider = user?.authProvider ?: stringResource(R.string.auth_provider_password),
             avatarUrl = user?.avatarUrl,
             localAvatarPath = uiState.localAvatarPath,
             tempAvatarPath = uiState.tempAvatarPath,
@@ -449,7 +449,7 @@ fun AccountScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Edit,
-                        contentDescription = "Edit Username",
+                        contentDescription = stringResource(R.string.edit_username),
                         tint = colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(15.dp)
                     )
@@ -553,7 +553,7 @@ fun AccountScreen(
                 showArrow = true,
                 onClick = {
                     coroutineScope.launch {
-                        snackbarHostState.showSnackbar("Redirecting to social account provider...")
+                        snackbarHostState.showSnackbar(context.getString(R.string.redirecting_social_provider))
                     }
                 }
             )

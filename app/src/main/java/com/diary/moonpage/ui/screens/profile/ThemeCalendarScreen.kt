@@ -31,6 +31,7 @@ import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.ui.screens.store.components.ConfirmActivationDialog
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 
 private data class ThemePickerItem(
     val id: String,
@@ -89,8 +90,8 @@ fun ThemeCalendarRoute(
         }
     }
 
-    val customThemes = remember(uiState.ownedThemes, uiState.customThemes) {
-        (uiState.customThemes + uiState.ownedThemes.filter { it.isCustomTheme() })
+    val customThemes = remember(uiState.customThemes) {
+        uiState.customThemes
             .distinctBy { it.id }
             .map { theme ->
                 ThemePickerItem(
@@ -347,10 +348,19 @@ private fun Theme.isCustomTheme(): Boolean {
 
 private fun Theme.themePickerColor(): Color {
     return ThemeConstants.THEMES.find { it.id == id }?.thumbnailUrl.toColorOrNull()
+        ?: description.appearanceColor("light", "primaryColor")
+        ?: description.appearanceColor("dark", "primaryColor")
         ?: primaryColor.toColorOrNull()
         ?: backgroundUrl.toColorOrNull()
         ?: thumbnailUrl.toColorOrNull()
         ?: Color(0xFFFFC547)
+}
+
+private fun String?.appearanceColor(mode: String, key: String): Color? {
+    if (isNullOrBlank()) return null
+    return runCatching {
+        JSONObject(this).optJSONObject(mode)?.optString(key).toColorOrNull()
+    }.getOrNull()
 }
 
 private fun String.toMoonThemeTypeOrNull(): MoonThemeType? {
@@ -372,6 +382,7 @@ private fun String?.toColorOrNull(): Color? {
     val raw = trim()
     val normalized = when {
         raw.startsWith("#") -> raw
+        raw.startsWith("0x", ignoreCase = true) -> "#${raw.drop(2)}"
         raw.length == 6 || raw.length == 8 -> "#$raw"
         else -> return null
     }

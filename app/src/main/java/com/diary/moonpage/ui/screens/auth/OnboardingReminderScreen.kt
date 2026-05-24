@@ -124,7 +124,7 @@ fun OnboardingReminderScreen(
         // Back Button
         Box(modifier = Modifier.fillMaxWidth()) {
             IconButton(onClick = onNavigateBack, modifier = Modifier.align(Alignment.CenterStart)) {
-                Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = "Back", modifier = Modifier.size(20.dp))
+                Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = stringResource(R.string.back), modifier = Modifier.size(20.dp))
             }
         }
 
@@ -215,12 +215,12 @@ fun OnboardingReminderScreen(
                 onDismissRequest = onTimePickerDismiss,
                 confirmButton = {
                     TextButton(onClick = onTimePickerConfirm) {
-                        Text("Confirm")
+                        Text(stringResource(R.string.confirm))
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = onTimePickerDismiss) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.cancel))
                     }
                 }
             ) {

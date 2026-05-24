@@ -133,8 +133,8 @@ fun DailySummaryWidgetEditScreen(
             )
 
             EditToggleItem(
-                title = "Show Streak Badge",
-                description = "Display your current streak on the widget.",
+                title = stringResource(R.string.show_streak_badge),
+                description = stringResource(R.string.show_streak_badge_widget_desc),
                 icon = Icons.Rounded.Whatshot,
                 checked = uiState.showStreak,
                 onCheckedChange = { viewModel.setShowStreak(it) }
@@ -143,8 +143,8 @@ fun DailySummaryWidgetEditScreen(
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = colorScheme.outlineVariant)
 
             EditToggleItem(
-                title = "Show Daily Note",
-                description = "Display a snippet of your today's note.",
+                title = stringResource(R.string.show_daily_note),
+                description = stringResource(R.string.show_daily_note_desc),
                 icon = Icons.Rounded.Note,
                 checked = uiState.showNote,
                 onCheckedChange = { viewModel.setShowNote(it) }
@@ -153,8 +153,8 @@ fun DailySummaryWidgetEditScreen(
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = colorScheme.outlineVariant)
 
             EditToggleItem(
-                title = "Show Stats Footer",
-                description = "Display your daily steps, sleep, and activities.",
+                title = stringResource(R.string.show_stats_footer),
+                description = stringResource(R.string.show_stats_footer_desc),
                 icon = Icons.Rounded.BarChart,
                 checked = uiState.showStats,
                 onCheckedChange = { viewModel.setShowStats(it) }

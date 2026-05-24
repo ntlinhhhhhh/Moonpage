@@ -38,6 +38,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -45,6 +46,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
 import com.diary.moonpage.ui.screens.tutorial.TutorialStep
+import com.diary.moonpage.R
 import coil.compose.AsyncImage
 import java.io.File
 import java.util.concurrent.Executor
@@ -130,7 +132,7 @@ fun CameraMainUI(
             ) {
                 AsyncImage(
                     model = avatarUrl,
-                    contentDescription = "Profile",
+                    contentDescription = stringResource(R.string.content_desc_profile),
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
@@ -158,7 +160,7 @@ fun CameraMainUI(
                         ImageCapture.FLASH_MODE_AUTO -> Icons.Rounded.FlashAuto
                         else -> Icons.Rounded.FlashOff
                     }
-                    Icon(flashIcon, "Flash", tint = MaterialTheme.colorScheme.primary)
+                    Icon(flashIcon, null, tint = MaterialTheme.colorScheme.primary)
                 }
             }
         }
@@ -268,9 +270,9 @@ fun CameraMainUI(
                 .tutorialTarget(TutorialStep.HighlightMomentHistoryButton),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Rounded.History, "History", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+            Icon(Icons.Rounded.History, stringResource(R.string.history), tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
-            Text("HISTORY", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
+            Text(stringResource(R.string.history).uppercase(), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, letterSpacing = 1.sp)
         }
         Spacer(modifier = Modifier.height(16.dp))
 

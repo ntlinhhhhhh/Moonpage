@@ -44,8 +44,10 @@ interface ThemeApi {
         @Part("Price") price: RequestBody,
         @Part thumbnail: MultipartBody.Part? = null,
         @Part background: MultipartBody.Part? = null,
+        @Part("PrimaryColor") primaryColor: RequestBody? = null,
         @Part("BackgroundDarkColor") backgroundDarkColor: RequestBody? = null,
         @Part("BackgroundLightColor") backgroundLightColor: RequestBody? = null,
+        @Part("Description") description: RequestBody? = null,
         @Part("IsOfficial") isOfficial: RequestBody? = null,
         @Part("IsActive") isActive: RequestBody? = null,
         @Part("Moods") moods: RequestBody? = null

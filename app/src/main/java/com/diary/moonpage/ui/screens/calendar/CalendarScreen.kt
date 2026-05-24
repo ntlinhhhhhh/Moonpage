@@ -108,6 +108,7 @@ fun CalendarScreen(
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var dateToDelete by remember { mutableStateOf<LocalDate?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
+    val futureDateError = stringResource(R.string.future_date_error)
 
     val initialPage = 500 * 12
     val baseYearMonth = remember { YearMonth.from(LocalDate.now().withDayOfMonth(1)) }
@@ -216,7 +217,7 @@ fun CalendarScreen(
                                     customMoods = uiState.customMoods,
                                     onDateSelected = { date ->
                                         if (date.isAfter(LocalDate.now())) {
-                                            showSnackbar("You cannot record for a future date!")
+                                            showSnackbar(futureDateError)
                                         } else {
                                             onEvent(CalendarUiEvent.OnDateSelected(date))
                                             if (uiState.dailyLogs[date] == null) {
@@ -316,8 +317,8 @@ fun CalendarScreen(
 
     if (showDeleteConfirmDialog && dateToDelete != null) {
         MoonDeleteConfirmDialog(
-            title = "Delete Log",
-            message = "Are you sure you want to delete this log? This action cannot be undone.",
+            title = stringResource(R.string.delete_log_title),
+            message = stringResource(R.string.delete_log_confirmation),
             onConfirm = {
                 onEvent(CalendarUiEvent.OnDeleteLog(dateToDelete!!))
                 showDeleteConfirmDialog = false
@@ -338,14 +339,7 @@ fun CalendarMonthHeader(
     onMonthClick: () -> Unit,
     onShareClick: () -> Unit
 ) {
-    val isDark = MoonTheme.customColors.isDark
-    val shades = com.diary.moonpage.core.theme.getThemeShades(themeType)
-    val highlightColor = if (shades.size > 3) shades[3] else MaterialTheme.colorScheme.primary
-    val headerColor = if (isDark) {
-        if (shades.size > 1) shades[1] else highlightColor
-    } else {
-        if (shades.size > 4) shades[4] else highlightColor
-    }
+    val headerColor = MaterialTheme.colorScheme.onSurface
 
     Box(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
@@ -413,13 +407,13 @@ fun CalendarSelectedLogDetail(
 
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 IconButton(onClick = onShareClick) {
-                    Icon(Icons.Rounded.IosShare, contentDescription = stringResource(R.string.share), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp))
+                    Icon(Icons.Rounded.IosShare, contentDescription = stringResource(R.string.share), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), modifier = Modifier.size(22.dp))
                 }
                 IconButton(onClick = { onEditLog(date) }) {
-                    Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.edit), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp))   
+                    Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.edit), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), modifier = Modifier.size(22.dp))
                 }
                 IconButton(onClick = { onDeleteLog(date) }) {
-                    Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.delete), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f), modifier = Modifier.size(22.dp))
+                    Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.delete), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f), modifier = Modifier.size(22.dp))
                 }
             }
         }
@@ -585,13 +579,13 @@ fun TimelineItem(
 
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 IconButton(onClick = onShare, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Rounded.IosShare, contentDescription = stringResource(R.string.share), tint = cs.onSurface.copy(alpha = 0.3f), modifier = Modifier.size(18.dp))
+                    Icon(Icons.Rounded.IosShare, contentDescription = stringResource(R.string.share), tint = cs.onSurface.copy(alpha = 0.8f), modifier = Modifier.size(18.dp))
                 }
                 IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.edit), tint = cs.onSurface.copy(alpha = 0.3f), modifier = Modifier.size(18.dp))
+                    Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.edit), tint = cs.onSurface.copy(alpha = 0.8f), modifier = Modifier.size(18.dp))
                 }
                 IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.delete), tint = cs.onSurface.copy(alpha = 0.3f), modifier = Modifier.size(18.dp))
+                    Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.delete), tint = cs.onSurface.copy(alpha = 0.8f), modifier = Modifier.size(18.dp))
                 }
             }
         }

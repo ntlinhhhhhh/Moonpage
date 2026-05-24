@@ -43,6 +43,17 @@ fun LandingScreen(
 ) {
     val pagerState = rememberPagerState(pageCount = { 4 })
     val scope = rememberCoroutineScope()
+    val isVietnamese = androidx.appcompat.app.AppCompatDelegate.getApplicationLocales()
+        .toLanguageTags()
+        .startsWith("vi")
+    val currentLanguageLabel = if (isVietnamese) {
+        stringResource(R.string.language_vietnamese)
+    } else {
+        stringResource(R.string.language_english)
+    }
+    val termsText = stringResource(R.string.terms_short)
+    val privacyText = stringResource(R.string.privacy_short)
+    val termsPrivacySeparator = stringResource(R.string.terms_privacy_separator)
 
     // Auto-scroll logic: Loops back to start after the last slide
     LaunchedEffect(pagerState.currentPage) {
@@ -79,7 +90,7 @@ fun LandingScreen(
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
-                text = "My special day",
+                text = stringResource(R.string.my_special_day),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
             )
@@ -140,7 +151,7 @@ fun LandingScreen(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = if (androidx.appcompat.app.AppCompatDelegate.getApplicationLocales().toLanguageTags().startsWith("vi")) "Tiếng Việt" else "English",
+                        text = currentLanguageLabel,
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
                     )
@@ -156,14 +167,14 @@ fun LandingScreen(
                         onDismissRequest = { showLanguageMenu = false }
                     ) {
                         DropdownMenuItem(
-                            text = { Text("English") },
+                            text = { Text(stringResource(R.string.language_english)) },
                             onClick = { 
                                 onLanguageChange("en")
                                 showLanguageMenu = false 
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("Tiếng Việt") },
+                            text = { Text(stringResource(R.string.language_vietnamese)) },
                             onClick = { 
                                 onLanguageChange("vi")
                                 showLanguageMenu = false 
@@ -176,11 +187,11 @@ fun LandingScreen(
                 Text(
                     text = buildAnnotatedString {
                         withStyle(style = SpanStyle(textDecoration = TextDecoration.Underline)) {
-                            append("Terms")
+                            append(termsText)
                         }
-                        append(" & ")
+                        append(termsPrivacySeparator)
                         withStyle(style = SpanStyle(textDecoration = TextDecoration.Underline)) {
-                            append("Privacy")
+                            append(privacyText)
                         }
                     },
                     style = MaterialTheme.typography.labelSmall,

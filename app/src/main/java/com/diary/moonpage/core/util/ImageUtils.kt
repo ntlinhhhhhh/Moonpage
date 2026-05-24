@@ -24,6 +24,7 @@ import androidx.core.content.FileProvider
 import androidx.core.graphics.drawable.toBitmap
 import coil.imageLoader
 import coil.request.ImageRequest
+import com.diary.moonpage.R
 import kotlinx.coroutines.*
 
 object ImageUtils {
@@ -71,7 +72,7 @@ object ImageUtils {
             } catch (e: Exception) {
                 android.util.Log.e("ImageUtils", "Share failed: ${e.message}", e)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Failed to share image: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.failed_to_share_image, e.message ?: ""), Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -88,13 +89,13 @@ object ImageUtils {
                 val bitmap = drawable?.toBitmap()
                 if (bitmap != null) {
                     withContext(Dispatchers.Main) {
-                        shareImage(context, bitmap, "Share Photo")
+                        shareImage(context, bitmap, context.getString(R.string.share_photo))
                     }
                 }
             } catch (e: Exception) {
                 android.util.Log.e("ImageUtils", "shareImageFromUrl failed", e)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Failed to load image for sharing", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.failed_to_load_image_for_sharing), Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -286,15 +287,15 @@ object ImageUtils {
 
                 withContext(Dispatchers.Main) {
                     if (success) {
-                        Toast.makeText(context, "Saved to gallery!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.share_saved_to_gallery), Toast.LENGTH_SHORT).show()
                     } else {
-                        Toast.makeText(context, "Failed to save image", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.failed_to_save_image), Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
                 android.util.Log.e("ImageUtils", "Save to gallery failed: ${e.message}", e)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Error saving: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.error_saving, e.message ?: ""), Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -313,13 +314,13 @@ object ImageUtils {
                     saveBitmapToGallery(context, bitmap)
                 } else {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "Failed to download image", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.failed_to_download_image), Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Failed to download image", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.failed_to_download_image), Toast.LENGTH_SHORT).show()
                 }
             }
         }

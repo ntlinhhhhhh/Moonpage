@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -43,6 +44,7 @@ import com.diary.moonpage.ui.screens.stats.MoodDistributionEntry
 import com.diary.moonpage.data.remote.dto.stats.MoodDistributionDto
 import com.diary.moonpage.data.remote.dto.stats.MoodFlowDto
 import com.diary.moonpage.core.theme.*
+import com.diary.moonpage.R
 import com.diary.moonpage.ui.screens.stats.SortOrder
 import java.time.YearMonth
 import java.util.Calendar
@@ -134,10 +136,10 @@ fun SummaryStatsView(
         modifier = Modifier.fillMaxWidth().tutorialTarget(TutorialStep.HighlightYearlyReport),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        SummaryItem(label = "Logs", value = totalLogs.toString(), modifier = Modifier.weight(1f))
-        SummaryItem(label = "Photos", value = totalPhotos.toString(), modifier = Modifier.weight(1f))
-        SummaryItem(label = "Streak", value = currentStreak.toString(), modifier = Modifier.weight(1f), icon = Icons.Rounded.Whatshot)
-        SummaryItem(label = "Record", value = longestStreak.toString(), modifier = Modifier.weight(1f))
+        SummaryItem(label = stringResource(R.string.logs), value = totalLogs.toString(), modifier = Modifier.weight(1f))
+        SummaryItem(label = stringResource(R.string.photos), value = totalPhotos.toString(), modifier = Modifier.weight(1f))
+        SummaryItem(label = stringResource(R.string.streak), value = currentStreak.toString(), modifier = Modifier.weight(1f), icon = Icons.Rounded.Whatshot)
+        SummaryItem(label = stringResource(R.string.record), value = longestStreak.toString(), modifier = Modifier.weight(1f))
     }
 }
 
@@ -620,7 +622,7 @@ fun SleepSummaryView(
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
-                    Text("Average Sleep", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.average_sleep_title), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
                         text = String.format(Locale.ENGLISH, "%.1f hours", averageSleepHours),
                         fontSize = 22.sp,
@@ -637,19 +639,19 @@ fun SleepSummaryView(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             SummaryItem(
-                label = "Bedtime",
+                label = stringResource(R.string.bedtime),
                 value = averageSleepStartTime ?: "--:--",
                 modifier = Modifier.weight(1f),
                 icon = Icons.Rounded.Alarm
             )
             SummaryItem(
-                label = "Wake up",
+                label = stringResource(R.string.wake_up),
                 value = averageWakeUpTime ?: "--:--",
                 modifier = Modifier.weight(1f),
                 icon = Icons.Rounded.WbSunny
             )
             SummaryItem(
-                label = "Avg Steps",
+                label = stringResource(R.string.avg_steps),
                 value = String.format(Locale.ENGLISH, "%,d", avgSteps),
                 modifier = Modifier.weight(1f),
                 icon = Icons.AutoMirrored.Rounded.DirectionsWalk
@@ -664,7 +666,7 @@ fun SleepSummaryView(
             ) {
                 if (avgCalories > 0) {
                     SummaryItem(
-                        label = "Avg Calories", 
+                        label = stringResource(R.string.avg_calories),
                         value = String.format(Locale.ENGLISH, "%,d kcal", avgCalories), 
                         modifier = Modifier.weight(1f),
                         icon = Icons.Rounded.LocalFireDepartment
@@ -672,7 +674,7 @@ fun SleepSummaryView(
                 }
                 if (avgDistance > 0.0) {
                     SummaryItem(
-                        label = "Avg Distance", 
+                        label = stringResource(R.string.avg_distance),
                         value = String.format(Locale.ENGLISH, "%.1f km", avgDistance), 
                         modifier = Modifier.weight(1f),
                         icon = Icons.Rounded.Route
@@ -738,7 +740,7 @@ fun SleepAnalysisChart(
         // Summary Row
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             val bedtime = latestSleep?.startTime?.ifBlank { null } ?: "12:00 AM"
-            SleepStatBox(label = "Bedtime", value = bedtime, modifier = Modifier.weight(1f))
+            SleepStatBox(label = stringResource(R.string.bedtime), value = bedtime, modifier = Modifier.weight(1f))
             
             val wakeUpTime = if (latestSleep != null) {
                 try {
@@ -751,7 +753,7 @@ fun SleepAnalysisChart(
                     } else "--:--"
                 } catch (e: Exception) { "--:--" }
             } else "--:--"
-            SleepStatBox(label = "Wake up", value = wakeUpTime, modifier = Modifier.weight(1f))
+            SleepStatBox(label = stringResource(R.string.wake_up), value = wakeUpTime, modifier = Modifier.weight(1f))
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -935,10 +937,10 @@ fun SleepAnalysisChart(
                 val between6And8 = sleepGroups.values.count { list -> list.sumOf { it.duration } in 6.0..8.0 }
                 val over8 = sleepGroups.values.count { list -> list.sumOf { it.duration } > 8.0 }
                 
-                SleepLegendItem(color = Color(0xFFEF5350), label = "Less than 6h", value = "$lessThan6/$totalDays days")
-                SleepLegendItem(color = primaryColor, label = "6-8h", value = "$between6And8/$totalDays days")
-                SleepLegendItem(color = shades[1], label = "Over 8h", value = "$over8/$totalDays days")
-                SleepLegendItem(color = Color(0xFFE0E0E0), label = "No record", value = "${totalDays - reportedDays}/$totalDays days")
+                SleepLegendItem(color = Color(0xFFEF5350), label = stringResource(R.string.less_than_6h), value = stringResource(R.string.days_ratio, lessThan6, totalDays))
+                SleepLegendItem(color = primaryColor, label = stringResource(R.string.six_to_eight_h), value = stringResource(R.string.days_ratio, between6And8, totalDays))
+                SleepLegendItem(color = shades[1], label = stringResource(R.string.over_8h), value = stringResource(R.string.days_ratio, over8, totalDays))
+                SleepLegendItem(color = Color(0xFFE0E0E0), label = stringResource(R.string.no_record), value = stringResource(R.string.days_ratio, totalDays - reportedDays, totalDays))
             }
         }
 
@@ -1120,7 +1122,7 @@ fun MonthlyMoodAverageChart(yearlyMoodGrid: List<MoodFlowDto>, year: Int, themeT
 fun MusicSummaryView(musicSummary: List<com.diary.moonpage.data.remote.dto.stats.MusicSummaryDto>) {
     if (musicSummary.isEmpty()) {
         Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
-            Text("No music data for this period", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+            Text(stringResource(R.string.no_music_data_period), color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
         }
         return
     }
@@ -1150,7 +1152,7 @@ fun MusicSummaryView(musicSummary: List<com.diary.moonpage.data.remote.dto.stats
                     Text(item.songTitle, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
                     Text(item.artistName, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                 }
-                Text("${item.occurrence} times", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.times_count, item.occurrence), fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -1209,7 +1211,7 @@ fun IconDeepDiveView(
 
     if (deepDive == null) {
         Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
-            Text("Select an activity to see details", color = onSurfaceVariant.copy(alpha = 0.5f))
+            Text(stringResource(R.string.select_activity_details), color = onSurfaceVariant.copy(alpha = 0.5f))
         }
         return
     }
@@ -1225,7 +1227,7 @@ fun IconDeepDiveView(
         Spacer(modifier = Modifier.width(16.dp))
         Column {
             Text(deepDive.activityName, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = onSurface)
-            Text("${deepDive.totalOccurrence} recordings this period", color = onSurfaceVariant, fontSize = 13.sp)
+            Text(stringResource(R.string.recordings_this_period, deepDive.totalOccurrence), color = onSurfaceVariant, fontSize = 13.sp)
         }
     }
 
@@ -1251,7 +1253,7 @@ fun IconDeepDiveView(
                 Text(scoreLabel, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = scoreColor)
             }
             Spacer(modifier = Modifier.height(4.dp))
-            Text("avg mood score", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.55f))
+            Text(stringResource(R.string.avg_mood_score), fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.55f))
         }
     }
 
@@ -1269,7 +1271,7 @@ fun IconDeepDiveView(
 
     // ---- Metric 1: Mood Distribution ----
     if (deepDive.moodDistribution.isNotEmpty() && deepDive.totalOccurrence > 0) {
-        Text("Mood Distribution", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = onSurfaceVariant)
+        Text(stringResource(R.string.mood_distribution), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = onSurfaceVariant)
         Spacer(modifier = Modifier.height(10.dp))
         // Stacked bar
         Row(
@@ -1305,14 +1307,14 @@ fun IconDeepDiveView(
             Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Icon(Icons.Rounded.LocalFireDepartment, null, tint = primaryColor, modifier = Modifier.size(18.dp))
                 Text("${deepDive.longestStreak}", fontSize = 24.sp, fontWeight = FontWeight.Black, color = onSurface)
-                Text("Longest streak\n(days)", fontSize = 11.sp, color = onSurfaceVariant.copy(alpha = 0.6f), lineHeight = 15.sp)
+                Text(stringResource(R.string.longest_streak_days), fontSize = 11.sp, color = onSurfaceVariant.copy(alpha = 0.6f), lineHeight = 15.sp)
             }
         }
         Surface(shape = RoundedCornerShape(16.dp), color = MoonTheme.customColors.logItemBg.copy(alpha = 0.5f), modifier = Modifier.weight(1f)) {
             Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Icon(Icons.Rounded.CalendarMonth, null, tint = primaryColor, modifier = Modifier.size(18.dp))
                 Text(String.format(Locale.ENGLISH, "%.1fx", deepDive.weeklyFrequency), fontSize = 24.sp, fontWeight = FontWeight.Black, color = onSurface)
-                Text("Times per\nweek avg", fontSize = 11.sp, color = onSurfaceVariant.copy(alpha = 0.6f), lineHeight = 15.sp)
+                Text(stringResource(R.string.times_per_week_avg), fontSize = 11.sp, color = onSurfaceVariant.copy(alpha = 0.6f), lineHeight = 15.sp)
             }
         }
     }
@@ -1325,7 +1327,7 @@ fun IconDeepDiveView(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Rounded.Link, null, tint = primaryColor, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Often paired with", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = onSurface)
+                    Text(stringResource(R.string.often_paired_with), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = onSurface)
                 }
                 Spacer(modifier = Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1368,7 +1370,7 @@ fun ActivityListItem(rank: Int, activity: BestActivityDto, modifier: Modifier = 
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(activity.activityName, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
-            Text("${activity.occurrence} records", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.activity_records, activity.occurrence), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -1386,7 +1388,7 @@ fun RankedActivityList(activities: List<BestActivityDto>, modifier: Modifier = M
 @Composable
 fun FilterToggle(onClick: () -> Unit) {
     IconButton(onClick = onClick) {
-        Icon(Icons.Rounded.FilterList, contentDescription = "Filter", tint = MaterialTheme.colorScheme.onSurface)
+        Icon(Icons.Rounded.FilterList, contentDescription = stringResource(R.string.filter), tint = MaterialTheme.colorScheme.onSurface)
     }
 }
 
@@ -1395,7 +1397,7 @@ fun SortToggle(currentOrder: SortOrder, onClick: () -> Unit) {
     IconButton(onClick = onClick) {
         Icon(
             if (currentOrder == SortOrder.MOST_RECORDED) Icons.Rounded.ArrowDownward else Icons.Rounded.ArrowUpward,
-            contentDescription = "Sort",
+            contentDescription = stringResource(R.string.sort),
             tint = MaterialTheme.colorScheme.onSurface
         )
     }
@@ -1410,7 +1412,7 @@ fun ActivityFilterModal(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Filter Activities") },
+        title = { Text(stringResource(R.string.filter_activities_title)) },
         text = {
             Column {
                 categories.forEach { category ->
@@ -1428,7 +1430,7 @@ fun ActivityFilterModal(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Apply") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.apply)) }
         }
     )
 }
@@ -1578,8 +1580,8 @@ fun BestAndWorstView(
                 ) { Icon(Icons.Rounded.SentimentVerySatisfied, null, tint = successColor, modifier = Modifier.size(16.dp)) }
                 Spacer(modifier = Modifier.width(10.dp))
                 Column {
-                    Text("Activities for Positive Vibes", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = onSurface)
-                    Text("Appear most with great moods", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.6f))
+                    Text(stringResource(R.string.activities_positive_vibes), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = onSurface)
+                    Text(stringResource(R.string.appear_most_great_moods), fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.6f))
                 }
             }
             if (hasCorrData && bestCorrelations.isNotEmpty()) {
@@ -1595,7 +1597,7 @@ fun BestAndWorstView(
                 }
             } else {
                 Box(modifier = Modifier.fillMaxWidth().height(64.dp), contentAlignment = Alignment.Center) {
-                    Text("Log more days to see results", color = onSurfaceVariant.copy(alpha = 0.45f), fontSize = 13.sp)
+                    Text(stringResource(R.string.log_more_days_to_see_results), color = onSurfaceVariant.copy(alpha = 0.45f), fontSize = 13.sp)
                 }
             }
         }
@@ -1611,8 +1613,8 @@ fun BestAndWorstView(
                 ) { Icon(Icons.Rounded.SentimentVeryDissatisfied, null, tint = errorColor, modifier = Modifier.size(16.dp)) }
                 Spacer(modifier = Modifier.width(10.dp))
                 Column {
-                    Text("Emotional Challenges", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = onSurface)
-                    Text("Appear most with tough moods", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.6f))
+                    Text(stringResource(R.string.emotional_challenges), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = onSurface)
+                    Text(stringResource(R.string.appear_most_tough_moods), fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.6f))
                 }
             }
             if (hasCorrData && worstCorrelations.isNotEmpty()) {
@@ -1628,7 +1630,7 @@ fun BestAndWorstView(
                 }
             } else {
                 Box(modifier = Modifier.fillMaxWidth().height(64.dp), contentAlignment = Alignment.Center) {
-                    Text("Everything looks balanced so far!", color = onSurfaceVariant.copy(alpha = 0.45f), fontSize = 13.sp)
+                    Text(stringResource(R.string.everything_balanced_so_far), color = onSurfaceVariant.copy(alpha = 0.45f), fontSize = 13.sp)
                 }
             }
         }
@@ -1658,7 +1660,7 @@ private fun CorrelationActivityRow(rank: Int, correlation: ActivityCorrelation, 
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(correlation.activityName, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = onSurface, maxLines = 1)
-                Text("${correlation.occurrence} times recorded", fontSize = 11.sp, color = onSurfaceVariant.copy(alpha = 0.55f))
+                Text(stringResource(R.string.times_recorded, correlation.occurrence), fontSize = 11.sp, color = onSurfaceVariant.copy(alpha = 0.55f))
                 Spacer(modifier = Modifier.height(6.dp))
                 // Percentage bar
                 Box(modifier = Modifier.fillMaxWidth().height(5.dp).clip(RoundedCornerShape(3.dp)).background(accentColor.copy(alpha = 0.15f))) {
@@ -1857,7 +1859,7 @@ fun YearlyRecapCard(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                 }
-                Text("Mood intensity", fontSize = 10.sp, color = onSurfaceVariant.copy(alpha = 0.6f))
+                Text(stringResource(R.string.mood_intensity), fontSize = 10.sp, color = onSurfaceVariant.copy(alpha = 0.6f))
             }
             
             if (bestActivities.isNotEmpty()) {
@@ -1899,12 +1901,12 @@ fun YearlyRecapCard(
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(Icons.AutoMirrored.Rounded.DirectionsWalk, null, tint = primaryColor, modifier = Modifier.size(20.dp))
                             Text(String.format(Locale.ENGLISH, "%,d", averageSteps), fontWeight = FontWeight.Bold, color = primaryColor)
-                            Text("Avg Steps", fontSize = 10.sp, color = onSurfaceVariant)
+                            Text(stringResource(R.string.avg_steps), fontSize = 10.sp, color = onSurfaceVariant)
                         }
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(Icons.Rounded.Route, null, tint = primaryColor, modifier = Modifier.size(20.dp))
                             Text(String.format(Locale.ENGLISH, "%.1f km", averageDistance), fontWeight = FontWeight.Bold, color = primaryColor)
-                            Text("Avg Distance", fontSize = 10.sp, color = onSurfaceVariant)
+                            Text(stringResource(R.string.avg_distance), fontSize = 10.sp, color = onSurfaceVariant)
                         }
                     }
                 }
@@ -1949,7 +1951,7 @@ fun YearlyRecapCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Rounded.NightsStay, contentDescription = null, tint = primaryColor, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("MoonPage", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = onSurfaceVariant)
+                Text(stringResource(R.string.app_name), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = onSurfaceVariant)
             }
         }
     }
@@ -2182,7 +2184,7 @@ fun MoodOverviewCard(
                             painter = painterResource(id = dominantMoodVisual.drawableRes),
                             contentDescription = null,
                             modifier = Modifier.size(42.dp),
-                            colorFilter = ColorFilter.tint(Color.Black.copy(alpha = 0.72f))
+                            colorFilter = ColorFilter.tint(Color.Black)
                         )
                     }
                 }
@@ -2307,7 +2309,7 @@ private fun SleepWidgetCard(avgSleepHours: Double, modifier: Modifier, onClick: 
                 Icon(Icons.Rounded.ChevronRight, null, tint = onSurfaceVariant.copy(alpha = 0.3f), modifier = Modifier.size(16.dp))
             }
             Spacer(modifier = Modifier.height(20.dp))
-            Text("Sleep", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.55f))
+            Text(stringResource(R.string.sleep_label), fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.55f))
             Spacer(modifier = Modifier.height(6.dp))
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
@@ -2315,7 +2317,7 @@ private fun SleepWidgetCard(avgSleepHours: Double, modifier: Modifier, onClick: 
                     fontSize = 30.sp, fontWeight = FontWeight.Black, color = onSurface, modifier = Modifier.alignByBaseline()
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("h/night", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.45f), modifier = Modifier.alignByBaseline())
+                Text(stringResource(R.string.per_night_suffix), fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.45f), modifier = Modifier.alignByBaseline())
             }
         }
     }
@@ -2340,13 +2342,13 @@ private fun PhysicalWidgetCard(avgSteps: Int, avgCalories: Int, modifier: Modifi
                 Icon(Icons.Rounded.ChevronRight, null, tint = onSurfaceVariant.copy(alpha = 0.3f), modifier = Modifier.size(16.dp))
             }
             Spacer(modifier = Modifier.height(20.dp))
-            Text("Avg Health & Steps", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.55f))
+            Text(stringResource(R.string.avg_health_steps), fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.55f))
             Spacer(modifier = Modifier.height(6.dp))
             if (avgSteps > 0) {
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(String.format(Locale.ENGLISH, "%,d", avgSteps), fontSize = 24.sp, fontWeight = FontWeight.Black, color = onSurface, modifier = Modifier.alignByBaseline())
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("steps/day", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.45f), modifier = Modifier.alignByBaseline())
+                    Text(stringResource(R.string.steps_per_day), fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.45f), modifier = Modifier.alignByBaseline())
                 }
             } else {
                 Text("--", fontSize = 30.sp, fontWeight = FontWeight.Black, color = onSurface)
@@ -2378,19 +2380,19 @@ fun ActivityHabitsCard(frequentlyRecorded: List<BestActivityDto>, onClick: () ->
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Frequently Recorded", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = onSurface)
+                Text(stringResource(R.string.stats_activities_habits), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = onSurface)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onClick() }
                 ) {
-                    Text("More", fontSize = 14.sp, color = onSurfaceVariant.copy(alpha = 0.6f))
+                    Text(stringResource(R.string.more), fontSize = 14.sp, color = onSurfaceVariant.copy(alpha = 0.6f))
                     Icon(Icons.Rounded.ChevronRight, null, tint = onSurfaceVariant.copy(alpha = 0.5f), modifier = Modifier.size(18.dp))
                 }
             }
             Spacer(modifier = Modifier.height(20.dp))
             if (frequentlyRecorded.isEmpty()) {
-                Text("No activity data available.", fontSize = 14.sp, color = onSurfaceVariant.copy(alpha = 0.5f))
+                Text(stringResource(R.string.no_activity_data_available), fontSize = 14.sp, color = onSurfaceVariant.copy(alpha = 0.5f))
             } else {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     top3.forEachIndexed { index, activity ->
@@ -2497,7 +2499,7 @@ fun InsightsTeaserCard(bestActivities: List<BestActivityDto>, onClick: () -> Uni
                         Icon(Icons.Rounded.AutoAwesome, null, tint = primary, modifier = Modifier.size(18.dp))
                     }
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text("Insights & Deep Dive", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = onSurfaceVariant.copy(alpha = 0.55f))
+                    Text(stringResource(R.string.insights_deep_dive), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = onSurfaceVariant.copy(alpha = 0.55f))
                 }
                 Icon(Icons.Rounded.ChevronRight, null, tint = onSurfaceVariant.copy(alpha = 0.35f), modifier = Modifier.size(20.dp))
             }
@@ -2559,13 +2561,13 @@ fun TopMusicCard(
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text("Top Music", fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.55f), fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.top_music), fontSize = 12.sp, color = onSurfaceVariant.copy(alpha = 0.55f), fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.height(4.dp))
                 if (topSong != null) {
                     Text(topSong.songTitle, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = onSurface, maxLines = 1)
                     Text(topSong.artistName, fontSize = 12.sp, color = onSurfaceVariant, maxLines = 1)
                 } else {
-                    Text("No data available", fontSize = 14.sp, color = onSurfaceVariant.copy(alpha = 0.5f))
+                    Text(stringResource(R.string.no_data_available), fontSize = 14.sp, color = onSurfaceVariant.copy(alpha = 0.5f))
                 }
             }
             Icon(Icons.Rounded.ChevronRight, null, tint = onSurfaceVariant.copy(alpha = 0.35f), modifier = Modifier.size(20.dp))

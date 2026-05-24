@@ -143,7 +143,7 @@ fun ForgotPasswordScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.ArrowBackIosNew,
-                        contentDescription = "Back",
+                        contentDescription = stringResource(R.string.back),
                         tint = iconColor
                     )
                 }
@@ -154,8 +154,8 @@ fun ForgotPasswordScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             AuthHeader(
-                title = "Forgot Password",
-                subtitle = "Please enter your registered email\naddress to receive a secure 6-digit OTP code."
+                title = stringResource(R.string.forgot_password_title),
+                subtitle = stringResource(R.string.forgot_password_subtitle)
             )
 
             Card(
@@ -176,7 +176,7 @@ fun ForgotPasswordScreen(
                     MoonTextField(
                         value = uiState.emailInput,
                         onValueChange = onEmailChange,
-                        label = "Email Address",
+                        label = stringResource(R.string.email_address),
                         placeholderText = stringResource(R.string.placeholder_email_example),
                         iconVector = Icons.Outlined.Email,
                         errorText = uiState.emailError,
@@ -224,12 +224,12 @@ fun ForgotPasswordScreen(
                 Spacer(modifier = Modifier.width(8.dp))
                 Icon(
                     Icons.Outlined.Lock,
-                    contentDescription = "Secure",
+                    contentDescription = stringResource(R.string.content_desc_secure),
                     modifier = Modifier.size(14.dp),
                     tint = textColor.copy(alpha = 0.3f)
                 )
                 Text(
-                    text = " SECURE SANCTUARY ",
+                    text = " ${stringResource(R.string.secure_sanctuary)} ",
                     style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
                     color = textColor.copy(alpha = 0.3f)
                 )

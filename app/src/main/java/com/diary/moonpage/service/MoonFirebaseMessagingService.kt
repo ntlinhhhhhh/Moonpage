@@ -43,8 +43,8 @@ class MoonFirebaseMessagingService : FirebaseMessagingService() {
 
         val type = message.data["type"]
         val targetId = message.data["targetId"]
-        val title = message.notification?.title ?: message.data["title"] ?: "Moonpage"
-        val body = message.notification?.body ?: message.data["body"] ?: "Bạn có một thông điệp mới!"
+        val title = message.notification?.title ?: message.data["title"] ?: getString(R.string.app_name)
+        val body = message.notification?.body ?: message.data["body"] ?: getString(R.string.notification_default_body)
 
         android.util.Log.d("FCMService", "Payload: title=$title, body=$body, type=$type, targetId=$targetId")
 

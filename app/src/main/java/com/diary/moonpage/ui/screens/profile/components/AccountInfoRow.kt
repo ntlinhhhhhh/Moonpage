@@ -15,10 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.diary.moonpage.R
 import com.diary.moonpage.core.theme.MoonPageTheme
 
 @Composable
@@ -123,14 +125,14 @@ fun AccountInfoRowPreview() {
     MoonPageTheme() {
         Column {
             AccountInfoRow(
-                label = "User ID",
+                label = stringResource(R.string.user_id),
                 value = "01KJPADDQZ5DSB2GYGFGX384RF",
-                actionText = "Copy",
+                actionText = stringResource(R.string.copy),
                 isColumnValue = true,
                 onClick = {}
             )
             AccountInfoRow(
-                label = "Birthday",
+                label = stringResource(R.string.birthday),
                 value = "04/06/2005",
                 showArrow = true,
                 onClick = {}

@@ -28,6 +28,7 @@ fun CreatePasscodeRoute(
     var confirmPasscode by remember { mutableStateOf("") }
     var isConfirming by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    val passcodesDoNotMatchMessage = stringResource(R.string.passcodes_do_not_match)
 
     val onNumberClick: (String) -> Unit = { digit ->
         if (isConfirming) {
@@ -41,7 +42,7 @@ fun CreatePasscodeRoute(
                             onNavigateBack()
                         }
                     } else {
-                        errorMessage = "Passcodes do not match"
+                        errorMessage = passcodesDoNotMatchMessage
                         confirmPasscode = ""
                     }
                 }
@@ -101,7 +102,7 @@ fun CreatePasscodeScreen(
                 title = { },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

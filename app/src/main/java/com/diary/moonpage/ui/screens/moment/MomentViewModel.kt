@@ -43,13 +43,13 @@ class MomentViewModel @Inject constructor(
     val uiEffect = _uiEffect.receiveAsFlow()
 
     val allTags = listOf(
-        MomentTag("text", null, "Message"),
-        MomentTag("review", Icons.Rounded.Star, "Review"),
-        MomentTag("location", Icons.Rounded.LocationOn, "Location"),
-        MomentTag("weather", Icons.Rounded.WbSunny, "Weather"),
-        MomentTag("party", null, "Party Time!", containerColor = Color(0xFF80FFE8), contentColor = Color.Black),
-        MomentTag("ootd", null, "OOTD", containerColor = Color.White, contentColor = Color.Black),
-        MomentTag("missyou", null, "Miss you", containerColor = Color(0xFFFF4B4B), contentColor = Color.White)
+        MomentTag("text", null, context.getString(R.string.moment_tag_message)),
+        MomentTag("review", Icons.Rounded.Star, context.getString(R.string.moment_tag_review)),
+        MomentTag("location", Icons.Rounded.LocationOn, context.getString(R.string.moment_tag_location)),
+        MomentTag("weather", Icons.Rounded.WbSunny, context.getString(R.string.moment_tag_weather)),
+        MomentTag("party", null, context.getString(R.string.moment_tag_party_time), containerColor = Color(0xFF80FFE8), contentColor = Color.Black),
+        MomentTag("ootd", null, context.getString(R.string.moment_tag_ootd), containerColor = Color.White, contentColor = Color.Black),
+        MomentTag("missyou", null, context.getString(R.string.moment_tag_miss_you), containerColor = Color(0xFFFF4B4B), contentColor = Color.White)
     )
 
     private val locationTracker = com.diary.moonpage.core.util.LocationTracker(
@@ -84,9 +84,9 @@ class MomentViewModel @Inject constructor(
                         _uiState.update { it.copy(
                             suggestedWeather = com.diary.moonpage.domain.repository.WeatherData(
                                 condition = weatherText,
-                                description = "Weather auto-filled",
+                                description = context.getString(R.string.weather_auto_filled),
                                 temp = temp,
-                                cityName = "Detected",
+                                cityName = context.getString(R.string.detected),
                                 iconUrl = ""
                             )
                         ) }
@@ -141,7 +141,7 @@ class MomentViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             getMyMomentsUseCase().onFailure { error ->
-                _uiEffect.send(MomentUiEffect.ShowSnackBar(UiText.DynamicString(error.message ?: "Unknown error")))
+                _uiEffect.send(MomentUiEffect.ShowSnackBar(error.message?.let { UiText.DynamicString(it) } ?: UiText.StringResource(R.string.error_unknown)))
             }
             _uiState.update { it.copy(isLoading = false) }
         }
@@ -154,7 +154,7 @@ class MomentViewModel @Inject constructor(
                 _uiState.update { it.copy(isLoading = false, selectedMoment = moment) }
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false) }
-                _uiEffect.send(MomentUiEffect.ShowSnackBar(UiText.DynamicString(error.message ?: "Unknown error")))
+                _uiEffect.send(MomentUiEffect.ShowSnackBar(error.message?.let { UiText.DynamicString(it) } ?: UiText.StringResource(R.string.error_unknown)))
             }
         }
     }
@@ -193,7 +193,7 @@ class MomentViewModel @Inject constructor(
                 _uiEffect.send(MomentUiEffect.ShowSnackBar(UiText.StringResource(R.string.moment_upload_success)))
             }.onFailure { error ->
                 _uiState.update { it.copy(isUploading = false) }
-                _uiEffect.send(MomentUiEffect.ShowSnackBar(UiText.DynamicString(error.message ?: "Upload failed")))
+                _uiEffect.send(MomentUiEffect.ShowSnackBar(error.message?.let { UiText.DynamicString(it) } ?: UiText.StringResource(R.string.upload_failed)))
             }
         }
     }
@@ -206,7 +206,7 @@ class MomentViewModel @Inject constructor(
                 _uiEffect.send(MomentUiEffect.ShowSnackBar(UiText.StringResource(R.string.moment_deleted)))
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false) }
-                _uiEffect.send(MomentUiEffect.ShowSnackBar(UiText.DynamicString(error.message ?: "Delete failed")))
+                _uiEffect.send(MomentUiEffect.ShowSnackBar(error.message?.let { UiText.DynamicString(it) } ?: UiText.StringResource(R.string.delete_failed)))
             }
         }
     }

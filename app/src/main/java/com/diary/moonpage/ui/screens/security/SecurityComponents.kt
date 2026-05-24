@@ -14,8 +14,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.diary.moonpage.R
 
 @Composable
 fun PasscodeDots(count: Int) {
@@ -61,7 +63,7 @@ fun NumericKeypad(
                     }
                 }
                 "delete" -> KeypadButton(
-                    icon = { Icon(Icons.Default.Backspace, contentDescription = "Delete") },
+                    icon = { Icon(Icons.Default.Backspace, contentDescription = stringResource(R.string.delete)) },
                     onClick = onDeleteClick
                 )
                 else -> KeypadButton(

@@ -11,6 +11,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.core.util.ThemePreferencesManager
+import com.diary.moonpage.R
 import com.diary.moonpage.core.theme.MoonThemeType
 import com.diary.moonpage.core.util.SettingsPreferencesManager
 import com.diary.moonpage.core.util.TokenManager
@@ -116,9 +117,9 @@ class MainViewModel @Inject constructor(
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = "Moonpage Notifications"
+            val name = context.getString(R.string.notification_channel_name)
             val channel = NotificationChannel("moonpage_notification_channel", name, NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "Daily reminders and system notifications"
+                description = context.getString(R.string.notification_channel_desc)
             }
             val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
@@ -151,7 +152,7 @@ class MainViewModel @Inject constructor(
             val error = uri.getQueryParameter("error")
             
             if (error != null) {
-                showSnackbar("Spotify Error: $error")
+                showSnackbar(context.getString(R.string.spotify_error, error))
                 return
             }
 
@@ -169,15 +170,15 @@ class MainViewModel @Inject constructor(
                             if (response.isSuccessful && response.body() != null) {
                                 val body = response.body()!!
                                 tokenManager.saveSpotifyToken(body.accessToken, body.refreshToken, body.expiresIn)
-                                showSnackbar("Spotify linked successfully!")
+                                showSnackbar(context.getString(R.string.spotify_linked_success))
                             } else {
-                                showSnackbar("Token exchange failed: ${response.errorBody()?.string()}")
+                                showSnackbar(context.getString(R.string.token_exchange_failed, response.errorBody()?.string() ?: ""))
                             }
                         } catch (e: Exception) {
-                            showSnackbar("API Error: ${e.message}")
+                            showSnackbar(context.getString(R.string.api_error, e.message ?: ""))
                         }
                     } else {
-                        showSnackbar("Error: Missing local verifier")
+                        showSnackbar(context.getString(R.string.missing_local_verifier))
                     }
                 }
             }

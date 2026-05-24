@@ -295,7 +295,7 @@ class AuthViewModel @Inject constructor (
                     _uiEvent.send(AuthUiEvent.LoginSuccess(user.token, user.userId, isNewUser = !isOnboarded))
                 }.onFailure { exception ->
                     _uiState.update { it.copy(isLoading = false) }
-                    _uiEvent.send(AuthUiEvent.ShowSnackBar(UiText.DynamicString(exception.message ?: "Google login failed.")))
+                    _uiEvent.send(AuthUiEvent.ShowSnackBar(exception.message?.let { UiText.DynamicString(it) } ?: UiText.StringResource(R.string.google_login_failed)))
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false) }
@@ -368,7 +368,7 @@ class AuthViewModel @Inject constructor (
         val otpCode = uiState.value.otpCodeInput.trim()
 
         if (otpCode.isBlank()) {
-            _uiState.update { it.copy(otpCodeError = UiText.DynamicString("OTP required")) }
+            _uiState.update { it.copy(otpCodeError = UiText.StringResource(R.string.otp_required)) }
             return
         }
 
@@ -408,7 +408,7 @@ class AuthViewModel @Inject constructor (
             }
 
             if (resetToken.isNullOrBlank()) {
-                _uiEvent.send(AuthUiEvent.ShowSnackBar(UiText.DynamicString("Invalid or expired session. Please try again.")))
+                _uiEvent.send(AuthUiEvent.ShowSnackBar(UiText.StringResource(R.string.invalid_or_expired_session)))
                 return@launch
             }
 
@@ -472,9 +472,13 @@ class AuthViewModel @Inject constructor (
     }
 
     private fun handleAuthError(message: String?) {
-        val error = message ?: "An unknown error occurred"
-
         _uiState.update { it.copy(emailError = null, passwordError = null, usernameError = null, confirmPasswordError = null) }
+        val error = message ?: run {
+            viewModelScope.launch {
+                _uiEvent.send(AuthUiEvent.ShowSnackBar(UiText.StringResource(R.string.error_unknown)))
+            }
+            return
+        }
         when {
             error.contains("Email", ignoreCase = true) || error.contains("User", ignoreCase = true) -> {
                 _uiState.update { it.copy(emailError = UiText.DynamicString(error)) }

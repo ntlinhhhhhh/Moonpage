@@ -57,7 +57,7 @@ fun ProfileRoute(
     } else {
         ProfileScreen(
             userId = uiState.user?.id?.take(8) ?: "",
-            userName = uiState.user?.name ?: "User",
+            userName = uiState.user?.name ?: stringResource(R.string.user_fallback),
             avatarUrl = uiState.user?.avatarUrl,
             recordedDays = uiState.totalLogs.toString(),
             photoCount = uiState.totalPhotos.toString(),
@@ -202,7 +202,7 @@ fun ProfileScreenPreview() {
     MoonPageTheme {
         ProfileScreen(
             userId = "0320",
-            userName = "Moon User",
+            userName = stringResource(R.string.user_fallback),
             avatarUrl = null,
             recordedDays = "8",
             photoCount = "3",

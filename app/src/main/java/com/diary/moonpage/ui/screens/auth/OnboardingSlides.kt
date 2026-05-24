@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -80,7 +81,11 @@ fun MoodLoggingSlide(isVisible: Boolean) {
         modifier = Modifier.fillMaxSize().padding(top = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        SlideHeader(title = "The simplest diary", description = "Record your day with just a few taps", isVisible = isVisible)
+        SlideHeader(
+            title = stringResource(R.string.onboarding_simple_diary_title),
+            description = stringResource(R.string.onboarding_simple_diary_desc),
+            isVisible = isVisible
+        )
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -94,7 +99,7 @@ fun MoodLoggingSlide(isVisible: Boolean) {
                     shape = RoundedCornerShape(24.dp)
                 ) {
                     Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("How was your day?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                        Text(stringResource(R.string.select_mood), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                         Spacer(modifier = Modifier.height(20.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                             listOf(1, 2, 3, 4, 5).forEachIndexed { index, level ->
@@ -123,21 +128,21 @@ fun MoodLoggingSlide(isVisible: Boolean) {
             // Weather Card
             Box(modifier = Modifier.padding(horizontal = 24.dp).offset(y = weatherY.value.dp)) {
                 ActivityCard {
-                    ActivityGroup("Weather", listOf(Icons.Rounded.WbSunny, Icons.Rounded.Cloud, Icons.Rounded.Umbrella, Icons.Rounded.Air), selectedActivityIdxs, 0)
+                    ActivityGroup(stringResource(R.string.activity_category_weather), listOf(Icons.Rounded.WbSunny, Icons.Rounded.Cloud, Icons.Rounded.Umbrella, Icons.Rounded.Air), selectedActivityIdxs, 0)
                 }
             }
 
             // Social Card
             Box(modifier = Modifier.padding(horizontal = 24.dp).offset(y = socialY.value.dp)) {
                 ActivityCard {
-                    ActivityGroup("Social", listOf(Icons.Rounded.Star, Icons.Rounded.Group, Icons.Rounded.Favorite, Icons.Rounded.Groups), selectedActivityIdxs, 4)
+                    ActivityGroup(stringResource(R.string.activity_category_social), listOf(Icons.Rounded.Star, Icons.Rounded.Group, Icons.Rounded.Favorite, Icons.Rounded.Groups), selectedActivityIdxs, 4)
                 }
             }
 
             // Feelings Card
             Box(modifier = Modifier.padding(horizontal = 24.dp).offset(y = feelingsY.value.dp)) {
                 ActivityCard {
-                    ActivityGroup("Feelings", listOf(Icons.Rounded.SentimentVerySatisfied, Icons.Rounded.Celebration, Icons.Rounded.Bedtime, Icons.Rounded.FlashOn), selectedActivityIdxs, 8)
+                    ActivityGroup(stringResource(R.string.activity_category_feelings), listOf(Icons.Rounded.SentimentVerySatisfied, Icons.Rounded.Celebration, Icons.Rounded.Bedtime, Icons.Rounded.FlashOn), selectedActivityIdxs, 8)
                 }
             }
         }
@@ -344,8 +349,8 @@ private fun lerp(start: Color, stop: Color, fraction: Float): Color {
 fun PhotoLogSlide(isVisible: Boolean) {
     Column(modifier = Modifier.fillMaxSize().padding(top = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         SlideHeader(
-            title = "Beautiful logging",
-            description = "Your day, perfectly preserved",
+            title = stringResource(R.string.onboarding_beautiful_logging_title),
+            description = stringResource(R.string.onboarding_beautiful_logging_desc),
             isVisible = isVisible
         )
 
@@ -374,8 +379,8 @@ fun OnboardingDailyLogCard() {
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
-                    Text("Saturday, May 16", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("2026", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                    Text(stringResource(R.string.onboarding_preview_date), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.onboarding_preview_year), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                 }
             }
             
@@ -394,7 +399,7 @@ fun OnboardingDailyLogCard() {
             
             // Note
             Text(
-                "Such a wonderful day! The beach was peaceful, and the sunset was breathtaking. These are the moments I want to keep forever. #family #peace",
+                stringResource(R.string.onboarding_preview_note),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                 lineHeight = 22.sp
@@ -432,8 +437,8 @@ fun OnboardingDailyLogCard() {
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
-                        Text("Summer Vibes", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
-                        Text("Acoustic Sessions", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
+                        Text(stringResource(R.string.onboarding_music_sample_title), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.onboarding_music_sample_artist), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
                     }
                 }
             }
@@ -470,7 +475,7 @@ fun OnboardingMomentCard() {
                     modifier = Modifier.align(Alignment.BottomCenter).padding(12.dp)
                 ) {
                     Text(
-                        "Beautiful Sunset 🌅",
+                        stringResource(R.string.onboarding_moment_sample_title),
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         color = Color.White,
                         fontSize = 12.sp,
@@ -482,7 +487,7 @@ fun OnboardingMomentCard() {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Rounded.AccessTime, null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("6:30 PM", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
+                Text(stringResource(R.string.onboarding_music_sample_time), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
             }
         }
     }
@@ -526,35 +531,35 @@ fun AnnualLookBackSlide(isVisible: Boolean) {
     var activeThemeIdx by remember { mutableStateOf(0) }
     val themes = listOf(
         ThemeData(
-            "Default Theme", 
+            stringResource(R.string.onboarding_default_theme),
             Color(0xFFFFFBF4), 
             Color(0xFF8C7E6A), 
             MoonThemeType.DEFAULT,
             listOf(Color(0xFFFFF9E1), Color(0xFFFFE082), Color(0xFFFFB74D), Color(0xFFFB8C00), Color(0xFF5D4037))
         ),
         ThemeData(
-            "Coffee Theme", 
+            stringResource(R.string.onboarding_coffee_theme),
             Color(0xFFF7F5F4), 
             Color(0xFF8D6E63), 
             MoonThemeType.COFFEE,
             listOf(Color(0xFFEFEBE9), Color(0xFFD7CCC8), Color(0xFFBCAAA4), Color(0xFF8D6E63), Color(0xFF5D4037))
         ),
         ThemeData(
-            "Blushing Theme", 
+            stringResource(R.string.onboarding_blushing_theme),
             Color(0xFFFFF0F3), 
             Color(0xFFD2847A), 
             MoonThemeType.BLUSHING,
             listOf(Color(0xFFFFEBEE), Color(0xFFFFCDD2), Color(0xFFEF9A9A), Color(0xFFE57373), Color(0xFFD32F2F))
         ),
         ThemeData(
-            "Galaxy Theme", 
+            stringResource(R.string.onboarding_galaxy_theme),
             Color(0xFFF0F2F9), 
             Color(0xFF3F51B5), 
             MoonThemeType.GALAXY,
             listOf(Color(0xFFE8EAF6), Color(0xFFC5CAE9), Color(0xFF9FA8DA), Color(0xFF7986CB), Color(0xFF3F51B5))
         ),
         ThemeData(
-            "Matcha Theme", 
+            stringResource(R.string.onboarding_matcha_theme),
             Color(0xFFF1F8E9), 
             Color(0xFF4CAF50), 
             MoonThemeType.MATCHA,
@@ -581,8 +586,8 @@ fun AnnualLookBackSlide(isVisible: Boolean) {
 
     Column(modifier = Modifier.fillMaxSize().padding(top = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         SlideHeader(
-            title = "Monthly themes",
-            description = "Pick a different theme for each month",
+            title = stringResource(R.string.onboarding_monthly_themes_title),
+            description = stringResource(R.string.onboarding_monthly_themes_desc),
             isVisible = isVisible
         )
 
@@ -613,9 +618,17 @@ fun AnnualLookBackSlide(isVisible: Boolean) {
                         ) {
                             // Days of week header
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                                listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat").forEach { day ->
-                                    val isSat = day == "Sat"
-                                    val isSun = day == "Sun"
+                                listOf(
+                                    stringResource(R.string.sun),
+                                    stringResource(R.string.mon),
+                                    stringResource(R.string.tue),
+                                    stringResource(R.string.wed),
+                                    stringResource(R.string.thu),
+                                    stringResource(R.string.fri),
+                                    stringResource(R.string.sat)
+                                ).forEachIndexed { dayIndex, day ->
+                                    val isSat = dayIndex == 6
+                                    val isSun = dayIndex == 0
                                     Text(
                                         text = day, 
                                         style = MaterialTheme.typography.labelSmall, 
@@ -721,8 +734,8 @@ fun AdvancedStatsSlide(isVisible: Boolean) {
 
     Column(modifier = Modifier.fillMaxSize().padding(top = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         SlideHeader(
-            title = "Learn about you",
-            description = "Gain new insights about your life and mood",
+            title = stringResource(R.string.onboarding_learn_about_you_title),
+            description = stringResource(R.string.onboarding_learn_about_you_desc),
             isVisible = isVisible
         )
 
@@ -765,7 +778,7 @@ fun MoodFlowFrame(isVisible: Boolean) {
     }
 
     Column(modifier = Modifier.padding(24.dp)) {
-        Text("Mood Flow", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.mood_flow), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(24.dp))
         
         Box(modifier = Modifier.fillMaxWidth().height(200.dp)) {
@@ -887,7 +900,7 @@ fun MoodDistributionFrame(isVisible: Boolean) {
     }
 
     Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("Mood Bar", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
+        Text(stringResource(R.string.mood_bar), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
         Spacer(modifier = Modifier.height(32.dp))
         
         val items = listOf(

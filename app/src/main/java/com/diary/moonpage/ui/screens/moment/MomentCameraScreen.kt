@@ -31,11 +31,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.imageLoader
 import coil.request.ImageRequest
+import com.diary.moonpage.R
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.screens.moment.components.CameraMainUI
 import com.diary.moonpage.ui.screens.moment.components.MomentTag
@@ -131,9 +133,9 @@ fun MomentCameraScreen(
                         val result = context.imageLoader.execute(request)
                         if (result is coil.request.SuccessResult) {
                             val bitmap = (result.drawable as android.graphics.drawable.BitmapDrawable).bitmap
-                            com.diary.moonpage.core.util.ImageUtils.shareImage(context, bitmap, "Share Moment")
+                            com.diary.moonpage.core.util.ImageUtils.shareImage(context, bitmap, context.getString(R.string.share_moment))
                         } else {
-                            snackbarHostState.showSnackbar("Failed to load image for sharing")
+                            snackbarHostState.showSnackbar(context.getString(R.string.failed_to_load_image_for_sharing))
                         }
                     }
                 }
@@ -168,7 +170,7 @@ fun MomentCameraScreen(
         )
     } else {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Camera permission is required", color = MaterialTheme.colorScheme.onBackground)
+            Text(stringResource(R.string.camera_permission_required), color = MaterialTheme.colorScheme.onBackground)
         }
     }
 }
@@ -222,7 +224,8 @@ fun MomentCameraScreenContent(
     var userMessage by remember { mutableStateOf("") }
     var userRating by remember { mutableFloatStateOf(0.0f) }
     var userLocation by remember { mutableStateOf("") }
-    var userWeather by remember { mutableStateOf("Sunny ☀️") }
+    val defaultWeather = stringResource(R.string.weather_sunny_icon)
+    var userWeather by remember(defaultWeather) { mutableStateOf(defaultWeather) }
     var showTagSheet by remember { mutableStateOf(false) }
     var pendingLocationRequest by remember { mutableStateOf(false) }
 
@@ -236,12 +239,12 @@ fun MomentCameraScreenContent(
                 if (!addresses.isNullOrEmpty()) {
                     val address = addresses[0]
                     val district = address.subLocality ?: address.locality ?: address.subAdminArea
-                    val city = address.adminArea ?: address.locality ?: "Unknown"
+                    val city = address.adminArea ?: address.locality ?: context.getString(R.string.unknown)
                     val locationName = if (district != null && district != city) "$district/$city" else city
                     withContext(Dispatchers.Main) { userLocation = locationName }
                 }
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) { userLocation = "Location error" }
+                withContext(Dispatchers.Main) { userLocation = context.getString(R.string.location_error) }
             }
         }
     }
@@ -408,16 +411,16 @@ fun MomentCameraScreenContent(
                 AlertDialog(
                     onDismissRequest = { showGpsDialog = false },
                     containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor,
-                    title = { Text("Location Services Off") },
-                    text = { Text("Please enable Location Services to add your location.") },
+                    title = { Text(stringResource(R.string.location_services_off)) },
+                    text = { Text(stringResource(R.string.location_services_add_location_desc)) },
                     confirmButton = {
                         TextButton(onClick = {
                             showGpsDialog = false
                             context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-                        }, colors = androidx.compose.material3.ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)) { Text("Open Settings") }
+                        }, colors = androidx.compose.material3.ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)) { Text(stringResource(R.string.open_settings)) }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showGpsDialog = false }, colors = androidx.compose.material3.ButtonDefaults.textButtonColors(contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor)) { Text("Cancel") }
+                        TextButton(onClick = { showGpsDialog = false }, colors = androidx.compose.material3.ButtonDefaults.textButtonColors(contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor)) { Text(stringResource(R.string.cancel)) }
                     }
                 )
             }

@@ -16,9 +16,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.diary.moonpage.R
 
 @Composable
 fun YearHeader(
@@ -42,7 +44,7 @@ fun YearHeader(
             Text(year, fontSize = 48.sp, fontWeight = FontWeight.Black, color = accentColor)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(userName, fontSize = 16.sp)
-                Text("'s Year", fontSize = 14.sp, color = accentColor, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.profile_year_suffix), fontSize = 14.sp, color = accentColor, fontWeight = FontWeight.Bold)
             }
         }
         IconButton(onClick = onNextClick) {
@@ -176,7 +178,7 @@ fun CalendarBottomActions(
             ),
             shape = RoundedCornerShape(16.dp)
         ) {
-            Text("Download", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.download), fontWeight = FontWeight.Bold)
         }
         Button(
             onClick = onShareClick,
@@ -187,7 +189,7 @@ fun CalendarBottomActions(
             ),
             shape = RoundedCornerShape(16.dp)
         ) {
-            Text("Share", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.share), fontWeight = FontWeight.Bold)
         }
     }
 }

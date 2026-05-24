@@ -8,10 +8,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.diary.moonpage.R
 import com.diary.moonpage.ui.screens.stats.components.*
 
 @Composable
@@ -38,10 +40,10 @@ fun StatsAnnualMoodDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Annual Mood", fontWeight = FontWeight.Bold, fontSize = 20.sp) },
+                title = { Text(stringResource(R.string.annual_mood), fontWeight = FontWeight.Bold, fontSize = 20.sp) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Rounded.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Rounded.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
@@ -53,7 +55,7 @@ fun StatsAnnualMoodDetailScreen(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(padding).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            StatsCard(title = "Mood Flow") {
+            StatsCard(title = stringResource(R.string.mood_flow)) {
                 MoodFlowChart(
                     moodFlow = stats?.moodFlow ?: emptyList(),
                     year = uiState.selectedYear,
@@ -62,7 +64,7 @@ fun StatsAnnualMoodDetailScreen(
                     themeType = uiState.themeType
                 )
             }
-            StatsCard(title = "Mood Distribution") {
+            StatsCard(title = stringResource(R.string.mood_distribution)) {
                 MoodDistributionView(
                     distribution = stats?.moodDistribution ?: emptyList(),
                     themeType = uiState.themeType

@@ -20,8 +20,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.diary.moonpage.R
 
 @Composable
 fun MomentZoomOverlay(
@@ -66,7 +68,7 @@ fun MomentZoomOverlay(
         Box(modifier = Modifier.fillMaxSize()) {
             AsyncImage(
                 model = localPath ?: imageUrl,
-                contentDescription = "Zoomed Image",
+                contentDescription = stringResource(R.string.content_desc_zoomed_image),
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer(
@@ -99,7 +101,7 @@ fun MomentZoomOverlay(
                     .align(Alignment.TopStart)
                     .background(Color.Black.copy(alpha = 0.4f), CircleShape)
             ) {
-                Icon(Icons.Rounded.Close, "Close", tint = Color.White)
+                Icon(Icons.Rounded.Close, stringResource(R.string.close), tint = Color.White)
             }
 
             // Share Button
@@ -111,7 +113,7 @@ fun MomentZoomOverlay(
                     .align(Alignment.TopEnd)
                     .background(Color.Black.copy(alpha = 0.4f), CircleShape)
             ) {
-                Icon(Icons.Rounded.Share, "Share", tint = Color.White)
+                Icon(Icons.Rounded.Share, stringResource(R.string.share), tint = Color.White)
             }
         }
     }
