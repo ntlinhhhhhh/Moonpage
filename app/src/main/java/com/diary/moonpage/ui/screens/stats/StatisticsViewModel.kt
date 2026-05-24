@@ -18,6 +18,7 @@ class StatisticsViewModel @Inject constructor(
     private val activityRepository: ActivityRepository,
     private val logRepository: DailyLogRepository,
     private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
+    private val themeRepository: com.diary.moonpage.domain.repository.ThemeRepository,
     private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager
 ) : ViewModel() {
 
@@ -28,6 +29,12 @@ class StatisticsViewModel @Inject constructor(
         viewModelScope.launch {
             themePreferencesManager.themeType.collect { themeType ->
                 _uiState.update { it.copy(themeType = themeType) }
+                loadCustomMoods()
+            }
+        }
+        viewModelScope.launch {
+            themeRepository.activeTheme.collect {
+                loadCustomMoods()
             }
         }
         viewModelScope.launch {
@@ -40,6 +47,60 @@ class StatisticsViewModel @Inject constructor(
             repository.refreshTrigger.collect {
                 loadStatistics()
             }
+        }
+    }
+
+    private suspend fun loadCustomMoods() {
+        val activeThemeId = themeRepository.getActiveThemeId()
+        if (activeThemeId != null) {
+            val moodEntities = themeRepository.getMoodsForTheme(activeThemeId)
+            if (moodEntities.isNotEmpty()) {
+                val currentTheme = _uiState.value.themeType
+                val customMoods = moodEntities.associate { entity ->
+                    val level = when (entity.baseMoodId) {
+                        "1", "Awful", "Very Sad" -> 1
+                        "2", "Bad", "Sad" -> 2
+                        "3", "Meh", "Neutral" -> 3
+                        "4", "Good", "Happy" -> 4
+                        "5", "Rad", "Very Happy" -> 5
+                        else -> 3
+                    }
+                    
+                    val isHexColor = !entity.iconUrl.isNullOrBlank() && (entity.iconUrl.startsWith("#") || entity.iconUrl.length == 6 || entity.iconUrl.length == 8)
+                    
+                    val color = try {
+                        if (isHexColor) {
+                            val colorStr = if (entity.iconUrl.startsWith("#")) entity.iconUrl else "#${entity.iconUrl}"
+                            androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor(colorStr))
+                        } else {
+                            MoonIcons.Moods.getMoodColor(level, currentTheme)
+                        }
+                    } catch (e: Exception) {
+                        MoonIcons.Moods.getMoodColor(level, currentTheme)
+                    }
+
+                    level to com.diary.moonpage.core.util.MoonIcon(
+                        color = color,
+                        name = entity.customName,
+                        imageUrl = if (!isHexColor && !entity.iconUrl.isNullOrBlank()) entity.iconUrl else null,
+                        drawableRes = if (isHexColor || entity.iconUrl.isNullOrBlank()) {
+                            when (level) {
+                                1 -> com.diary.moonpage.R.drawable.very_sad
+                                2 -> com.diary.moonpage.R.drawable.sad
+                                3 -> com.diary.moonpage.R.drawable.neutral
+                                4 -> com.diary.moonpage.R.drawable.happy
+                                5 -> com.diary.moonpage.R.drawable.very_happy
+                                else -> com.diary.moonpage.R.drawable.neutral
+                            }
+                        } else null
+                    )
+                }
+                _uiState.update { it.copy(customMoods = customMoods) }
+            } else {
+                _uiState.update { it.copy(customMoods = null) }
+            }
+        } else {
+            _uiState.update { it.copy(customMoods = null) }
         }
     }
 

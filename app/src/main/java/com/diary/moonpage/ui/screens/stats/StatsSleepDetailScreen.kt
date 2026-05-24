@@ -95,7 +95,8 @@ fun StatsSleepDetailScreen(
                 StatsCard(title = stringResource(R.string.moods_by_sleep)) {
                     SleepMoodCorrelationChart(
                         sleepData = stats?.sleepAnalysis ?: emptyList(),
-                        themeType = uiState.themeType
+                        themeType = uiState.themeType,
+                        customMoods = uiState.customMoods
                     )
                 }
 

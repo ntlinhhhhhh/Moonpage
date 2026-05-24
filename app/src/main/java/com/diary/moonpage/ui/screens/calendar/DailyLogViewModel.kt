@@ -306,8 +306,10 @@ class DailyLogViewModel @Inject constructor(
                         else -> 3
                     }
                     
+                    val isHexColor = !entity.iconUrl.isNullOrBlank() && (entity.iconUrl.startsWith("#") || entity.iconUrl.length == 6 || entity.iconUrl.length == 8)
+                    
                     val color = try {
-                        if (!entity.iconUrl.isNullOrBlank() && (entity.iconUrl.startsWith("#") || entity.iconUrl.length == 6 || entity.iconUrl.length == 8)) {
+                        if (isHexColor) {
                             val colorStr = if (entity.iconUrl.startsWith("#")) entity.iconUrl else "#${entity.iconUrl}"
                             androidx.compose.ui.graphics.Color(android.graphics.Color.parseColor(colorStr))
                         } else {
@@ -320,14 +322,17 @@ class DailyLogViewModel @Inject constructor(
                     level to com.diary.moonpage.core.util.MoonIcon(
                         color = color,
                         name = entity.customName,
-                        drawableRes = when (level) {
-                            1 -> com.diary.moonpage.R.drawable.very_sad
-                            2 -> com.diary.moonpage.R.drawable.sad
-                            3 -> com.diary.moonpage.R.drawable.neutral
-                            4 -> com.diary.moonpage.R.drawable.happy
-                            5 -> com.diary.moonpage.R.drawable.very_happy
-                            else -> com.diary.moonpage.R.drawable.neutral
-                        }
+                        imageUrl = if (!isHexColor && !entity.iconUrl.isNullOrBlank()) entity.iconUrl else null,
+                        drawableRes = if (isHexColor || entity.iconUrl.isNullOrBlank()) {
+                            when (level) {
+                                1 -> com.diary.moonpage.R.drawable.very_sad
+                                2 -> com.diary.moonpage.R.drawable.sad
+                                3 -> com.diary.moonpage.R.drawable.neutral
+                                4 -> com.diary.moonpage.R.drawable.happy
+                                5 -> com.diary.moonpage.R.drawable.very_happy
+                                else -> com.diary.moonpage.R.drawable.neutral
+                            }
+                        } else null
                     )
                 }
                 _uiState.update { it.copy(customMoods = customMoods) }

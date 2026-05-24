@@ -43,6 +43,7 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.text.style.TextAlign
+import coil.compose.AsyncImage
 import com.diary.moonpage.core.theme.MoonTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -204,11 +205,13 @@ fun ShareCalendarRoute(
                 contentAlignment = Alignment.Center
             ) {
                 ShareCalendarContent(
-                    yearMonth = yearMonth,
+                    yearMonth = uiState.currentYearMonth,
                     dailyLogs = uiState.dailyLogs,
                     themeType = uiState.themeType,
+                    customMoods = uiState.customMoods,
                     isSquare = selectedRatio == "1:1"
                 )
+
             }
 
             Spacer(modifier = Modifier.height(40.dp))
@@ -253,6 +256,7 @@ fun ShareCalendarContent(
     yearMonth: YearMonth,
     dailyLogs: Map<LocalDate, com.diary.moonpage.domain.model.DailyLog>,
     themeType: MoonThemeType,
+    customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null,
     isSquare: Boolean
 ) {
     val monthName = yearMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH))
@@ -327,7 +331,7 @@ fun ShareCalendarContent(
                                             .size(if (isSquare) 28.dp else 32.dp) // Reduced size from 36/44
                                             .clip(CircleShape)
                                             .background(if (log != null) {
-                                                val mv = MoonIcons.Moods.getMoodVisual(log.baseMoodId, themeType)
+                                                val mv = MoonIcons.Moods.getMoodVisual(log.baseMoodId, themeType, customMoods)
                                                 mv.color
                                             } else {
                                                 emptyCellColor
@@ -335,12 +339,20 @@ fun ShareCalendarContent(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         if (log != null) {
-                                            val mv = MoonIcons.Moods.getMoodVisual(log.baseMoodId, themeType)
-                                            if (mv.drawableRes != null) {
+                                            val mv = MoonIcons.Moods.getMoodVisual(log.baseMoodId, themeType, customMoods)
+                                            if (mv.imageUrl != null) {
+                                                AsyncImage(
+                                                    model = mv.imageUrl,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.fillMaxSize(0.65f),
+                                                    contentScale = ContentScale.Fit
+                                                )
+                                            } else if (mv.drawableRes != null) {
                                                 Image(
                                                     painter = painterResource(id = mv.drawableRes),
                                                     contentDescription = null,
-                                                    modifier = Modifier.fillMaxSize(0.65f)
+                                                    modifier = Modifier.fillMaxSize(0.65f),
+                                                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White)
                                                 )
                                             }
                                         }

@@ -721,7 +721,7 @@ fun CreateCustomThemeCard(
             .height(190.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f))
+        colors = CardDefaults.cardColors(containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.logCardBg)
     ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(14.dp),

@@ -395,7 +395,7 @@ class StoreViewModel @Inject constructor(
     }
 }
 
-const val CUSTOM_THEME_SLOT_PRICE = 500
+const val CUSTOM_THEME_SLOT_PRICE = 250
 
 // Extension to map Theme to MoonThemeType
 fun Theme.toMoonThemeType(): MoonThemeType {

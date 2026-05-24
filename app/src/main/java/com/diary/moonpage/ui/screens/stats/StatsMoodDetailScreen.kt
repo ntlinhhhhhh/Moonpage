@@ -83,6 +83,7 @@ fun StatsMoodDetailScreen(
                             month = uiState.selectedMonth,
                             isMonthly = uiState.isMonthly,
                             themeType = uiState.themeType,
+                            customMoods = uiState.customMoods,
                             menstruationDates = if (!isMale) stats?.menstruationData ?: emptyList() else emptyList()
                         )
                     }
@@ -91,7 +92,8 @@ fun StatsMoodDetailScreen(
                 StatsCard(title = stringResource(R.string.mood_bar)) {
                     MoodDistributionView(
                         distribution = stats?.moodDistribution ?: emptyList(),
-                        themeType = uiState.themeType
+                        themeType = uiState.themeType,
+                        customMoods = uiState.customMoods
                     )
                 }
 

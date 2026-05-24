@@ -178,7 +178,7 @@ private fun Theme?.customImageScrim(isDark: Boolean): Color? {
     return if (isDark) {
         Color.Black.copy(alpha = 0.46f)
     } else {
-        Color.White.copy(alpha = 0.22f)
+        Color.White.copy(alpha = 0.38f)
     }
 }
 

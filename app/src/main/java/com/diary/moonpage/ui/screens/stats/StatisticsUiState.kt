@@ -21,6 +21,7 @@ data class StatisticsUiState(
     val selectedMonth: Int = java.time.LocalDate.now().monthValue,
     val isMonthly: Boolean = true,
     val themeType: MoonThemeType = MoonThemeType.DEFAULT,
+    val customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null,
     val gender: String? = null,
     val selectedIconId: String? = null,
     val averageWakeUpTime: String? = null,

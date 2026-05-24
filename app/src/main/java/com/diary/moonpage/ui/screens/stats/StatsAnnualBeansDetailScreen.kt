@@ -172,6 +172,7 @@ fun StatsAnnualBeansDetailScreen(
                 YearInMoonpageMiniatureCard(
                     year = uiState.selectedYear,
                     themeType = uiState.themeType,
+                    customMoods = uiState.customMoods,
                     onDetailClick = { showRecapDetail = true }
                 )
             }
@@ -194,12 +195,14 @@ fun StatsAnnualBeansDetailScreen(
                         year = uiState.selectedYear,
                         moodData = moodData,
                         themeType = uiState.themeType,
+                        customMoods = uiState.customMoods,
                         graphicsLayer = graphicsLayerEntire
                     )
                     1 -> ByMonthContent(
                         year = uiState.selectedYear,
                         moodData = moodData,
                         themeType = uiState.themeType,
+                        customMoods = uiState.customMoods,
                         graphicsLayer = graphicsLayerMonth
                     )
                 }
@@ -270,6 +273,7 @@ private fun EntireYearContent(
     year: Int,
     moodData: List<MoodFlowDto>,
     themeType: MoonThemeType,
+    customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null,
     graphicsLayer: androidx.compose.ui.graphics.layer.GraphicsLayer
 ) {
     val moodMap = remember(moodData) { moodData.associateBy { it.date } }
@@ -280,7 +284,7 @@ private fun EntireYearContent(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        // Year heading
+        // ... (Header code) ...
         Text(
             text = "$year",
             fontWeight = FontWeight.Bold,
@@ -291,17 +295,17 @@ private fun EntireYearContent(
                 .padding(bottom = 12.dp)
         )
 
-        // Capture area — explicit background so download/share works in both light & dark mode
+        // Capture area
         val captureBackground = MaterialTheme.colorScheme.background
         val isCaptureDark = captureBackground.luminance() < 0.5f
         val captureContentColor = if (isCaptureDark) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
         val emptyColor = captureContentColor.copy(alpha = if (isCaptureDark) 0.18f else 0.13f)
         val labelColor = captureContentColor.copy(alpha = if (isCaptureDark) 0.88f else 0.55f)
 
-        // Label geometry (fixed)
+        // Label geometry
         val dayLabelWidth = 18.dp
         val labelToDotsGap = 4.dp
-        val outerHorizPadding = 12.dp // padding inside the capture box
+        val outerHorizPadding = 12.dp
 
         Box(
             modifier = Modifier
@@ -318,12 +322,8 @@ private fun EntireYearContent(
                 .padding(horizontal = outerHorizPadding, vertical = 16.dp),
             contentAlignment = Alignment.Center
         ) {
-            // Measure available width and fill it with the grid
             BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
                 val available = maxWidth - dayLabelWidth - labelToDotsGap
-                // monthGap stays proportional: use ~30 % of cellSize
-                // Solve: 12*cellSize + 11*gap = available, gap = 0.3*cellSize
-                //   → cellSize = available / (12 + 11*0.3) = available / 15.3
                 val cellSize = (available / 15.3f).coerceIn(14.dp, 26.dp)
                 val monthGap = (cellSize * 0.3f).coerceIn(3.dp, 8.dp)
                 val rowSpacing = cellSize * 0.35f
@@ -332,6 +332,7 @@ private fun EntireYearContent(
                     year = year,
                     moodMap = moodMap,
                     themeType = themeType,
+                    customMoods = customMoods,
                     emptyColor = emptyColor,
                     labelColor = labelColor,
                     cellSize = cellSize,
@@ -339,7 +340,7 @@ private fun EntireYearContent(
                     rowSpacing = rowSpacing,
                     dayLabelWidth = dayLabelWidth,
                     labelToDotsGap = labelToDotsGap,
-                    gridWidth = maxWidth          // stretch to full available width
+                    gridWidth = maxWidth
                 )
             }
         }
@@ -353,6 +354,7 @@ private fun EntireYearGrid(
     year: Int,
     moodMap: Map<String, MoodFlowDto>,
     themeType: MoonThemeType,
+    customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null,
     emptyColor: Color,
     labelColor: Color,
     cellSize: Dp,
@@ -365,9 +367,8 @@ private fun EntireYearGrid(
     val widthModifier = if (gridWidth != Dp.Unspecified) Modifier.width(gridWidth) else Modifier
 
     Column(modifier = widthModifier.offset(x = (-8).dp)) {
-        // ── Month header row ──
+        // ... (Header row code) ...
         Row(verticalAlignment = Alignment.CenterVertically) {
-            // Spacer for day-label column + gap
             Spacer(modifier = Modifier.width(dayLabelWidth + labelToDotsGap))
             (1..12).forEachIndexed { idx, month ->
                 if (idx > 0) Spacer(modifier = Modifier.width(monthGap))
@@ -384,10 +385,8 @@ private fun EntireYearGrid(
 
         Spacer(modifier = Modifier.height(6.dp))
 
-        // ── Rows for days 1..31 ──
         (1..31).forEach { day ->
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Day label column — right-aligned, only day 1 and multiples of 5
                 Box(
                     modifier = Modifier.width(dayLabelWidth),
                     contentAlignment = Alignment.CenterEnd
@@ -402,10 +401,8 @@ private fun EntireYearGrid(
                     }
                 }
 
-                // Gap between label column and first dot
                 Spacer(modifier = Modifier.width(labelToDotsGap))
 
-                // Month dots
                 (1..12).forEachIndexed { idx, month ->
                     if (idx > 0) Spacer(modifier = Modifier.width(monthGap))
                     val isValid = try {
@@ -416,7 +413,7 @@ private fun EntireYearGrid(
                         val dateStr = String.format(Locale.ENGLISH, "%04d-%02d-%02d", year, month, day)
                         val mood = moodMap[dateStr]
                         val color = if (mood != null)
-                            MoonIcons.Moods.getMoodColor(mood.moodId.toInt(), themeType)
+                            MoonIcons.Moods.getMoodColor(mood.moodId.toInt(), themeType, customMoods)
                         else emptyColor
 
                         Box(
@@ -426,7 +423,6 @@ private fun EntireYearGrid(
                                 .background(color)
                         )
                     } else {
-                        // Invalid date — invisible placeholder keeps alignment
                         Spacer(modifier = Modifier.size(cellSize))
                     }
                 }
@@ -436,15 +432,12 @@ private fun EntireYearGrid(
     }
 }
 
-// ────────────────────────────────────────────────────────────────
-// By Month Tab
-// ────────────────────────────────────────────────────────────────
-
 @Composable
 private fun ByMonthContent(
     year: Int,
     moodData: List<MoodFlowDto>,
     themeType: MoonThemeType,
+    customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null,
     graphicsLayer: androidx.compose.ui.graphics.layer.GraphicsLayer
 ) {
     val moodMap = remember(moodData) { moodData.associateBy { it.date } }
@@ -455,7 +448,7 @@ private fun ByMonthContent(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
-        // Year heading
+        // ... (Header code) ...
         Text(
             text = "$year",
             fontWeight = FontWeight.Bold,
@@ -466,7 +459,6 @@ private fun ByMonthContent(
                 .padding(bottom = 12.dp)
         )
 
-        // Capture wrapper — explicit background for correct light/dark screenshot
         val captureBackground = MaterialTheme.colorScheme.background
         val isCaptureDark = captureBackground.luminance() < 0.5f
         val emptyColor = (if (isCaptureDark) Color.White else MaterialTheme.colorScheme.onSurfaceVariant)
@@ -489,9 +481,6 @@ private fun ByMonthContent(
             ) {
                 val monthPairs = (1..12).chunked(2)
                 monthPairs.forEach { pair ->
-                    // IntrinsicSize.Max makes both cards in the same row
-                    // match the height of the taller card — no fixed height needed,
-                    // so dots are never squished or distorted.
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -504,6 +493,7 @@ private fun ByMonthContent(
                                 month = month,
                                 moodMap = moodMap,
                                 themeType = themeType,
+                                customMoods = customMoods,
                                 emptyColor = emptyColor,
                                 modifier = Modifier
                                     .weight(1f)
@@ -528,6 +518,7 @@ private fun MonthBeanCard(
     month: Int,
     moodMap: Map<String, MoodFlowDto>,
     themeType: MoonThemeType,
+    customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null,
     emptyColor: Color,
     modifier: Modifier = Modifier
 ) {
@@ -537,14 +528,10 @@ private fun MonthBeanCard(
     val onSurface = MaterialTheme.colorScheme.onSurface
     val surface = MaterialTheme.colorScheme.surface
     val outline = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
-
-    // Day-of-week offset for the 1st of this month
-    // java DayOfWeek: MONDAY=1 … SUNDAY=7 → Mon=0, Tue=1, … Sun=6
     val firstDayOffset = java.time.LocalDate.of(year, month, 1).dayOfWeek.value - 1
 
-    val dotsPerRow = 7   // 7 days = 1 week per row
-    val totalRows = 6    // max possible weeks a month can span
-    // Larger dots + spacing so cards are taller and dots are clearly circular
+    val dotsPerRow = 7
+    val totalRows = 6
     val dotSize = 16.dp
     val dotSpacing = 5.dp
 
@@ -560,7 +547,6 @@ private fun MonthBeanCard(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Month name
             Text(
                 text = monthName,
                 fontSize = 13.sp,
@@ -569,9 +555,6 @@ private fun MonthBeanCard(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            // Weekly calendar grid — 7 columns (Mon–Sun), up to 6 rows
-            // cellIndex=0 is Mon of week 1; firstDayOffset pushes day 1
-            // to the correct day-of-week column.
             Column(
                 verticalArrangement = Arrangement.spacedBy(dotSpacing),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -588,17 +571,16 @@ private fun MonthBeanCard(
                                 )
                                 val mood = moodMap[dateStr]
                                 val dotColor = if (mood != null)
-                                    MoonIcons.Moods.getMoodColor(mood.moodId.toInt(), themeType)
+                                    MoonIcons.Moods.getMoodColor(mood.moodId.toInt(), themeType, customMoods)
                                 else emptyColor
 
                                 Box(
                                     modifier = Modifier
-                                        .size(dotSize)  // fixed square → always a perfect circle
+                                        .size(dotSize)
                                         .clip(CircleShape)
                                         .background(dotColor)
                                 )
                             } else {
-                                // Empty cell — invisible spacer, keeps grid aligned
                                 Spacer(modifier = Modifier.size(dotSize))
                             }
                         }

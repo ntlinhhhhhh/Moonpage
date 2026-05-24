@@ -186,6 +186,7 @@ fun StatisticsScreen(
                             MoodOverviewCard(
                                 stats = stats,
                                 themeType = uiState.themeType,
+                                customMoods = uiState.customMoods,
                                 isMonthly = true,
                                 year = uiState.selectedYear,
                                 month = uiState.selectedMonth,
@@ -224,6 +225,7 @@ fun StatisticsScreen(
                         MoodOverviewCard(
                             stats = stats,
                             themeType = uiState.themeType,
+                            customMoods = uiState.customMoods,
                             isMonthly = false,
                             year = uiState.selectedYear,
                             onClick = onNavigateToAnnualMoodDetail
@@ -257,7 +259,7 @@ fun StatisticsScreen(
                                 if (flow.isNotEmpty()) flow.groupBy { it.moodId.toInt() }.maxByOrNull { it.value.size }?.key ?: 3 else 3
                             }
                         }
-                        val annualMoodVisual = MoonIcons.Moods.getMoodVisual(annualDominantMoodId, uiState.themeType)
+                        val annualMoodVisual = MoonIcons.Moods.getMoodVisual(annualDominantMoodId, uiState.themeType, uiState.customMoods)
 
                         Card(
                             modifier = Modifier.fillMaxWidth()

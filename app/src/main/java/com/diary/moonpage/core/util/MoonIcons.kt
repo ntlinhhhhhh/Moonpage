@@ -33,7 +33,8 @@ data class MoonIcon(
     val vector: ImageVector? = null,
     val color: Color,
     val name: String = "",
-    @DrawableRes val drawableRes: Int? = null
+    @DrawableRes val drawableRes: Int? = null,
+    val imageUrl: String? = null
 )
 
 object MoonIcons {
@@ -45,7 +46,14 @@ object MoonIcons {
         val Sad = MoonIcon(null, Color.Unspecified, "Sad", R.drawable.sad) 
         val VerySad = MoonIcon(null, Color.Unspecified, "Very Sad", R.drawable.very_sad)
 
-        fun getMoodColor(level: Int, themeType: com.diary.moonpage.core.theme.MoonThemeType): Color {
+        fun getMoodColor(
+            level: Int, 
+            themeType: com.diary.moonpage.core.theme.MoonThemeType,
+            customMoods: Map<Int, MoonIcon>? = null
+        ): Color {
+            if (customMoods != null && customMoods.containsKey(level)) {
+                return customMoods[level]!!.color
+            }
             val shades = com.diary.moonpage.core.theme.getThemeShades(themeType)
             return when (level) {
                 1 -> shades[4]

@@ -255,11 +255,19 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                     .background(themeColor.copy(alpha = 0.8f)),
                 contentAlignment = Alignment.Center
             ) {
-                if (moodVisual.drawableRes != null) {
+                if (moodVisual.imageUrl != null) {
+                    AsyncImage(
+                        model = moodVisual.imageUrl,
+                        contentDescription = null,
+                        modifier = Modifier.size(42.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                } else if (moodVisual.drawableRes != null) {
                     Image(
                         painter = painterResource(id = moodVisual.drawableRes),
                         contentDescription = null,
-                        modifier = Modifier.size(42.dp)
+                        modifier = Modifier.size(42.dp),
+                        colorFilter = if (moodVisual.color != Color.Unspecified) androidx.compose.ui.graphics.ColorFilter.tint(Color.White) else null
                     )
                 }
             }

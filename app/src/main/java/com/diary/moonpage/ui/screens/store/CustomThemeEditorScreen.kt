@@ -1926,7 +1926,7 @@ private fun previewImageScrim(isDarkMode: Boolean): Color {
     return if (isDarkMode) {
         Color.Black.copy(alpha = 0.42f)
     } else {
-        Color.White.copy(alpha = 0.16f)
+        Color.White.copy(alpha = 0.38f)
     }
 }
 

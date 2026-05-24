@@ -48,24 +48,43 @@ import java.time.YearMonth
 import java.util.Calendar
 import java.util.Locale
 import kotlin.math.roundToInt
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.graphicsLayer
 
 import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
 import com.diary.moonpage.ui.screens.tutorial.TutorialStep
 
 @Composable
-fun MoonActivityIcon(icon: com.diary.moonpage.core.util.MoonIcon, size: androidx.compose.ui.unit.Dp = 44.dp) {
-    if (icon.drawableRes != null) {
+fun MoonActivityIcon(icon: com.diary.moonpage.core.util.MoonIcon, size: androidx.compose.ui.unit.Dp = 44.dp, tint: Color = Color.Unspecified) {
+    if (icon.imageUrl != null) {
+        AsyncImage(
+            model = icon.imageUrl,
+            contentDescription = null,
+            modifier = Modifier.size(size),
+            contentScale = ContentScale.Fit
+        )
+    } else if (icon.drawableRes != null) {
         Image(
             painter = painterResource(id = icon.drawableRes),
             contentDescription = null,
-            modifier = Modifier.size(size)
+            modifier = Modifier.size(size),
+            colorFilter = if (tint != Color.Unspecified) androidx.compose.ui.graphics.ColorFilter.tint(tint) else null
         )
     } else if (icon.vector != null) {
         Icon(
             imageVector = icon.vector,
             contentDescription = null,
             modifier = Modifier.size(size),
-            tint = icon.color
+            tint = if (tint != Color.Unspecified) tint else icon.color
         )
     }
 }
@@ -201,16 +220,16 @@ fun MoodFlowChart(
     month: Int, 
     isMonthly: Boolean = true,
     themeType: MoonThemeType = MoonThemeType.DEFAULT,
+    customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null,
     menstruationDates: List<String> = emptyList()
 ) {
-    val shades = getThemeShades(themeType)
     val primaryColor = MaterialTheme.colorScheme.primary
     val moodColors = listOf(
-        shades[0],
-        shades[1],
-        shades[2],
-        shades[3],
-        shades[4]
+        MoonIcons.Moods.getMoodColor(5, themeType, customMoods),
+        MoonIcons.Moods.getMoodColor(4, themeType, customMoods),
+        MoonIcons.Moods.getMoodColor(3, themeType, customMoods),
+        MoonIcons.Moods.getMoodColor(2, themeType, customMoods),
+        MoonIcons.Moods.getMoodColor(1, themeType, customMoods)
     )
     
     val filteredMoods = remember(moodFlow, year, month, isMonthly) {
@@ -342,14 +361,15 @@ fun MoodFlowChart(
 @Composable
 fun MoodDistributionView(
     distribution: List<MoodDistributionDto>,
-    themeType: MoonThemeType = MoonThemeType.DEFAULT
+    themeType: MoonThemeType = MoonThemeType.DEFAULT,
+    customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null
 ) {
     val moods = listOf(
-        MoonIcons.Moods.getMoodVisual(5, themeType),
-        MoonIcons.Moods.getMoodVisual(4, themeType),
-        MoonIcons.Moods.getMoodVisual(3, themeType),
-        MoonIcons.Moods.getMoodVisual(2, themeType),
-        MoonIcons.Moods.getMoodVisual(1, themeType)
+        MoonIcons.Moods.getMoodVisual(5, themeType, customMoods),
+        MoonIcons.Moods.getMoodVisual(4, themeType, customMoods),
+        MoonIcons.Moods.getMoodVisual(3, themeType, customMoods),
+        MoonIcons.Moods.getMoodVisual(2, themeType, customMoods),
+        MoonIcons.Moods.getMoodVisual(1, themeType, customMoods)
     )
 
     // Define consistent aliases for all 5 mood levels
@@ -397,7 +417,14 @@ fun MoodDistributionView(
                             .background(if (rawPercent > 0) mood.color.copy(alpha = 0.85f) else MoonTheme.customColors.logItemBg),
                         contentAlignment = Alignment.Center
                     ) {
-                        if (mood.drawableRes != null) {
+                        if (mood.imageUrl != null) {
+                            AsyncImage(
+                                model = mood.imageUrl,
+                                contentDescription = null,
+                                modifier = Modifier.size(iconSize),
+                                contentScale = ContentScale.Fit
+                            )
+                        } else if (mood.drawableRes != null) {
                             Image(
                                 painter = painterResource(id = mood.drawableRes),
                                 contentDescription = null,
@@ -471,7 +498,8 @@ fun YearlyGridChart(
     yearlyMoodGrid: List<MoodFlowDto>,
     year: Int,
     menstruationDates: List<String> = emptyList(),
-    themeType: MoonThemeType = MoonThemeType.DEFAULT
+    themeType: MoonThemeType = MoonThemeType.DEFAULT,
+    customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null
 ) {
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
     val gridColor = MoonTheme.customColors.logItemBg
@@ -527,7 +555,7 @@ fun YearlyGridChart(
                                 val isPeriod = periodSet.contains(dateStr)
                                 
                                 val color = if (mood != null) {
-                                    MoonIcons.Moods.getMoodColor(mood.moodId.toInt(), themeType)
+                                    MoonIcons.Moods.getMoodColor(mood.moodId.toInt(), themeType, customMoods)
                                 } else {
                                     gridColor
                                 }
@@ -998,7 +1026,11 @@ private fun parseTimeFromNoon(timeStr: String?): Float {
 }
 
 @Composable
-fun SleepMoodCorrelationChart(sleepData: List<com.diary.moonpage.data.remote.dto.stats.SleepAnalysisDto>, themeType: MoonThemeType) {
+fun SleepMoodCorrelationChart(
+    sleepData: List<com.diary.moonpage.data.remote.dto.stats.SleepAnalysisDto>, 
+    themeType: MoonThemeType,
+    customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null
+) {
     val displayData = sleepData
 
     val ranges = listOf(
@@ -1021,7 +1053,7 @@ fun SleepMoodCorrelationChart(sleepData: List<com.diary.moonpage.data.remote.dto
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             (5 downTo 1).forEach { moodId ->
-                Box(modifier = Modifier.size(8.dp).background(MoonIcons.Moods.getMoodColor(moodId, themeType), CircleShape))
+                Box(modifier = Modifier.size(8.dp).background(MoonIcons.Moods.getMoodColor(moodId, themeType, customMoods), CircleShape))
             }
         }
 
@@ -1037,7 +1069,7 @@ fun SleepMoodCorrelationChart(sleepData: List<com.diary.moonpage.data.remote.dto
                             .width(28.dp)
                             .fillMaxHeight(heightFactor)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(MoonIcons.Moods.getMoodColor(avgMood.toInt().coerceIn(1, 5), themeType))
+                            .background(MoonIcons.Moods.getMoodColor(avgMood.toInt().coerceIn(1, 5), themeType, customMoods))
                     )
                 } else {
                     Spacer(modifier = Modifier.height(1.dp))
@@ -1717,6 +1749,7 @@ fun YearlyRecapCard(
     yearlyMoodGrid: List<MoodFlowDto>,
     themeType: MoonThemeType,
     modifier: Modifier = Modifier,
+    customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null,
     bestActivities: List<BestActivityDto> = emptyList(),
     averageDistance: Double = 0.0,
     averageSteps: Int = 0,
@@ -1726,7 +1759,6 @@ fun YearlyRecapCard(
     val primaryColor = MaterialTheme.colorScheme.primary
     val onSurface = MaterialTheme.colorScheme.onSurface
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
-    val shades = getThemeShades(themeType)
 
     // Calculate Dominant Mood
     val dominantMood = if (yearlyMoodGrid.isNotEmpty()) {
@@ -1783,7 +1815,7 @@ fun YearlyRecapCard(
             Spacer(modifier = Modifier.height(16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 RecapStatItem("Happiest Month", happiestMonth, Modifier.weight(1f))
-                RecapStatItem("Dominant Mood", dominantMoodName, Modifier.weight(1f), color = MoonIcons.Moods.getMoodColor(dominantMood, themeType))
+                RecapStatItem("Dominant Mood", dominantMoodName, Modifier.weight(1f), color = MoonIcons.Moods.getMoodColor(dominantMood, themeType, customMoods))
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -1805,7 +1837,7 @@ fun YearlyRecapCard(
                     .background(MoonTheme.customColors.logItemBg.copy(alpha = 0.5f))
                     .padding(8.dp)
             ) {
-                YearInPixelsGrid(yearlyMoodGrid, year, themeType, isLarger = isLarger)
+                YearInPixelsGrid(yearlyMoodGrid, year, themeType, customMoods = customMoods, isLarger = isLarger)
             }
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -1821,7 +1853,7 @@ fun YearlyRecapCard(
                         modifier = Modifier
                             .size(10.dp)
                             .clip(CircleShape)
-                            .background(MoonIcons.Moods.getMoodColor(level, themeType))
+                            .background(MoonIcons.Moods.getMoodColor(level, themeType, customMoods))
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                 }
@@ -1891,7 +1923,7 @@ fun YearlyRecapCard(
                             append("$totalLogs days")
                         }
                         append(" of your journey. Your spirit was mostly ")
-                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MoonIcons.Moods.getMoodColor(dominantMood, themeType))) {
+                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MoonIcons.Moods.getMoodColor(dominantMood, themeType, customMoods))) {
                             append(dominantMoodName.lowercase())
                         }
                         append(". ")
@@ -1937,6 +1969,7 @@ fun YearInPixelsGrid(
     yearlyMoodGrid: List<MoodFlowDto>, 
     year: Int, 
     themeType: MoonThemeType,
+    customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null,
     isLarger: Boolean = false
 ) {
     val moodMap = remember(yearlyMoodGrid) { yearlyMoodGrid.associateBy { it.date } }
@@ -2031,6 +2064,7 @@ fun YearInPixelsGrid(
 fun MoodOverviewCard(
     stats: com.diary.moonpage.data.remote.dto.stats.StatisticsResponse?,
     themeType: MoonThemeType,
+    customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null,
     isMonthly: Boolean = true,
     year: Int = java.time.LocalDate.now().year,
     month: Int = java.time.LocalDate.now().monthValue,
@@ -2074,7 +2108,7 @@ fun MoodOverviewCard(
         }
     }
     
-    val dominantMoodVisual = MoonIcons.Moods.getMoodVisual(dominantMoodId, themeType)
+    val dominantMoodVisual = MoonIcons.Moods.getMoodVisual(dominantMoodId, themeType, customMoods)
 
     val moodText = when (dominantMoodId) {
         5 -> if (isMonthly) "This month looks great! 🌟" else "This year looks great! 🌟"
@@ -2136,7 +2170,14 @@ fun MoodOverviewCard(
                         .background(dominantMoodVisual.color.copy(alpha = 0.18f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (dominantMoodVisual.drawableRes != null) {
+                    if (dominantMoodVisual.imageUrl != null) {
+                        AsyncImage(
+                            model = dominantMoodVisual.imageUrl,
+                            contentDescription = null,
+                            modifier = Modifier.size(42.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    } else if (dominantMoodVisual.drawableRes != null) {
                         Image(
                             painter = painterResource(id = dominantMoodVisual.drawableRes),
                             contentDescription = null,
@@ -2533,12 +2574,17 @@ fun TopMusicCard(
 }
 
 @Composable
-fun ShowcaseThemeGrid(shades: List<Color>, modifier: Modifier = Modifier) {
+fun ShowcaseThemeGrid(
+    shades: List<Color>, 
+    themeType: MoonThemeType = MoonThemeType.DEFAULT,
+    customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null,
+    modifier: Modifier = Modifier
+) {
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
     val dividerColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.15f)
     
     Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        // Month headers (1 to 12)
+        // ... (Month headers code) ...
         Row(verticalAlignment = Alignment.CenterVertically) {
             Spacer(modifier = Modifier.width(30.dp)) // Spacer for y-axis labels
             (1..12).forEach { month ->
@@ -2574,8 +2620,9 @@ fun ShowcaseThemeGrid(shades: List<Color>, modifier: Modifier = Modifier) {
                 modifier = Modifier.padding(vertical = 3.dp)
             ) {
                 // Row Label (1 to 5)
+                val moodLevel = 6 - row
                 Text(
-                    text = "$row",
+                    text = "$moodLevel",
                     fontSize = 11.sp,
                     color = labelColor,
                     modifier = Modifier.width(24.dp),
@@ -2593,13 +2640,7 @@ fun ShowcaseThemeGrid(shades: List<Color>, modifier: Modifier = Modifier) {
                 Spacer(modifier = Modifier.width(5.dp))
                 
                 // Dots for columns 1..12
-                val dotColor = when (row) {
-                    1 -> shades[0]
-                    2 -> shades[1]
-                    3 -> shades[2]
-                    4 -> shades[3]
-                    else -> shades[4]
-                }
+                val dotColor = MoonIcons.Moods.getMoodColor(moodLevel, themeType, customMoods)
                 
                 (1..12).forEach { _ ->
                     Box(
@@ -2620,7 +2661,8 @@ fun YearInMoonpageMiniatureCard(
     year: Int,
     themeType: MoonThemeType,
     onDetailClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
     val shades = getThemeShades(themeType)
@@ -2667,7 +2709,7 @@ fun YearInMoonpageMiniatureCard(
             Spacer(modifier = Modifier.height(24.dp))
             
             // Showcase Grid
-            ShowcaseThemeGrid(shades = shades)
+            ShowcaseThemeGrid(shades = shades, themeType = themeType, customMoods = customMoods)
             
             Spacer(modifier = Modifier.height(32.dp))
             
