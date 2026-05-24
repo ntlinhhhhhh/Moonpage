@@ -232,6 +232,7 @@ fun CalendarScreen(
                                 CalendarSelectedLogDetail(
                                     selectedDate = uiState.selectedDate,
                                     dailyLogs = uiState.dailyLogs,
+                                    menstruationDays = uiState.menstruationDays,
                                     dynamicActivities = uiState.dynamicActivities,
                                     themeType = uiState.themeType,
                                     customMoods = uiState.customMoods,
@@ -247,27 +248,27 @@ fun CalendarScreen(
                                     }
                                 )
 
-                                Spacer(modifier = Modifier.height(100.dp))
-                            }
-                            }
-                        }
-                        CalendarViewMode.TIMELINE -> {
-                            TimelineView(
-                                dailyLogs = uiState.dailyLogs,
-                                selectedFilters = uiState.selectedFilters,
-                                dynamicActivities = uiState.dynamicActivities,
-                                themeType = uiState.themeType,
-                                customMoods = uiState.customMoods,
-                                onEditLog = { date -> onNavigateToDailyLog(date.toString()) },
-                                onDeleteLog = { date ->
-                                    dateToDelete = date
-                                    showDeleteConfirmDialog = true
-                                },
-                                onShareLog = { date -> onNavigateToShareLog(date.toString()) },
-                                onAddLog = { date -> onNavigateToDailyLog(date.toString()) }
-                            )
-                        }
-                    }
+                                                Spacer(modifier = Modifier.height(100.dp))
+                                            }
+                                            }
+                                        }
+                                        CalendarViewMode.TIMELINE -> {
+                                            TimelineView(
+                                                dailyLogs = uiState.dailyLogs,
+                                                menstruationDays = uiState.menstruationDays,
+                                                selectedFilters = uiState.selectedFilters,
+                                                dynamicActivities = uiState.dynamicActivities,
+                                                themeType = uiState.themeType,
+                                                customMoods = uiState.customMoods,
+                                                onEditLog = { date -> onNavigateToDailyLog(date.toString()) },
+                                                onDeleteLog = { date ->
+                                                    dateToDelete = date
+                                                    showDeleteConfirmDialog = true
+                                                },
+                                                onShareLog = { date -> onNavigateToShareLog(date.toString()) },
+                                                onAddLog = { date -> onNavigateToDailyLog(date.toString()) }
+                                            )
+                                        }                    }
                 }
             }
         }
@@ -381,6 +382,7 @@ fun CalendarMonthHeader(
 fun CalendarSelectedLogDetail(
     selectedDate: LocalDate?,
     dailyLogs: Map<LocalDate, DailyLog>,
+    menstruationDays: Map<LocalDate, Int>,
     dynamicActivities: List<com.diary.moonpage.domain.model.Activity>,
     themeType: com.diary.moonpage.core.theme.MoonThemeType,
     customMoods: Map<Int, MoonIcon>? = null,
@@ -439,6 +441,7 @@ fun CalendarSelectedLogDetail(
                 dailyPhotos = selectedLog.dailyPhotos ?: emptyList(),
                 sleepHours = selectedLog.sleepHours,
                 isMenstruation = selectedLog.isMenstruation,
+                menstruationDay = menstruationDays[date],
                 steps = selectedLog.steps,
                 musicRecord = selectedLog.musicRecord,
                 weather = selectedLog.weather,
@@ -451,6 +454,7 @@ fun CalendarSelectedLogDetail(
 @Composable
 fun TimelineView(
     dailyLogs: Map<LocalDate, DailyLog>,
+    menstruationDays: Map<LocalDate, Int>,
     selectedFilters: List<FilterItem>,
     dynamicActivities: List<com.diary.moonpage.domain.model.Activity>,
     themeType: com.diary.moonpage.core.theme.MoonThemeType,
@@ -534,6 +538,7 @@ fun TimelineView(
                     mv = mv,
                     activityNames = activityNames,
                     themeType = themeType,
+                    menstruationDay = menstruationDays[date],
                     onEdit = { onEditLog(date) },
                     onDelete = { onDeleteLog(date) },
                     onShare = { onShareLog(date) }
@@ -550,6 +555,7 @@ fun TimelineItem(
     mv: MoonIcon,
     activityNames: List<String>,
     themeType: com.diary.moonpage.core.theme.MoonThemeType,
+    menstruationDay: Int?,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onShare: () -> Unit
@@ -609,6 +615,7 @@ fun TimelineItem(
                 dailyPhotos = log.dailyPhotos ?: emptyList(),
                 sleepHours = log.sleepHours,
                 isMenstruation = log.isMenstruation,
+                menstruationDay = menstruationDay,
                 steps = log.steps,
                 musicRecord = log.musicRecord,
                 weather = log.weather,

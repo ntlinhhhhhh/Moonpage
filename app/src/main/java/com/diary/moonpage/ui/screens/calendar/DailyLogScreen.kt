@@ -1293,50 +1293,43 @@ fun HealthStatItem(modifier: Modifier, label: String, value: String, icon: andro
 @Composable
 private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean) -> Unit, onMenstrualClick: () -> Unit) {
     Card(
-        shape = RoundedCornerShape(16.dp), 
-        colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), 
-        modifier = Modifier.fillMaxWidth().clickable(
-            interactionSource = remember { MutableInteractionSource() },
-            indication = null
-        ) { onMenstrualClick() }
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
+        modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(stringResource(R.string.daily_log_menstruation), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
+            Text(
+                text = "Are you on your period?",
+                fontWeight = FontWeight.Bold,
+                color = MoonTheme.customColors.logCardOnBg
+            )
             Spacer(modifier = Modifier.height(16.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.CenterVertically) {
-                repeat(5) { i ->
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        val formatter = DateTimeFormatter.ofPattern("M/d")
-                        val date = LocalDate.now().minusDays(2L - i.toLong())
-                        Text(date.format(formatter), fontSize = 10.sp, color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.7f))
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Box(
-                            modifier = Modifier.size(40.dp).clip(CircleShape)
-                                .background(
-                                    if (i == 2 && isMenstruation) Color(0xFFFFEBEE)
-                                    else MoonTheme.customColors.logItemBg
-                                )
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null
-                                ) { if (i == 2) onToggle(!isMenstruation) },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                Icons.Rounded.WaterDrop,
-                                contentDescription = null,
-                                tint = if (i == 2 && isMenstruation) Color(0xFFEF5350)
-                                       else MoonTheme.customColors.logCardOnBg.copy(alpha = 0.4f)
-                            )
-                        }
-                    }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // No Button
+                Button(
+                    onClick = { onToggle(false) },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (!isMenstruation) MoonTheme.customColors.logItemIconSelected else MoonTheme.customColors.logItemBg,
+                        contentColor = if (!isMenstruation) Color.White else MoonTheme.customColors.logCardOnBg
+                    )
+                ) {
+                    Text("No")
                 }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Rounded.WaterDrop, contentDescription = null, modifier = Modifier.size(14.dp), tint = MoonTheme.customColors.logCardOnBg)
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(R.string.daily_log_menstrual_tracking_enabled), fontSize = 12.sp, color = MoonTheme.customColors.logCardOnBg)
+                // Yes Button
+                Button(
+                    onClick = { onToggle(true) },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isMenstruation) MoonTheme.customColors.logItemIconSelected else MoonTheme.customColors.logItemBg,
+                        contentColor = if (isMenstruation) Color.White else MoonTheme.customColors.logCardOnBg
+                    )
+                ) {
+                    Text("Yes")
+                }
             }
         }
     }

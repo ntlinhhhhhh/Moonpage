@@ -332,6 +332,7 @@ fun DayDetailArea(
     dailyPhotos: List<String> = emptyList(),
     sleepHours: Double? = null,
     isMenstruation: Boolean = false,
+    menstruationDay: Int? = null,
     steps: Int? = null,
     musicRecord: String? = null,
     weather: String? = null,
@@ -514,7 +515,7 @@ fun DayDetailArea(
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 12.dp)) {
                             Icon(Icons.Rounded.WaterDrop, contentDescription = null, tint = Color(0xFFF48FB1), modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(12.dp))
-                            Text(stringResource(R.string.on_day_x, 3), color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
+                            Text(stringResource(R.string.on_day_x, menstruationDay ?: 1), color = cs.onSurface.copy(alpha = 0.7f), fontSize = 13.sp)
                         }
                     }
 
@@ -685,6 +686,7 @@ fun DayDetailBottomSheet(
     dailyPhotos: List<String> = emptyList(),
     sleepHours: Double? = null,
     isMenstruation: Boolean = false,
+    menstruationDay: Int? = null,
     steps: Int? = null,
     musicRecord: String? = null,
     weather: String? = null,
