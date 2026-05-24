@@ -4,9 +4,9 @@
     android:initialLayout="@layout/widget_glance_placeholder"
     android:minWidth="146dp"
     android:minHeight="146dp"
-    android:previewLayout="@layout/widget_glance_placeholder"
+    android:previewLayout="@layout/widget_photo_moment_preview"
     android:resizeMode="horizontal|vertical"
-    android:targetCellWidth="2"
-    android:targetCellHeight="2"
+    android:targetCellWidth="3"
+    android:targetCellHeight="3"
     android:updatePeriodMillis="0"
     android:widgetCategory="home_screen" />

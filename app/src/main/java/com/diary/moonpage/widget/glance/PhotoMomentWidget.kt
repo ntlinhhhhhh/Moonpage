@@ -51,8 +51,16 @@ class PhotoMomentWidget : GlanceAppWidget() {
         val dataSource = MoonpageWidgetDataSource(context)
         val snapshot = dataSource.loadTodaySnapshot()
         val state = getAppWidgetState(context, PreferencesGlanceStateDefinition, id)
-        val currentIndex = state[photoIndexKey] ?: 0
+        var currentIndex = state[photoIndexKey] ?: 0
         val photoCount = snapshot.photoUris.size
+        
+        if (currentIndex >= photoCount) {
+            currentIndex = 0
+            updateAppWidgetState(context, id) { prefs ->
+                prefs[photoIndexKey] = 0
+            }
+        }
+        
         val resolvedIndex = if (photoCount == 0) 0 else currentIndex.mod(photoCount)
         val bitmap = dataSource.loadBitmap(snapshot.photoUris.getOrNull(resolvedIndex))
         
@@ -73,15 +81,41 @@ class PhotoMomentWidget : GlanceAppWidget() {
                     .padding(14.dp),
                 contentAlignment = Alignment.TopStart
             ) {
-                if (bitmap != null) {
-                    Image(
-                        provider = ImageProvider(bitmap),
-                        contentDescription = null,
-                        contentScale = if (displayMode == "CROP") ContentScale.Crop else ContentScale.Fit,
-                        modifier = GlanceModifier.fillMaxSize()
+            if (bitmap != null) {
+                Image(
+                    provider = ImageProvider(bitmap),
+                    contentDescription = null,
+                    contentScale = if (displayMode == "CROP") ContentScale.Crop else ContentScale.Fit,
+                    modifier = GlanceModifier.fillMaxSize()
+                )
+            }
+            if (photoCount > 1) {
+                Row(
+                    modifier = GlanceModifier.fillMaxSize(),
+                ) {
+                    Spacer(
+                        modifier = GlanceModifier
+                            .defaultWeight()
+                            .fillMaxHeight()
+                            .clickable(
+                                actionRunCallback<PhotoIndexAction>(
+                                    actionParametersOf(photoDirectionKey to -1)
+                                )
+                            )
+                    )
+                    Spacer(
+                        modifier = GlanceModifier
+                            .defaultWeight()
+                            .fillMaxHeight()
+                            .clickable(
+                                actionRunCallback<PhotoIndexAction>(
+                                    actionParametersOf(photoDirectionKey to 1)
+                                )
+                            )
                     )
                 }
-                if (bitmap == null) {
+            }
+            if (bitmap == null) {
                     Column(
                         modifier = GlanceModifier.fillMaxSize(),
                         verticalAlignment = Alignment.Vertical.CenterVertically,
@@ -119,33 +153,6 @@ class PhotoMomentWidget : GlanceAppWidget() {
                             fontWeight = FontWeight.Bold
                         )
                     )
-                }
-
-                if (photoCount > 1) {
-                    Row(
-                        modifier = GlanceModifier.fillMaxSize(),
-                    ) {
-                        Spacer(
-                            modifier = GlanceModifier
-                                .defaultWeight()
-                                .fillMaxHeight()
-                                .clickable(
-                                    actionRunCallback<PhotoIndexAction>(
-                                        actionParametersOf(photoDirectionKey to -1)
-                                    )
-                                )
-                        )
-                        Spacer(
-                            modifier = GlanceModifier
-                                .defaultWeight()
-                                .fillMaxHeight()
-                                .clickable(
-                                    actionRunCallback<PhotoIndexAction>(
-                                        actionParametersOf(photoDirectionKey to 1)
-                                    )
-                                )
-                        )
-                    }
                 }
             }
         }
