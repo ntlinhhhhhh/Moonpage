@@ -768,13 +768,15 @@ GET /api/dailylogs/month/:yearMonth
     "id": "log_id_1",
     "baseMoodId": 4,
     "date": "2024-04-20",
-    "yearMonth": "2024-04",
     "note": "...",
     "sleepHours": 7.5,
     "sleepStartTime": "23:00",
+    "wakeupTime": "06:30",
     "isMenstruation": false,
     "menstruationPhase": "",
     "steps": 8000,
+    "calories": 400,
+    "distance": 4.5,
     "musicRecord": "",
     "dailyPhotos": [],
     "activityIds": [],
@@ -1399,30 +1401,72 @@ GET /api/themes/:id/moods
 
 - [200 OK] - List of mood icons.
 
-## Create themes (Admin/User)
+## Create theme (Upload - Admin Only)
 
 - Endpoint:
 
 ```text
-POST /api/themes
+POST /api/themes/upload
 ```
 
-- Description: Creates one or multiple new themes. The `authorId` is automatically determined from the authenticated user's token. Official themes can only be listed in store by setting `isOfficial` to true (typically Admin only).
-- Auth required: Yes
+- Description: Creates a new theme by uploading image files. Images are processed asynchronously.
+- Auth required: Yes (Role: Admin)
+
+### Request body (multipart/form-data):
+
+- Id (string, Required): Unique theme ID.
+- Name (string, Required)
+- Price (int, Required)
+- Thumbnail (File, Optional): Thumbnail image file.
+- Background (File, Optional): Background image file.
+- BackgroundDarkColor (string, Optional): Hex color (e.g., "0xFFF4F6F1").
+- BackgroundLightColor (string, Optional): Hex color (e.g., "0xFF1C1C1C").
+- IsOfficial (bool, Optional): Default is false.
+- IsActive (bool, Optional): Default is true.
+- Moods (string, Optional): A JSON string representing a list of mood icons.
+
+Example `Moods` JSON:
+```json
+[
+  { "BaseMoodId": 5, "IconColor": "#FF5733", "CustomName": "Rad" },
+  { "BaseMoodId": 1, "IconColor": "#000000" }
+]
+```
+
+### Responses:
+
+- [200 OK] - Theme created and images are being processed.
+
+```json
+{
+  "message": "Theme uploaded and created successfully!"
+}
+```
+
+## List create themes (Admin Only)
+
+- Endpoint:
+
+```text
+POST /api/themes/list
+```
+
+- Description: Creates multiple new themes using existing image URLs.
+- Auth required: Yes (Role: Admin)
 
 ### Request body (application/json):
 
-- An array of theme objects, each containing:
-    - id (string, Required): Unique theme ID.
+- An array of theme objects:
+    - id (string, Required)
     - name (string, Required)
     - price (int, Required)
     - thumbnailUrl (string, Optional)
     - backgroundUrl (string, Optional)
     - backgroundDarkColor (string, Optional)
     - backgroundLightColor (string, Optional)
-    - isOfficial (bool, Optional): Set to true for store themes, false for personal. Default is false.
-    - isActive (bool, Optional): Default is true.
-    - moods (array, Required): List of mood icons.
+    - isOfficial (bool, Optional)
+    - isActive (bool, Optional)
+    - moods (array, Required): List of objects (`baseMoodId`, `iconColor`, `customName`).
 
 ```json
 [
@@ -1431,14 +1475,10 @@ POST /api/themes
     "name": "Summer Vibe",
     "price": 300,
     "isOfficial": true,
-    "backgroundDarkColor": "0xFFF4F6F1",
-    "backgroundLightColor": "0xFF1C1C1C",
+    "thumbnailUrl": "themes/summer_thumb.png",
+    "backgroundUrl": "themes/summer_bg.png",
     "moods": [
-      { "baseMoodId": 5, "iconUrl": "https://...", "customName": "Sunshine" },
-      { "baseMoodId": 4, "iconUrl": "https://...", "customName": "Sunshine" },
-      { "baseMoodId": 3, "iconUrl": "https://...", "customName": "Sunshine" },
-      { "baseMoodId": 2, "iconUrl": "https://...", "customName": "Sunshine" },
-      { "baseMoodId": 1, "iconUrl": "https://...", "customName": "Sunshine" }
+      { "baseMoodId": 5, "iconColor": "#FFD700", "customName": "Sunshine" }
     ]
   }
 ]
@@ -1448,12 +1488,6 @@ POST /api/themes
 
 - [200 OK] - Themes created successfully.
 
-```json
-{
-  "message": "1 themes created successfully!!"
-}
-```
-
 ## Update theme
 
 - Endpoint:
@@ -1462,17 +1496,22 @@ POST /api/themes
 PUT /api/themes/:id
 ```
 
-- Description: Updates an existing theme. `authorId` cannot be changed and is not required in the body.
+- Description: Updates an existing theme. Supports partial updates and asynchronous image processing.
 - Auth required: Yes
 
-### Request body (application/json):
+### Request body (multipart/form-data):
 
-- Same as single theme object in Create Theme (excluding `authorId`).
+- Same as Create Theme (Upload). All fields except `Id` are effectively optional for partial update.
 
 ### Responses:
 
 - [200 OK] - Theme updated.
 
+```json
+{
+  "message": "Theme updated successfully!"
+}
+```
 ## Delete theme (Admin Only)
 
 - Endpoint:
