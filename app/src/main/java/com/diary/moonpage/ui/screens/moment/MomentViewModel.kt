@@ -189,6 +189,11 @@ class MomentViewModel @Inject constructor(
             ).onSuccess {
                 _uiState.update { it.copy(isUploading = false) }
                 
+                // Refresh local cache of logs so the new photo appears in DailyLog screen
+                viewModelScope.launch {
+                    dailyLogRepository.getDailyLogByDate(actualLogId)
+                }
+
                 _uiEffect.send(MomentUiEffect.UploadSuccess)
                 _uiEffect.send(MomentUiEffect.ShowSnackBar(UiText.StringResource(R.string.moment_upload_success)))
             }.onFailure { error ->

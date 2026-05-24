@@ -137,7 +137,7 @@ fun AccountRoute(
             onLogoutClick = { showLogoutDialog = true },
             onBirthdayClick = { currentBottomSheet = BottomSheetType.BIRTHDAY },
             onGenderClick = { currentBottomSheet = BottomSheetType.GENDER },
-            onAvatarEditClick = onNavigateToChangeAvatar,
+            onAvatarEditClick = { avatarLauncher.launch("image/*") },
             onUsernameEditClick = { currentBottomSheet = BottomSheetType.USERNAME },
             onChangePasswordClick = { currentBottomSheet = BottomSheetType.CHANGE_PASSWORD },
             snackbarHostState = snackbarHostState
@@ -546,17 +546,17 @@ fun AccountScreen(
                 onClick = {}
             )
 
-            AccountInfoRow(
-                label = stringResource(R.string.change_social_account),
-                value = "",
-                icon = Icons.Rounded.Sync,
-                showArrow = true,
-                onClick = {
-                    coroutineScope.launch {
-                        snackbarHostState.showSnackbar(context.getString(R.string.redirecting_social_provider))
-                    }
-                }
-            )
+//            AccountInfoRow(
+//                label = stringResource(R.string.change_social_account),
+//                value = "",
+//                icon = Icons.Rounded.Sync,
+//                showArrow = true,
+//                onClick = {
+//                    coroutineScope.launch {
+//                        snackbarHostState.showSnackbar(context.getString(R.string.redirecting_social_provider))
+//                    }
+//                }
+//            )
 
             if (!authProvider.equals("Google", ignoreCase = true)) {
                 AccountInfoRow(

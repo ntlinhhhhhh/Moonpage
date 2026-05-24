@@ -1,31 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Preview Widget 1: Photo Moment (4×2) -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/widget_background"
-    android:padding="12dp">
+    android:padding="0dp">
 
-    <ImageView
-        android:id="@+id/photo_view"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scaleType="centerCrop"
-        android:src="@drawable/happy" />
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/preview_theme_default_bg">
 
+        <FrameLayout
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_gravity="center">
+            <!-- Tạm thời dùng src=logo, nếu logo ko có nền tròn thì để ImageView bình thường -->
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/logo"
+                android:scaleType="fitCenter" />
+        </FrameLayout>
+
+    </LinearLayout>
+
+    <!-- Streak Badge – Top End -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:background="#AA111111"
-        android:padding="6dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="10dp"
+        android:background="#AA000000"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="4dp"
         android:orientation="horizontal">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="🔥 12"
-            android:textColor="@android:color/white"
-            android:textSize="12sp"
+            android:text="&#x1F525; 15"
+            android:textColor="#FFFFFF"
+            android:textSize="10sp"
             android:textStyle="bold" />
     </LinearLayout>
-</RelativeLayout>
+
+</FrameLayout>

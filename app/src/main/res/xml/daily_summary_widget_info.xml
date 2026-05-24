@@ -2,7 +2,7 @@
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/widget_daily_summary_desc"
     android:initialLayout="@layout/widget_glance_placeholder"
-    android:minWidth="250dp"
+    android:minWidth="160dp"
     android:minHeight="120dp"
     android:previewLayout="@layout/widget_daily_summary_preview"
     android:resizeMode="horizontal|vertical"

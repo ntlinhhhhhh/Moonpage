@@ -4,8 +4,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,12 +21,13 @@ fun PhotoMomentWidgetPreview(
     displayMode: String,
     modifier: Modifier = Modifier
 ) {
+    val previewSurface = Color(0xFFF4F6F1)
     Card(
-        modifier = modifier.fillMaxWidth().height(200.dp),
+        modifier = modifier.fillMaxWidth().height(140.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant)) {
+        Box(modifier = Modifier.fillMaxSize().background(previewSurface)) {
             Image(
                 painter = painterResource(id = R.drawable.happy),
                 contentDescription = null,
@@ -41,16 +40,15 @@ fun PhotoMomentWidgetPreview(
                 Surface(
                     modifier = Modifier.padding(12.dp).align(Alignment.TopEnd),
                     shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                    color = Color(0xAA111111)
                 ) {
-                    Row(
+                    Text(
+                        text = "🔥 12",
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Rounded.Whatshot, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.White)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("12", color = Color.White, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
-                    }
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }

@@ -2,6 +2,7 @@ package com.diary.moonpage.data.remote.dto.moment
 
 import com.diary.moonpage.core.util.normalizeAppImageUrl
 import com.diary.moonpage.domain.model.Moment
+import com.google.gson.annotations.SerializedName
 
 data class MomentResponse(
     val id: String,
@@ -9,6 +10,8 @@ data class MomentResponse(
     val caption: String?,
     val capturedAt: String,
     val isPublic: Boolean,
+    @SerializedName(value = "dailyLogId", alternate = ["DailyLogId", "daily_log_id"])
+    val dailyLogId: String? = null,
     val location: String? = null,
     val weather: String? = null,
     val rating: Float? = null
@@ -20,6 +23,7 @@ data class MomentResponse(
             caption = caption,
             capturedAt = capturedAt,
             isPublic = isPublic,
+            dailyLogId = dailyLogId,
             location = location,
             weather = weather,
             rating = rating

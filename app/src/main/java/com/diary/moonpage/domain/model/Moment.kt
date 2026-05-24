@@ -9,6 +9,7 @@ data class Moment(
     val caption: String?,
     val capturedAt: String,
     val isPublic: Boolean,
+    val dailyLogId: String? = null,
     val location: String? = null,
     val weather: String? = null,
     val rating: Float? = null

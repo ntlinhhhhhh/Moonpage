@@ -35,13 +35,27 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+// DailyBean-style off-white background color
+private val DailyBeanBg = Color(0xFFF5F3EE)
+private val DailyBeanBgDark = Color(0xFF2A2A2A)
+private val DailyBeanText = Color(0xFF333333)
+private val DailyBeanTextDark = Color(0xFFEEEEEE)
+private val DailyBeanSubText = Color(0xFFAAAAAA)
+private val DailyBeanSubTextDark = Color(0xFF888888)
+
+private val MoodCircleColors = listOf(
+    Color(0xFFF5DE6E), // very_happy
+    Color(0xFFA8D96E), // happy
+    Color(0xFF5BAD6E), // neutral
+    Color(0xFF2D6E45), // sad
+    Color(0xFF4A4A4A)  // very_sad
+)
+
+private val MutedCircleColor = Color(0xFFE0DDD8)
+private val MutedCircleColorDark = Color(0xFF3A3A3A)
+
 /**
  * Widget 4: Monthly Mood Calendar (4×3) – Style DailyBean
- * - Nền Surface theo theme, bo góc 16dp
- * - Header: "MMM yyyy" căn trái + Streak Badge TopEnd
- * - Row header: S M T W T F S
- * - Lưới lịch nguyên tháng (với padding cells đầu tháng)
- * - Click → mở app
  */
 class MonthlyMoodWidget : GlanceAppWidget() {
     override val sizeMode = SizeMode.Single
@@ -51,14 +65,18 @@ class MonthlyMoodWidget : GlanceAppWidget() {
         val snapshot = dataSource.loadTodaySnapshot()
         val monthDays = dataSource.loadMonthSnapshot()
         val isNight = dataSource.isNightMode()
-        val palette = snapshot.palette
+
+        val bg = if (isNight) snapshot.palette.nightSurface else snapshot.palette.daySurface
+        val textColor = if (isNight) snapshot.palette.nightOnSurface else snapshot.palette.dayOnSurface
+        val subColor = if (isNight) snapshot.palette.nightOnSurface.copy(alpha=0.6f) else snapshot.palette.dayOnSurface.copy(alpha=0.6f)
+        val mutedCircleColor = if (isNight) MutedCircleColorDark else MutedCircleColor
 
         val today = LocalDate.now()
         val monthLabel = today.format(DateTimeFormatter.ofPattern("MMM yyyy", Locale.ENGLISH))
 
         // Chunk into weeks (groups of 7)
         val weeks = monthDays.chunked(7)
-        val dayHeaders = listOf("S", "M", "T", "W", "T", "F", "S")
+        val dayHeaders = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
 
         val openAppAction = actionStartActivity(
             Intent(context, MainActivity::class.java).apply {
@@ -71,7 +89,7 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                 modifier = GlanceModifier
                     .fillMaxSize()
                     .cornerRadius(16.dp)
-                    .background(ColorProvider(if (isNight) palette.nightSurface else palette.daySurface))
+                    .background(ColorProvider(bg))
                     .clickable(openAppAction)
                     .padding(horizontal = 10.dp, vertical = 8.dp),
                 contentAlignment = Alignment.TopStart
@@ -79,39 +97,28 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                 Column(
                     modifier = GlanceModifier.fillMaxSize()
                 ) {
-                    // ── Header: Month + Streak Badge ──
+                    // ── Header: ↻ | Month Year | ⚙ ──
                     Box(
                         modifier = GlanceModifier.fillMaxWidth(),
-                        contentAlignment = Alignment.CenterStart
+                        contentAlignment = Alignment.Center
                     ) {
+                        Box(modifier = GlanceModifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
+                            Text(text = "↻", style = TextStyle(color = ColorProvider(subColor), fontSize = 13.sp))
+                        }
                         Text(
                             text = monthLabel,
                             style = TextStyle(
-                                color = ColorProvider(if (isNight) palette.nightOnSurface else palette.dayOnSurface),
+                                color = ColorProvider(textColor),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         )
-                        Box(
-                            modifier = GlanceModifier.fillMaxWidth(),
-                            contentAlignment = Alignment.CenterEnd
-                        ) {
-                            Text(
-                                text = "🔥 ${snapshot.streakCount}",
-                                modifier = GlanceModifier
-                                    .cornerRadius(50.dp)
-                                    .background(ColorProvider(if (isNight) palette.nightBadge else palette.dayBadge))
-                                    .padding(horizontal = 8.dp, vertical = 3.dp),
-                                style = TextStyle(
-                                    color = ColorProvider(if (isNight) palette.nightBadgeText else palette.dayBadgeText),
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            )
+                        Box(modifier = GlanceModifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+                            Text(text = "⚙", style = TextStyle(color = ColorProvider(subColor), fontSize = 13.sp))
                         }
                     }
 
-                    Spacer(modifier = GlanceModifier.size(3.dp))
+                    Spacer(modifier = GlanceModifier.size(4.dp))
 
                     // ── Day-of-week header row ──
                     Row(modifier = GlanceModifier.fillMaxWidth()) {
@@ -123,10 +130,7 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                                 Text(
                                     text = label,
                                     style = TextStyle(
-                                        color = ColorProvider(
-                                            if (isNight) palette.nightOnSurface.copy(alpha = 0.45f)
-                                            else palette.dayOnSurface.copy(alpha = 0.45f)
-                                        ),
+                                        color = ColorProvider(subColor),
                                         fontSize = 7.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -135,7 +139,7 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                         }
                     }
 
-                    Spacer(modifier = GlanceModifier.size(2.dp))
+                    Spacer(modifier = GlanceModifier.size(3.dp))
 
                     // ── Calendar grid ──
                     weeks.forEach { week ->
@@ -143,7 +147,6 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                             modifier = GlanceModifier.fillMaxWidth().defaultWeight(),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Pad the last row to 7 cells if needed
                             val paddedWeek = week + List(7 - week.size) {
                                 MonthDayMood(0, null, Color.Transparent, false, true)
                             }
@@ -155,55 +158,59 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                                     when {
                                         day.isEmpty -> {
                                             // Empty padding cell
-                                            Spacer(modifier = GlanceModifier.size(18.dp))
+                                            Spacer(modifier = GlanceModifier.size(24.dp))
                                         }
                                         day.moodResId != null -> {
-                                            // Has mood – show icon
-                                            Image(
-                                                provider = ImageProvider(day.moodResId),
-                                                contentDescription = null,
-                                                modifier = GlanceModifier.size(18.dp)
-                                            )
-                                        }
-                                        day.isToday -> {
-                                            // Today without mood – dashed circle with day number
+                                            // Has mood – colored circle
                                             Box(
                                                 modifier = GlanceModifier
-                                                    .size(18.dp)
-                                                    .cornerRadius(9.dp)
-                                                    .background(
-                                                        ColorProvider(
-                                                            if (isNight) palette.nightOnSurface.copy(alpha = 0.12f)
-                                                            else palette.dayOnSurface.copy(alpha = 0.10f)
-                                                        )
-                                                    ),
+                                                    .size(24.dp)
+                                                    .cornerRadius(12.dp)
+                                                    .background(ColorProvider(day.moodColor)),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Image(
+                                                    provider = ImageProvider(day.moodResId),
+                                                    contentDescription = null,
+                                                    modifier = GlanceModifier.size(19.dp)
+                                                )
+                                            }
+                                        }
+                                        day.isToday -> {
+                                            // Today without mood – dashed circle
+                                            Box(
+                                                modifier = GlanceModifier
+                                                    .size(24.dp)
+                                                    .background(ImageProvider(com.diary.moonpage.R.drawable.widget_day_today_border)),
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 Text(
                                                     text = "${day.dayNumber}",
                                                     style = TextStyle(
-                                                        color = ColorProvider(
-                                                            if (isNight) palette.nightOnSurface
-                                                            else palette.dayOnSurface
-                                                        ),
-                                                        fontSize = 7.sp,
+                                                        color = ColorProvider(subColor),
+                                                        fontSize = 8.sp,
                                                         fontWeight = FontWeight.Bold
                                                     )
                                                 )
                                             }
                                         }
+                                        day.dayNumber > today.dayOfMonth -> {
+                                            // Future day – just text
+                                            Text(
+                                                text = "${day.dayNumber}",
+                                                style = TextStyle(
+                                                    color = ColorProvider(subColor.copy(alpha = 0.5f)),
+                                                    fontSize = 8.sp
+                                                )
+                                            )
+                                        }
                                         else -> {
-                                            // Future/no-log day – subtle circle
+                                            // Past day no mood – muted circle
                                             Box(
                                                 modifier = GlanceModifier
-                                                    .size(18.dp)
-                                                    .cornerRadius(9.dp)
-                                                    .background(
-                                                        ColorProvider(
-                                                            if (isNight) palette.nightOnSurface.copy(alpha = 0.06f)
-                                                            else palette.dayOnSurface.copy(alpha = 0.05f)
-                                                        )
-                                                    )
+                                                    .size(24.dp)
+                                                    .cornerRadius(12.dp)
+                                                    .background(ColorProvider(mutedCircleColor))
                                             ) {}
                                         }
                                     }
@@ -211,6 +218,25 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                             }
                         }
                     }
+                }
+
+                // ── Streak Badge – TOP END ──
+                Box(
+                    modifier = GlanceModifier.fillMaxSize().padding(end = 4.dp),
+                    contentAlignment = Alignment.TopEnd
+                ) {
+                    Text(
+                        text = "🔥 ${snapshot.streakCount}",
+                        modifier = GlanceModifier
+                            .cornerRadius(50.dp)
+                            .background(ColorProvider(Color(0xCC000000)))
+                            .padding(horizontal = 6.dp, vertical = 2.dp),
+                        style = TextStyle(
+                            color = ColorProvider(Color.White),
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
                 }
             }
         }

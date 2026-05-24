@@ -147,7 +147,9 @@ class MomentRepositoryImpl @Inject constructor(
                 dailyLogIdBody, imagePart, captionBody, isPublicBody, capturedAtBody, locationBody, weatherBody, ratingBody
             )
             if (response.isSuccessful && response.body() != null) {
-                val newMoment = response.body()!!.toDomain()
+                val newMoment = response.body()!!.toDomain().let { moment ->
+                    moment.copy(dailyLogId = moment.dailyLogId ?: dailyLogId)
+                }
                 
                 // Save locally
                 val fileName = "moment_${newMoment.id}.webp"

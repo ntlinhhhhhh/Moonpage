@@ -64,9 +64,9 @@ object ActivityInsightsEngine {
             return Pair(emptyList(), emptyList())
         }
 
-        // Build lookup: activityId → dto AND activityName(lowercase) → dto (fallback)
+        // Build lookup: activityId → dto AND activityName(normalized) → dto (fallback)
         val activityById = activities.associateBy { it.activityId }
-        val activityByName = activities.associateBy { it.activityName.lowercase() }
+        val activityByName = activities.associateBy { normalizeActivityName(it.activityName) }
 
         val totalCount = mutableMapOf<String, Int>()
         val bestCount = mutableMapOf<String, Int>()
@@ -78,12 +78,15 @@ object ActivityInsightsEngine {
             val actIds = log.activityIds ?: continue
             val mood = log.baseMoodId
             for (rawId in actIds) {
-                val actId = rawId.trim()
-                if (actId.isBlank()) continue
-                // Try to resolve DTO by ID first, then by name
-                val dto = activityById[actId]
-                    ?: activityByName[actId.lowercase()]
+                val inputId = rawId.trim()
+                if (inputId.isBlank()) continue
+                
+                // Try to resolve DTO by ID first, then by normalized name
+                val dto = activityById[inputId]
+                    ?: activityByName[normalizeActivityName(inputId)]
                     ?: continue
+                
+                val actId = dto.activityId // Always use the canonical ID from backend
                 actIdToDto[actId] = dto
                 totalCount[actId] = (totalCount[actId] ?: 0) + 1
                 moodScoreSum[actId] = (moodScoreSum[actId] ?: 0.0) + mood
@@ -149,9 +152,13 @@ object ActivityInsightsEngine {
 
         val targetId = targetDto.activityId
 
-        // Filter logs that contain this activity
+        // Filter logs that contain this activity (by ID or normalized name)
+        val normalizedTargetName = normalizeActivityName(targetDto.activityName)
         val relevantLogs = logs.filter { log ->
-            log.activityIds?.any { it.trim() == targetId } == true
+            log.activityIds?.any { id -> 
+                val cleanId = id.trim()
+                cleanId == targetId || normalizeActivityName(cleanId) == normalizedTargetName
+            } == true
         }
 
         if (relevantLogs.isEmpty()) {
@@ -235,6 +242,10 @@ object ActivityInsightsEngine {
             weeklyFrequency = weeklyFreq,
             relatedActivities = relatedActivities
         )
+    }
+
+    private fun normalizeActivityName(name: String): String {
+        return name.filterNot { it.isWhitespace() }.lowercase()
     }
 
     /**

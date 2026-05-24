@@ -22,12 +22,9 @@ class AuthInterceptor @Inject constructor(
         val request = chain.request()
         val requestBuilder = request.newBuilder()
         val host = request.url.host
+        val isBackendHost = host.contains("hieu-wikipedia.io.vn")
 
-        val allowedHosts = listOf("hieu-wikipedia.io.vn", "spotify.com", "googleusercontent.com")
-
-        val shouldAddToken = allowedHosts.any { host.contains(it) }
-
-        if (token != null && shouldAddToken) {
+        if (token != null && isBackendHost) {
             if (request.header("Authorization") == null) {
                 android.util.Log.d("AuthInterceptor", "Adding Auth header to: ${request.url}")
                 requestBuilder.addHeader("Authorization", "Bearer $token")

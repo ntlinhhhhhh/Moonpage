@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.R
 import com.diary.moonpage.core.util.ActivityPreferencesManager
 import com.diary.moonpage.core.util.normalizeAppImageUrl
+import com.diary.moonpage.core.util.resolveLogDate
 import com.diary.moonpage.domain.model.DailyLog
 import com.diary.moonpage.domain.repository.DailyLogRepository
 import com.diary.moonpage.core.util.PkceUtil
@@ -95,7 +96,7 @@ class DailyLogViewModel @Inject constructor(
                     momentRepository.moments,
                     repository.getAllDailyLogsFlow()
                 ) { log, moments, allLogs ->
-                    val momentPhotos = moments.filter { it.capturedAt.startsWith(date.toString()) }
+                    val momentPhotos = moments.filter { it.resolveLogDate() == date }
                         .mapNotNull { normalizeAppImageUrl(it.imageUrl) }
                     Triple(log, momentPhotos, allLogs)
                 }

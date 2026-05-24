@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import android.content.Context
 import com.diary.moonpage.R
 import com.diary.moonpage.core.util.normalizeAppImageUrl
+import com.diary.moonpage.core.util.resolveLogDate
 import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.domain.repository.DailyLogRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -172,7 +173,7 @@ class CalendarViewModel @Inject constructor(
                 
                 moments.forEach { moment ->
                     try {
-                        val momentDate = LocalDate.parse(moment.capturedAt.substring(0, 10))
+                        val momentDate = moment.resolveLogDate() ?: return@forEach
                         if (YearMonth.from(momentDate) == month) {
                             val existingLog = logsMap[momentDate]
                             val momentPhotoUrl = normalizeAppImageUrl(moment.imageUrl) ?: return@forEach

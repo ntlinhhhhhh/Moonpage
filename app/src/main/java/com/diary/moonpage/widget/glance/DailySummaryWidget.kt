@@ -2,10 +2,14 @@ package com.diary.moonpage.widget.glance
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.Image
+import androidx.glance.ImageProvider
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
@@ -29,14 +33,11 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.diary.moonpage.R
 import com.diary.moonpage.ui.MainActivity
+import java.util.Locale
+import kotlinx.coroutines.flow.firstOrNull
 
-/**
- * Widget 5: Daily Log Summary (4×2)
- * - Nền SurfaceVariant theo theme
- * - Bo góc 16dp
- * - 3 khu vực: Header (title + streak badge), Note (2 dòng ellipsis), Footer (mood/sleep/steps/kcal/distance/activities)
- * - Click toàn widget → mở app
- */
+private val ThemeDefaultIconColor = Color(0xFFDB9D1F)
+
 class DailySummaryWidget : GlanceAppWidget() {
     override val sizeMode = SizeMode.Single
 
@@ -45,6 +46,10 @@ class DailySummaryWidget : GlanceAppWidget() {
         val snapshot = dataSource.loadTodaySnapshot()
         val isNight = dataSource.isNightMode()
         val palette = snapshot.palette
+        val preferences = dataSource.getWidgetPreferences()
+        val showStreak = preferences.showDailyStreak.firstOrNull() ?: true
+        val showNote = preferences.showDailyNote.firstOrNull() ?: true
+        val showStats = preferences.showDailyStats.firstOrNull() ?: true
 
         val openAppAction = actionStartActivity(
             Intent(context, MainActivity::class.java).apply {
@@ -53,108 +58,158 @@ class DailySummaryWidget : GlanceAppWidget() {
         )
 
         provideContent {
-            Column(
+            val bg = if (isNight) palette.nightSurface else palette.daySurface
+            val textColor = if (isNight) palette.nightOnSurface else palette.dayOnSurface
+            val subColor = if (isNight) {
+                palette.nightOnSurface.copy(alpha = 0.62f)
+            } else {
+                palette.dayOnSurface.copy(alpha = 0.62f)
+            }
+            val iconTint = ColorProvider(ThemeDefaultIconColor)
+            val note = snapshot.note.ifBlank { "-" }
+
+            Box(
                 modifier = GlanceModifier
                     .fillMaxSize()
                     .cornerRadius(16.dp)
-                    .background(
-                        ColorProvider(if (isNight) palette.nightSurfaceVariant else palette.daySurfaceVariant)
-                    )
+                    .background(ColorProvider(bg))
                     .clickable(openAppAction)
-                    .padding(14.dp)
+                    .padding(horizontal = 14.dp, vertical = 12.dp)
             ) {
-                // ── Header Row: Title + Streak Badge (TopEnd) ──
-                Box(
-                    modifier = GlanceModifier.fillMaxWidth(),
-                    contentAlignment = Alignment.CenterStart
+                Column(
+                    modifier = GlanceModifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.Horizontal.CenterHorizontally
                 ) {
-                    Text(
-                        text = context.getString(R.string.widget_today_summary),
-                        style = TextStyle(
-                            color = ColorProvider(if (isNight) palette.nightOnSurface else palette.dayOnSurface),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                    Image(
+                        provider = ImageProvider(snapshot.moodResId ?: R.drawable.ic_widget_stat),
+                        contentDescription = null,
+                        modifier = GlanceModifier.size(42.dp),
+                        colorFilter = if (snapshot.moodResId == null) {
+                            ColorFilter.tint(iconTint)
+                        } else {
+                            null
+                        }
                     )
+
+                    if (showNote) {
+                        Text(
+                            text = note,
+                            modifier = GlanceModifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            style = TextStyle(
+                                color = ColorProvider(textColor),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
+                            ),
+                            maxLines = 2
+                        )
+                    }
+
+                    Spacer(modifier = GlanceModifier.defaultWeight())
+
+                    if (showStats) {
+                        Row(
+                            modifier = GlanceModifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            DailySummaryFooterItem(
+                                modifier = GlanceModifier.defaultWeight(),
+                                label = "Activity",
+                                value = snapshot.firstActivity ?: "-",
+                                textColor = textColor,
+                                subColor = subColor,
+                                iconTint = iconTint
+                            )
+                            DailySummaryFooterItem(
+                                modifier = GlanceModifier.defaultWeight(),
+                                label = "Sleep",
+                                value = snapshot.sleep?.let { String.format(Locale.ENGLISH, "%.1fh", it) } ?: "-",
+                                textColor = textColor,
+                                subColor = subColor,
+                                iconTint = iconTint
+                            )
+                            DailySummaryFooterItem(
+                                modifier = GlanceModifier.defaultWeight(),
+                                label = "Steps",
+                                value = snapshot.steps?.let { String.format(Locale.ENGLISH, "%,d", it) } ?: "-",
+                                textColor = textColor,
+                                subColor = subColor,
+                                iconTint = iconTint
+                            )
+                            DailySummaryFooterItem(
+                                modifier = GlanceModifier.defaultWeight(),
+                                label = "Kcal",
+                                value = snapshot.calories?.let { String.format(Locale.ENGLISH, "%,d", it) } ?: "-",
+                                textColor = textColor,
+                                subColor = subColor,
+                                iconTint = iconTint
+                            )
+                            DailySummaryFooterItem(
+                                modifier = GlanceModifier.defaultWeight(),
+                                label = "Dist",
+                                value = snapshot.distance?.let { String.format(Locale.ENGLISH, "%.1fkm", it / 1000.0) } ?: "-",
+                                textColor = textColor,
+                                subColor = subColor,
+                                iconTint = iconTint
+                            )
+                        }
+                    }
+                }
+
+                if (showStreak) {
                     Box(
-                        modifier = GlanceModifier.fillMaxWidth(),
-                        contentAlignment = Alignment.CenterEnd
+                        modifier = GlanceModifier.fillMaxSize(),
+                        contentAlignment = Alignment.TopEnd
                     ) {
                         Text(
                             text = "🔥 ${snapshot.streakCount}",
                             modifier = GlanceModifier
                                 .cornerRadius(50.dp)
-                                .background(
-                                    ColorProvider(if (isNight) palette.nightBadge else palette.dayBadge)
-                                )
+                                .background(ColorProvider(if (isNight) palette.nightBadge else palette.dayBadge))
                                 .padding(horizontal = 8.dp, vertical = 4.dp),
                             style = TextStyle(
                                 color = ColorProvider(if (isNight) palette.nightBadgeText else palette.dayBadgeText),
-                                fontSize = 11.sp,
+                                fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         )
                     }
                 }
-
-                Spacer(modifier = GlanceModifier.size(8.dp))
-
-                // ── Note Text (2 lines max, ellipsis) ──
-                Box(
-                    modifier = GlanceModifier.fillMaxWidth().defaultWeight(),
-                    contentAlignment = Alignment.TopStart
-                ) {
-                    Text(
-                        text = snapshot.note.ifBlank { context.getString(R.string.widget_no_note) },
-                        maxLines = 2,
-                        style = TextStyle(
-                            color = ColorProvider(
-                                if (isNight) palette.nightOnSurface.copy(alpha = 0.85f)
-                                else palette.dayOnSurface.copy(alpha = 0.85f)
-                            ),
-                            fontSize = 12.sp
-                        )
-                    )
-                }
-
-                Spacer(modifier = GlanceModifier.size(8.dp))
-
-                // ── Footer: mood + sleep + steps + kcal + distance + activities ──
-                if (snapshot.footerItems.isNotEmpty()) {
-                    Row(
-                        modifier = GlanceModifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        snapshot.footerItems.take(5).forEachIndexed { idx, item ->
-                            if (idx > 0) {
-                                Text(
-                                    text = " · ",
-                                    style = TextStyle(
-                                        color = ColorProvider(
-                                            if (isNight) palette.nightOnSurface.copy(alpha = 0.4f)
-                                            else palette.dayOnSurface.copy(alpha = 0.4f)
-                                        ),
-                                        fontSize = 10.sp
-                                    )
-                                )
-                            }
-                            val display = if (item.label.isBlank()) item.emoji
-                                         else "${item.emoji} ${item.label}"
-                            Text(
-                                text = display,
-                                style = TextStyle(
-                                    color = ColorProvider(
-                                        if (isNight) palette.nightOnSurface.copy(alpha = 0.7f)
-                                        else palette.dayOnSurface.copy(alpha = 0.7f)
-                                    ),
-                                    fontSize = 10.sp
-                                )
-                            )
-                        }
-                    }
-                }
             }
         }
+    }
+}
+
+@androidx.compose.runtime.Composable
+private fun DailySummaryFooterItem(
+    modifier: GlanceModifier,
+    label: String,
+    value: String,
+    textColor: Color,
+    subColor: Color,
+    iconTint: ColorProvider
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.Horizontal.CenterHorizontally
+    ) {
+        Image(
+            provider = ImageProvider(R.drawable.ic_widget_stat),
+            contentDescription = null,
+            modifier = GlanceModifier.size(18.dp),
+            colorFilter = ColorFilter.tint(iconTint)
+        )
+        Text(
+            text = label,
+            style = TextStyle(color = ColorProvider(subColor), fontSize = 7.sp),
+            maxLines = 1
+        )
+        Text(
+            text = value,
+            style = TextStyle(color = ColorProvider(textColor), fontSize = 9.sp, fontWeight = FontWeight.Bold),
+            maxLines = 1
+        )
     }
 }
 

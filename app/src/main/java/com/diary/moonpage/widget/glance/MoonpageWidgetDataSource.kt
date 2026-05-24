@@ -52,7 +52,12 @@ data class WidgetDaySnapshot(
     val note: String,
     val photoUris: List<String>,
     val footerItems: List<WidgetFooterItem>,
-    val palette: WidgetPalette
+    val palette: WidgetPalette,
+    val steps: Int? = null,
+    val sleep: Double? = null,
+    val calories: Int? = null,
+    val distance: Double? = null,
+    val firstActivity: String? = null
 )
 
 data class WidgetFooterItem(
@@ -99,7 +104,12 @@ class MoonpageWidgetDataSource(private val context: Context) {
             note = log?.note?.trim().orEmpty(),
             photoUris = log?.dailyPhotos.orEmpty().map(::normalizePhotoPath),
             footerItems = buildFooterItems(log, activities),
-            palette = resolvePalette(themeType)
+            palette = resolvePalette(themeType),
+            steps = log?.steps,
+            sleep = log?.sleepHours,
+            calories = log?.calories,
+            distance = log?.distance,
+            firstActivity = log?.activityIds?.firstOrNull()?.let { id -> activities.firstOrNull { it.id == id }?.name }
         )
     }
 

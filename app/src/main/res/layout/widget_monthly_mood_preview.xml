@@ -1,121 +1,170 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Preview layout cho Monthly Mood Calendar (4x3) hiển thị trong Widget Picker -->
+<!-- Preview Widget 4: Monthly Mood (4×3) – Style DailyBean exact match with full grid -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/widget_background"
     android:orientation="vertical"
-    android:paddingHorizontal="10dp"
-    android:paddingVertical="8dp">
+    android:background="@drawable/preview_theme_default_bg"
+    android:paddingLeft="10dp"
+    android:paddingRight="10dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
 
-    <!-- Header: Month Year -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="May 2026"
-        android:textStyle="bold"
-        android:textColor="@android:color/darker_gray"
-        android:textSize="10sp"
-        android:layout_marginBottom="4dp" />
-
-    <!-- Day headers -->
-    <LinearLayout
+    <!-- Header: ↻ | Nov 2025 | ⚙ -->
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:weightSum="7">
-        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-            android:layout_weight="1" android:gravity="center"
-            android:text="S" android:textSize="7sp" android:textColor="@android:color/darker_gray"/>
-        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-            android:layout_weight="1" android:gravity="center"
-            android:text="M" android:textSize="7sp" android:textColor="@android:color/darker_gray"/>
-        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-            android:layout_weight="1" android:gravity="center"
-            android:text="T" android:textSize="7sp" android:textColor="@android:color/darker_gray"/>
-        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-            android:layout_weight="1" android:gravity="center"
-            android:text="W" android:textSize="7sp" android:textColor="@android:color/darker_gray"/>
-        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-            android:layout_weight="1" android:gravity="center"
-            android:text="T" android:textSize="7sp" android:textColor="@android:color/darker_gray"/>
-        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-            android:layout_weight="1" android:gravity="center"
-            android:text="F" android:textSize="7sp" android:textColor="@android:color/darker_gray"/>
-        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-            android:layout_weight="1" android:gravity="center"
-            android:text="S" android:textSize="7sp" android:textColor="@android:color/darker_gray"/>
+        android:layout_marginBottom="4dp">
+        <TextView android:id="@+id/mm_refresh"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_alignParentStart="true" android:layout_centerVertical="true"
+            android:text="↻" android:textColor="#BBBBBB" android:textSize="13sp" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="Nov 2025" android:textColor="#333333" android:textSize="11sp" android:textStyle="bold" />
+        <TextView android:id="@+id/mm_settings"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true" android:layout_centerVertical="true"
+            android:text="⚙" android:textColor="#BBBBBB" android:textSize="13sp" />
+    </RelativeLayout>
+
+    <!-- Day header labels: Sun Mon The Wed Thu Fri Sat -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:weightSum="7" android:layout_marginBottom="2dp">
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:gravity="center" android:text="Sun" android:textSize="7sp" android:textColor="#AAAAAA"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:gravity="center" android:text="Mon" android:textSize="7sp" android:textColor="#AAAAAA"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:gravity="center" android:text="Tue" android:textSize="7sp" android:textColor="#AAAAAA"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:gravity="center" android:text="Wed" android:textSize="7sp" android:textColor="#AAAAAA"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:gravity="center" android:text="Thu" android:textSize="7sp" android:textColor="#AAAAAA"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:gravity="center" android:text="Fri" android:textSize="7sp" android:textColor="#AAAAAA"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:gravity="center" android:text="Sat" android:textSize="7sp" android:textColor="#AAAAAA"/>
     </LinearLayout>
 
-    <!-- Week 1 -->
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:weightSum="7">
-        <View android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"/>
-        <ImageView android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"
-            android:src="@drawable/happy" android:scaleType="fitCenter"/>
-        <ImageView android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"
-            android:src="@drawable/neutral" android:scaleType="fitCenter"/>
-        <ImageView android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"
-            android:src="@drawable/very_happy" android:scaleType="fitCenter"/>
-        <ImageView android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"
-            android:src="@drawable/sad" android:scaleType="fitCenter"/>
-        <ImageView android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"
-            android:src="@drawable/happy" android:scaleType="fitCenter"/>
-        <ImageView android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"
-            android:src="@drawable/very_happy" android:scaleType="fitCenter"/>
+    <!-- Week 1: [empty][empty][empty][empty][empty][empty][Sat=mood] -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+        android:orientation="horizontal" android:weightSum="7" android:gravity="center_vertical">
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="" />
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="" />
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="" />
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="" />
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="" />
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="" />
+        <!-- Sat 1 – has mood -->
+        <FrameLayout android:layout_width="0dp" android:layout_height="30dp" android:layout_weight="1">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="center"
+                android:src="@drawable/mood_circle_bg_1"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp" android:layout_gravity="center"
+                android:src="@drawable/very_happy" android:scaleType="fitCenter"/>
+        </FrameLayout>
     </LinearLayout>
 
-    <!-- Week 2 -->
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:weightSum="7">
-        <ImageView android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"
-            android:src="@drawable/neutral" android:scaleType="fitCenter"/>
-        <ImageView android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"
-            android:src="@drawable/sad" android:scaleType="fitCenter"/>
-        <ImageView android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"
-            android:src="@drawable/very_happy" android:scaleType="fitCenter"/>
-        <ImageView android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"
-            android:src="@drawable/happy" android:scaleType="fitCenter"/>
-        <View android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"
-            android:background="@drawable/widget_day_today_border"/>
-        <ImageView android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"
-            android:src="@drawable/neutral" android:scaleType="fitCenter"/>
-        <ImageView android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"
-            android:src="@drawable/very_sad" android:scaleType="fitCenter"/>
+    <!-- Week 2: Sun–Sat all have mood -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+        android:orientation="horizontal" android:weightSum="7" android:gravity="center_vertical">
+        <FrameLayout android:layout_width="0dp" android:layout_height="30dp" android:layout_weight="1">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="center" android:src="@drawable/mood_circle_bg_2"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp" android:layout_gravity="center" android:src="@drawable/happy" android:scaleType="fitCenter"/>
+        </FrameLayout>
+        <FrameLayout android:layout_width="0dp" android:layout_height="30dp" android:layout_weight="1">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="center" android:src="@drawable/mood_circle_bg_4"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp" android:layout_gravity="center" android:src="@drawable/sad" android:scaleType="fitCenter"/>
+        </FrameLayout>
+        <FrameLayout android:layout_width="0dp" android:layout_height="30dp" android:layout_weight="1">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="center" android:src="@drawable/mood_circle_bg_2"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp" android:layout_gravity="center" android:src="@drawable/happy" android:scaleType="fitCenter"/>
+        </FrameLayout>
+        <FrameLayout android:layout_width="0dp" android:layout_height="30dp" android:layout_weight="1">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="center" android:src="@drawable/mood_circle_bg_3"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp" android:layout_gravity="center" android:src="@drawable/neutral" android:scaleType="fitCenter"/>
+        </FrameLayout>
+        <FrameLayout android:layout_width="0dp" android:layout_height="30dp" android:layout_weight="1">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="center" android:src="@drawable/mood_circle_bg_1"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp" android:layout_gravity="center" android:src="@drawable/very_happy" android:scaleType="fitCenter"/>
+        </FrameLayout>
+        <FrameLayout android:layout_width="0dp" android:layout_height="30dp" android:layout_weight="1">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="center" android:src="@drawable/mood_circle_bg_2"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp" android:layout_gravity="center" android:src="@drawable/happy" android:scaleType="fitCenter"/>
+        </FrameLayout>
+        <FrameLayout android:layout_width="0dp" android:layout_height="30dp" android:layout_weight="1">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="center" android:src="@drawable/mood_circle_bg_3"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp" android:layout_gravity="center" android:src="@drawable/neutral" android:scaleType="fitCenter"/>
+        </FrameLayout>
     </LinearLayout>
 
-    <!-- Week 3 -->
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:weightSum="7">
-        <ImageView android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"
-            android:src="@drawable/very_happy" android:scaleType="fitCenter"/>
-        <ImageView android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"
-            android:src="@drawable/very_sad" android:scaleType="fitCenter"/>
-        <View android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"
-            android:background="@drawable/widget_day_today_border"/>
-        <ImageView android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"
-            android:src="@drawable/sad" android:scaleType="fitCenter"/>
-        <ImageView android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"
-            android:src="@drawable/happy" android:scaleType="fitCenter"/>
-        <ImageView android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"
-            android:src="@drawable/neutral" android:scaleType="fitCenter"/>
-        <ImageView android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"
-            android:src="@drawable/very_happy" android:scaleType="fitCenter"/>
+    <!-- Week 3: Mix mood + muted circle (no log) -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+        android:orientation="horizontal" android:weightSum="7" android:gravity="center_vertical">
+        <FrameLayout android:layout_width="0dp" android:layout_height="30dp" android:layout_weight="1">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="center" android:src="@drawable/mood_circle_bg_3"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp" android:layout_gravity="center" android:src="@drawable/neutral" android:scaleType="fitCenter"/>
+        </FrameLayout>
+        <FrameLayout android:layout_width="0dp" android:layout_height="30dp" android:layout_weight="1">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="center" android:src="@drawable/mood_circle_bg_5"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp" android:layout_gravity="center" android:src="@drawable/very_sad" android:scaleType="fitCenter"/>
+        </FrameLayout>
+        <!-- muted circle = no log -->
+        <FrameLayout android:layout_width="0dp" android:layout_height="30dp" android:layout_weight="1">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="center" android:src="@drawable/muted_circle_bg"/>
+        </FrameLayout>
+        <FrameLayout android:layout_width="0dp" android:layout_height="30dp" android:layout_weight="1">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="center" android:src="@drawable/mood_circle_bg_4"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp" android:layout_gravity="center" android:src="@drawable/sad" android:scaleType="fitCenter"/>
+        </FrameLayout>
+        <FrameLayout android:layout_width="0dp" android:layout_height="30dp" android:layout_weight="1">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="center" android:src="@drawable/mood_circle_bg_5"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp" android:layout_gravity="center" android:src="@drawable/very_sad" android:scaleType="fitCenter"/>
+        </FrameLayout>
+        <!-- muted circle -->
+        <FrameLayout android:layout_width="0dp" android:layout_height="30dp" android:layout_weight="1">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="center" android:src="@drawable/muted_circle_bg"/>
+        </FrameLayout>
+        <FrameLayout android:layout_width="0dp" android:layout_height="30dp" android:layout_weight="1">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="center" android:src="@drawable/mood_circle_bg_1"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp" android:layout_gravity="center" android:src="@drawable/very_happy" android:scaleType="fitCenter"/>
+        </FrameLayout>
     </LinearLayout>
 
-    <!-- Week 4 (today row) -->
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="horizontal" android:weightSum="7">
-        <ImageView android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"
-            android:src="@drawable/happy" android:scaleType="fitCenter"/>
-        <!-- Today: dashed border -->
-        <View android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"
-            android:background="@drawable/widget_day_today_border"/>
-        <View android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"/>
-        <View android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"/>
-        <View android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"/>
-        <View android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"/>
-        <View android:layout_width="0dp" android:layout_height="20dp" android:layout_weight="1"/>
+    <!-- Week 4: Mix mood + muted + today dashed + future plain number -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+        android:orientation="horizontal" android:weightSum="7" android:gravity="center_vertical">
+        <FrameLayout android:layout_width="0dp" android:layout_height="30dp" android:layout_weight="1">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="center" android:src="@drawable/mood_circle_bg_1"/>
+            <ImageView android:layout_width="20dp" android:layout_height="20dp" android:layout_gravity="center" android:src="@drawable/very_happy" android:scaleType="fitCenter"/>
+        </FrameLayout>
+        <!-- Today: dashed circle + number "24" -->
+        <FrameLayout android:layout_width="0dp" android:layout_height="30dp" android:layout_weight="1">
+            <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="center"
+                android:src="@drawable/widget_day_today_border"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_gravity="center" android:text="24" android:textColor="#555555"
+                android:textSize="8sp" android:textStyle="bold"/>
+        </FrameLayout>
+        <!-- Future: plain numbers -->
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:gravity="center" android:text="25" android:textColor="#CCCCCC" android:textSize="9sp"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:gravity="center" android:text="26" android:textColor="#CCCCCC" android:textSize="9sp"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:gravity="center" android:text="27" android:textColor="#CCCCCC" android:textSize="9sp"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:gravity="center" android:text="28" android:textColor="#CCCCCC" android:textSize="9sp"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:gravity="center" android:text="29" android:textColor="#CCCCCC" android:textSize="9sp"/>
+    </LinearLayout>
+
+    <!-- Week 5: Just "30" plain -->
+    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+        android:orientation="horizontal" android:weightSum="7" android:gravity="center_vertical">
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:gravity="center" android:text="30" android:textColor="#CCCCCC" android:textSize="9sp"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="6" android:text=""/>
     </LinearLayout>
 
 </LinearLayout>

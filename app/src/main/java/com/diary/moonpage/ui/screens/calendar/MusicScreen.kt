@@ -1,5 +1,6 @@
 package com.diary.moonpage.ui.screens.calendar
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -9,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Search
@@ -120,7 +122,7 @@ fun MusicScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (!uiState.isLinked) {
+            if (!uiState.isLinked && uiState.searchQuery.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -147,48 +149,121 @@ fun MusicScreen(
                         Spacer(modifier = Modifier.height(8.dp))
                         Button(
                             onClick = onLinkClick,
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1DB954)) // Spotify Green
                         ) {
-                            Text(stringResource(R.string.music_link_spotify))
-                        }
-                    }
-                }
-            } else if (uiState.isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            } else {
-                val displayTracks = if (uiState.searchQuery.isBlank()) uiState.suggestions else uiState.searchResults
-                
-                if (displayTracks.isEmpty() && uiState.searchQuery.isNotBlank()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(stringResource(R.string.music_no_songs_found), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f))
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(bottom = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        if (uiState.searchQuery.isBlank() && uiState.suggestions.isNotEmpty()) {
-                            item {
-                                Text(
-                                    stringResource(R.string.daily_log_recently_played),
-                                    style = MaterialTheme.typography.titleSmall,
-                                    modifier = Modifier.padding(vertical = 8.dp),
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        }
-                        
-                        items(displayTracks) { track ->
-                            MusicTrackItem(track = track, onClick = { onSongClick(track) })
+                            Text(stringResource(R.string.music_link_spotify), color = Color.White)
                         }
                     }
                 }
             }
+
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (uiState.searchQuery.isNotEmpty()) {
+                    item {
+                        ManualMusicItem(
+                            query = uiState.searchQuery,
+                            onClick = { onSongClick(createManualTrack(uiState.searchQuery)) }
+                        )
+                    }
+                }
+
+                if (uiState.isLoading) {
+                    item {
+                        Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                }
+
+                val displayTracks = if (uiState.searchQuery.isBlank()) uiState.suggestions else uiState.searchResults
+                
+                if (uiState.error != null) {
+                    item {
+                        Text(
+                            uiState.error,
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+                
+                if (displayTracks.isEmpty() && !uiState.isLoading && uiState.searchQuery.isNotBlank() && uiState.error == null) {
+                    item {
+                        Text(
+                            stringResource(R.string.music_no_songs_found),
+                            modifier = Modifier.fillMaxWidth().padding(32.dp),
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        )
+                    }
+                }
+
+                if (uiState.searchQuery.isBlank() && uiState.suggestions.isNotEmpty()) {
+                    item {
+                        Text(
+                            stringResource(R.string.daily_log_recently_played),
+                            style = MaterialTheme.typography.titleSmall,
+                            modifier = Modifier.padding(vertical = 8.dp),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                
+                items(displayTracks) { track ->
+                    MusicTrackItem(track = track, onClick = { onSongClick(track) })
+                }
+            }
         }
     }
+}
+
+@Composable
+private fun ManualMusicItem(query: String, onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().clickable { onClick() },
+        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f))
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Rounded.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text(
+                    text = query,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = stringResource(R.string.custom_theme),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
+        }
+    }
+}
+
+private fun createManualTrack(query: String): SpotifyTrack {
+    return SpotifyTrack(
+        id = "manual_${System.currentTimeMillis()}",
+        name = query,
+        artists = emptyList(),
+        album = com.diary.moonpage.data.remote.api.SpotifyAlbum("", emptyList()),
+        duration_ms = 0,
+        preview_url = null,
+        externalUrls = com.diary.moonpage.data.remote.api.SpotifyExternalUrls("")
+    )
 }
 
 @Composable

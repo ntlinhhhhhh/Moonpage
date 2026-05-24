@@ -9,6 +9,7 @@ import com.diary.moonpage.core.util.PkceUtil
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import javax.inject.Inject
 import java.util.UUID
 
@@ -49,14 +50,15 @@ class MusicViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                val response = spotifyApi.getRecentlyPlayedTracks(token)
+                val authHeader = if (token.startsWith("Bearer ")) token else "Bearer $token"
+                val response = spotifyApi.getRecentlyPlayedTracks(authHeader)
                 if (response.isSuccessful) {
                     val tracks = response.body()?.items?.map { it.track } ?: emptyList()
                     _uiState.update { it.copy(suggestions = tracks, isLoading = false) }
                 } else {
                     val errorBody = response.errorBody()?.string()
                     _uiState.update { it.copy(
-                        error = "Load Failed (${response.code()}): $errorBody",
+                        error = "Load Failed (${response.code()})",
                         isLoading = false
                     ) }
                 }
@@ -76,12 +78,20 @@ class MusicViewModel @Inject constructor(
         return SpotifyApi.getAuthUrl(challenge, state)
     }
 
+    private var searchJob: kotlinx.coroutines.Job? = null
+
     fun onSearchQueryChanged(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
-        if (query.length > 2 && currentToken != null) {
-            searchMusic(query)
+        searchJob?.cancel()
+        if (query.length > 1) {
+            searchJob = viewModelScope.launch {
+                delay(500) // Debounce
+                if (currentToken != null) {
+                    searchMusic(query)
+                }
+            }
         } else if (query.isEmpty()) {
-            _uiState.update { it.copy(searchResults = emptyList()) }
+            _uiState.update { it.copy(searchResults = emptyList(), error = null) }
         }
     }
 
@@ -90,21 +100,25 @@ class MusicViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                val response = spotifyApi.searchTracks(token, query)
+                val authHeader = if (token.startsWith("Bearer ")) token else "Bearer $token"
+                val response = spotifyApi.searchTracks(authHeader, query)
                 if (response.isSuccessful) {
+                    val tracks = response.body()?.tracks?.items ?: emptyList()
                     _uiState.update { it.copy(
-                        searchResults = response.body()?.tracks?.items ?: emptyList(),
-                        isLoading = false
+                        searchResults = tracks,
+                        isLoading = false,
+                        error = if (tracks.isEmpty()) "No songs found for '$query'" else null
                     ) }
                 } else {
                     val errorBody = response.errorBody()?.string()
+                    android.util.Log.e("SpotifyAPI", "Search failed: ${response.code()} - $errorBody")
                     _uiState.update { it.copy(
-                        error = "Search Failed (${response.code()}): $errorBody",
+                        error = "Spotify Error (${response.code()})",
                         isLoading = false
                     ) }
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(error = e.message, isLoading = false) }
+                _uiState.update { it.copy(error = "Search failed: ${e.localizedMessage}", isLoading = false) }
             }
         }
     }

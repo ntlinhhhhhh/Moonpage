@@ -1,33 +1,35 @@
 package com.diary.moonpage.ui.screens.profile
 
+import android.graphics.Bitmap
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBackIosNew
+import androidx.compose.material.icons.rounded.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.diary.moonpage.R
 import com.diary.moonpage.ui.screens.profile.components.AvatarOption
 import com.diary.moonpage.ui.screens.profile.components.ProfileAvatarGroup
 import com.diary.moonpage.ui.screens.profile.components.ProfileAvatarItem
-import com.diary.moonpage.core.theme.MoonTheme
 import com.diary.moonpage.core.util.ComposeCaptureUtils
 import java.io.File
 import java.io.FileOutputStream
-import android.graphics.Bitmap
-import android.net.Uri
 
 /**
  * Stateful Screen for Changing Profile Picture
@@ -72,10 +74,20 @@ fun ChangeProfilePictureScreen(
 
     val allAvatars = remember { puppyAvatars + matchaAvatars + heartAvatars + basicAvatars }
 
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            viewModel.updateAvatar(context, it)
+            onApply()
+        }
+    }
+
     ChangeProfilePictureContent(
         onNavigateBack = onNavigateBack,
         selectedId = selectedId,
         onSelect = { selectedId = it },
+        onPickFromGallery = { galleryLauncher.launch("image/*") },
         onApply = {
             val selectedAvatar = allAvatars.find { it.id == selectedId }
             if (selectedAvatar != null) {
@@ -118,6 +130,7 @@ fun ChangeProfilePictureContent(
     onNavigateBack: () -> Unit,
     selectedId: Int?,
     onSelect: (Int) -> Unit,
+    onPickFromGallery: () -> Unit,
     onApply: () -> Unit,
     puppyAvatars: List<AvatarOption>,
     matchaAvatars: List<AvatarOption>,
@@ -144,6 +157,15 @@ fun ChangeProfilePictureContent(
                             Icons.Rounded.ArrowBackIosNew, 
                             contentDescription = stringResource(R.string.back),
                             tint = colorScheme.onBackground
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onPickFromGallery) {
+                        Icon(
+                            Icons.Rounded.PhotoLibrary, 
+                            contentDescription = "Pick from Gallery",
+                            tint = colorScheme.primary
                         )
                     }
                 },
@@ -200,6 +222,7 @@ fun ChangeProfilePicturePreview() {
         onNavigateBack = {},
         selectedId = 1,
         onSelect = {},
+        onPickFromGallery = {},
         onApply = {},
         puppyAvatars = avatars,
         matchaAvatars = avatars,

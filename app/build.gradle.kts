@@ -44,6 +44,10 @@ android {
     }
 }
 
+ksp {
+    arg("room.generateKotlin", "true")
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
@@ -77,7 +81,6 @@ dependencies {
     implementation(libs.androidx.compose.remote.creation.core)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.ui.graphics)
-    implementation(libs.hilt.work)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 

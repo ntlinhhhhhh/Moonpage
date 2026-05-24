@@ -8,7 +8,7 @@ import javax.inject.Inject
 class GetStatisticsSummaryUseCase @Inject constructor(
     private val repository: StatisticsRepository
 ) {
-    suspend operator fun invoke(year: Int, month: Int, isMonthly: Boolean): Response<StatisticsResponse> {
+    suspend operator fun invoke(year: Int, month: Int?, isMonthly: Boolean): Response<StatisticsResponse> {
         return repository.getStatisticsSummary(year, month, isMonthly)
     }
 }

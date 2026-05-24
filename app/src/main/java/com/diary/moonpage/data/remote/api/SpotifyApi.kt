@@ -13,6 +13,7 @@ import retrofit2.http.POST
 interface SpotifyApi {
     @GET("https://api.spotify.com/v1/search")
     suspend fun searchTracks(
+        @Header("Authorization") token: String,
         @Query("q") query: String,
         @Query("type") type: String = "track",
         @Query("limit") limit: Int = 20

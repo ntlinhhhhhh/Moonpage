@@ -1,71 +1,106 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Preview layout cho Quick Mood Selector (4x1) hiển thị trong Widget Picker -->
+<!-- Preview Widget 2: Quick Mood (4×1) – Style DailyBean exact match -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/widget_background"
     android:orientation="vertical"
-    android:gravity="center"
-    android:paddingHorizontal="12dp"
-    android:paddingVertical="8dp">
+    android:gravity="center_vertical"
+    android:background="@drawable/preview_theme_default_bg"
+    android:paddingLeft="14dp"
+    android:paddingRight="14dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp">
 
-    <!-- Title -->
-    <TextView
-        android:layout_width="wrap_content"
+    <!-- Row 1: ↻ | How was your day? | ⚙ -->
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="How was your day?"
-        android:textStyle="bold"
-        android:textColor="@android:color/darker_gray"
-        android:textSize="11sp"
-        android:layout_marginBottom="6dp" />
+        android:layout_marginBottom="8dp">
+        <TextView
+            android:id="@+id/qm_refresh"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:text="↻"
+            android:textColor="#BBBBBB"
+            android:textSize="15sp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="How was your day?"
+            android:textColor="#333333"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/qm_settings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:text="⚙"
+            android:textColor="#BBBBBB"
+            android:textSize="15sp" />
+    </RelativeLayout>
 
-    <!-- 5 Mood Icons Row -->
+    <!-- Row 2: 5 Emoji Circles với màu nền riêng -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:weightSum="5">
+        android:weightSum="5"
+        android:layout_marginBottom="8dp">
 
-        <ImageView
-            android:layout_width="0dp"
-            android:layout_height="32dp"
-            android:layout_weight="1"
-            android:src="@drawable/very_happy"
-            android:scaleType="fitCenter" />
-        <ImageView
-            android:layout_width="0dp"
-            android:layout_height="32dp"
-            android:layout_weight="1"
-            android:src="@drawable/happy"
-            android:scaleType="fitCenter" />
-        <ImageView
-            android:layout_width="0dp"
-            android:layout_height="32dp"
-            android:layout_weight="1"
-            android:src="@drawable/neutral"
-            android:scaleType="fitCenter" />
-        <ImageView
-            android:layout_width="0dp"
-            android:layout_height="32dp"
-            android:layout_weight="1"
-            android:src="@drawable/sad"
-            android:scaleType="fitCenter" />
-        <ImageView
-            android:layout_width="0dp"
-            android:layout_height="32dp"
-            android:layout_weight="1"
-            android:src="@drawable/very_sad"
-            android:scaleType="fitCenter" />
+        <!-- Very Happy – Yellow -->
+        <FrameLayout android:layout_width="0dp" android:layout_height="44dp" android:layout_weight="1">
+            <ImageView android:layout_width="40dp" android:layout_height="40dp" android:layout_gravity="center"
+                android:src="@drawable/mood_circle_bg_1" />
+            <ImageView android:layout_width="36dp" android:layout_height="36dp" android:layout_gravity="center"
+                android:src="@drawable/very_happy" android:scaleType="fitCenter" />
+        </FrameLayout>
+
+        <!-- Happy – Light Green -->
+        <FrameLayout android:layout_width="0dp" android:layout_height="44dp" android:layout_weight="1">
+            <ImageView android:layout_width="40dp" android:layout_height="40dp" android:layout_gravity="center"
+                android:src="@drawable/mood_circle_bg_2" />
+            <ImageView android:layout_width="36dp" android:layout_height="36dp" android:layout_gravity="center"
+                android:src="@drawable/happy" android:scaleType="fitCenter" />
+        </FrameLayout>
+
+        <!-- Neutral – Medium Green -->
+        <FrameLayout android:layout_width="0dp" android:layout_height="44dp" android:layout_weight="1">
+            <ImageView android:layout_width="40dp" android:layout_height="40dp" android:layout_gravity="center"
+                android:src="@drawable/mood_circle_bg_3" />
+            <ImageView android:layout_width="36dp" android:layout_height="36dp" android:layout_gravity="center"
+                android:src="@drawable/neutral" android:scaleType="fitCenter" />
+        </FrameLayout>
+
+        <!-- Sad – Dark Green -->
+        <FrameLayout android:layout_width="0dp" android:layout_height="44dp" android:layout_weight="1">
+            <ImageView android:layout_width="40dp" android:layout_height="40dp" android:layout_gravity="center"
+                android:src="@drawable/mood_circle_bg_4" />
+            <ImageView android:layout_width="36dp" android:layout_height="36dp" android:layout_gravity="center"
+                android:src="@drawable/sad" android:scaleType="fitCenter" />
+        </FrameLayout>
+
+        <!-- Very Sad – Dark Gray -->
+        <FrameLayout android:layout_width="0dp" android:layout_height="44dp" android:layout_weight="1">
+            <ImageView android:layout_width="40dp" android:layout_height="40dp" android:layout_gravity="center"
+                android:src="@drawable/mood_circle_bg_5" />
+            <ImageView android:layout_width="36dp" android:layout_height="36dp" android:layout_gravity="center"
+                android:src="@drawable/very_sad" android:scaleType="fitCenter" />
+        </FrameLayout>
     </LinearLayout>
 
-    <!-- Date Label -->
+    <!-- Row 3: Date label căn giữa -->
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="Sunday, May 24"
-        android:textColor="@android:color/darker_gray"
+        android:gravity="center"
+        android:text="Thursday, November 27"
+        android:textColor="#AAAAAA"
         android:textSize="9sp" />
 
 </LinearLayout>

@@ -3,7 +3,10 @@ package com.diary.moonpage.di
 import android.content.Context
 import com.diary.moonpage.core.network.AuthInterceptor
 import com.diary.moonpage.data.remote.api.*
+import com.diary.moonpage.data.remote.dto.stats.MusicSummaryDto
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonDeserializer
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -27,7 +30,47 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideGson(): Gson = Gson()
+    fun provideGson(): Gson {
+        return GsonBuilder()
+            .registerTypeAdapter(
+                MusicSummaryDto::class.java,
+                JsonDeserializer<MusicSummaryDto> { json, _, _ ->
+                    if (json == null || json.isJsonNull) {
+                        MusicSummaryDto(songTitle = "", artistName = "", albumArtUrl = null, occurrence = 0)
+                    } else if (json.isJsonPrimitive) {
+                        MusicSummaryDto(songTitle = json.asString, artistName = "", albumArtUrl = null, occurrence = 1)
+                    } else {
+                        val obj = json.asJsonObject
+                        fun stringValue(vararg names: String): String? {
+                            return names.asSequence()
+                                .mapNotNull { name ->
+                                    obj.get(name)
+                                        ?.takeUnless { element -> element.isJsonNull }
+                                        ?.asString
+                                }
+                                .firstOrNull()
+                        }
+                        fun intValue(vararg names: String): Int? {
+                            return names.asSequence()
+                                .mapNotNull { name ->
+                                    obj.get(name)
+                                        ?.takeUnless { element -> element.isJsonNull }
+                                        ?.let { element -> runCatching { element.asInt }.getOrNull() }
+                                }
+                                .firstOrNull()
+                        }
+
+                        MusicSummaryDto(
+                            songTitle = stringValue("songTitle", "title", "name", "song").orEmpty(),
+                            artistName = stringValue("artistName", "artist", "artist_name").orEmpty(),
+                            albumArtUrl = stringValue("albumArtUrl", "albumArt", "imageUrl", "image_url"),
+                            occurrence = intValue("occurrence", "count", "total") ?: 1
+                        )
+                    }
+                }
+            )
+            .create()
+    }
 
     @Provides
     @Singleton
@@ -61,11 +104,11 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
+    fun provideRetrofit(okHttpClient: OkHttpClient, gson: Gson): Retrofit {
         return Retrofit.Builder()
             .baseUrl("https://hieu-wikipedia.io.vn/")
             .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
 

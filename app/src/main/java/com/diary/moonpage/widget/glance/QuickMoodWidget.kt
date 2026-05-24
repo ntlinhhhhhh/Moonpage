@@ -2,6 +2,7 @@ package com.diary.moonpage.widget.glance
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
@@ -35,14 +36,30 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+// DailyBean-style off-white background color
+private val DailyBeanBg = Color(0xFFF5F3EE)
+private val DailyBeanBgDark = Color(0xFF2A2A2A)
+private val DailyBeanText = Color(0xFF333333)
+private val DailyBeanTextDark = Color(0xFFEEEEEE)
+private val DailyBeanSubText = Color(0xFFAAAAAA)
+private val DailyBeanSubTextDark = Color(0xFF888888)
+
+// Mood circle background colors (level 5→1: very_happy→very_sad)
+private val MoodCircleColors = listOf(
+    Color(0xFFF5DE6E), // very_happy – yellow
+    Color(0xFFA8D96E), // happy – light green
+    Color(0xFF5BAD6E), // neutral – medium green
+    Color(0xFF2D6E45), // sad – dark green
+    Color(0xFF4A4A4A)  // very_sad – dark gray
+)
+
 /**
  * Widget 2: Quick Mood Selector (4×1) – Style DailyBean
- * - Nền Surface theo theme, bo góc 16dp
- * - "How was your day?" ở giữa trên cùng
- * - 5 icon cảm xúc hàng ngang cách đều
- * - Dòng dưới: "Thứ, Ngày Tháng" hiện tại
- * - Streak Badge TopEnd
- * - Click bất kỳ → mở app
+ * Layout: 3 rows:
+ *  Row 1: [↻ icon] [How was your day?] [⚙ icon]
+ *  Row 2: 5 emoji circles to (36dp) spaced evenly với colored background
+ *  Row 3: "Thursday, November 27" date text, centered
+ *  Streak Badge: TopEnd overlay
  */
 class QuickMoodWidget : GlanceAppWidget() {
     override val sizeMode = SizeMode.Single
@@ -51,16 +68,16 @@ class QuickMoodWidget : GlanceAppWidget() {
         val dataSource = MoonpageWidgetDataSource(context)
         val snapshot = dataSource.loadTodaySnapshot()
         val isNight = dataSource.isNightMode()
-        val palette = snapshot.palette
+
+        val bg = if (isNight) snapshot.palette.nightSurface else snapshot.palette.daySurface
+        val textColor = if (isNight) snapshot.palette.nightOnSurface else snapshot.palette.dayOnSurface
+        val subColor = if (isNight) snapshot.palette.nightOnSurface.copy(alpha=0.6f) else snapshot.palette.dayOnSurface.copy(alpha=0.6f)
 
         val today = LocalDate.now()
-        val dateStr = today.format(
-            DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale.ENGLISH)
-        )
+        val dateStr = today.format(DateTimeFormatter.ofPattern("EEEE, MMMM d", Locale.ENGLISH))
 
-        // Mood icons and colors (level 5=very_happy → 1=very_sad)
+        // Level order: very_happy(5), happy(4), neutral(3), sad(2), very_sad(1)
         val moodLevels = listOf(5, 4, 3, 2, 1)
-        val moodDrawables = moodLevels.map { dataSource.mapMoodDrawable(it) }
 
         val openAppAction = actionStartActivity(
             Intent(context, MainActivity::class.java).apply {
@@ -73,7 +90,7 @@ class QuickMoodWidget : GlanceAppWidget() {
                 modifier = GlanceModifier
                     .fillMaxSize()
                     .cornerRadius(16.dp)
-                    .background(ColorProvider(if (isNight) palette.nightSurface else palette.daySurface))
+                    .background(ColorProvider(bg))
                     .clickable(openAppAction)
                     .padding(horizontal = 12.dp, vertical = 8.dp),
                 contentAlignment = Alignment.TopStart
@@ -82,49 +99,85 @@ class QuickMoodWidget : GlanceAppWidget() {
                     modifier = GlanceModifier.fillMaxSize(),
                     horizontalAlignment = Alignment.Horizontal.CenterHorizontally
                 ) {
-                    // Title
-                    Text(
-                        text = context.getString(R.string.widget_how_was_your_day),
-                        style = TextStyle(
-                            color = ColorProvider(if (isNight) palette.nightOnSurface else palette.dayOnSurface),
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold
+                    // ── Row 1: ↻ | "How was your day?" | ⚙ ──
+                    Box(
+                        modifier = GlanceModifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // Left: ↻
+                        Box(
+                            modifier = GlanceModifier.fillMaxWidth(),
+                            contentAlignment = Alignment.CenterStart
+                        ) {
+                            Text(
+                                text = "↻",
+                                style = TextStyle(
+                                    color = ColorProvider(subColor),
+                                    fontSize = 14.sp
+                                )
+                            )
+                        }
+                        // Center: title
+                        Text(
+                            text = context.getString(R.string.widget_how_was_your_day),
+                            style = TextStyle(
+                                color = ColorProvider(textColor),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         )
-                    )
+                        // Right: ⚙
+                        Box(
+                            modifier = GlanceModifier.fillMaxWidth(),
+                            contentAlignment = Alignment.CenterEnd
+                        ) {
+                            Text(
+                                text = "⚙",
+                                style = TextStyle(
+                                    color = ColorProvider(subColor),
+                                    fontSize = 14.sp
+                                )
+                            )
+                        }
+                    }
 
-                    Spacer(modifier = GlanceModifier.size(4.dp))
+                    Spacer(modifier = GlanceModifier.size(6.dp))
 
-                    // 5 Mood Icons Row
+                    // ── Row 2: 5 Emoji Circles ──
                     Row(
                         modifier = GlanceModifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        moodDrawables.forEachIndexed { idx, drawableRes ->
+                        moodLevels.forEachIndexed { idx, level ->
                             Box(
-                                modifier = GlanceModifier
-                                    .defaultWeight()
-                                    .padding(horizontal = 2.dp),
+                                modifier = GlanceModifier.defaultWeight(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Image(
-                                    provider = ImageProvider(drawableRes),
-                                    contentDescription = null,
-                                    modifier = GlanceModifier.size(28.dp)
-                                )
+                                // Colored circle background
+                                Box(
+                                    modifier = GlanceModifier
+                                        .size(36.dp)
+                                        .cornerRadius(18.dp)
+                                        .background(ColorProvider(snapshot.palette.moodColors[(level - 1).coerceIn(0, 4)])),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Image(
+                                        provider = ImageProvider(dataSource.mapMoodDrawable(level)),
+                                        contentDescription = null,
+                                        modifier = GlanceModifier.size(30.dp)
+                                    )
+                                }
                             }
                         }
                     }
 
-                    Spacer(modifier = GlanceModifier.size(3.dp))
+                    Spacer(modifier = GlanceModifier.size(5.dp))
 
-                    // Date Label
+                    // ── Row 3: Date label ──
                     Text(
                         text = dateStr,
                         style = TextStyle(
-                            color = ColorProvider(
-                                if (isNight) palette.nightOnSurface.copy(alpha = 0.55f)
-                                else palette.dayOnSurface.copy(alpha = 0.55f)
-                            ),
+                            color = ColorProvider(subColor),
                             fontSize = 9.sp
                         )
                     )
@@ -132,17 +185,17 @@ class QuickMoodWidget : GlanceAppWidget() {
 
                 // ── Streak Badge – TOP END ──
                 Box(
-                    modifier = GlanceModifier.fillMaxSize().padding(top = 0.dp, end = 0.dp),
+                    modifier = GlanceModifier.fillMaxSize(),
                     contentAlignment = Alignment.TopEnd
                 ) {
                     Text(
                         text = "🔥 ${snapshot.streakCount}",
                         modifier = GlanceModifier
                             .cornerRadius(50.dp)
-                            .background(ColorProvider(if (isNight) palette.nightBadge else palette.dayBadge))
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                            .background(ColorProvider(Color(0xCC000000)))
+                            .padding(horizontal = 7.dp, vertical = 3.dp),
                         style = TextStyle(
-                            color = ColorProvider(if (isNight) palette.nightBadgeText else palette.dayBadgeText),
+                            color = ColorProvider(Color.White),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold
                         )

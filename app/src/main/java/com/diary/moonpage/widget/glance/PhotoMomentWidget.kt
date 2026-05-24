@@ -1,81 +1,71 @@
 package com.diary.moonpage.widget.glance
 
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.datastore.preferences.core.MutablePreferences
-import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
 import androidx.glance.ImageProvider
-import androidx.glance.action.ActionParameters
-import androidx.glance.action.actionParametersOf
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.SizeMode
-import androidx.glance.appwidget.action.ActionCallback
-import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
-import androidx.glance.appwidget.state.getAppWidgetState
-import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.appwidget.updateAll
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.glance.layout.ContentScale
-import androidx.glance.layout.Row
-import androidx.glance.layout.Spacer
-import androidx.glance.layout.fillMaxHeight
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
-import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.unit.ColorProvider
 import com.diary.moonpage.R
-import com.diary.moonpage.core.theme.MoonThemeType
 import com.diary.moonpage.ui.MainActivity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 
-private val photoIndexKey = intPreferencesKey("photo_moment_index")
-private val photoDirectionKey = ActionParameters.Key<Int>("photo_direction")
+private const val PHOTO_ROTATE_INTERVAL_MS = 30_000L
+private const val PHOTO_ROTATE_ACTION = "com.diary.moonpage.widget.PHOTO_MOMENT_ROTATE"
+private const val PHOTO_ROTATE_REQUEST_CODE = 5102
 
-/**
- * Widget 1: Photo Moment (2×2) – Style Locket
- * - Ảnh fill 100% với ContentScale.Crop
- * - Bo góc 32dp cực tròn
- * - Tự động chuyển ảnh hôm nay
- * - Streak Badge TopEnd
- * - Click → mở app
- */
 class PhotoMomentWidget : GlanceAppWidget() {
-    override val stateDefinition = PreferencesGlanceStateDefinition
     override val sizeMode = SizeMode.Single
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val dataSource = MoonpageWidgetDataSource(context)
         val snapshot = dataSource.loadTodaySnapshot()
-        val state = getAppWidgetState(context, PreferencesGlanceStateDefinition, id)
-        var currentIndex = state[photoIndexKey] ?: 0
         val photoCount = snapshot.photoUris.size
-
-        if (currentIndex >= photoCount) {
-            currentIndex = 0
-            updateAppWidgetState(context, id) { prefs -> prefs[photoIndexKey] = 0 }
+        if (photoCount > 1) {
+            PhotoMomentRotationScheduler.schedule(context)
+        } else {
+            PhotoMomentRotationScheduler.cancel(context)
         }
-
-        val resolvedIndex = if (photoCount == 0) 0 else currentIndex.mod(photoCount)
+        val resolvedIndex = if (photoCount == 0) {
+            0
+        } else {
+            ((System.currentTimeMillis() / PHOTO_ROTATE_INTERVAL_MS) % photoCount).toInt()
+        }
         val bitmap = dataSource.loadBitmap(snapshot.photoUris.getOrNull(resolvedIndex))
         val isNight = dataSource.isNightMode()
         val palette = snapshot.palette
+        val preferences = dataSource.getWidgetPreferences()
+        val showStreak = preferences.showPhotoStreak.firstOrNull() ?: true
+        val displayMode = preferences.photoDisplayMode.firstOrNull() ?: "CROP"
 
         val openAppAction = actionStartActivity(
             Intent(context, MainActivity::class.java).apply {
@@ -87,107 +77,126 @@ class PhotoMomentWidget : GlanceAppWidget() {
             Box(
                 modifier = GlanceModifier
                     .fillMaxSize()
-                    .cornerRadius(32.dp)  // Locket-style extreme rounded corners
+                    .cornerRadius(16.dp)
                     .background(
                         ColorProvider(if (isNight) palette.nightSurface else palette.daySurface)
                     )
                     .clickable(openAppAction),
                 contentAlignment = Alignment.TopStart
             ) {
-                // Photo fill 100%
                 if (bitmap != null) {
                     Image(
                         provider = ImageProvider(bitmap),
                         contentDescription = null,
-                        contentScale = ContentScale.Crop,
+                        contentScale = if (displayMode == "FIT") ContentScale.Fit else ContentScale.Crop,
                         modifier = GlanceModifier.fillMaxSize()
                     )
                 } else {
-                    // Placeholder khi chưa có ảnh
                     Column(
                         modifier = GlanceModifier.fillMaxSize(),
                         verticalAlignment = Alignment.Vertical.CenterVertically,
                         horizontalAlignment = Alignment.Horizontal.CenterHorizontally
                     ) {
-                        Text(
-                            text = "📷",
-                            style = TextStyle(fontSize = 28.sp)
+                        Image(
+                            provider = ImageProvider(R.drawable.logo),
+                            contentDescription = null,
+                            modifier = GlanceModifier.size(60.dp)
                         )
+                    }
+                }
+
+                if (showStreak) {
+                    Box(
+                        modifier = GlanceModifier.fillMaxSize().padding(top = 12.dp, end = 12.dp),
+                        contentAlignment = Alignment.TopEnd
+                    ) {
                         Text(
-                            text = context.getString(R.string.widget_photo_empty),
+                            text = "🔥 ${snapshot.streakCount}",
+                            modifier = GlanceModifier
+                                .cornerRadius(50.dp)
+                                .background(ColorProvider(if (isNight) palette.nightBadge else palette.dayBadge))
+                                .padding(horizontal = 10.dp, vertical = 5.dp),
                             style = TextStyle(
-                                color = ColorProvider(
-                                    if (isNight) palette.nightOnSurface else palette.dayOnSurface
-                                ),
+                                color = ColorProvider(if (isNight) palette.nightBadgeText else palette.dayBadgeText),
                                 fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.Bold
                             )
                         )
                     }
-                }
-
-                // Tap zones for previous/next photo
-                if (photoCount > 1) {
-                    Row(modifier = GlanceModifier.fillMaxSize()) {
-                        Spacer(
-                            modifier = GlanceModifier
-                                .defaultWeight()
-                                .fillMaxHeight()
-                                .clickable(actionRunCallback<PhotoIndexAction>(
-                                    actionParametersOf(photoDirectionKey to -1)
-                                ))
-                        )
-                        Spacer(
-                            modifier = GlanceModifier
-                                .defaultWeight()
-                                .fillMaxHeight()
-                                .clickable(actionRunCallback<PhotoIndexAction>(
-                                    actionParametersOf(photoDirectionKey to 1)
-                                ))
-                        )
-                    }
-                }
-
-                // ── Streak Badge – TOP END ──
-                Box(
-                    modifier = GlanceModifier.fillMaxSize().padding(top = 12.dp, end = 12.dp),
-                    contentAlignment = Alignment.TopEnd
-                ) {
-                    Text(
-                        text = "🔥 ${snapshot.streakCount}",
-                        modifier = GlanceModifier
-                            .cornerRadius(50.dp)
-                            .background(ColorProvider(if (isNight) palette.nightBadge else palette.dayBadge))
-                            .padding(horizontal = 10.dp, vertical = 5.dp),
-                        style = TextStyle(
-                            color = ColorProvider(if (isNight) palette.nightBadgeText else palette.dayBadgeText),
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
                 }
             }
         }
     }
 }
 
-class PhotoIndexAction : ActionCallback {
-    override suspend fun onAction(
-        context: Context,
-        glanceId: GlanceId,
-        parameters: ActionParameters
-    ) {
-        val direction = parameters[photoDirectionKey] ?: 0
-        val photoCount = MoonpageWidgetDataSource(context).loadTodaySnapshot().photoUris.size
-        if (photoCount <= 1) return
-        updateAppWidgetState(context, glanceId) { prefs: MutablePreferences ->
-            val currentIndex = prefs[photoIndexKey] ?: 0
-            prefs[photoIndexKey] = (currentIndex + direction).mod(photoCount)
+private object PhotoMomentRotationScheduler {
+    fun schedule(context: Context) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        val pendingIntent = pendingIntent(context)
+        val triggerAt = System.currentTimeMillis() + PHOTO_ROTATE_INTERVAL_MS
+
+        when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms() -> {
+                alarmManager.set(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
+            }
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
+            }
+            else -> {
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
+            }
         }
-        PhotoMomentWidget().updateAll(context)
+    }
+
+    fun cancel(context: Context) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        alarmManager.cancel(pendingIntent(context))
+    }
+
+    private fun pendingIntent(context: Context): PendingIntent {
+        val intent = Intent(context, PhotoMomentAutoRotateReceiver::class.java).apply {
+            action = PHOTO_ROTATE_ACTION
+        }
+        return PendingIntent.getBroadcast(
+            context,
+            PHOTO_ROTATE_REQUEST_CODE,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+}
+
+class PhotoMomentAutoRotateReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action != PHOTO_ROTATE_ACTION) return
+
+        PhotoMomentRotationScheduler.schedule(context)
+        val pendingResult = goAsync()
+        CoroutineScope(Dispatchers.Default).launch {
+            try {
+                PhotoMomentWidget().updateAll(context)
+            } finally {
+                pendingResult.finish()
+            }
+        }
     }
 }
 
 class PhotoMomentWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = PhotoMomentWidget()
+
+    override fun onEnabled(context: Context) {
+        super.onEnabled(context)
+        PhotoMomentRotationScheduler.schedule(context)
+    }
+
+    override fun onDisabled(context: Context) {
+        PhotoMomentRotationScheduler.cancel(context)
+        super.onDisabled(context)
+    }
+
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        PhotoMomentRotationScheduler.schedule(context)
+    }
 }

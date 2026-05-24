@@ -26,7 +26,7 @@
     <uses-feature android:name="android.hardware.camera.autofocus" />
 
     <application
-        android:name=".MoonPageApplication"
+        android:name="com.diary.moonpage.MoonPageApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -54,6 +54,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="moonpage" android:host="spotify-callback" android:path="/" />
                 <data android:scheme="moonpage" android:host="spotify-callback" />
             </intent-filter>
 
@@ -105,6 +106,9 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/photo_moment_widget_info" />
         </receiver>
+        <receiver
+            android:name=".widget.glance.PhotoMomentAutoRotateReceiver"
+            android:exported="false" />
         <receiver
             android:name=".widget.glance.QuickMoodWidgetReceiver"
             android:exported="true"
