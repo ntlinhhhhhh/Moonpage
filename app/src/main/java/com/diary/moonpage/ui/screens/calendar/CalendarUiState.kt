@@ -22,6 +22,7 @@ data class CalendarUiState(
     val currentYearMonth: YearMonth = YearMonth.now(),
     val selectedDate: LocalDate? = LocalDate.now(),
     val dailyLogs: Map<LocalDate, DailyLog> = emptyMap(),
+    val menstruationDays: Map<LocalDate, Int> = emptyMap(),
     val dynamicActivities: List<Activity> = emptyList(),
     val snackbarMessage: String? = null,
     val showMonthPicker: Boolean = false,

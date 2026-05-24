@@ -198,7 +198,20 @@ class CalendarViewModel @Inject constructor(
                     log.copy(dailyPhotos = log.dailyPhotos?.mapNotNull(::normalizeAppImageUrl))
                 }
 
-                _uiState.update { it.copy(dailyLogs = finalMap, currentYearMonth = month, isLoading = false) }
+                val periodDates = finalMap.values.filter { it.isMenstruation }.mapNotNull { runCatching { LocalDate.parse(it.date) }.getOrNull() }.toSet()
+                val menstruationDays = finalMap.keys.associateWith { date ->
+                    if (periodDates.contains(date)) {
+                        var day = 1
+                        var cursor = date.minusDays(1)
+                        while (periodDates.contains(cursor)) {
+                            day += 1
+                            cursor = cursor.minusDays(1)
+                        }
+                        day
+                    } else 0
+                }.filter { it.value > 0 }
+
+                _uiState.update { it.copy(dailyLogs = finalMap, menstruationDays = menstruationDays, currentYearMonth = month, isLoading = false) }
             }.collect {}
         }
     }
