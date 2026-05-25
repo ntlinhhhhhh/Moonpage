@@ -10,7 +10,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
@@ -60,6 +61,7 @@ import com.diary.moonpage.ui.components.feedback.MoonDeleteConfirmDialog
 import com.diary.moonpage.core.theme.MoonTheme
 import com.diary.moonpage.core.theme.MoonThemeType
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import java.time.LocalDate
 import java.time.LocalTime
@@ -101,6 +103,10 @@ fun DailyLogRoute(
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION
         )
+    )
+
+    val audioPermissionState = com.google.accompanist.permissions.rememberPermissionState(
+        Manifest.permission.RECORD_AUDIO
     )
 
     LaunchedEffect(dateString) {
@@ -208,6 +214,13 @@ fun DailyLogRoute(
         onNavigateToDailyPhoto = {
             photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         },
+        onMicClick = {
+            if (audioPermissionState.status.isGranted) {
+                viewModel.onEvent(DailyLogUiEvent.OnToggleListening)
+            } else {
+                audioPermissionState.launchPermissionRequest()
+            }
+        },
         onImportSteps = { viewModel.onEvent(DailyLogUiEvent.OnImportClick) },
         onLinkMusicAccount = { viewModel.onEvent(DailyLogUiEvent.OnLinkMusicAccount) },
         checkLogExists = { date, callback -> viewModel.checkLogExists(date, callback) },
@@ -283,6 +296,7 @@ fun DailyLogScreen(
     onNavigateToMusic: () -> Unit,
     onNavigateToMenstrualCycle: () -> Unit,
     onNavigateToDailyPhoto: () -> Unit,
+    onMicClick: () -> Unit,
     onNavigateToShare: (String) -> Unit,
     onNavigateToSettings: () -> Unit,
     onImportSteps: () -> Unit,
@@ -377,6 +391,7 @@ fun DailyLogScreen(
                 onNavigateToMusic = onNavigateToMusic,
                 onNavigateToMenstrualCycle = onNavigateToMenstrualCycle,
                 onNavigateToDailyPhoto = onNavigateToDailyPhoto,
+                onMicClick = onMicClick,
                 onImportSteps = onImportSteps,
                 onLinkMusicAccount = onLinkMusicAccount,
                 onPhotoDeleteRequest = onPhotoDeleteRequest,
@@ -559,6 +574,7 @@ private fun DailyLogMainContent(
     onNavigateToMusic: () -> Unit,
     onNavigateToMenstrualCycle: () -> Unit,
     onNavigateToDailyPhoto: () -> Unit,
+    onMicClick: () -> Unit,
     onImportSteps: () -> Unit,
     onLinkMusicAccount: () -> Unit,
     onPhotoDeleteRequest: (String) -> Unit,
@@ -666,11 +682,13 @@ private fun DailyLogMainContent(
             }
         }
 
-        // 4. Note Section (Text Input)
         item {
             DailyNoteSection(
                 noteText = uiState.noteText,
-                onNoteChanged = { onEvent(DailyLogUiEvent.OnNoteChanged(it)) }
+                partialText = uiState.partialNoteText,
+                isListening = uiState.isListening,
+                onNoteChanged = { onEvent(DailyLogUiEvent.OnNoteChanged(it)) },
+                onMicClick = onMicClick
             )
         }
 
@@ -1336,26 +1354,81 @@ private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean
 }
 
 @Composable
-private fun DailyNoteSection(noteText: String, onNoteChanged: (String) -> Unit) {
+private fun DailyNoteSection(
+    noteText: String,
+    partialText: String,
+    isListening: Boolean,
+    onNoteChanged: (String) -> Unit,
+    onMicClick: () -> Unit
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "micPulse")
+    val micScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = if (isListening) 1.3f else 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800, easing = LinearOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "micScale"
+    )
+
     Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {      
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(stringResource(R.string.daily_log_todays_note), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(stringResource(R.string.daily_log_todays_note), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
+                
+                IconButton(
+                    onClick = onMicClick,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        if (isListening) Icons.Rounded.StopCircle else Icons.Rounded.Mic,
+                        contentDescription = "Voice Note",
+                        tint = if (isListening) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                        modifier = if (isListening) Modifier.graphicsLayer(scaleX = micScale, scaleY = micScale) else Modifier
+                    )
+                }
+            }
             Spacer(modifier = Modifier.height(12.dp))
             Surface(color = MoonTheme.customColors.logItemBg, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(
-                    value = noteText, onValueChange = onNoteChanged, modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
-                    placeholder = { Text(stringResource(R.string.daily_log_note_placeholder), color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f), fontSize = 14.sp) },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedBorderColor = Color.Transparent,
-                        unfocusedBorderColor = Color.Transparent,
-                        cursorColor = MoonTheme.customColors.logCardOnBg,
-                        focusedTextColor = MoonTheme.customColors.logCardOnBg,
-                        unfocusedTextColor = MoonTheme.customColors.logCardOnBg
-                    ),
-                    shape = RoundedCornerShape(12.dp), maxLines = 5
-                )
+                Box(modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp).padding(horizontal = 16.dp, vertical = 12.dp)) {
+                    // Display existing note text + ghost partial text
+                    val displayText = if (isListening && partialText.isNotEmpty()) {
+                        if (noteText.isEmpty()) partialText else "$noteText\n$partialText"
+                    } else {
+                        noteText
+                    }
+
+                    if (displayText.isEmpty()) {
+                        Text(
+                            text = stringResource(R.string.daily_log_note_placeholder),
+                            color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f),
+                            fontSize = 14.sp
+                        )
+                    }
+
+                    OutlinedTextField(
+                        value = displayText, 
+                        onValueChange = onNoteChanged, 
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedBorderColor = Color.Transparent,
+                            unfocusedBorderColor = Color.Transparent,
+                            cursorColor = MoonTheme.customColors.logCardOnBg,
+                            focusedTextColor = MoonTheme.customColors.logCardOnBg,
+                            unfocusedTextColor = MoonTheme.customColors.logCardOnBg
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        maxLines = 10,
+                        readOnly = isListening // Prevent typing while voice recording
+                    )
+                }
             }
         }
     }

@@ -26,23 +26,45 @@ import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 
+import com.diary.moonpage.core.util.SpeechToTextManager
+import dagger.hilt.android.qualifiers.ApplicationContext
+import com.diary.moonpage.core.di.ApplicationScope
+import kotlinx.coroutines.Job
+
+import com.diary.moonpage.domain.repository.ThemeRepository
+import com.diary.moonpage.core.util.ThemePreferencesManager
+import com.diary.moonpage.domain.repository.UserRepository
+import com.diary.moonpage.core.util.TokenManager
+import com.diary.moonpage.domain.repository.StatisticsRepository
+import com.diary.moonpage.domain.repository.MomentRepository
+import com.diary.moonpage.domain.usecase.notification.CheckAndTriggerNotificationsUseCase
+import com.diary.moonpage.core.util.HealthConnectManager
+import android.content.Context
+import kotlinx.coroutines.CoroutineScope
+
+import com.diary.moonpage.data.remote.api.SpotifyApi
+
+import com.diary.moonpage.core.util.LanguagePreferencesManager
+
 @HiltViewModel
 class DailyLogViewModel @Inject constructor(
     private val repository: DailyLogRepository,
-    private val themeRepository: com.diary.moonpage.domain.repository.ThemeRepository,
+    private val themeRepository: ThemeRepository,
     private val weatherRepository: WeatherRepository,
     private val locationTracker: LocationTracker,
     private val activityPreferencesManager: ActivityPreferencesManager,
-    private val themePreferencesManager: com.diary.moonpage.core.util.ThemePreferencesManager,
-    private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
-    private val tokenManager: com.diary.moonpage.core.util.TokenManager,
-    private val statisticsRepository: com.diary.moonpage.domain.repository.StatisticsRepository,
-    private val spotifyApi: com.diary.moonpage.data.remote.api.SpotifyApi,
-    private val momentRepository: com.diary.moonpage.domain.repository.MomentRepository,
-    private val checkAndTriggerNotificationsUseCase: com.diary.moonpage.domain.usecase.notification.CheckAndTriggerNotificationsUseCase,
-    @com.diary.moonpage.core.di.ApplicationScope private val applicationScope: kotlinx.coroutines.CoroutineScope,
-    val healthConnectManager: com.diary.moonpage.core.util.HealthConnectManager,
-    @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context
+    private val themePreferencesManager: ThemePreferencesManager,
+    private val userRepository: UserRepository,
+    private val tokenManager: TokenManager,
+    private val statisticsRepository: StatisticsRepository,
+    private val spotifyApi: SpotifyApi,
+    private val momentRepository: MomentRepository,
+    private val checkAndTriggerNotificationsUseCase: CheckAndTriggerNotificationsUseCase,
+    @ApplicationScope private val applicationScope: CoroutineScope,
+    val healthConnectManager: HealthConnectManager,
+    @ApplicationContext private val context: Context,
+    private val speechToTextManager: SpeechToTextManager,
+    private val languagePreferencesManager: LanguagePreferencesManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DailyLogUiState())
@@ -52,6 +74,7 @@ class DailyLogViewModel @Inject constructor(
     val uiEffect: SharedFlow<DailyLogUiEffect> = _uiEffect.asSharedFlow()
 
     private val currentDate = MutableStateFlow<LocalDate?>(null)
+    private var listeningJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -558,6 +581,56 @@ class DailyLogViewModel @Inject constructor(
             }
             DailyLogUiEvent.OnLocationPermissionGranted -> {
                 autoFetchWeather(_uiState.value.date)
+            }
+            DailyLogUiEvent.OnToggleListening -> {
+                toggleListening()
+            }
+        }
+    }
+
+    private fun toggleListening() {
+        if (_uiState.value.isListening) {
+            listeningJob?.cancel()
+            _uiState.update { it.copy(isListening = false) }
+        } else {
+            listeningJob?.cancel()
+            listeningJob = viewModelScope.launch {
+                val currentLang = languagePreferencesManager.languageCode.first()
+                val systemLocales = context.resources.configuration.locales
+                val isSystemVi = (0 until systemLocales.size()).any { systemLocales.get(it).language == "vi" }
+                
+                // Prioritize app setting, fallback to system locale
+                val sttLang = if (currentLang == "vi" || isSystemVi) "vi-VN" else "en-US"
+                
+                speechToTextManager.startListening(sttLang).collect { state ->
+                    when (state) {
+                        is SpeechToTextManager.SpeechState.Listening -> {
+                            _uiState.update { it.copy(isListening = true) }
+                        }
+                        is SpeechToTextManager.SpeechState.Partial -> {
+                            _uiState.update { it.copy(partialNoteText = state.text) }
+                        }
+                        is SpeechToTextManager.SpeechState.Success -> {
+                            val newText = if (_uiState.value.noteText.isEmpty()) {
+                                state.text
+                            } else {
+                                "${_uiState.value.noteText}\n${state.text}"
+                            }
+                            _uiState.update { 
+                                it.copy(
+                                    noteText = newText, 
+                                    partialNoteText = "", 
+                                    isListening = false 
+                                ) 
+                            }
+                        }
+                        is SpeechToTextManager.SpeechState.Error -> {
+                            _uiState.update { it.copy(isListening = false, partialNoteText = "") }
+                            _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(state.message))
+                        }
+                        else -> {}
+                    }
+                }
             }
         }
     }

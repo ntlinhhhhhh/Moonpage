@@ -38,4 +38,5 @@ sealed class DailyLogUiEvent {
     data class OnPhotoZoom(val imageUrl: String?) : DailyLogUiEvent()
     object DismissMessage : DailyLogUiEvent()
     object OnLocationPermissionGranted : DailyLogUiEvent()
+    object OnToggleListening : DailyLogUiEvent()
 }
