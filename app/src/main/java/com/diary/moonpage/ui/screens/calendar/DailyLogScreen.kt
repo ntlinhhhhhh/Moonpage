@@ -59,6 +59,7 @@ import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.core.util.normalizeAppImageUrl
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.components.feedback.MoonDeleteConfirmDialog
+import com.diary.moonpage.ui.components.media.PhotoFullscreenPreview
 import com.diary.moonpage.core.theme.MoonTheme
 import com.diary.moonpage.core.theme.MoonThemeType
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -236,14 +237,10 @@ fun DailyLogRoute(
     )
 
     if (uiState.zoomImageUrl != null) {
-        com.diary.moonpage.ui.screens.moment.components.MomentZoomOverlay(
+        PhotoFullscreenPreview(
             imageUrl = uiState.zoomImageUrl!!,
             localPath = null,
-            onDismiss = { viewModel.onEvent(DailyLogUiEvent.OnPhotoZoom(null)) },
-            onShare = {
-                // For now, share is handled via the main bottom bar,
-                // but we can add logic here if needed.
-            }
+            onDismiss = { viewModel.onEvent(DailyLogUiEvent.OnPhotoZoom(null)) }
         )
     }
 

@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.ZoneOffset
 import javax.inject.Inject
 
@@ -22,6 +23,7 @@ data class GalleryPhotoItem(
     val imageUrl: String,
     val localPath: String? = null,
     val sortInstant: Instant,
+    val date: LocalDate,
     val momentId: String? = null,
     val dailyLogDate: String? = null
 )
@@ -50,19 +52,22 @@ class GalleryViewModel @Inject constructor(
             ) { moments, localPaths, dailyLogs ->
                 val momentItems = moments.mapNotNull { moment ->
                     val imageUrl = normalizeAppImageUrl(moment.imageUrl) ?: return@mapNotNull null
+                    val sortInstant = runCatching { Instant.parse(moment.capturedAt) }.getOrElse { Instant.EPOCH }
                     GalleryPhotoItem(
                         id = "moment_${moment.id}",
                         imageUrl = imageUrl,
                         localPath = localPaths[moment.id] ?: localPaths[moment.imageUrl],
-                        sortInstant = runCatching { Instant.parse(moment.capturedAt) }.getOrElse { Instant.EPOCH },
+                        sortInstant = sortInstant,
+                        date = sortInstant.atZone(ZoneId.systemDefault()).toLocalDate(),
                         momentId = moment.id
                     )
                 }
 
                 val dailyLogItems = dailyLogs.flatMap { log ->
+                    val logDate = runCatching { LocalDate.parse(log.date) }.getOrElse { LocalDate.now() }
                     val sortInstant = runCatching {
                         log.createdAt?.let(Instant::parse)
-                            ?: LocalDate.parse(log.date).atTime(23, 59, 59).toInstant(ZoneOffset.UTC)
+                            ?: logDate.atTime(23, 59, 59).toInstant(ZoneOffset.UTC)
                     }.getOrElse { Instant.EPOCH }
 
                     log.dailyPhotos.orEmpty().mapIndexedNotNull { index, photoUrl ->
@@ -71,6 +76,7 @@ class GalleryViewModel @Inject constructor(
                             id = "dailylog_${log.id}_$index",
                             imageUrl = normalizedUrl,
                             sortInstant = sortInstant,
+                            date = logDate,
                             dailyLogDate = log.date
                         )
                     }

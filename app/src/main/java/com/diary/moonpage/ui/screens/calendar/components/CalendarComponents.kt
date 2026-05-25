@@ -337,6 +337,7 @@ fun DayDetailArea(
     musicRecord: String? = null,
     weather: String? = null,
     temperature: Double? = null,
+    onPhotoClick: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val cs = MaterialTheme.colorScheme
@@ -594,6 +595,7 @@ fun DayDetailArea(
                                 .size(110.dp)
                                 .clip(RoundedCornerShape(16.dp))
                                 .background(cs.onSurface.copy(alpha = 0.05f))
+                                .clickable { onPhotoClick(photoUrl) }
                         ) {
                             coil.compose.AsyncImage(
                                 model = imageRequest,
@@ -694,7 +696,8 @@ fun DayDetailBottomSheet(
     onDismiss: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
-    onShare: () -> Unit
+    onShare: () -> Unit,
+    onPhotoClick: (String) -> Unit = {}
 ) {
     val cs = MaterialTheme.colorScheme
     ModalBottomSheet(
@@ -733,7 +736,8 @@ fun DayDetailBottomSheet(
                     steps = steps,
                     musicRecord = musicRecord,
                     weather = weather,
-                    temperature = temperature
+                    temperature = temperature,
+                    onPhotoClick = onPhotoClick
                 )
             }
 

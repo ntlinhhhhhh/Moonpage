@@ -3,17 +3,15 @@ package com.diary.moonpage.ui.screens.profile
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material.icons.rounded.BrokenImage
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,8 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -36,6 +32,9 @@ import coil.request.ImageRequest
 import coil.size.Scale
 import coil.size.Size
 import com.diary.moonpage.R
+import com.diary.moonpage.ui.components.media.PhotoFullscreenPreview
+import java.time.format.DateTimeFormatter
+
 @Composable
 fun GalleryScreen(
     onNavigateBack: () -> Unit,
@@ -65,6 +64,10 @@ fun GalleryScreenContent(
     val isLoading = uiState.isLoading
     val backText = stringResource(R.string.back)
     val galleryItems = uiState.items
+    val groupedGalleryItems = remember(galleryItems) {
+        galleryItems.groupBy { it.date }.toList().sortedByDescending { it.first }
+    }
+    val dateFormatter = remember { DateTimeFormatter.ofPattern("d/M/yyyy") }
     var previewItem by remember { mutableStateOf<GalleryPhotoItem?>(null) }
 
     Scaffold(
@@ -129,20 +132,34 @@ fun GalleryScreenContent(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(
-                        items = galleryItems,
-                        key = { it.id }
-                    ) { item ->
-                        GalleryItem(
-                            url = item.imageUrl,
-                            localPath = item.localPath,
-                            onClick = {
-                                when {
-                                    item.momentId != null -> onNavigateToMomentDetail(item.momentId)
-                                    item.dailyLogDate != null -> previewItem = item
+                    groupedGalleryItems.forEach { (date, itemsForDate) ->
+                        item(
+                            key = "header_$date",
+                            span = { GridItemSpan(maxLineSpan) }
+                        ) {
+                            Text(
+                                text = date.format(dateFormatter),
+                                color = colorScheme.onBackground.copy(alpha = 0.68f),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(top = 8.dp, bottom = 2.dp)
+                            )
+                        }
+                        items(
+                            items = itemsForDate,
+                            key = { it.id }
+                        ) { item ->
+                            GalleryItem(
+                                url = item.imageUrl,
+                                localPath = item.localPath,
+                                onClick = {
+                                    when {
+                                        item.momentId != null -> onNavigateToMomentDetail(item.momentId)
+                                        item.dailyLogDate != null -> previewItem = item
+                                    }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }
@@ -150,8 +167,8 @@ fun GalleryScreenContent(
     }
 
     previewItem?.let { item ->
-        DailyLogGalleryFullscreenPreview(
-            url = item.imageUrl,
+        PhotoFullscreenPreview(
+            imageUrl = item.imageUrl,
             localPath = item.localPath,
             onDismiss = { previewItem = null }
         )
@@ -227,85 +244,3 @@ fun GalleryItem(
     }
 }
 
-@Composable
-private fun DailyLogGalleryFullscreenPreview(
-    url: String,
-    localPath: String?,
-    onDismiss: () -> Unit
-) {
-    val context = LocalContext.current
-    val imageData = remember(localPath, url) {
-        if (localPath != null && java.io.File(localPath).exists()) java.io.File(localPath) else url
-    }
-    var scale by remember { mutableFloatStateOf(1f) }
-    var offset by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
-    val backgroundColor = MaterialTheme.colorScheme.background
-
-    Surface(
-        modifier = Modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onDoubleTap = {
-                        if (scale > 1f) {
-                            scale = 1f
-                            offset = androidx.compose.ui.geometry.Offset.Zero
-                        } else {
-                            scale = 2.5f
-                        }
-                    }
-                )
-            },
-        color = backgroundColor
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            AsyncImage(
-                model = remember(imageData) {
-                    ImageRequest.Builder(context)
-                        .data(imageData)
-                        .crossfade(true)
-                        .build()
-                },
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer(
-                        scaleX = scale,
-                        scaleY = scale,
-                        translationX = offset.x,
-                        translationY = offset.y
-                    )
-                    .pointerInput(Unit) {
-                        detectTransformGestures { _, pan, zoom, _ ->
-                            val nextScale = (scale * zoom).coerceIn(1f, 5f)
-                            scale = nextScale
-                            offset = if (nextScale > 1f) {
-                                offset + pan
-                            } else {
-                                androidx.compose.ui.geometry.Offset.Zero
-                            }
-                        }
-                    },
-                contentScale = ContentScale.Fit
-            )
-
-            IconButton(
-                onClick = onDismiss,
-                modifier = Modifier
-                    .statusBarsPadding()
-                    .padding(16.dp)
-                    .align(Alignment.TopStart)
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f), androidx.compose.foundation.shape.CircleShape)
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Close,
-                    contentDescription = stringResource(R.string.close),
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
-        }
-    }
-}

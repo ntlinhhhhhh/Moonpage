@@ -2,6 +2,7 @@ package com.diary.moonpage.ui.screens.calendar
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -44,6 +45,7 @@ import java.time.format.TextStyle
 import java.util.*
 import com.diary.moonpage.ui.screens.moment.components.DashedDivider
 import com.diary.moonpage.core.theme.MoonTheme
+import com.diary.moonpage.ui.components.media.PhotoFullscreenPreview
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,6 +60,7 @@ fun ShareLogRoute(
     val snackbarHostState = remember { SnackbarHostState() }
     val graphicsLayer = rememberGraphicsLayer()
     val isDark = MoonTheme.customColors.isDark
+    var previewPhotoUrl by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(dateString) {
         viewModel.setInitialDate(LocalDate.parse(dateString))
@@ -176,17 +179,30 @@ fun ShareLogRoute(
                             drawLayer(graphicsLayer)
                         }
                 ) {
-                    ShareLogCard(uiState = uiState)
+                    ShareLogCard(
+                        uiState = uiState,
+                        onPhotoClick = { previewPhotoUrl = it }
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(40.dp))
             }
         }
     }
+
+    previewPhotoUrl?.let { photoUrl ->
+        PhotoFullscreenPreview(
+            imageUrl = photoUrl,
+            onDismiss = { previewPhotoUrl = null }
+        )
+    }
 }
 
 @Composable
-fun ShareLogCard(uiState: DailyLogUiState) {
+fun ShareLogCard(
+    uiState: DailyLogUiState,
+    onPhotoClick: (String) -> Unit = {}
+) {
     val date = uiState.date
     val themeType = uiState.themeType
     val isDark = MoonTheme.customColors.isDark
@@ -426,7 +442,8 @@ fun ShareLogCard(uiState: DailyLogUiState) {
                                 contentDescription = null,
                                 modifier = Modifier
                                     .size(90.dp)
-                                    .clip(RoundedCornerShape(12.dp)),
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable { onPhotoClick(photoUrl) },
                                 contentScale = ContentScale.Crop
                             )
                             if (colIndex < chunk.size - 1) Spacer(modifier = Modifier.width(8.dp))

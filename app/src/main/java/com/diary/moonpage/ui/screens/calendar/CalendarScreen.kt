@@ -31,6 +31,7 @@ import com.diary.moonpage.core.util.MoonIcon
 import com.diary.moonpage.ui.screens.calendar.components.*
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.components.feedback.MoonDeleteConfirmDialog
+import com.diary.moonpage.ui.components.media.PhotoFullscreenPreview
 import com.diary.moonpage.ui.components.refresh.MoonPullToRefreshBox
 import androidx.compose.ui.res.stringResource
 import com.diary.moonpage.R
@@ -107,6 +108,7 @@ fun CalendarScreen(
 ) {
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var dateToDelete by remember { mutableStateOf<LocalDate?>(null) }
+    var previewPhotoUrl by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val futureDateError = stringResource(R.string.future_date_error)
 
@@ -252,7 +254,8 @@ fun CalendarScreen(
                                             uiState.selectedDate?.let { date ->
                                                 onNavigateToShareLog(date.toString())
                                             }
-                                        }
+                                        },
+                                        onPhotoClick = { previewPhotoUrl = it }
                                     )
                                 }
 
@@ -274,7 +277,8 @@ fun CalendarScreen(
                                                     showDeleteConfirmDialog = true
                                                 },
                                                 onShareLog = { date -> onNavigateToShareLog(date.toString()) },
-                                                onAddLog = { date -> onNavigateToDailyLog(date.toString()) }
+                                                onAddLog = { date -> onNavigateToDailyLog(date.toString()) },
+                                                onPhotoClick = { previewPhotoUrl = it }
                                             )
                                         }                    }
                 }
@@ -339,6 +343,13 @@ fun CalendarScreen(
             }
         )
     }
+
+    previewPhotoUrl?.let { photoUrl ->
+        PhotoFullscreenPreview(
+            imageUrl = photoUrl,
+            onDismiss = { previewPhotoUrl = null }
+        )
+    }
 }
 
 @Composable
@@ -396,7 +407,8 @@ fun CalendarSelectedLogDetail(
     customMoods: Map<Int, MoonIcon>? = null,
     onEditLog: (LocalDate) -> Unit,
     onDeleteLog: (LocalDate) -> Unit,
-    onShareClick: () -> Unit
+    onShareClick: () -> Unit,
+    onPhotoClick: (String) -> Unit = {}
 ) {
     val date = selectedDate ?: return
     val selectedLog = dailyLogs[date] ?: return
@@ -453,7 +465,8 @@ fun CalendarSelectedLogDetail(
                 steps = selectedLog.steps,
                 musicRecord = selectedLog.musicRecord,
                 weather = selectedLog.weather,
-                temperature = selectedLog.temperature
+                temperature = selectedLog.temperature,
+                onPhotoClick = onPhotoClick
             )
         }
     }
@@ -470,7 +483,8 @@ fun TimelineView(
     onEditLog: (LocalDate) -> Unit,
     onDeleteLog: (LocalDate) -> Unit,
     onShareLog: (LocalDate) -> Unit,
-    onAddLog: (LocalDate) -> Unit
+    onAddLog: (LocalDate) -> Unit,
+    onPhotoClick: (String) -> Unit = {}
 ) {
     val filteredLogs = remember(dailyLogs, selectedFilters) {
         dailyLogs.values.filter { log ->
@@ -549,7 +563,8 @@ fun TimelineView(
                     menstruationDay = menstruationDays[date],
                     onEdit = { onEditLog(date) },
                     onDelete = { onDeleteLog(date) },
-                    onShare = { onShareLog(date) }
+                    onShare = { onShareLog(date) },
+                    onPhotoClick = onPhotoClick
                 )
             }
         }
@@ -566,7 +581,8 @@ fun TimelineItem(
     menstruationDay: Int?,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
-    onShare: () -> Unit
+    onShare: () -> Unit,
+    onPhotoClick: (String) -> Unit = {}
 ) {
     val cs = MaterialTheme.colorScheme
     
@@ -627,7 +643,8 @@ fun TimelineItem(
                 steps = log.steps,
                 musicRecord = log.musicRecord,
                 weather = log.weather,
-                temperature = log.temperature
+                temperature = log.temperature,
+                onPhotoClick = onPhotoClick
             )
         }
     }
