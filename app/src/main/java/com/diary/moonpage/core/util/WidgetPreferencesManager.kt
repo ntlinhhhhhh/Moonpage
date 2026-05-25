@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import com.diary.moonpage.widget.glance.MoonpageWidgets
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -50,14 +51,19 @@ class WidgetPreferencesManager(
     // Weekly Mood Flows
     val showWeeklyMoodDates: Flow<Boolean> = context.widgetSettingsDataStore.data.map { it[SHOW_WEEKLY_MOOD_DATES_KEY] ?: true }
 
-    suspend fun setShowDailyStreak(show: Boolean) = context.widgetSettingsDataStore.edit { it[SHOW_DAILY_STREAK_KEY] = show }
-    suspend fun setShowDailyNote(show: Boolean) = context.widgetSettingsDataStore.edit { it[SHOW_DAILY_NOTE_KEY] = show }
-    suspend fun setShowDailyStats(show: Boolean) = context.widgetSettingsDataStore.edit { it[SHOW_DAILY_STATS_KEY] = show }
+    suspend fun setShowDailyStreak(show: Boolean) = updatePreference { it[SHOW_DAILY_STREAK_KEY] = show }
+    suspend fun setShowDailyNote(show: Boolean) = updatePreference { it[SHOW_DAILY_NOTE_KEY] = show }
+    suspend fun setShowDailyStats(show: Boolean) = updatePreference { it[SHOW_DAILY_STATS_KEY] = show }
 
-    suspend fun setShowPhotoStreak(show: Boolean) = context.widgetSettingsDataStore.edit { it[SHOW_PHOTO_STREAK_KEY] = show }
-    suspend fun setPhotoDisplayMode(mode: String) = context.widgetSettingsDataStore.edit { it[PHOTO_DISPLAY_MODE_KEY] = mode }
-    
-    suspend fun setShowMonthlyMoodGrid(show: Boolean) = context.widgetSettingsDataStore.edit { it[SHOW_MONTHLY_MOOD_GRID_KEY] = show }
-    suspend fun setShowQuickMoodLabels(show: Boolean) = context.widgetSettingsDataStore.edit { it[SHOW_QUICK_MOOD_LABELS_KEY] = show }
-    suspend fun setShowWeeklyMoodDates(show: Boolean) = context.widgetSettingsDataStore.edit { it[SHOW_WEEKLY_MOOD_DATES_KEY] = show }
+    suspend fun setShowPhotoStreak(show: Boolean) = updatePreference { it[SHOW_PHOTO_STREAK_KEY] = show }
+    suspend fun setPhotoDisplayMode(mode: String) = updatePreference { it[PHOTO_DISPLAY_MODE_KEY] = mode }
+
+    suspend fun setShowMonthlyMoodGrid(show: Boolean) = updatePreference { it[SHOW_MONTHLY_MOOD_GRID_KEY] = show }
+    suspend fun setShowQuickMoodLabels(show: Boolean) = updatePreference { it[SHOW_QUICK_MOOD_LABELS_KEY] = show }
+    suspend fun setShowWeeklyMoodDates(show: Boolean) = updatePreference { it[SHOW_WEEKLY_MOOD_DATES_KEY] = show }
+
+    private suspend fun updatePreference(update: (MutablePreferences) -> Unit) {
+        context.widgetSettingsDataStore.edit(update)
+        MoonpageWidgets.refreshAll(context.applicationContext)
+    }
 }
