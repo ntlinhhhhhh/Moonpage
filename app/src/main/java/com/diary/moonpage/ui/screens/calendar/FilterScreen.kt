@@ -332,11 +332,16 @@ fun SelectedItemDisplay(item: FilterItem, themeType: com.diary.moonpage.core.the
     when (item) {
         is FilterItem.Mood -> {
             val visual = MoonIcons.Moods.getMoodVisual(item.id, themeType)
+            val moodColor = if (isActuallyDark) {
+                MoonIcons.brightenMoodColorForDarkMode(visual.color, amount = 0.32f)
+            } else {
+                visual.color
+            }
             Box(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(CircleShape)
-                    .background(visual.color),
+                    .background(moodColor),
                 contentAlignment = Alignment.Center
             ) {
                 if (visual.drawableRes != null) {
@@ -411,13 +416,18 @@ fun MoodFilterItem(
     onClick: () -> Unit
 ) {
     val isActuallyDark = MaterialTheme.colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
+    val moodColor = if (isActuallyDark) {
+        MoonIcons.brightenMoodColorForDarkMode(visual.color, amount = 0.32f)
+    } else {
+        visual.color
+    }
     
     val bg = if (isActuallyDark) {
-        val dimmedBg = Color(0xFF262626)
-        if (isSelected) visual.color else dimmedBg
+        val dimmedBg = Color(0xFF3A3A3A)
+        if (isSelected) moodColor else dimmedBg
     } else {
         val dimmedBg = Color(0xFFF2F2F2)
-        if (isSelected) visual.color else dimmedBg
+        if (isSelected) moodColor else dimmedBg
     }
 
     Box(
@@ -425,6 +435,13 @@ fun MoodFilterItem(
             .size(56.dp)
             .clip(CircleShape)
             .background(bg)
+            .then(
+                if (isSelected) {
+                    Modifier.border(1.5.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                } else {
+                    Modifier
+                }
+            )
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
@@ -468,7 +485,7 @@ fun SpecialFilterItem(
             .height(48.dp)
             .clip(RoundedCornerShape(24.dp))
             .background(bg)
-            .then(if (isSelected && !isActuallyDark) Modifier.border(1.5.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(24.dp)) else Modifier)
+            .then(if (isSelected) Modifier.border(1.5.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(24.dp)) else Modifier)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
@@ -504,6 +521,7 @@ fun ActivityFilterGrid(
     ) {
         items.forEach { item ->
             val isSelected = selectedItems.any { it.id == item.id }
+            val iconAlpha = if (isSelected) 1f else 0.4f
             val icon = MoonIcons.getIconForActivity(item.name)
             
             val bg = if (isActuallyDark) {
@@ -520,7 +538,7 @@ fun ActivityFilterGrid(
                     .size(52.dp)
                     .clip(CircleShape)
                     .background(bg)
-                    .then(if (isSelected && !isActuallyDark) Modifier.border(1.5.dp, MaterialTheme.colorScheme.primary, CircleShape) else Modifier)
+                    .then(if (isSelected) Modifier.border(1.5.dp, MaterialTheme.colorScheme.primary, CircleShape) else Modifier)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
@@ -533,13 +551,13 @@ fun ActivityFilterGrid(
                         contentDescription = item.name,
                         modifier = Modifier
                             .size(32.dp)
-                            .then(if (isAnySelected && !isSelected) Modifier.alpha(0.4f) else Modifier)
+                            .alpha(iconAlpha)
                     )
                 } else if (icon.vector != null) {
                     Icon(
                         icon.vector,
                         contentDescription = item.name,
-                        tint = if (isAnySelected && !isSelected) icon.color.copy(alpha = 0.4f) else icon.color,
+                        tint = icon.color.copy(alpha = iconAlpha),
                         modifier = Modifier.size(24.dp)
                     )
                 }

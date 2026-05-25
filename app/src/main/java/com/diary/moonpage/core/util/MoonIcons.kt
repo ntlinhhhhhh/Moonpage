@@ -38,6 +38,17 @@ data class MoonIcon(
 )
 
 object MoonIcons {
+    fun brightenMoodColorForDarkMode(color: Color, amount: Float = 0.24f): Color {
+        if (color == Color.Unspecified) return color
+        val safeAmount = amount.coerceIn(0f, 1f)
+        return Color(
+            red = (color.red + (1f - color.red) * safeAmount).coerceIn(0f, 1f),
+            green = (color.green + (1f - color.green) * safeAmount).coerceIn(0f, 1f),
+            blue = (color.blue + (1f - color.blue) * safeAmount).coerceIn(0f, 1f),
+            alpha = color.alpha
+        )
+    }
+
     fun parseThemeColor(value: String?): Color? {
         val raw = value?.trim()?.takeIf { it.isNotEmpty() } ?: return null
         val hex = when {

@@ -149,7 +149,7 @@ fun CalendarTopBar(
                     .padding(4.dp)
             ) {
                 Icon(
-                    imageVector = if (viewMode == CalendarViewMode.CALENDAR) Icons.Rounded.ViewHeadline else Icons.Rounded.CalendarMonth,
+                    imageVector = if (viewMode == CalendarViewMode.CALENDAR) Icons.Rounded.ViewList else Icons.Rounded.CalendarMonth,
                     contentDescription = stringResource(R.string.calendar_switch_view),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(28.dp)
@@ -1294,6 +1294,7 @@ fun FilterBottomSheet(
     onDismiss: () -> Unit
 ) {
     val cs = MaterialTheme.colorScheme
+    val isActuallyDark = cs.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = cs.surface,
@@ -1348,11 +1349,24 @@ fun FilterBottomSheet(
                 moods.forEach { moodId ->
                     val isSelected = selectedMoodIds.contains(moodId)
                     val visual = MoonIcons.Moods.getMoodVisual(moodId, themeType)
+                    val moodColor = if (isActuallyDark) {
+                        MoonIcons.brightenMoodColorForDarkMode(visual.color, amount = 0.32f)
+                    } else {
+                        visual.color
+                    }
                     Box(
                         modifier = Modifier
                             .size(52.dp)
                             .clip(CircleShape)
-                            .background(if (isSelected) visual.color else visual.color.copy(alpha = 0.12f))
+                            .background(
+                                if (isSelected) {
+                                    moodColor
+                                } else if (isActuallyDark) {
+                                    Color(0xFF3A3A3A)
+                                } else {
+                                    moodColor.copy(alpha = 0.12f)
+                                }
+                            )
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null

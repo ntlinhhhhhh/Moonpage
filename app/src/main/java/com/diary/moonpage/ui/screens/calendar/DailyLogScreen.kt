@@ -14,6 +14,7 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -852,18 +853,29 @@ private fun DailyMoodSection(
             ) {
                 val isAnyMoodSelected = selectedMood != null && selectedMood != 0
                 val isActuallyDark = MaterialTheme.colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
-                val unselectedMoodBg = if (isActuallyDark) Color(0xFF262626) else Color(0xFFF2F2F2)
+                val unselectedMoodBg = if (isActuallyDark) Color(0xFF3A3A3A) else Color(0xFFF2F2F2)
 
                 (5 downTo 1).forEach { id ->
                     val isSelected = selectedMood == id
                     val moodVisual = MoonIcons.Moods.getMoodVisual(id, themeType, customMoods)
-                    val moodColor = moodVisual.color
+                    val moodColor = if (isActuallyDark) {
+                        MoonIcons.brightenMoodColorForDarkMode(moodVisual.color)
+                    } else {
+                        moodVisual.color
+                    }
                     val tutorialController = LocalTutorialController.current
                     Box(
                         modifier = Modifier.size(54.dp).clip(CircleShape)
                             .background(
                                 if (isSelected) moodColor
                                 else unselectedMoodBg
+                            )
+                            .then(
+                                if (isSelected) {
+                                    Modifier.border(1.5.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                                } else {
+                                    Modifier
+                                }
                             )
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
@@ -1066,7 +1078,6 @@ fun DailyLogGrid(
     selectedIds: List<String>,
     onItemClick: (String) -> Unit
 ) {
-    val isAnySelected = selectedIds.isNotEmpty()
     val isActuallyDark = MaterialTheme.colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
 
     Column(
@@ -1080,6 +1091,7 @@ fun DailyLogGrid(
             ) {
                 rowItems.forEach { item ->
                     val isSelected = selectedIds.contains(item.id)
+                    val itemContentAlpha = if (isSelected) 1f else 0.4f
                     val itemBg = if (isActuallyDark) {
                         if (isSelected) Color(0xFF404040) else MoonTheme.customColors.logItemBg
                     } else {
@@ -1095,6 +1107,13 @@ fun DailyLogGrid(
                                 .size(54.dp)
                                 .clip(CircleShape)
                                 .background(itemBg)
+                                .then(
+                                    if (isSelected) {
+                                        Modifier.border(1.5.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                                    } else {
+                                        Modifier
+                                    }
+                                )
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null
@@ -1109,13 +1128,13 @@ fun DailyLogGrid(
                                     contentDescription = null,
                                     modifier = Modifier
                                         .size(28.dp)
-                                        .then(if (isAnySelected && !isSelected) Modifier.alpha(0.4f) else Modifier)
+                                        .alpha(itemContentAlpha)
                                 )
                             } else if (item.icon.vector != null) {
                                 Icon(
                                     item.icon.vector,
                                     contentDescription = null,
-                                    tint = if (isAnySelected && !isSelected) item.icon.color.copy(alpha = 0.4f) else item.icon.color,
+                                    tint = item.icon.color.copy(alpha = itemContentAlpha),
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
@@ -1123,7 +1142,7 @@ fun DailyLogGrid(
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             item.label,
-                            color = MoonTheme.customColors.logCardOnBg.copy(alpha = if (isSelected) 1f else 0.7f),
+                            color = MoonTheme.customColors.logCardOnBg.copy(alpha = if (isSelected) 1f else 0.45f),
                             style = MaterialTheme.typography.bodySmall,
                             fontSize = 11.sp,
                             maxLines = 1,
