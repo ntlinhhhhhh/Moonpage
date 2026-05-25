@@ -95,7 +95,7 @@ fun WeeklyMoodWidgetEditScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(20.dp)
         ) {
-            WeeklyMoodWidgetPreview()
+            WeeklyMoodWidgetPreview(showDates = uiState.showDates)
             Spacer(modifier = Modifier.height(20.dp))
             SwitchSettingItem(
                 title = "Show dates",

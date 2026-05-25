@@ -96,7 +96,7 @@ fun QuickMoodWidgetEditScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(20.dp)
         ) {
-            QuickMoodWidgetPreview()
+            QuickMoodWidgetPreview(showLabels = uiState.showLabels)
             Spacer(modifier = Modifier.height(20.dp))
             SwitchSettingItem(
                 title = "Show labels",

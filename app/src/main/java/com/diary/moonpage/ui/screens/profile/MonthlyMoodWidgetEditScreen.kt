@@ -95,7 +95,7 @@ fun MonthlyMoodWidgetEditScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(20.dp)
         ) {
-            MonthlyMoodWidgetPreview()
+            MonthlyMoodWidgetPreview(showGrid = uiState.showGrid)
             Spacer(modifier = Modifier.height(20.dp))
             SwitchSettingItem(
                 title = "Show grid",
