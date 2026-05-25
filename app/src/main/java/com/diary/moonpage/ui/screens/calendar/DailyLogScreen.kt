@@ -34,6 +34,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
@@ -55,7 +56,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.core.util.MoonIcon
 import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.core.util.normalizeAppImageUrl
-import androidx.compose.ui.graphics.ColorFilter
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.components.feedback.MoonDeleteConfirmDialog
 import com.diary.moonpage.core.theme.MoonTheme
@@ -850,6 +850,10 @@ private fun DailyMoodSection(
                 modifier = Modifier.fillMaxWidth().tutorialTarget(TutorialStep.HighlightMoodSelection), 
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                val isAnyMoodSelected = selectedMood != null && selectedMood != 0
+                val isActuallyDark = MaterialTheme.colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
+                val unselectedMoodBg = if (isActuallyDark) Color(0xFF262626) else Color(0xFFF2F2F2)
+
                 (5 downTo 1).forEach { id ->
                     val isSelected = selectedMood == id
                     val moodVisual = MoonIcons.Moods.getMoodVisual(id, themeType, customMoods)
@@ -859,7 +863,7 @@ private fun DailyMoodSection(
                         modifier = Modifier.size(54.dp).clip(CircleShape)
                             .background(
                                 if (isSelected) moodColor
-                                else moodColor.copy(alpha = 0.2f)
+                                else unselectedMoodBg
                             )
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
@@ -873,7 +877,9 @@ private fun DailyMoodSection(
                             Image(
                                 painter = painterResource(id = moodVisual.drawableRes),
                                 contentDescription = moodVisual.name,
-                                modifier = Modifier.size(if (isSelected) 38.dp else 32.dp)
+                                modifier = Modifier
+                                    .size(if (isSelected) 38.dp else 32.dp)
+                                    .then(if (isAnyMoodSelected && !isSelected) Modifier.alpha(0.4f) else Modifier)
                             )
                         }
                     }
@@ -1060,6 +1066,9 @@ fun DailyLogGrid(
     selectedIds: List<String>,
     onItemClick: (String) -> Unit
 ) {
+    val isAnySelected = selectedIds.isNotEmpty()
+    val isActuallyDark = MaterialTheme.colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -1071,6 +1080,11 @@ fun DailyLogGrid(
             ) {
                 rowItems.forEach { item ->
                     val isSelected = selectedIds.contains(item.id)
+                    val itemBg = if (isActuallyDark) {
+                        if (isSelected) Color(0xFF404040) else MoonTheme.customColors.logItemBg
+                    } else {
+                        if (isSelected) MoonTheme.customColors.logItemSelect else Color(0xFFF2F2F2)
+                    }
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.width(68.dp)
@@ -1080,7 +1094,7 @@ fun DailyLogGrid(
                             modifier = Modifier
                                 .size(54.dp)
                                 .clip(CircleShape)
-                                .background(if (isSelected) MoonTheme.customColors.logItemSelect else MoonTheme.customColors.logItemBg)
+                                .background(itemBg)
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null
@@ -1094,22 +1108,14 @@ fun DailyLogGrid(
                                     painter = painterResource(id = item.icon.drawableRes),
                                     contentDescription = null,
                                     modifier = Modifier
-                                        .size(28.dp),
-                                    colorFilter = if (isSelected) {
-                                        if (MoonTheme.customColors.logItemIconSelected != Color.Unspecified) ColorFilter.tint(MoonTheme.customColors.logItemIconSelected) else null
-                                    } else {
-                                        ColorFilter.tint(MoonTheme.customColors.logItemIconUnselected)
-                                    }
+                                        .size(28.dp)
+                                        .then(if (isAnySelected && !isSelected) Modifier.alpha(0.4f) else Modifier)
                                 )
                             } else if (item.icon.vector != null) {
                                 Icon(
                                     item.icon.vector,
                                     contentDescription = null,
-                                    tint = if (isSelected) {
-                                        if (MoonTheme.customColors.logItemIconSelected != Color.Unspecified) MoonTheme.customColors.logItemIconSelected else item.icon.color
-                                    } else {
-                                        MoonTheme.customColors.logItemIconUnselected
-                                    },
+                                    tint = if (isAnySelected && !isSelected) item.icon.color.copy(alpha = 0.4f) else item.icon.color,
                                     modifier = Modifier.size(24.dp)
                                 )
                             }

@@ -191,7 +191,7 @@ fun FilterScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    (1..5).forEach { moodId ->
+                    (5 downTo 1).forEach { moodId ->
                         val visual = MoonIcons.Moods.getMoodVisual(moodId, themeType)
                         val isSelected = selectedItems.any { (it as? FilterItem.Mood)?.id == moodId }
                         MoodFilterItem(

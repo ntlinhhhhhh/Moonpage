@@ -1,6 +1,8 @@
 package com.diary.moonpage.ui.screens.auth
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -43,6 +45,11 @@ fun LandingScreen(
 ) {
     val pagerState = rememberPagerState(pageCount = { 4 })
     val scope = rememberCoroutineScope()
+    val slideAnimationSpec = tween<Float>(
+        durationMillis = 520,
+        easing = FastOutSlowInEasing
+    )
+    val settledPage by remember { derivedStateOf { pagerState.settledPage } }
     val isVietnamese = androidx.appcompat.app.AppCompatDelegate.getApplicationLocales()
         .toLanguageTags()
         .startsWith("vi")
@@ -56,8 +63,8 @@ fun LandingScreen(
     val termsPrivacySeparator = stringResource(R.string.terms_privacy_separator)
 
     // Auto-scroll logic: Loops back to start after the last slide
-    LaunchedEffect(pagerState.currentPage) {
-        val duration = when (pagerState.currentPage) {
+    LaunchedEffect(settledPage) {
+        val duration = when (settledPage) {
             0 -> 8000L // Slide 1: Mood Logging (complex animation)
             1 -> 4000L // Slide 2: Beautiful Logging (single screen)
             2 -> 10000L // Slide 3: Monthly Themes (5 themes)
@@ -66,8 +73,11 @@ fun LandingScreen(
         }
         delay(duration)
         scope.launch {
-            val nextPage = (pagerState.currentPage + 1) % 4
-            pagerState.animateScrollToPage(nextPage)
+            val nextPage = (settledPage + 1) % 4
+            pagerState.animateScrollToPage(
+                page = nextPage,
+                animationSpec = slideAnimationSpec
+            )
         }
     }
 
@@ -98,7 +108,16 @@ fun LandingScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // --- CENTRAL CONTENT (Animated Pager) ---
+        LandingSlideIntro(
+            currentPage = settledPage,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // --- CENTRAL PREVIEW BOX (only this part slides) ---
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.weight(1f),
@@ -106,10 +125,10 @@ fun LandingScreen(
         ) { page ->
             Box(modifier = Modifier.fillMaxSize()) {
                 when (page) {
-                    0 -> MoodLoggingSlide(isVisible = pagerState.currentPage == 0)
-                    1 -> PhotoLogSlide(isVisible = pagerState.currentPage == 1)
-                    2 -> AnnualLookBackSlide(isVisible = pagerState.currentPage == 2)
-                    3 -> AdvancedStatsSlide(isVisible = pagerState.currentPage == 3)
+                    0 -> MoodLoggingSlide(isVisible = pagerState.currentPage == 0, showHeader = false)
+                    1 -> PhotoLogSlide(isVisible = pagerState.currentPage == 1, showHeader = false)
+                    2 -> AnnualLookBackSlide(isVisible = pagerState.currentPage == 2, showHeader = false)
+                    3 -> AdvancedStatsSlide(isVisible = pagerState.currentPage == 3, showHeader = false)
                 }
             }
         }
@@ -207,7 +226,10 @@ fun LandingScreen(
                 onClick = {
                     if (pagerState.currentPage < 3) {
                         scope.launch {
-                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                            pagerState.animateScrollToPage(
+                                page = pagerState.currentPage + 1,
+                                animationSpec = slideAnimationSpec
+                            )
                         }
                     } else {
                         onNavigateToRegister()
@@ -241,6 +263,63 @@ fun LandingScreen(
             }
             
             Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+private fun LandingSlideIntro(
+    currentPage: Int,
+    modifier: Modifier = Modifier
+) {
+    val slideTexts = listOf(
+        stringResource(R.string.onboarding_simple_diary_title) to stringResource(R.string.onboarding_simple_diary_desc),
+        stringResource(R.string.onboarding_beautiful_logging_title) to stringResource(R.string.onboarding_beautiful_logging_desc),
+        stringResource(R.string.onboarding_monthly_themes_title) to stringResource(R.string.onboarding_monthly_themes_desc),
+        stringResource(R.string.onboarding_learn_about_you_title) to stringResource(R.string.onboarding_learn_about_you_desc)
+    )
+
+    AnimatedContent(
+        targetState = currentPage.coerceIn(slideTexts.indices),
+        transitionSpec = {
+            fadeIn(
+                animationSpec = tween(
+                    durationMillis = 480,
+                    delayMillis = 180,
+                    easing = FastOutSlowInEasing
+                )
+            ).togetherWith(
+                fadeOut(
+                    animationSpec = tween(
+                        durationMillis = 180,
+                        easing = FastOutSlowInEasing
+                    )
+                )
+            ).using(SizeTransform(clip = false))
+        },
+        contentAlignment = Alignment.Center,
+        label = "landing_slide_intro",
+        modifier = modifier.heightIn(min = 92.dp)
+    ) { page ->
+        val (title, description) = slideTexts[page]
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                textAlign = TextAlign.Center
+            )
         }
     }
 }

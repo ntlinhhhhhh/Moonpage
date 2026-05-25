@@ -43,16 +43,39 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-fun MoodLoggingSlide(isVisible: Boolean) {
+fun MoodLoggingSlide(
+    isVisible: Boolean,
+    showHeader: Boolean = true
+) {
     var step by remember { mutableStateOf(0) }
     var selectedMoodIdx by remember { mutableStateOf(-1) }
     var selectedActivityIdxs by remember { mutableStateOf(setOf<Int>()) }
+    val cardSlideSpec = tween<Float>(
+        durationMillis = 900,
+        easing = FastOutSlowInEasing
+    )
 
     // Positions: -300 (Off top), 0 (Top slot), 165 (Bottom slot), 500 (Off bottom)
-    val moodY = animateFloatAsState(targetValue = when(step) { 0 -> 60f; 1 -> 0f; else -> -300f }, animationSpec = spring(0.8f, Spring.StiffnessMedium))
-    val weatherY = animateFloatAsState(targetValue = when(step) { 0 -> 500f; 1 -> 165f; 2 -> 0f; else -> -300f }, animationSpec = spring(0.8f, Spring.StiffnessMedium))
-    val socialY = animateFloatAsState(targetValue = when(step) { 0, 1 -> 500f; 2 -> 165f; 3 -> 0f; else -> -300f }, animationSpec = spring(0.8f, Spring.StiffnessMedium))
-    val feelingsY = animateFloatAsState(targetValue = when(step) { 0, 1, 2 -> 500f; 3 -> 165f; else -> 165f }, animationSpec = spring(0.8f, Spring.StiffnessMedium))
+    val moodY = animateFloatAsState(
+        targetValue = when (step) { 0 -> 60f; 1 -> 0f; else -> -300f },
+        animationSpec = cardSlideSpec,
+        label = "moodCardY"
+    )
+    val weatherY = animateFloatAsState(
+        targetValue = when (step) { 0 -> 500f; 1 -> 165f; 2 -> 0f; else -> -300f },
+        animationSpec = cardSlideSpec,
+        label = "weatherCardY"
+    )
+    val socialY = animateFloatAsState(
+        targetValue = when (step) { 0, 1 -> 500f; 2 -> 165f; 3 -> 0f; else -> -300f },
+        animationSpec = cardSlideSpec,
+        label = "socialCardY"
+    )
+    val feelingsY = animateFloatAsState(
+        targetValue = when (step) { 0, 1, 2 -> 500f; 3 -> 165f; else -> 165f },
+        animationSpec = cardSlideSpec,
+        label = "feelingsCardY"
+    )
 
     LaunchedEffect(isVisible) {
         if (isVisible) {
@@ -78,16 +101,17 @@ fun MoodLoggingSlide(isVisible: Boolean) {
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(top = 24.dp),
+        modifier = Modifier.fillMaxSize().padding(top = if (showHeader) 24.dp else 0.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        SlideHeader(
-            title = stringResource(R.string.onboarding_simple_diary_title),
-            description = stringResource(R.string.onboarding_simple_diary_desc),
-            isVisible = isVisible
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
+        if (showHeader) {
+            SlideHeader(
+                title = stringResource(R.string.onboarding_simple_diary_title),
+                description = stringResource(R.string.onboarding_simple_diary_desc),
+                isVisible = isVisible
+            )
+            Spacer(modifier = Modifier.height(32.dp))
+        }
 
         Box(modifier = Modifier.fillMaxWidth().weight(1f).clipToBounds()) {
             // Mood Card
@@ -346,15 +370,19 @@ private fun lerp(start: Color, stop: Color, fraction: Float): Color {
 
 // --- SLIDE 2: LOGS & MOMENTS (Refactored to match Slide 1) ---
 @Composable
-fun PhotoLogSlide(isVisible: Boolean) {
-    Column(modifier = Modifier.fillMaxSize().padding(top = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        SlideHeader(
-            title = stringResource(R.string.onboarding_beautiful_logging_title),
-            description = stringResource(R.string.onboarding_beautiful_logging_desc),
-            isVisible = isVisible
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
+fun PhotoLogSlide(
+    isVisible: Boolean,
+    showHeader: Boolean = true
+) {
+    Column(modifier = Modifier.fillMaxSize().padding(top = if (showHeader) 24.dp else 0.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        if (showHeader) {
+            SlideHeader(
+                title = stringResource(R.string.onboarding_beautiful_logging_title),
+                description = stringResource(R.string.onboarding_beautiful_logging_desc),
+                isVisible = isVisible
+            )
+            Spacer(modifier = Modifier.height(32.dp))
+        }
 
         Box(modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 24.dp)) {
             OnboardingDailyLogCard()
@@ -527,7 +555,10 @@ fun getIconForItem(item: String): ImageVector = when (item) {
 
 // --- SLIDE 3: MONTHLY THEMES ---
 @Composable
-fun AnnualLookBackSlide(isVisible: Boolean) {
+fun AnnualLookBackSlide(
+    isVisible: Boolean,
+    showHeader: Boolean = true
+) {
     var activeThemeIdx by remember { mutableStateOf(0) }
     val themes = listOf(
         ThemeData(
@@ -584,20 +615,29 @@ fun AnnualLookBackSlide(isVisible: Boolean) {
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().padding(top = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        SlideHeader(
-            title = stringResource(R.string.onboarding_monthly_themes_title),
-            description = stringResource(R.string.onboarding_monthly_themes_desc),
-            isVisible = isVisible
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
+    Column(modifier = Modifier.fillMaxSize().padding(top = if (showHeader) 24.dp else 0.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        if (showHeader) {
+            SlideHeader(
+                title = stringResource(R.string.onboarding_monthly_themes_title),
+                description = stringResource(R.string.onboarding_monthly_themes_desc),
+                isVisible = isVisible
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+        }
 
         Box(modifier = Modifier.fillMaxWidth().weight(1f).clipToBounds()) {
             AnimatedContent(
                 targetState = activeThemeIdx,
                 transitionSpec = {
-                    (slideInHorizontally { it } + fadeIn()).togetherWith(slideOutHorizontally { -it } + fadeOut())
+                    slideInHorizontally(
+                        animationSpec = tween(durationMillis = 520, easing = FastOutSlowInEasing),
+                        initialOffsetX = { it }
+                    ).togetherWith(
+                        slideOutHorizontally(
+                            animationSpec = tween(durationMillis = 520, easing = FastOutSlowInEasing),
+                            targetOffsetX = { -it }
+                        )
+                    )
                 },
                 label = "theme_slide",
                 modifier = Modifier.fillMaxSize()
@@ -718,7 +758,10 @@ data class ThemeData(
 
 // --- SLIDE 4: LEARN ABOUT YOU ---
 @Composable
-fun AdvancedStatsSlide(isVisible: Boolean) {
+fun AdvancedStatsSlide(
+    isVisible: Boolean,
+    showHeader: Boolean = true
+) {
     var activeFrame by remember { mutableStateOf(0) }
     
     LaunchedEffect(isVisible) {
@@ -732,20 +775,29 @@ fun AdvancedStatsSlide(isVisible: Boolean) {
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().padding(top = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        SlideHeader(
-            title = stringResource(R.string.onboarding_learn_about_you_title),
-            description = stringResource(R.string.onboarding_learn_about_you_desc),
-            isVisible = isVisible
-        )
-
-        Spacer(modifier = Modifier.height(40.dp))
+    Column(modifier = Modifier.fillMaxSize().padding(top = if (showHeader) 24.dp else 0.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        if (showHeader) {
+            SlideHeader(
+                title = stringResource(R.string.onboarding_learn_about_you_title),
+                description = stringResource(R.string.onboarding_learn_about_you_desc),
+                isVisible = isVisible
+            )
+            Spacer(modifier = Modifier.height(40.dp))
+        }
 
         Box(modifier = Modifier.fillMaxWidth().weight(1f).clipToBounds()) {
             AnimatedContent(
                 targetState = activeFrame,
                 transitionSpec = {
-                    (slideInHorizontally { it } + fadeIn()).togetherWith(slideOutHorizontally { -it } + fadeOut())
+                    slideInHorizontally(
+                        animationSpec = tween(durationMillis = 520, easing = FastOutSlowInEasing),
+                        initialOffsetX = { it }
+                    ).togetherWith(
+                        slideOutHorizontally(
+                            animationSpec = tween(durationMillis = 520, easing = FastOutSlowInEasing),
+                            targetOffsetX = { -it }
+                        )
+                    )
                 },
                 label = "stats_slide"
             ) { frameIdx ->
@@ -949,32 +1001,20 @@ fun MoodDistributionFrame(isVisible: Boolean) {
 @Composable
 fun SlideHeader(title: String, description: String, isVisible: Boolean) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        AnimatedVisibility(
-            visible = isVisible,
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center
-            )
-        }
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center
+        )
         Spacer(modifier = Modifier.height(8.dp))
-        AnimatedVisibility(
-            visible = isVisible,
-            enter = fadeIn(tween(600, delayMillis = 200)),
-            exit = fadeOut()
-        ) {
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-                textAlign = TextAlign.Center
-            )
-        }
+        Text(
+            text = description,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+            textAlign = TextAlign.Center
+        )
     }
 }
 
