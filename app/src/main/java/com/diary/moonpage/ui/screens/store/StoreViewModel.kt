@@ -69,7 +69,7 @@ class StoreViewModel @Inject constructor(
 
         viewModelScope.launch {
             themeRepository.myThemes.collect { customThemes ->
-                _uiState.update { it.copy(customThemes = customThemes) }
+                _uiState.update { it.copy(customThemes = customThemes.newestCreatedFirst()) }
             }
         }
     }
@@ -399,6 +399,36 @@ class StoreViewModel @Inject constructor(
 }
 
 const val CUSTOM_THEME_SLOT_PRICE = 250
+
+private fun List<Theme>.newestCreatedFirst(): List<Theme> {
+    return mapIndexed { index, theme -> index to theme }
+        .sortedWith(
+            compareByDescending<Pair<Int, Theme>> { (_, theme) ->
+                theme.customThemeCreatedAtMillis() ?: Long.MIN_VALUE
+            }.thenBy { (index, _) -> index }
+        )
+        .map { (_, theme) -> theme }
+}
+
+private fun Theme.customThemeCreatedAtMillis(): Long? {
+    id.substringAfterLast('_')
+        .toLongOrNull()
+        ?.takeIf { it.isLikelyCustomThemeTimestamp() }
+        ?.let { return it }
+
+    return listOfNotNull(thumbnailUrl, backgroundUrl, description)
+        .asSequence()
+        .flatMap { value ->
+            CUSTOM_THEME_FILE_TIMESTAMP_REGEX.findAll(value)
+                .mapNotNull { match -> match.groupValues.getOrNull(1)?.toLongOrNull() }
+        }
+        .filter { it.isLikelyCustomThemeTimestamp() }
+        .maxOrNull()
+}
+
+private fun Long.isLikelyCustomThemeTimestamp(): Boolean = this >= 1_000_000_000_000L
+
+private val CUSTOM_THEME_FILE_TIMESTAMP_REGEX = Regex("""custom_theme_(?:thumb|bg)_(\d{10,})""")
 
 // Extension to map Theme to MoonThemeType
 fun Theme.toMoonThemeType(): MoonThemeType {

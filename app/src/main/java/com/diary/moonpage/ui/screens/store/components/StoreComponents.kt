@@ -745,21 +745,17 @@ fun getThemeShades(theme: Theme): List<Color> {
         }
     }
 
-    // Attempt to parse from description JSON (for custom themes)
-    if (!theme.description.isNullOrBlank() && theme.id.startsWith("custom_")) {
-        runCatching {
-            val json = org.json.JSONObject(theme.description)
-            val light = json.optJSONObject("light")
-            val iconColorsArray = light?.optJSONArray("iconColors")
-            if (iconColorsArray != null && iconColorsArray.length() >= 5) {
-                return List(5) { i ->
-                    MoonIcons.parseThemeColor(iconColorsArray.getString(i)) ?: Color.LightGray
-                }
-            }
-        }
+    theme.iconShadesFromDescription()?.let { return it }
+
+    if (theme.isCustomThemeCard()) {
+        val fallback = MoonIcons.parseThemeColor(theme.primaryColor)
+            ?: MoonIcons.parseThemeColor(theme.thumbnailUrl)
+            ?: MoonIcons.parseThemeColor(theme.backgroundUrl)
+            ?: Color(0xFFE8E1DA)
+        return List(5) { fallback }
     }
-    
-    return when (theme.decoration) {
+
+    return when (theme.decoration.uppercase()) {
         "BLUSHING" -> listOf(
             Color(0xFFFFEBEE), Color(0xFFFFCDD2), Color(0xFFEF9A9A), Color(0xFFE57373), Color(0xFFEF5350)
         )
@@ -815,4 +811,37 @@ fun getThemeShades(theme: Theme): List<Color> {
             Color(0xFFE8E1DA), Color(0xFFD7CCC8), Color(0xFFBCAAA4), Color(0xFF8D6E63), Color(0xFF5D4037)
         )
     }
+}
+
+private fun Theme.iconShadesFromDescription(): List<Color>? {
+    val root = description
+        ?.takeIf { it.isNotBlank() }
+        ?.let { raw -> runCatching { org.json.JSONObject(raw) }.getOrNull() }
+        ?: return null
+
+    val appearances = listOf(root.optJSONObject("light"), root.optJSONObject("dark"), root)
+    appearances.forEach { appearance ->
+        val iconColors = appearance?.iconColors()
+        if (iconColors != null) return iconColors
+    }
+    return null
+}
+
+private fun org.json.JSONObject.iconColors(): List<Color>? {
+    val iconColorsArray = optJSONArray("iconColors")
+    if (iconColorsArray != null && iconColorsArray.length() >= 5) {
+        val colors = List(5) { index ->
+            MoonIcons.parseThemeColor(iconColorsArray.optString(index)) ?: Color.LightGray
+        }
+        return colors
+    }
+
+    val iconColor = MoonIcons.parseThemeColor(optString("iconColor"))
+    return iconColor?.let { color -> List(5) { color } }
+}
+
+private fun Theme.isCustomThemeCard(): Boolean {
+    return id.startsWith("custom_") ||
+        decoration.equals("CUSTOM", ignoreCase = true) ||
+        collection.equals("Custom Theme", ignoreCase = true)
 }
