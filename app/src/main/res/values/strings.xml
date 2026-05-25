@@ -31,7 +31,7 @@
     <string name="widgets_instruction_3">Find MoonPage and choose your favorite widget style.</string>
     <string name="widgets_instruction_4">Drag it to your home screen and enjoy!</string>
     <string name="got_it">Got it</string>
-    <string name="google_web_client_id">511455154390-m8jmplb158akjj874288pipkt3emset0.apps.googleusercontent.com</string>
+    <string name="google_web_client_id">11803658921-418tdojg3ojmtse51q9fui795rl4ngte.apps.googleusercontent.com</string>
 
     <!-- Common -->
     <string name="ok">OK</string>
@@ -860,6 +860,7 @@
     <string name="weather_sunny_icon">Sunny ☀️</string>
     <string name="rating_stars">Rating: %1$.1f stars</string>
     <string name="google_sign_in_required">Please sign in to a Google account.</string>
+    <string name="google_sign_in_failed_with_reason">Google sign-in failed: %1$s</string>
     <string name="google_login_failed">Google login failed.</string>
     <string name="otp_required">OTP required</string>
     <string name="invalid_or_expired_session">Invalid or expired session. Please try again.</string>

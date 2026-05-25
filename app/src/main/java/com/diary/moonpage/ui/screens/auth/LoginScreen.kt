@@ -1,6 +1,5 @@
 package com.diary.moonpage.ui.screens.auth
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
@@ -103,7 +102,7 @@ fun LoginScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    val googleWebClientId = stringResource(R.string.google_web_client_id)
+    val googleWebClientId = stringResource(R.string.default_web_client_id)
 
     val screenBgColor = MaterialTheme.colorScheme.background
     val backIconColor = MaterialTheme.colorScheme.onSurface
@@ -257,13 +256,18 @@ fun LoginScreen(
                                         if (credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
                                             val googleIdToken = GoogleIdTokenCredential.createFrom(credential.data)
                                             onGoogleLoginClick(googleIdToken.idToken)
+                                        } else {
+                                            snackBarHostState.showSnackbar(context.getString(R.string.google_login_failed))
                                         }
                                     } catch (e: GetCredentialCancellationException) {
-                                        Log.d("Auth", "User cancelled")
+                                        // User cancelled the Google account picker.
                                     } catch (e: NoCredentialException) {
                                         snackBarHostState.showSnackbar(context.getString(R.string.google_sign_in_required))
                                     } catch (e: Exception) {
-                                        Log.e("Auth", "Error: ${e.message}")
+                                        val reason = e.localizedMessage ?: e::class.java.simpleName
+                                        snackBarHostState.showSnackbar(
+                                            context.getString(R.string.google_sign_in_failed_with_reason, reason)
+                                        )
                                     }
                                 }
                             }

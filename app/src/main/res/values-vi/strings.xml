@@ -15,7 +15,7 @@
     <string name="widgets_instruction_3">Tìm MoonPage và chọn kiểu tiện ích bạn thích.</string>
     <string name="widgets_instruction_4">Kéo tiện ích ra màn hình chính và tận hưởng!</string>
     <string name="got_it">Đã hiểu</string>
-    <string name="google_web_client_id">511455154390-m8jmplb158akjj874288pipkt3emset0.apps.googleusercontent.com</string>
+    <string name="google_web_client_id">11803658921-418tdojg3ojmtse51q9fui795rl4ngte.apps.googleusercontent.com</string>
 
     <!-- Validation Errors -->
     <string name="error_email_empty">Email không được để trống.</string>
@@ -842,6 +842,7 @@
     <string name="weather_sunny_icon">Nắng ☀️</string>
     <string name="rating_stars">Đánh giá: %1$.1f sao</string>
     <string name="google_sign_in_required">Vui lòng đăng nhập vào tài khoản Google.</string>
+    <string name="google_sign_in_failed_with_reason">Đăng nhập Google thất bại: %1$s</string>
     <string name="google_login_failed">Đăng nhập Google thất bại.</string>
     <string name="otp_required">Vui lòng nhập OTP</string>
     <string name="invalid_or_expired_session">Phiên không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.</string>

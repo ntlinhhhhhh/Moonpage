@@ -12,7 +12,12 @@
           "package_name": "com.diary.moonpage"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "11803658921-418tdojg3ojmtse51q9fui795rl4ngte.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCRKuEz_8wsXShWxLnZJySzt4hhFI4ypSc"
@@ -20,7 +25,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "11803658921-418tdojg3ojmtse51q9fui795rl4ngte.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

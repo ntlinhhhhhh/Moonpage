@@ -120,7 +120,7 @@ fun SettingsRoute(
                     viewModel.showPasswordConfirmationDialog()
                 } else if (uiState.authProvider.equals("Google", ignoreCase = true)) {
                     viewModel.dismissDeleteAccountDialog()
-                    val googleWebClientId = context.getString(R.string.google_web_client_id)
+                    val googleWebClientId = context.getString(R.string.default_web_client_id)
                     scope.launch {
                         try {
                             val credentialManager = androidx.credentials.CredentialManager.create(context)
