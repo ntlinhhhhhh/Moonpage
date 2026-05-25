@@ -28,7 +28,10 @@ data class WidgetInfo(
 fun WidgetCustomizationScreen(
     onNavigateBack: () -> Unit,
     onNavigateToDailySummaryEdit: () -> Unit,
-    onNavigateToPhotoMomentEdit: () -> Unit
+    onNavigateToPhotoMomentEdit: () -> Unit,
+    onNavigateToQuickMoodEdit: () -> Unit,
+    onNavigateToWeeklyMoodEdit: () -> Unit,
+    onNavigateToMonthlyMoodEdit: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
     
@@ -44,6 +47,24 @@ fun WidgetCustomizationScreen(
             descriptionRes = R.string.widget_photo_moment_description,
             icon = Icons.Rounded.Photo,
             onClick = onNavigateToPhotoMomentEdit
+        ),
+        WidgetInfo(
+            titleRes = R.string.widget_quick_mood_label,
+            descriptionRes = R.string.widget_quick_mood_desc,
+            icon = Icons.Rounded.Mood,
+            onClick = onNavigateToQuickMoodEdit
+        ),
+        WidgetInfo(
+            titleRes = R.string.widget_weekly_mood_label,
+            descriptionRes = R.string.widget_weekly_mood_desc,
+            icon = Icons.Rounded.DateRange,
+            onClick = onNavigateToWeeklyMoodEdit
+        ),
+        WidgetInfo(
+            titleRes = R.string.widget_monthly_mood_label,
+            descriptionRes = R.string.widget_monthly_mood_desc,
+            icon = Icons.Rounded.CalendarMonth,
+            onClick = onNavigateToMonthlyMoodEdit
         )
     )
 

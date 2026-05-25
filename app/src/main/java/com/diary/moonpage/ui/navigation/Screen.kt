@@ -33,6 +33,9 @@ sealed class Screen (val route: String) {
     object WidgetCustomization: Screen("widget_customization_screen")
     object DailySummaryWidgetEdit: Screen("daily_summary_widget_edit_screen")
     object PhotoMomentWidgetEdit: Screen("photo_moment_widget_edit_screen")
+    object QuickMoodWidgetEdit: Screen("quick_mood_widget_edit_screen")
+    object WeeklyMoodWidgetEdit: Screen("weekly_mood_widget_edit_screen")
+    object MonthlyMoodWidgetEdit: Screen("monthly_mood_widget_edit_screen")
     object InviteFriend: Screen("invite_friend_screen")
     object StreakStats: Screen("streak_stats_screen")
 

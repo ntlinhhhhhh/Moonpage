@@ -625,7 +625,10 @@ fun AppNavigation(
                         WidgetCustomizationScreen(
                             onNavigateBack = { navController.popBackStack() },
                             onNavigateToDailySummaryEdit = { navController.navigate(Screen.DailySummaryWidgetEdit.route) },
-                            onNavigateToPhotoMomentEdit = { navController.navigate(Screen.PhotoMomentWidgetEdit.route) }
+                            onNavigateToPhotoMomentEdit = { navController.navigate(Screen.PhotoMomentWidgetEdit.route) },
+                            onNavigateToQuickMoodEdit = { navController.navigate(Screen.QuickMoodWidgetEdit.route) },
+                            onNavigateToWeeklyMoodEdit = { navController.navigate(Screen.WeeklyMoodWidgetEdit.route) },
+                            onNavigateToMonthlyMoodEdit = { navController.navigate(Screen.MonthlyMoodWidgetEdit.route) }
                         )
                     }
                 }
@@ -641,6 +644,30 @@ fun AppNavigation(
                 composable(Screen.PhotoMomentWidgetEdit.route) {
                     ScreenWrapper(Screen.PhotoMomentWidgetEdit.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         PhotoMomentWidgetEditScreen(
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+                }
+
+                composable(Screen.QuickMoodWidgetEdit.route) {
+                    ScreenWrapper(Screen.QuickMoodWidgetEdit.route, mainAppRoutes, totalBottomPadding, paddingValues) {
+                        QuickMoodWidgetEditScreen(
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+                }
+
+                composable(Screen.WeeklyMoodWidgetEdit.route) {
+                    ScreenWrapper(Screen.WeeklyMoodWidgetEdit.route, mainAppRoutes, totalBottomPadding, paddingValues) {
+                        WeeklyMoodWidgetEditScreen(
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+                }
+
+                composable(Screen.MonthlyMoodWidgetEdit.route) {
+                    ScreenWrapper(Screen.MonthlyMoodWidgetEdit.route, mainAppRoutes, totalBottomPadding, paddingValues) {
+                        MonthlyMoodWidgetEditScreen(
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }

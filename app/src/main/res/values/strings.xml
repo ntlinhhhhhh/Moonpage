@@ -13,15 +13,15 @@
     <string name="widgets_instruction_1">Long press on an empty space on your home screen.</string>
 
     <!-- Widget Picker Labels & Descriptions (5 Widgets) -->
-    <string name="widget_photo_moment_label">Moonpage - Photo Moment</string>
+    <string name="widget_photo_moment_label">Photo Moment</string>
     <string name="widget_photo_moment_desc">Display a featured photo from today.</string>
-    <string name="widget_quick_mood_label">Moonpage - Quick Mood</string>
+    <string name="widget_quick_mood_label">Quick Mood</string>
     <string name="widget_quick_mood_desc">Quickly record your current mood.</string>
-    <string name="widget_weekly_mood_label">Moonpage - Weekly Calendar</string>
+    <string name="widget_weekly_mood_label">Weekly Calendar</string>
     <string name="widget_weekly_mood_desc">Track your moods for the last 7 days.</string>
-    <string name="widget_monthly_mood_label">Moonpage - Monthly Calendar</string>
+    <string name="widget_monthly_mood_label">Monthly Calendar</string>
     <string name="widget_monthly_mood_desc">A complete picture of your monthly mood.</string>
-    <string name="widget_daily_summary_label">Moonpage - Daily Summary</string>
+    <string name="widget_daily_summary_label">Daily Summary</string>
     <string name="widget_daily_summary_desc">Review your content and activities for today.</string>
     <string name="widget_today_summary">Today\'s Summary</string>
     <string name="widget_how_was_your_day">How was your day?</string>
