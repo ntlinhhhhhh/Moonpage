@@ -1,9 +1,6 @@
 package com.diary.moonpage.ui.screens.moment
 
 import android.location.Geocoder
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.*
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.R
@@ -12,7 +9,6 @@ import com.diary.moonpage.core.util.UiText
 import com.diary.moonpage.domain.repository.MomentRepository
 import com.diary.moonpage.domain.repository.WeatherRepository
 import com.diary.moonpage.domain.usecase.moment.*
-import com.diary.moonpage.ui.screens.moment.components.MomentTag
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -41,16 +37,6 @@ class MomentViewModel @Inject constructor(
 
     private val _uiEffect = Channel<MomentUiEffect>()
     val uiEffect = _uiEffect.receiveAsFlow()
-
-    val allTags get() = listOf(
-        MomentTag("text", null, context.getString(R.string.moment_tag_message)),
-        MomentTag("review", Icons.Rounded.Star, context.getString(R.string.moment_tag_review)),
-        MomentTag("location", Icons.Rounded.LocationOn, context.getString(R.string.moment_tag_location)),
-        MomentTag("weather", Icons.Rounded.WbSunny, context.getString(R.string.moment_tag_weather)),
-        MomentTag("party", null, context.getString(R.string.moment_tag_party_time), containerColor = Color(0xFF80FFE8), contentColor = Color.Black),
-        MomentTag("ootd", null, context.getString(R.string.moment_tag_ootd), containerColor = Color.White, contentColor = Color.Black),
-        MomentTag("missyou", null, context.getString(R.string.moment_tag_miss_you), containerColor = Color(0xFFFF4B4B), contentColor = Color.White)
-    )
 
     private val locationTracker = com.diary.moonpage.core.util.LocationTracker(
         com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(context),

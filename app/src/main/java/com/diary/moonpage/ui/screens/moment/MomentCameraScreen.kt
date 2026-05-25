@@ -30,6 +30,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -115,6 +116,7 @@ fun MomentCameraScreen(
     val coroutineScope = rememberCoroutineScope()
     var isSuccess by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
+    val allTags = rememberMomentUploadTags()
 
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
@@ -155,7 +157,7 @@ fun MomentCameraScreen(
     if (cameraPermission?.status?.isGranted == true) {
         MomentCameraScreenContent(
             uiState = uiState,
-            allTags = viewModel.allTags,
+            allTags = allTags,
             locationPermissionState = locationPermissionState,
             onEvent = viewModel::onEvent,
             onNavigateToGallery = onNavigateToGallery,
@@ -172,6 +174,29 @@ fun MomentCameraScreen(
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(stringResource(R.string.camera_permission_required), color = MaterialTheme.colorScheme.onBackground)
         }
+    }
+}
+
+@Composable
+private fun rememberMomentUploadTags(): List<MomentTag> {
+    val message = stringResource(R.string.moment_tag_message)
+    val review = stringResource(R.string.moment_tag_review)
+    val location = stringResource(R.string.moment_tag_location)
+    val weather = stringResource(R.string.moment_tag_weather)
+    val partyTime = stringResource(R.string.moment_tag_party_time)
+    val ootd = stringResource(R.string.moment_tag_ootd)
+    val missYou = stringResource(R.string.moment_tag_miss_you)
+
+    return remember(message, review, location, weather, partyTime, ootd, missYou) {
+        listOf(
+            MomentTag("text", null, message),
+            MomentTag("review", Icons.Rounded.Star, review),
+            MomentTag("location", Icons.Rounded.LocationOn, location),
+            MomentTag("weather", Icons.Rounded.WbSunny, weather),
+            MomentTag("party", null, partyTime, containerColor = Color(0xFF80FFE8), contentColor = Color.Black),
+            MomentTag("ootd", null, ootd, containerColor = Color.White, contentColor = Color.Black),
+            MomentTag("missyou", null, missYou, containerColor = Color(0xFFFF4B4B), contentColor = Color.White)
+        )
     }
 }
 

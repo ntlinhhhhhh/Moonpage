@@ -620,6 +620,7 @@
     <!-- Hardcoded UI cleanup -->
     <string name="share_moment">Chia sẻ khoảnh khắc</string>
     <string name="share_photo">Chia sẻ ảnh</string>
+    <string name="moment_upload_title">Tải lên</string>
     <string name="my_daily_log">Nhật ký hôm nay của tôi</string>
     <string name="failed_to_share_image">Không thể chia sẻ ảnh: %1$s</string>
     <string name="error_saving">Lỗi khi lưu: %1$s</string>
