@@ -1,122 +1,189 @@
-# 🌙 Moon Page - Your Personal Soul Diary
+﻿# Moon Page - Personal Mood Diary
 
 [![Build Status](https://img.shields.io/badge/Build-Success-brightgreen.svg)]()
 [![Platform](https://img.shields.io/badge/Platform-Android-3DDC84.svg?style=flat&logo=android)](https://www.android.com/)
-[![Kotlin](https://img.shields.io/badge/Kotlin-1.9.24-7F52FF.svg?style=flat&logo=kotlin)](https://kotlinlang.org/)
-[![Compose](https://img.shields.io/badge/Jetpack_Compose-2024.04-4285F4.svg?style=flat&logo=jetpackcompose)](https://developer.android.com/compose)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.1.0-7F52FF.svg?style=flat&logo=kotlin)](https://kotlinlang.org/)
+[![Compose](https://img.shields.io/badge/Jetpack_Compose-2024.10.00-4285F4.svg?style=flat&logo=jetpackcompose)](https://developer.android.com/compose)
+[![Compile SDK](https://img.shields.io/badge/Compile_SDK-35-3DDC84.svg)]()
 
-**Moon Page** is a modern, aesthetically pleasing diary application designed to help users track their moods, activities, and precious moments. With a focus on emotional well-being and intuitive design, Moon Page transforms daily logging into a delightful ritual.
+Moon Page is a modern Android diary app for recording daily mood, activities, photos, health signals, music, weather, and personal memories. The app combines mood tracking, rich calendar views, personalized themes, widgets, reminders, and privacy controls into one journaling workflow.
+
+---
+
+## Release APK
+
+- [Download Moon Page 1.0 APK](app/release/moonpage_1.0.apk)
 
 ---
 
 ## Key Features
 
-### 📅 Intuitive Calendar Logging
-- **Daily Journaling:** Log your thoughts, activities, and feelings with a few taps.
-- **Mood Tracking:** Choose from 5 expressive mood levels with custom "Cute Beans" icons.
-- **Activity Enrichment:** Tag activities (Exercise, Reading, Gaming, etc.) to see how they impact your mood.
-- **Menstrual Cycle Tracking:** Integrated cycle logging for comprehensive health monitoring.
+### Calendar & Daily Logging
+- Daily journal entries with mood, note, activities, photos, music, weather, and health data.
+- Five-level mood tracking using custom Cute Bean mood icons.
+- Activity tagging with built-in categories such as emotions, meals, weather, health, hobbies, school, work, people, and self-care.
+- Calendar and list views with filter support for moods, activities, music, weather, health, and photos.
+- Menstrual cycle and sleep record support.
+- Shareable daily log and monthly mood calendar images saved through native bitmap capture.
 
-### 📸 Moments & Memories
-- **In-App Camera:** Capture the essence of your day directly within the app.
-- **Moment Gallery:** Revisit your past photos and memories in a beautiful, organized gallery.
-- **Public/Private Moments:** Choose whether to keep your moments private or share them with the community.
+### Moments & Gallery
+- CameraX-based in-app camera for capturing daily moments.
+- Moment upload, delete, share, zoom preview, and public/private visibility controls.
+- Photo gallery for browsing past memory photos.
+- Photo Moment widget support for showing a selected daily image on the home screen.
 
-### 📊 Insightful Statistics & Recap
-- **Mood Distribution:** Detailed charts showing your emotional patterns over months and years.
-- **Activity Analysis (Best/Worst):** Advanced correlation algorithms to identify habits that impact your mood positively or negatively.
-- **Year in Pixels & Annual Recap:** A shareable, visually stunning 365-day grid summarizing your entire year's emotional journey.
-- **Streak System:** Stay motivated with daily login streaks and "Streak Freeze" items.
+### Statistics & Recaps
+- Mood distribution, yearly mood detail, annual beans view, and year-in-pixels style summaries.
+- Best/worst activity correlation, icon deep dive, and activity detail screens.
+- Sleep and health statistics, including annual sleep/health summaries.
+- Top music statistics and annual music detail.
+- Streak tracking with current streak, longest streak, total days, and recovery support.
 
-### 🔔 Smart Notification System
-- **Real-time Push Notifications:** Integrated with Firebase Cloud Messaging (FCM) to deliver and permanently record system messages, streaks, and updates.
-- **Reliable Local Reminders:** Punctual daily journaling reminders powered by Android's Exact Alarms (`setExactAndAllowWhileIdle`) and self-rescheduling receivers.
-- **In-App Notification Bus:** Seamless real-time Snackbars and automatic UI refreshing without interrupting the user experience.
+### Store & Personalization
+- Theme Store with official themes, owned themes, collections, and custom themes.
+- Moon Coins economy for buying themes and streak freeze items.
+- Custom Theme Editor with:
+  - Image, solid color, and gradient backgrounds.
+  - Light/dark appearance configuration.
+  - Drawing tools with brush styles, size control, color picker, undo, and clear.
+  - Per-mood icon colors for all five mood icons.
+  - Backend-synced custom theme moods so each icon can keep its own backend-defined color.
+  - Custom themes sorted newest first in the store.
+- Dynamic app theming for active themes, including theme-aware mood previews.
+- Theme Calendar settings for choosing calendar display style.
 
-### 🎨 Personalization & Store
-- **Premium Themes:** Unlock unique UI skins and icon packs (Blushing, Midnight, Forest, etc.) using in-app "Moon Coins."
-- **Dark/Light Mode:** Seamless support for System, Light, and Dark appearance.
-- **Dynamic Theming:** UI elements adapt their color palette based on your active theme.
+### Widgets
+- Android Glance widgets:
+  - Quick Mood
+  - Weekly Mood Calendar
+  - Monthly Mood Calendar
+  - Daily Summary
+  - Photo Moment
+- Widget customization screens with preview states and streak badge options.
+- Widget refresh after daily log changes.
 
-### 🔒 Security & Integrations
-- **Biometric Lock:** Secure your private diary with Fingerprint or Face ID.
-- **Spotify Integration:** Automatically attach recently played or top tracks to your logs, intelligently adapting to Spotify Free or Premium accounts.
-- **Health Connect API:** Deep integration to seamlessly aggregate your daily steps, total calories burned, distance, and detailed sleep analysis (Bedtime & Wake-up averages).
+### Notifications & Reminders
+- Firebase Cloud Messaging for push notifications.
+- Notification Center for in-app notification history.
+- Local daily reminders with exact alarms and boot-aware rescheduling.
+- In-app notification/snackbar bus for real-time UI feedback.
+- Streak, reminder, moment, and system notification flows.
+
+### Security & Account
+- Credential Manager and Google Identity support for Google sign-in.
+- Passcode lock setup and verification.
+- BiometricPrompt support for local fingerprint/face unlock.
+- Profile, settings, account management, invite friend, language, and notification settings screens.
+
+### Integrations
+- Spotify integration for linking music to diary logs and viewing top/recent tracks.
+- Health Connect import for steps, calories, distance, and sleep data.
+- Location-based weather auto-fill with cached weather conditions.
+- Google Places and Play Services Location support for location-aware flows.
 
 ---
 
-## 🏗Architecture
+## Architecture
 
-Moon Page is built following **Clean Architecture** principles and the **MVVM** (Model-View-ViewModel) pattern. This ensuring the codebase is scalable, testable, and maintainable.
+Moon Page follows Clean Architecture with MVVM and state-hoisted Jetpack Compose screens.
 
-### Layers:
-1.  **`core`**: Cross-cutting concerns including DI (Hilt), network configurations, and shared utilities.
-2.  **`domain`**: Pure business logic (UseCases, Repositories Interfaces, and Models). No Android dependencies.
-3.  **`data`**: Implementation of repositories, local database (Room), and remote API services (Retrofit).
-4.  **`presentation`**: UI layer powered by Jetpack Compose, handling state management with ViewModels and StateFlow.
+### Layers
+
+1. `core`: Dependency injection, theme system, utilities, network setup, preferences, notifications, and shared helpers.
+2. `domain`: Business models, repository interfaces, and use cases.
+3. `data`: Retrofit APIs, Room entities/DAOs, repository implementations, local cache, and remote DTO mapping.
+4. `ui`: Compose screens, ViewModels, UI state/effects, navigation, components, and feature flows.
+5. `widget`: Glance app widgets and widget data source.
 
 ---
 
-## Tech Stack & Frameworks
+## Tech Stack
 
-- **Language:** [Kotlin](https://kotlinlang.org/)
-- **UI:** [Jetpack Compose](https://developer.android.com/compose) (Modern Android Toolkit)
-  - *Advanced Graphics:* `GraphicsLayer` and Canvas capture for rendering and sharing Composable bitmaps natively.
-- **Dependency Injection:** [Dagger Hilt](https://dagger.dev/hilt/)
-- **Database:** [Room Persistence Library](https://developer.android.com/training/data-storage/room)
-- **Networking:** [Retrofit 2](https://square.github.io/retrofit/) & [OkHttp](https://square.github.io/okhttp/)
-- **Third-Party APIs:**
-  - **Spotify Web API:** OAuth 2.0 (PKCE) integration, handling Free vs. Premium account endpoints (`/me/top/tracks` vs `/me/player/recently-played`).
-- **Health & Fitness:** [Health Connect API](https://developer.android.com/guide/health-and-fitness/health-connect) (Aggregate Data fetching for Steps, Calories, Distance, and Sleep Session analysis).
-- **Image Loading:** [Coil](https://coil-kt.github.io/coil/)
-- **Asynchronous Flow:** [Kotlin Coroutines](https://kotlinlang.org/docs/coroutines-overview.html) (Dispatchers.IO for background processing) & [Flow](https://kotlinlang.org/docs/flow.html)
-- **Navigation:** [Jetpack Compose Navigation](https://developer.android.com/jetpack/compose/navigation)
-- **Local Storage:** [DataStore Preferences](https://developer.android.com/topic/libraries/architecture/datastore) (Typed, asynchronous storage for settings and onboarding flags).
-- **Notifications & Background Tasks:** 
-  - [Firebase Cloud Messaging (FCM)](https://firebase.google.com/docs/cloud-messaging) for real-time Push Notifications.
-  - `AlarmManager` with `setExactAndAllowWhileIdle` for punctual local daily reminders.
-  - Custom `NotificationBus` using `SharedFlow` for real-time in-app Snackbar alerts.
-- **Camera:** [CameraX](https://developer.android.com/training/camerax)
-- **Security:** 
-  - [Credential Manager](https://developer.android.com/training/sign-in/credential-manager) for Google One Tap Sign-In.
-  - `BiometricPrompt` for local Face ID/Fingerprint app lock.
+- **Language:** Kotlin 2.1.0
+- **Build:** Gradle, Android Gradle Plugin 8.13.2, KSP
+- **Android:** minSdk 26, targetSdk 34, compileSdk 35, Java 17
+- **UI:** Jetpack Compose, Compose BOM 2024.10.00, Material 3, Material Icons Extended
+- **Navigation:** Jetpack Navigation Compose
+- **State & Async:** Kotlin Coroutines, Flow, StateFlow, SharedFlow
+- **Dependency Injection:** Dagger Hilt, Hilt Navigation Compose, Hilt Work
+- **Persistence:** Room, DataStore Preferences
+- **Networking:** Retrofit 2.11.0, Gson converter, OkHttp logging interceptor
+- **Images:** Coil Compose, ExifInterface, custom bitmap storage helpers
+- **Camera:** CameraX core, camera2, lifecycle, view, extensions
+- **Widgets:** Jetpack Glance AppWidget and Glance Material 3
+- **Notifications:** Firebase Cloud Messaging, Firebase Analytics, AlarmManager, WorkManager
+- **Authentication & Security:** Credential Manager, Google Identity, BiometricPrompt
+- **Health:** Health Connect Client
+- **Location & Places:** Play Services Location, Google Places
+- **Permissions:** Accompanist Permissions
+- **Graphics:** Compose Canvas, graphicsLayer, native bitmap capture for sharing/export
+- **Testing:** JUnit, AndroidX JUnit, Espresso, Compose UI Test
 
 ---
 
 ## Getting Started
 
 ### Prerequisites
-- Android Studio Ladybug | 2024.2.1 or newer.
-- Android SDK 35 (Compile SDK).
-- A physical Android device or Emulator (API level 26+).
+
+- Android Studio Ladybug or newer.
+- JDK 17.
+- Android SDK 35.
+- Android device or emulator running API 26+.
+- `google-services.json` in the `app/` directory for Firebase features.
+- Backend API configured for the app's Retrofit network module.
 
 ### Installation
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/ntlinhhhhhh/Moonpage.git
-    ```
-2.  **Set up Firebase:**
-    - Place your `google-services.json` file in the `app/` directory.
-3.  **API Configuration:**
-    - Update your base URL and API keys in the `core/di/NetworkModule.kt` if necessary.
-4.  **Build and Run:**
-    - Sync Gradle and run the `:app` module on your device.
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/ntlinhhhhhh/Moonpage.git
+   ```
+
+2. Add Firebase configuration:
+
+   ```text
+   app/google-services.json
+   ```
+
+3. Configure backend/API values in the network module if needed.
+
+4. Sync Gradle and run the `:app` module from Android Studio.
+
+### Useful Commands
+
+```bash
+./gradlew :app:compileDebugKotlin
+./gradlew :app:assembleDebug
+./gradlew :app:testDebugUnitTest
+```
+
+On Windows:
+
+```powershell
+.\gradlew.bat :app:compileDebugKotlin
+.\gradlew.bat :app:assembleDebug
+.\gradlew.bat :app:testDebugUnitTest
+```
 
 ---
 
 ## Documentation
 
-- [Detailed Architecture Guide](ARCHITECTURE.md) - Deep dive into our implementation of Clean Architecture.
-- [API Specification](api.md) - Overview of Backend endpoints and data structures.
+- [Architecture Guide](ARCHITECTURE.md)
+- [API Specification](api.md)
 
 ---
 
-## Contributing
+## Project Notes
+
+- Supported app resource languages are currently constrained to English and Vietnamese.
+- Custom theme previews and shared diary images use local bitmap generation/storage.
+- Widget data is backed by the local database and refreshed after key diary updates.
 
 ---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
-*Moon Page - Logging your soul, one bean at a time.* 🌙
