@@ -158,8 +158,21 @@ class ThemeRepositoryImpl @Inject constructor(
                         val networkPrimary = networkTheme.primaryColor.takeIfThemeColor()
                             ?: networkTheme.description.primaryColorForMode("light")
                             ?: networkTheme.description.primaryColorForMode("dark")
+                        val backendIconColors = loadBackendThemeMoodIconColors(networkTheme.id)
+                        val cachedIconColors = if (backendIconColors.size >= DEFAULT_MOOD_IDS.size) {
+                            emptyList()
+                        } else {
+                            loadCachedThemeMoodIconColors(cachedTheme)
+                        }
+                        val moodIconColors = backendIconColors
+                            .takeIf { it.size >= DEFAULT_MOOD_IDS.size }
+                            ?: cachedIconColors.takeIf { it.size >= DEFAULT_MOOD_IDS.size }
+                        val description = moodIconColors
+                            ?.let { (cachedTheme?.description ?: networkTheme.description).withMoodIconColors(it) }
+                            ?: cachedTheme?.description
+                            ?: networkTheme.description
                         val moodPrimary = if (cachedPrimary == null && networkPrimary == null) {
-                            loadThemeMoodPrimaryColor(networkTheme.id)
+                            moodIconColors?.firstOrNull() ?: loadThemeMoodPrimaryColor(networkTheme.id)
                         } else {
                             null
                         }
@@ -171,7 +184,7 @@ class ThemeRepositoryImpl @Inject constructor(
                                 ?: networkTheme.backgroundUrl
                                 ?: cachedTheme?.backgroundUrl,
                             primaryColor = cachedPrimary ?: networkPrimary ?: moodPrimary,
-                            description = cachedTheme?.description ?: networkTheme.description,
+                            description = description,
                             activatedAt = cachedTheme?.activatedAt
                         )
                     }
@@ -188,6 +201,42 @@ class ThemeRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    private suspend fun loadBackendThemeMoodIconColors(themeId: String): List<String> {
+        val remoteMoods = try {
+            val response = api.getThemeMoods(themeId)
+            if (response.isSuccessful && response.body() != null) {
+                response.body()!!.map { dto ->
+                    ThemeMoodEntity(
+                        themeId = themeId,
+                        baseMoodId = dto.baseMoodId,
+                        iconUrl = dto.iconUrl,
+                        customName = dto.customName.orEmpty()
+                    )
+                }
+            } else {
+                emptyList()
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
+
+        if (remoteMoods.isNotEmpty()) {
+            dao.insertThemeMoods(remoteMoods)
+            val remoteColors = remoteMoods.toOrderedIconColors()
+            if (remoteColors.size >= DEFAULT_MOOD_IDS.size) return remoteColors
+        }
+
+        return dao.getMoodsForTheme(themeId).toOrderedIconColors()
+    }
+
+    private suspend fun loadCachedThemeMoodIconColors(cachedTheme: ThemeEntity?): List<String> {
+        if (cachedTheme == null) return emptyList()
+        val descriptionColors = cachedTheme.description.explicitIconColorsFromThemeDescription()
+        if (descriptionColors.size >= DEFAULT_MOOD_IDS.size) return descriptionColors.take(DEFAULT_MOOD_IDS.size)
+
+        return dao.getMoodsForTheme(cachedTheme.id).toOrderedIconColors()
     }
 
     private suspend fun loadThemeMoodPrimaryColor(themeId: String): String? {
@@ -715,6 +764,61 @@ private fun String?.iconColorsFromThemeDescription(): List<String> {
         appearance?.optString("iconColor")?.toCanonicalThemeColorHex()
     } ?: return emptyList()
     return List(5) { fallbackColor }
+}
+
+private fun String?.explicitIconColorsFromThemeDescription(): List<String> {
+    if (isNullOrBlank()) return emptyList()
+    val root = runCatching { JSONObject(this) }.getOrNull() ?: return emptyList()
+    val modes = listOf(root.optJSONObject("light"), root.optJSONObject("dark"), root)
+
+    modes.forEach { appearance ->
+        val iconColors = appearance?.optJSONArray("iconColors")
+            ?.toColorList()
+            .orEmpty()
+        if (iconColors.size >= DEFAULT_MOOD_IDS.size) return iconColors.take(DEFAULT_MOOD_IDS.size)
+    }
+
+    return emptyList()
+}
+
+private fun String?.withMoodIconColors(iconColors: List<String>): String {
+    val normalizedColors = iconColors
+        .mapNotNull { it.toCanonicalThemeColorHex() }
+        .take(DEFAULT_MOOD_IDS.size)
+    val root = takeIf { !it.isNullOrBlank() }
+        ?.let { raw -> runCatching { JSONObject(raw) }.getOrNull() }
+        ?: JSONObject()
+    if (normalizedColors.size < DEFAULT_MOOD_IDS.size) return root.toString()
+
+    val light = root.optJSONObject("light") ?: JSONObject()
+    light.put("iconColor", normalizedColors.first())
+    light.put("iconColors", JSONArray(normalizedColors))
+    root.put("light", light)
+
+    return root.toString()
+}
+
+private fun List<ThemeMoodEntity>.toOrderedIconColors(): List<String> {
+    if (isEmpty()) return emptyList()
+
+    val colorsByMoodId = linkedMapOf<Int, String>()
+    forEach { mood ->
+        val moodId = mood.baseMoodId.toThemeMoodIdOrNull()
+        val color = mood.iconUrl.toCanonicalThemeColorHex()
+        if (moodId != null && color != null) {
+            colorsByMoodId.putIfAbsent(moodId, color)
+        }
+    }
+
+    val orderedColors = DEFAULT_MOOD_IDS.mapNotNull { moodId -> colorsByMoodId[moodId] }
+    if (orderedColors.size >= DEFAULT_MOOD_IDS.size) return orderedColors.take(DEFAULT_MOOD_IDS.size)
+
+    val positionalColors = mapNotNull { mood -> mood.iconUrl.toCanonicalThemeColorHex() }
+    return if (positionalColors.size >= DEFAULT_MOOD_IDS.size) {
+        positionalColors.take(DEFAULT_MOOD_IDS.size)
+    } else {
+        emptyList()
+    }
 }
 
 private fun JSONArray.toColorList(): List<String> {
