@@ -32,10 +32,14 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.diary.moonpage.R
 import com.diary.moonpage.ui.MainActivity
+import androidx.glance.appwidget.updateAll
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.first
 
 private val MutedCircleColor = Color(0xFFE0DDD8)
 private val MutedCircleColorDark = Color(0xFF3A3A3A)
@@ -49,7 +53,8 @@ class MonthlyMoodWidget : GlanceAppWidget() {
         val monthDays = dataSource.loadMonthSnapshot()
         val isNight = dataSource.isNightMode()
         val preferences = dataSource.getWidgetPreferences()
-        val showGrid = preferences.showMonthlyMoodGrid.firstOrNull() ?: true
+        val showGrid = preferences.showMonthlyMoodGrid.first()
+        val _trigger = preferences.lastUpdateTrigger.first() // Force dependency
 
         val bg = if (isNight) snapshot.palette.nightSurface else snapshot.palette.daySurface
         val textColor = if (isNight) snapshot.palette.nightOnSurface else snapshot.palette.dayOnSurface
@@ -335,4 +340,11 @@ class MonthlyMoodWidget : GlanceAppWidget() {
 
 class MonthlyMoodWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = MonthlyMoodWidget()
+
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        CoroutineScope(Dispatchers.Main).launch {
+            MonthlyMoodWidget().updateAll(context)
+        }
+    }
 }

@@ -32,10 +32,14 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.diary.moonpage.R
 import com.diary.moonpage.ui.MainActivity
+import androidx.glance.appwidget.updateAll
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.first
 
 class WeeklyMoodWidget : GlanceAppWidget() {
     override val sizeMode = SizeMode.Single
@@ -46,7 +50,8 @@ class WeeklyMoodWidget : GlanceAppWidget() {
         val weekDays = dataSource.loadWeekSnapshot()
         val isNight = dataSource.isNightMode()
         val preferences = dataSource.getWidgetPreferences()
-        val showDates = preferences.showWeeklyMoodDates.firstOrNull() ?: true
+        val showDates = preferences.showWeeklyMoodDates.first()
+        val _trigger = preferences.lastUpdateTrigger.first() // Force dependency
 
         val bg = if (isNight) snapshot.palette.nightSurface else snapshot.palette.daySurface
         val textColor = if (isNight) snapshot.palette.nightOnSurface else snapshot.palette.dayOnSurface
@@ -261,4 +266,11 @@ class WeeklyMoodWidget : GlanceAppWidget() {
 
 class WeeklyMoodWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = WeeklyMoodWidget()
+
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        CoroutineScope(Dispatchers.Main).launch {
+            WeeklyMoodWidget().updateAll(context)
+        }
+    }
 }

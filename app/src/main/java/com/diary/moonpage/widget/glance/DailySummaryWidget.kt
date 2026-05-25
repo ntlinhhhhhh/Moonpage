@@ -33,8 +33,12 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.diary.moonpage.R
 import com.diary.moonpage.ui.MainActivity
+import androidx.glance.appwidget.updateAll
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.Locale
-import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.first
 
 private val ThemeDefaultIconColor = Color(0xFFDB9D1F)
 
@@ -47,9 +51,10 @@ class DailySummaryWidget : GlanceAppWidget() {
         val isNight = dataSource.isNightMode()
         val palette = snapshot.palette
         val preferences = dataSource.getWidgetPreferences()
-        val showStreak = preferences.showDailyStreak.firstOrNull() ?: true
-        val showNote = preferences.showDailyNote.firstOrNull() ?: true
-        val showStats = preferences.showDailyStats.firstOrNull() ?: true
+        val showStreak = preferences.showDailyStreak.first()
+        val showNote = preferences.showDailyNote.first()
+        val showStats = preferences.showDailyStats.first()
+        val _trigger = preferences.lastUpdateTrigger.first() // Force dependency
 
         val openAppAction = actionStartActivity(
             Intent(context, MainActivity::class.java).apply {
@@ -253,4 +258,11 @@ private fun DailyMetricItem(
 
 class DailySummaryWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = DailySummaryWidget()
+
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        CoroutineScope(Dispatchers.Main).launch {
+            DailySummaryWidget().updateAll(context)
+        }
+    }
 }

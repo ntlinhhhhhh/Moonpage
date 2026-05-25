@@ -76,7 +76,6 @@ fun PhotoMomentWidgetEditScreen(
     val context = LocalContext.current
     val colorScheme = MaterialTheme.colorScheme
 
-    // Refresh widgets when any state changes
     LaunchedEffect(uiState) {
         MoonpageWidgets.refreshAll(context)
     }

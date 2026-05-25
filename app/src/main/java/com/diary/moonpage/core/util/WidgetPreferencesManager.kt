@@ -31,6 +31,8 @@ class WidgetPreferencesManager(
 
         // Weekly Mood Keys
         private val SHOW_WEEKLY_MOOD_DATES_KEY = booleanPreferencesKey("show_weekly_mood_dates")
+
+        private val LAST_UPDATE_TRIGGER_KEY = longPreferencesKey("last_update_trigger")
     }
 
     // Daily Summary Flows
@@ -51,6 +53,8 @@ class WidgetPreferencesManager(
     // Weekly Mood Flows
     val showWeeklyMoodDates: Flow<Boolean> = context.widgetSettingsDataStore.data.map { it[SHOW_WEEKLY_MOOD_DATES_KEY] ?: true }
 
+    val lastUpdateTrigger: Flow<Long> = context.widgetSettingsDataStore.data.map { it[LAST_UPDATE_TRIGGER_KEY] ?: 0L }
+
     suspend fun setShowDailyStreak(show: Boolean) = updatePreference { it[SHOW_DAILY_STREAK_KEY] = show }
     suspend fun setShowDailyNote(show: Boolean) = updatePreference { it[SHOW_DAILY_NOTE_KEY] = show }
     suspend fun setShowDailyStats(show: Boolean) = updatePreference { it[SHOW_DAILY_STATS_KEY] = show }
@@ -63,7 +67,10 @@ class WidgetPreferencesManager(
     suspend fun setShowWeeklyMoodDates(show: Boolean) = updatePreference { it[SHOW_WEEKLY_MOOD_DATES_KEY] = show }
 
     private suspend fun updatePreference(update: (MutablePreferences) -> Unit) {
-        context.widgetSettingsDataStore.edit(update)
+        context.widgetSettingsDataStore.edit { prefs ->
+            update(prefs)
+            prefs[LAST_UPDATE_TRIGGER_KEY] = System.currentTimeMillis()
+        }
         MoonpageWidgets.refreshAll(context.applicationContext)
     }
 }

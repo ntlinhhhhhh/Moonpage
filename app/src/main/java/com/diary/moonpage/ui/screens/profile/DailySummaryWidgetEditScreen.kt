@@ -84,7 +84,7 @@ fun DailySummaryWidgetEditScreen(
     val context = LocalContext.current
     val colorScheme = MaterialTheme.colorScheme
 
-    // Refresh widgets when any state changes
+    // Aggressively refresh widgets when UI state changes
     LaunchedEffect(uiState) {
         MoonpageWidgets.refreshAll(context)
     }

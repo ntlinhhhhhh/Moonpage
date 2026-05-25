@@ -36,7 +36,7 @@ import com.diary.moonpage.R
 import com.diary.moonpage.ui.MainActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 private const val PHOTO_ROTATE_INTERVAL_MS = 30_000L
@@ -64,8 +64,9 @@ class PhotoMomentWidget : GlanceAppWidget() {
         val isNight = dataSource.isNightMode()
         val palette = snapshot.palette
         val preferences = dataSource.getWidgetPreferences()
-        val showStreak = preferences.showPhotoStreak.firstOrNull() ?: true
-        val displayMode = preferences.photoDisplayMode.firstOrNull() ?: "CROP"
+        val showStreak = preferences.showPhotoStreak.first()
+        val displayMode = preferences.photoDisplayMode.first()
+        val _trigger = preferences.lastUpdateTrigger.first() // Force dependency
 
         val openAppAction = actionStartActivity(
             Intent(context, MainActivity::class.java).apply {
