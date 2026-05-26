@@ -790,15 +790,26 @@ fun MonthYearPickerDialog(
     onDismiss: () -> Unit,
     showMonth: Boolean = true
 ) {
-    val currentYear = java.time.LocalDate.now().year
-    val years = remember { (2000..currentYear + 10).map { it.toString() } }
+    val today = remember { java.time.LocalDate.now() }
+    val currentYear = today.year
+    val currentMonth = today.monthValue
+
+    val years = remember { (2000..currentYear).map { it.toString() } }
     val currentLanguage = LocalLocale.current
     val months = remember(currentLanguage) { (1..12).map {
         com.diary.moonpage.core.util.LocaleUtils.getFormattedMonthName(it, currentLanguage)
     } }
 
-    var tempYear by remember { mutableIntStateOf(currentYearMonth.year) }
+    var tempYear by remember { mutableIntStateOf(currentYearMonth.year.coerceAtMost(currentYear)) }
     var tempMonth by remember { mutableIntStateOf(currentYearMonth.monthValue) }
+
+    val isFutureDate = remember(tempYear, tempMonth) {
+        if (showMonth) {
+            YearMonth.of(tempYear, tempMonth).isAfter(YearMonth.from(today))
+        } else {
+            tempYear > currentYear
+        }
+    }
 
     val itemHeight = 44.dp
 
@@ -913,10 +924,12 @@ fun MonthYearPickerDialog(
                     Button(
                         onClick = { onConfirm(tempYear, tempMonth) },
                         modifier = Modifier.weight(1f).height(48.dp),
+                        enabled = !isFutureDate,
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
-                        Text(stringResource(R.string.ok), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimary)
+                        val textColor = if (isFutureDate) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f) else MaterialTheme.colorScheme.onPrimary
+                        Text(stringResource(R.string.ok), fontWeight = FontWeight.Bold, color = textColor)
                     }
                 }
             }
