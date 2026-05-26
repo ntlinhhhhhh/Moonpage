@@ -5,8 +5,17 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
@@ -14,48 +23,26 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.Undo
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.AutoFixHigh
-import androidx.compose.material.icons.rounded.BarChart
-import androidx.compose.material.icons.rounded.Brush
-import androidx.compose.material.icons.rounded.CalendarMonth
-import androidx.compose.material.icons.rounded.CloudUpload
-import androidx.compose.material.icons.rounded.Colorize
-import androidx.compose.material.icons.rounded.DarkMode
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.FormatColorFill
-import androidx.compose.material.icons.rounded.FormatColorReset
-import androidx.compose.material.icons.rounded.Gesture
-import androidx.compose.material.icons.rounded.Gradient
-import androidx.compose.material.icons.rounded.Image
-import androidx.compose.material.icons.rounded.LightMode
-import androidx.compose.material.icons.rounded.Palette
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.Square
-import androidx.compose.material.icons.rounded.Storefront
-import androidx.compose.material.icons.rounded.Visibility
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -86,16 +73,20 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import android.app.Activity
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.diary.moonpage.R
-import com.diary.moonpage.core.theme.MoonTheme
 import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
+import kotlinx.coroutines.launch
 
-private val EditorBottomToolsHeight = 240.dp
-private val EditorBottomToolContentHeight = 160.dp
+// ==========================================
+// ROUTE ENTRY POINT
+// ==========================================
 
 @Composable
 fun CustomThemeEditorRoute(
@@ -113,13 +104,12 @@ fun CustomThemeEditorRoute(
         }
     }
 
-    CustomThemeEditorScreen(
+    CustomThemeEditorRoot(
         uiState = uiState,
         onNameChange = viewModel::updateName,
         onImagePicked = viewModel::setBackgroundUri,
         onApplyEditedImage = viewModel::applyPendingBackground,
         onCancelEditedImage = viewModel::cancelPendingBackground,
-        onBackgroundFillModeSelected = viewModel::setBackgroundFillMode,
         onSolidBackgroundSelected = viewModel::setSolidBackgroundColor,
         onGradientStartSelected = viewModel::setGradientBackgroundStartColor,
         onGradientEndSelected = viewModel::setGradientBackgroundEndColor,
@@ -130,9 +120,11 @@ fun CustomThemeEditorRoute(
         onBrushSizeChange = viewModel::setBrushSize,
         onBrushTypeSelected = viewModel::setBrushType,
         onEraserChanged = viewModel::setEraser,
-        onToolSelected = viewModel::setTool,
+        onSetScreen = viewModel::setScreen,
+        onSetEditMode = viewModel::setEditMode,
+        onSetGradientNode = viewModel::setGradientNode,
+        onAddRecentColor = viewModel::addColorToRecent,
         onToggleEditingMode = viewModel::toggleEditingMode,
-        onExitPreview = viewModel::exitPreview,
         onStrokeFinished = viewModel::addStroke,
         onUndo = viewModel::undoStroke,
         onClearStrokes = viewModel::clearStrokes,
@@ -143,20 +135,18 @@ fun CustomThemeEditorRoute(
     )
 }
 
-/*
- * Stateful route collects ViewModel state and effects. This stateless screen receives
- * immutable state plus event callbacks, following the state-hoisting pattern from
- * Google Android Basics so preview, tools, and dialogs remain independently testable.
- */
+// ==========================================
+// ROOT COMPOSABLE
+// ==========================================
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CustomThemeEditorScreen(
+fun CustomThemeEditorRoot(
     uiState: CustomThemeEditorUiState,
     onNameChange: (String) -> Unit,
     onImagePicked: (String?) -> Unit,
     onApplyEditedImage: (Float, Float, Float, Float) -> Unit,
     onCancelEditedImage: () -> Unit,
-    onBackgroundFillModeSelected: (BackgroundFillMode) -> Unit,
     onSolidBackgroundSelected: (Long) -> Unit,
     onGradientStartSelected: (Long) -> Unit,
     onGradientEndSelected: (Long) -> Unit,
@@ -167,9 +157,11 @@ fun CustomThemeEditorScreen(
     onBrushSizeChange: (Float) -> Unit,
     onBrushTypeSelected: (BrushType) -> Unit,
     onEraserChanged: (Boolean) -> Unit,
-    onToolSelected: (ThemeEditorTool) -> Unit,
+    onSetScreen: (EditorScreenState) -> Unit,
+    onSetEditMode: (EditMode) -> Unit,
+    onSetGradientNode: (GradientNode) -> Unit,
+    onAddRecentColor: (Long) -> Unit,
     onToggleEditingMode: () -> Unit,
-    onExitPreview: () -> Unit,
     onStrokeFinished: (DrawStroke) -> Unit,
     onUndo: () -> Unit,
     onClearStrokes: () -> Unit,
@@ -178,203 +170,188 @@ fun CustomThemeEditorScreen(
     onDiscardConfirm: () -> Unit,
     onSave: () -> Unit
 ) {
+    val isFinalPreview = uiState.currentScreen == EditorScreenState.FinalPreview
+    
+    // Preview luôn scale 1f (full width) để không bị viền đen 2 bên
+    val animatedPreviewScale by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "previewScale"
+    )
+
     var editorZoom by remember { mutableFloatStateOf(1f) }
     var editorPan by remember { mutableStateOf(Offset.Zero) }
-    val previewTargetScale = when (uiState.selectedTool) {
-        ThemeEditorTool.BackgroundImage, ThemeEditorTool.BackgroundColor, ThemeEditorTool.Draw, ThemeEditorTool.Colors -> 0.82f
-        ThemeEditorTool.Preview -> 1f
+
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        val window = (view.context as Activity).window
+        val insetsController = WindowCompat.getInsetsController(window, view)
+
+        DisposableEffect(Unit) {
+            val originalColor = window.statusBarColor
+            val originalLight = insetsController.isAppearanceLightStatusBars
+
+            onDispose {
+                window.statusBarColor = originalColor
+                insetsController.isAppearanceLightStatusBars = originalLight
+            }
+        }
+
+        SideEffect {
+            window.statusBarColor = android.graphics.Color.TRANSPARENT
+            insetsController.isAppearanceLightStatusBars = false
+        }
     }
-    val animatedPreviewScale by animateFloatAsState(targetValue = previewTargetScale, label = "customThemePreviewScale")
-    val animatedPreviewOffsetY by animateDpAsState(
-        targetValue = if (uiState.selectedTool != ThemeEditorTool.Preview) (-12).dp else 0.dp,
-        label = "customThemePreviewOffset"
-    )
+
     val transformState = rememberTransformableState { zoomChange, panChange, _ ->
-        editorZoom = (editorZoom * zoomChange).coerceIn(1f, 2.8f)
-        editorPan = if (editorZoom <= 1.02f) {
-            Offset.Zero
-        } else {
-            Offset(
+        if (!isFinalPreview && uiState.currentScreen == EditorScreenState.Home) {
+            editorZoom = (editorZoom * zoomChange).coerceIn(1f, 2.8f)
+            editorPan = if (editorZoom <= 1.02f) Offset.Zero else Offset(
                 x = (editorPan.x + panChange.x).coerceIn(-220f, 220f),
                 y = (editorPan.y + panChange.y).coerceIn(-260f, 260f)
             )
         }
     }
+
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         onImagePicked(uri?.toString())
+        if (uri != null) onSetScreen(EditorScreenState.EditComponents)
     }
 
     BackHandler(onBack = onBack)
 
-    Scaffold(
-        topBar = {
-            if (uiState.selectedTool == ThemeEditorTool.Preview) {
-                TopAppBar(
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
-                    title = {},
-                    navigationIcon = {
-                        IconButton(onClick = onExitPreview) {
-                            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = stringResource(R.string.back))
-                        }
-                    },
-                    actions = {
-                        TextButton(
-                            enabled = !uiState.isSaving,
-                            modifier = Modifier.padding(end = 4.dp),
-                            colors = ButtonDefaults.textButtonColors(
-                                contentColor = MaterialTheme.colorScheme.primary
-                            ),
-                            onClick = onSave
-                        ) {
-                            Text(stringResource(R.string.save), fontWeight = FontWeight.Bold, maxLines = 1)
-                        }
-                    }
-                )
-            } else {
-                CenterAlignedTopAppBar(
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent),
-                    title = {
-                        OutlinedTextField(
-                            value = uiState.name,
-                            onValueChange = onNameChange,
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(0.72f),
-                            textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color.Transparent,
-                                unfocusedBorderColor = Color.Transparent,
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent
-                            )
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, contentDescription = stringResource(R.string.back))
-                        }
-                    },
-                    actions = {
-                        TextButton(
-                            enabled = !uiState.isSaving,
-                            modifier = Modifier.padding(end = 4.dp),
-                            colors = ButtonDefaults.textButtonColors(
-                                contentColor = MaterialTheme.colorScheme.primary
-                            ),
-                            onClick = onSave
-                        ) {
-                            Text(stringResource(R.string.save), fontWeight = FontWeight.Bold, maxLines = 1)
-                        }
-                    }
-                )
-            }
-        },
-        bottomBar = {
-            if (uiState.selectedTool != ThemeEditorTool.Preview) {
-                ThemeEditorBottomTools(
-                    uiState = uiState,
-                    onToolSelected = onToolSelected,
-                    onPickImage = {
-                        imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                    },
-                    onBackgroundFillModeSelected = onBackgroundFillModeSelected,
-                    onSolidBackgroundSelected = onSolidBackgroundSelected,
-                    onGradientStartSelected = onGradientStartSelected,
-                    onGradientEndSelected = onGradientEndSelected,
-                    onPrimaryFocus = onPrimaryFocus,
-                    onFocusedColorSelected = onFocusedColorSelected,
-                    onIconSelected = onIconSelected,
-                    onBrushColorSelected = onBrushColorSelected,
-                    onBrushSizeChange = onBrushSizeChange,
-                    onBrushTypeSelected = onBrushTypeSelected,
-                    onEraserChanged = onEraserChanged,
-                    onUndo = onUndo,
-                    onClearStrokes = onClearStrokes
-                )
-            }
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { paddingValues ->
-        Surface(
+    // Status bar height — dùng để offset preview bên dưới system bar
+    val statusBarTopPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+
+    // ── ROOT: Nền đen hoàn toàn ──────────────────────────────────────────
+    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+
+        // ── LAYER 1: Preview Box (luôn render, không bao giờ bị re-create) ──
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            color = MaterialTheme.colorScheme.background
+                .align(Alignment.TopCenter)
+                .padding(top = if (isFinalPreview) 0.dp else (statusBarTopPadding + 2.dp))
+                .fillMaxWidth()                                            
+                .then(
+                    if (isFinalPreview) Modifier.fillMaxHeight()
+                    else Modifier.fillMaxHeight().padding(bottom = 110.dp)
+                )
+                .clip(RoundedCornerShape(if (isFinalPreview) 0.dp else 30.dp))
+                .graphicsLayer {
+                    scaleX = animatedPreviewScale * editorZoom
+                    scaleY = animatedPreviewScale * editorZoom
+                    translationX = editorPan.x
+                    translationY = editorPan.y
+                }
+                .transformable(transformState)
         ) {
+            ThemePreviewCapture(
+                uiState = uiState,
+                showFullPreview = isFinalPreview,
+                modifier = Modifier.fillMaxSize(),
+                onPrimaryFocus = onPrimaryFocus,
+                onIconSelected = onIconSelected,
+                onLightModeSelected = { if (uiState.editingMode == EditorAppearanceMode.Dark) onToggleEditingMode() },
+                onDarkModeSelected = { if (uiState.editingMode == EditorAppearanceMode.Light) onToggleEditingMode() },
+                onToggleAppearance = if (!isFinalPreview) onToggleEditingMode else null,
+                onStrokeFinished = onStrokeFinished
+            )
+        }
+
+        // ── LAYER 2: Screen Overlays ──────────────────────────────────────
+        Crossfade(
+            targetState = uiState.currentScreen,
+            animationSpec = tween(durationMillis = 280),
+            label = "screenTransition"
+        ) { screen ->
             Box(modifier = Modifier.fillMaxSize()) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 18.dp, vertical = 8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                        contentAlignment = Alignment.TopCenter
-                    ) {
-                        BoxWithConstraints(
-                            modifier = Modifier
-                                .padding(top = 10.dp)
-                                .offset(y = animatedPreviewOffsetY)
-                                .graphicsLayer {
-                                    scaleX = animatedPreviewScale * editorZoom
-                                    scaleY = animatedPreviewScale * editorZoom
-                                    translationX = editorPan.x
-                                    translationY = editorPan.y
-                                }
-                                .transformable(transformState)
-                        ) {
-                            val previewMaxHeight = if (uiState.selectedTool == ThemeEditorTool.Preview) {
-                                540.dp
+                when (screen) {
+                    is EditorScreenState.Home -> HomeOverlay(
+                        onClose = onBack,
+                        onImageClick = {
+                            imagePicker.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                            )
+                        },
+                        onSolidClick = { onSetScreen(EditorScreenState.SolidBg) },
+                        onGradientClick = { onSetScreen(EditorScreenState.GradientBg) }
+                    )
+
+                    is EditorScreenState.SolidBg -> SolidBgOverlay(
+                        uiState = uiState,
+                        onBack = { onSetScreen(EditorScreenState.Home) },
+                        onApply = { onSetScreen(EditorScreenState.EditComponents) },
+                        onColorSelected = { color ->
+                            onSolidBackgroundSelected(color)
+                            onAddRecentColor(color)
+                        }
+                    )
+
+                    is EditorScreenState.GradientBg -> GradientBgOverlay(
+                        uiState = uiState,
+                        onBack = { onSetScreen(EditorScreenState.Home) },
+                        onApply = { onSetScreen(EditorScreenState.EditComponents) },
+                        onNodeSelected = onSetGradientNode,
+                        onColorSelected = { color ->
+                            if (uiState.activeGradientNode == GradientNode.Start) {
+                                onGradientStartSelected(color)
                             } else {
-                                minOf(492.dp, maxOf(360.dp, maxHeight - 28.dp))
+                                onGradientEndSelected(color)
                             }
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .widthIn(max = 360.dp)
-                                    .heightIn(max = previewMaxHeight)
-                                    .aspectRatio(0.62f)
-                                    .clip(RoundedCornerShape(28.dp))
-                            ) {
-                                ThemePreviewCapture(
-                                    uiState = uiState,
-                                    showFullPreview = uiState.selectedTool == ThemeEditorTool.Preview,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .clip(RoundedCornerShape(28.dp)),
-                                    onPrimaryFocus = onPrimaryFocus,
-                                    onIconSelected = onIconSelected,
-                                    onLightModeSelected = {
-                                        if (uiState.editingMode == EditorAppearanceMode.Dark) onToggleEditingMode()
-                                    },
-                                    onDarkModeSelected = {
-                                        if (uiState.editingMode == EditorAppearanceMode.Light) onToggleEditingMode()
-                                    },
-                                    onToggleAppearance = if (uiState.selectedTool != ThemeEditorTool.Preview) onToggleEditingMode else null,
-                                    onStrokeFinished = onStrokeFinished
-                                )
-
-                            }
+                            onAddRecentColor(color)
                         }
-                    }
-                }
+                    )
 
-                if (uiState.isSaving) {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background.copy(alpha = 0.55f)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator()
+                    is EditorScreenState.EditComponents -> EditComponentsOverlay(
+                        uiState = uiState,
+                        // Back từ EditComponents → về Home (không hỏi discard ở đây)
+                        onBack = { onSetScreen(EditorScreenState.Home) },
+                        onSetEditMode = onSetEditMode,
+                        onNameChange = onNameChange,
+                        onPreviewClick = { onSetScreen(EditorScreenState.FinalPreview) },
+                        onSaveClick = onSave,
+                        onBrushColorSelected = { color ->
+                            onBrushColorSelected(color)
+                            onAddRecentColor(color)
+                        },
+                        onBrushSizeChange = onBrushSizeChange,
+                        onBrushTypeSelected = onBrushTypeSelected,
+                        onEraserChanged = onEraserChanged,
+                        onUndo = onUndo,
+                        onClearStrokes = onClearStrokes,
+                        onFocusedColorSelected = { color ->
+                            onFocusedColorSelected(color)
+                            onAddRecentColor(color)
                         }
-                    }
+                    )
+
+                    is EditorScreenState.FinalPreview -> FinalPreviewOverlay(
+                        uiState = uiState,
+                        onBack = { onSetScreen(EditorScreenState.EditComponents) },
+                        onSave = onSave
+                    )
                 }
+            }
+        }
+
+        // ── LAYER 3: Saving Indicator ─────────────────────────────────────
+        AnimatedVisibility(
+            visible = uiState.isSaving,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.55f)),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         }
     }
 
+    // ── DIALOGS (ngoài Box chính để tránh clipping) ───────────────────────
     if (uiState.pendingBackgroundUri != null) {
         BackgroundTransformDialog(
             imageUri = uiState.pendingBackgroundUri,
@@ -396,9 +373,7 @@ fun CustomThemeEditorScreen(
             dismissButton = {
                 TextButton(
                     onClick = onDiscardDismiss,
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.primary
-                    )
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)
                 ) {
                     Text(stringResource(R.string.cancel))
                 }
@@ -406,6 +381,919 @@ fun CustomThemeEditorScreen(
         )
     }
 }
+
+// ==========================================
+// SCREEN 1: HOME OVERLAY
+// ==========================================
+
+@Composable
+private fun BoxScope.HomeOverlay(
+    onClose: () -> Unit,
+    onImageClick: () -> Unit,
+    onSolidClick: () -> Unit,
+    onGradientClick: () -> Unit
+) {
+    val statusBarTopPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+
+    // Top-left: X để thoát
+    IconButton(
+        onClick = onClose,
+        modifier = Modifier
+            .align(Alignment.TopStart)
+            .padding(top = statusBarTopPadding + 16.dp, start = 8.dp)
+            .background(Color.Black.copy(alpha = 0.35f), CircleShape)
+    ) {
+        Icon(Icons.Rounded.Close, contentDescription = "Close", tint = Color.White)
+    }
+
+    // Bottom-left: Expandable menu
+    Box(
+        modifier = Modifier
+            .align(Alignment.BottomStart)
+            .padding(bottom = 40.dp, start = 16.dp)
+    ) {
+        ExpandableBackgroundMenu(
+            onImageClick = onImageClick,
+            onSolidClick = onSolidClick,
+            onGradientClick = onGradientClick
+        )
+    }
+}
+
+@Composable
+fun ExpandableBackgroundMenu(
+    onImageClick: () -> Unit,
+    onSolidClick: () -> Unit,
+    onGradientClick: () -> Unit
+) {
+    var isExpanded by remember { mutableStateOf(false) }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Nút Image chính – toggle expand/collapse
+        IconButton(
+            onClick = { isExpanded = !isExpanded },
+            modifier = Modifier
+                .size(52.dp)
+                .background(Color.White.copy(alpha = 0.18f), CircleShape)
+                .border(1.dp, Color.White.copy(alpha = 0.35f), CircleShape)
+        ) {
+            Icon(
+                imageVector = if (isExpanded) Icons.Rounded.ExpandLess else Icons.Rounded.Image,
+                contentDescription = "Background",
+                tint = Color.White
+            )
+        }
+
+        // Expanded: 3 icon — Image gallery, Solid color, Gradient
+        AnimatedVisibility(
+            visible = isExpanded,
+            enter = expandHorizontally(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy))
+                    + fadeIn(animationSpec = tween(200)),
+            exit = shrinkHorizontally(animationSpec = tween(180)) + fadeOut(animationSpec = tween(150))
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                // Gallery / Image
+                ExpandMenuIconButton(
+                    icon = Icons.Rounded.PhotoLibrary,
+                    label = "Gallery",
+                    onClick = {
+                        isExpanded = false
+                        onImageClick()
+                    }
+                )
+                // Solid color
+                ExpandMenuIconButton(
+                    icon = Icons.Rounded.FormatColorFill,
+                    label = "Solid",
+                    onClick = {
+                        isExpanded = false
+                        onSolidClick()
+                    }
+                )
+                // Gradient color
+                ExpandMenuIconButton(
+                    icon = Icons.Rounded.Gradient,
+                    label = "Gradient",
+                    onClick = {
+                        isExpanded = false
+                        onGradientClick()
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExpandMenuIconButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: () -> Unit
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier
+            .size(48.dp)
+            .background(Color.White.copy(alpha = 0.18f), CircleShape)
+            .border(1.dp, Color.White.copy(alpha = 0.3f), CircleShape)
+    ) {
+        Icon(icon, contentDescription = label, tint = Color.White)
+    }
+}
+
+// ==========================================
+// SCREEN 2: SOLID BACKGROUND OVERLAY
+// ==========================================
+
+@Composable
+fun BoxScope.SolidBgOverlay(
+    uiState: CustomThemeEditorUiState,
+    onBack: () -> Unit,
+    onApply: () -> Unit,
+    onColorSelected: (Long) -> Unit
+) {
+    val statusBarTopPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+
+    // Top bar: ← và ✓
+    TopEditorBar(onBack = onBack, onApply = onApply)
+
+    // Bottom color picker với pager
+    ColorPagedPickerBar(
+        customColorPages = uiState.recentColors.chunkedToPages(),
+        onColorSelected = onColorSelected,
+        modifier = Modifier.align(Alignment.BottomCenter)
+    )
+}
+
+// ==========================================
+// SCREEN 3: GRADIENT BACKGROUND OVERLAY
+// ==========================================
+
+@Composable
+fun BoxScope.GradientBgOverlay(
+    uiState: CustomThemeEditorUiState,
+    onBack: () -> Unit,
+    onApply: () -> Unit,
+    onNodeSelected: (GradientNode) -> Unit,
+    onColorSelected: (Long) -> Unit
+) {
+    TopEditorBar(onBack = onBack, onApply = onApply)
+
+    Column(
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Gradient node selector (Start / End pill)
+        GradientNodeSelector(
+            activeNode = uiState.activeGradientNode,
+            startColor = uiState.gradientStartColor,
+            endColor = uiState.gradientEndColor,
+            onNodeSelected = onNodeSelected,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+
+        // Paged color bar
+        ColorPagedPickerBar(
+            customColorPages = uiState.recentColors.chunkedToPages(),
+            onColorSelected = onColorSelected
+        )
+    }
+}
+
+// ==========================================
+// SCREEN 4: EDIT COMPONENTS OVERLAY
+// ==========================================
+
+@Composable
+fun BoxScope.EditComponentsOverlay(
+    uiState: CustomThemeEditorUiState,
+    onBack: () -> Unit,
+    onSetEditMode: (EditMode) -> Unit,
+    onNameChange: (String) -> Unit,
+    onPreviewClick: () -> Unit,
+    onSaveClick: () -> Unit,
+    onBrushColorSelected: (Long) -> Unit,
+    onBrushSizeChange: (Float) -> Unit,
+    onBrushTypeSelected: (BrushType) -> Unit,
+    onEraserChanged: (Boolean) -> Unit,
+    onUndo: () -> Unit,
+    onClearStrokes: () -> Unit,
+    onFocusedColorSelected: (Long) -> Unit
+) {
+    val statusBarTopPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+
+    when (uiState.activeEditMode) {
+        EditMode.None -> {
+            // ── Back button (top-left, trong preview) ────────────────────
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(top = statusBarTopPadding + 20.dp, start = 16.dp)
+                    .background(Color.Black.copy(alpha = 0.45f), CircleShape)
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
+                    contentDescription = "Back",
+                    tint = Color.White
+                )
+            }
+
+            // ── Brush + Palette buttons (top-right) ──────────────────────
+            Row(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = statusBarTopPadding + 20.dp, end = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                EditorIconButton(
+                    icon = Icons.Rounded.Brush,
+                    label = "Draw",
+                    onClick = { onSetEditMode(EditMode.Draw) }
+                )
+                EditorIconButton(
+                    icon = Icons.Rounded.Palette,
+                    label = "Colors",
+                    onClick = { onSetEditMode(EditMode.Palette) }
+                )
+            }
+
+            // ── Main bottom bar: Preview | Name | Save ───────────────────
+            AnimatedVisibility(
+                visible = true,
+                modifier = Modifier.align(Alignment.BottomCenter),
+                enter = slideInVertically(initialOffsetY = { it }),
+                exit = slideOutVertically(targetOffsetY = { it })
+            ) {
+                EditComponentsBottomBar(
+                    name = uiState.name,
+                    onNameChange = onNameChange,
+                    onPreviewClick = onPreviewClick,
+                    onSaveClick = onSaveClick
+                )
+            }
+        }
+
+        EditMode.Draw -> {
+            // ── Draw toolbar (top-center, ngoài preview) ──────────────────
+            DrawToolbar(
+                uiState = uiState,
+                onBrushTypeSelected = onBrushTypeSelected,
+                onEraserChanged = onEraserChanged,
+                onUndo = onUndo,
+                onClearStrokes = onClearStrokes,
+                // ✓ Check icon để done vẽ
+                onDone = { onSetEditMode(EditMode.None) },
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = statusBarTopPadding + 16.dp)
+            )
+
+            // ── Vertical size slider (left edge) ──────────────────────────
+            VerticalSizeSlider(
+                value = uiState.brushSize,
+                onValueChange = onBrushSizeChange,
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(start = 12.dp)
+            )
+
+            // ── Color picker bar (bottom) ──────────────────────────────────
+            ColorPagedPickerBar(
+                customColorPages = uiState.recentColors.chunkedToPages(),
+                onColorSelected = onBrushColorSelected,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
+        }
+
+        EditMode.Palette -> {
+            // ── Done button (top-right) ────────────────────────────────────
+            IconButton(
+                onClick = { onSetEditMode(EditMode.None) },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 40.dp, end = 16.dp)
+                    .background(Color.Black.copy(alpha = 0.45f), CircleShape)
+            ) {
+                Icon(Icons.Rounded.Check, contentDescription = "Done", tint = Color.White)
+            }
+
+            // ── Color picker bar (bottom) ──────────────────────────────────
+            ColorPagedPickerBar(
+                customColorPages = uiState.recentColors.chunkedToPages(),
+                onColorSelected = onFocusedColorSelected,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
+        }
+    }
+}
+
+@Composable
+private fun EditorIconButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: () -> Unit
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier
+            .background(Color.Black.copy(alpha = 0.45f), CircleShape)
+    ) {
+        Icon(icon, contentDescription = label, tint = Color.White)
+    }
+}
+
+@Composable
+private fun EditComponentsBottomBar(
+    name: String,
+    onNameChange: (String) -> Unit,
+    onPreviewClick: () -> Unit,
+    onSaveClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.Black.copy(alpha = 0.72f))
+            .navigationBarsPadding()
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Preview button
+        Button(
+            onClick = onPreviewClick,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.White.copy(alpha = 0.15f),
+                contentColor = Color.White
+            ),
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+        ) {
+            Icon(
+                Icons.Rounded.Visibility,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(Modifier.width(4.dp))
+            Text("Preview", style = MaterialTheme.typography.labelMedium)
+        }
+
+        // Name text field (center)
+        BasicNameField(
+            value = name,
+            onValueChange = onNameChange,
+            modifier = Modifier.weight(1f)
+        )
+
+        // Save button
+        Button(
+            onClick = onSaveClick,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ),
+            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+        ) {
+            Text(stringResource(R.string.save), style = MaterialTheme.typography.labelMedium)
+        }
+    }
+}
+
+@Composable
+private fun BasicNameField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        singleLine = true,
+        modifier = modifier,
+        textStyle = MaterialTheme.typography.bodyMedium.copy(
+            color = Color.White,
+            textAlign = TextAlign.Center
+        ),
+        placeholder = {
+            Text(
+                "Theme name",
+                color = Color.White.copy(alpha = 0.45f),
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = Color.White.copy(alpha = 0.4f),
+            unfocusedBorderColor = Color.White.copy(alpha = 0.15f),
+            focusedContainerColor = Color.White.copy(alpha = 0.08f),
+            unfocusedContainerColor = Color.White.copy(alpha = 0.05f),
+            cursorColor = Color.White
+        ),
+        shape = RoundedCornerShape(14.dp)
+    )
+}
+
+// ==========================================
+// SCREEN 5: FINAL PREVIEW OVERLAY
+// ==========================================
+
+@Composable
+private fun BoxScope.FinalPreviewOverlay(
+    uiState: CustomThemeEditorUiState,
+    onBack: () -> Unit,
+    onSave: () -> Unit
+) {
+    // Top-left: < quay lại EditComponents
+    IconButton(
+        onClick = onBack,
+        modifier = Modifier
+            .align(Alignment.TopStart)
+            .padding(top = 32.dp, start = 8.dp)
+            .background(Color.Black.copy(alpha = 0.45f), CircleShape)
+    ) {
+        Icon(
+            Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
+            contentDescription = "Back",
+            tint = Color.White
+        )
+    }
+
+    // Bottom bar: tên (chỉ đọc) + nút Save
+    Row(
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .fillMaxWidth()
+            .background(Color.Black.copy(alpha = 0.65f))
+            .navigationBarsPadding()
+            .padding(horizontal = 20.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = uiState.name.ifBlank { "My Theme" },
+            color = Color.White,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f)
+        )
+        Spacer(Modifier.width(16.dp))
+        Button(
+            onClick = onSave,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            )
+        ) {
+            Text(stringResource(R.string.save), fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+// ==========================================
+// SHARED: TOP EDITOR BAR (Screen 2 & 3)
+// ==========================================
+
+@Composable
+fun BoxScope.TopEditorBar(onBack: () -> Unit, onApply: () -> Unit) {
+    val statusBarTopPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .align(Alignment.TopCenter)
+            .padding(top = statusBarTopPadding + 16.dp, start = 4.dp, end = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        // ← Quay lại
+        IconButton(
+            onClick = onBack,
+            modifier = Modifier.background(Color.Black.copy(alpha = 0.35f), CircleShape)
+        ) {
+            Icon(
+                Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
+                contentDescription = "Back",
+                tint = Color.White
+            )
+        }
+        // ✓ Áp dụng và sang màn tiếp
+        IconButton(
+            onClick = onApply,
+            modifier = Modifier.background(Color.Black.copy(alpha = 0.35f), CircleShape)
+        ) {
+            Icon(Icons.Rounded.Check, contentDescription = "Apply", tint = Color.White)
+        }
+    }
+}
+
+// ==========================================
+// GRADIENT NODE SELECTOR
+// ==========================================
+
+@Composable
+fun GradientNodeSelector(
+    activeNode: GradientNode,
+    startColor: Long,
+    endColor: Long,
+    onNodeSelected: (GradientNode) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .background(Color.Black.copy(alpha = 0.65f), RoundedCornerShape(28.dp))
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        GradientNodeTab(
+            label = "Start",
+            color = startColor,
+            isActive = activeNode == GradientNode.Start,
+            nodeMarker = "①",
+            onClick = { onNodeSelected(GradientNode.Start) }
+        )
+        GradientNodeTab(
+            label = "End",
+            color = endColor,
+            isActive = activeNode == GradientNode.End,
+            nodeMarker = "②",
+            onClick = { onNodeSelected(GradientNode.End) }
+        )
+    }
+}
+
+@Composable
+private fun GradientNodeTab(
+    label: String,
+    color: Long,
+    isActive: Boolean,
+    nodeMarker: String,
+    onClick: () -> Unit
+) {
+    val bgAlpha by animateFloatAsState(
+        targetValue = if (isActive) 0.22f else 0f,
+        animationSpec = tween(200),
+        label = "nodeTabBg"
+    )
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .background(Color.White.copy(alpha = bgAlpha), RoundedCornerShape(24.dp))
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() },
+                onClick = onClick
+            )
+            .padding(horizontal = 14.dp, vertical = 8.dp)
+    ) {
+        // Color swatch
+        Box(
+            modifier = Modifier
+                .size(18.dp)
+                .background(Color(color), CircleShape)
+                .border(1.5.dp, Color.White.copy(alpha = 0.6f), CircleShape)
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(
+            text = "$nodeMarker $label",
+            color = Color.White,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal
+        )
+    }
+}
+
+// ==========================================
+// COLOR PAGED PICKER BAR
+// ==========================================
+
+/**
+ * 4 trang màu preset cố định. Khi user thêm màu custom → tạo thêm trang mới.
+ */
+private val PresetColorPages: List<List<Long>> = listOf(
+    // Trang 1: Màu cơ bản (đen-trắng-primary)
+    listOf(
+        0xFFFFFFFF, 0xFF1A1A1A, 0xFF2196F3, 0xFF4CAF50,
+        0xFFFFEB3B, 0xFFFF9800, 0xFFD32F2F, 0xFFE91E63, 0xFF9C27B0
+    ),
+    // Trang 2: Xám đậm → xám nhạt
+    listOf(
+        0xFF424242, 0xFF616161, 0xFF757575, 0xFF9E9E9E,
+        0xFFBDBDBD, 0xFFDDDDDD, 0xFFEEEEEE, 0xFFF5F5F5, 0xFFFFFFFF
+    ),
+    // Trang 3: Màu trung tính ấm
+    listOf(
+        0xFF795548, 0xFF8D6E63, 0xFFA1887F, 0xFFBCAAA4,
+        0xFFD7CCC8, 0xFFEFEBE9, 0xFFFFF7EC, 0xFFFFF3E0, 0xFFFBE9E7
+    ),
+    // Trang 4: Màu ấm (đỏ-hồng-cam-nâu)
+    listOf(
+        0xFFD32F2F, 0xFFE57373, 0xFFFFCDD2, 0xFFFFCCBC,
+        0xFFFFAB91, 0xFFBCAAA4, 0xFF8D6E63, 0xFF4E342E, 0xFF1B5E20
+    )
+)
+
+/** Chunk recentColors thành các trang 9 màu để tạo custom pages */
+private fun List<Long>.chunkedToPages(): List<List<Long>> =
+    if (isEmpty()) emptyList() else chunked(9)
+
+@Composable
+fun ColorPagedPickerBar(
+    customColorPages: List<List<Long>>,
+    onColorSelected: (Long) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var showColorSheet by remember { mutableStateOf(false) }
+    var pendingCustomColor by remember { mutableLongStateOf(0xFFFF0000L) }
+
+    // Tất cả pages = custom (recent) + preset
+    val allPages = remember(customColorPages) {
+        (if (customColorPages.isNotEmpty()) customColorPages else emptyList()) + PresetColorPages
+    }
+
+    val pagerState = rememberPagerState(
+        initialPage = if (customColorPages.isNotEmpty()) 0 else 0,
+        pageCount = { allPages.size }
+    )
+    val coroutineScope = rememberCoroutineScope()
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Color.Black.copy(alpha = 0.0f)) // trong suốt - không có nền đen của Column
+            .navigationBarsPadding()
+            .padding(top = 8.dp, bottom = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Hàng màu: [Add button cố định trái] + [Pager]
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // ─ Add button luôn hiển thị bên trái, không ở trong pager ──────────────────────
+            Box(
+                modifier = Modifier
+                    .padding(start = 12.dp, end = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                AddColorCircleButton(onClick = { showColorSheet = true })
+            }
+
+            // ─ Pager chỉ chứa các màu, không có contentPadding thừa ─────────────────
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                contentPadding = PaddingValues(start = 0.dp, end = 12.dp), // chỉ padding cuối
+                pageSpacing = 0.dp,
+                beyondViewportPageCount = 1
+            ) { pageIndex ->
+                val colors = allPages.getOrNull(pageIndex) ?: emptyList()
+                LazyRow(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    contentPadding = PaddingValues(start = 4.dp, end = 4.dp)
+                ) {
+                    items(colors) { color ->
+                        ColorSwatchCircle(
+                            color = color,
+                            onClick = { onColorSelected(color) }
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(6.dp))
+
+        // Pager dots indicator
+        PageDots(pagerState = pagerState, pageCount = allPages.size)
+    }
+
+    // Color picker bottom sheet
+    if (showColorSheet) {
+        ColorPickerBottomSheet(
+            selectedColor = pendingCustomColor,
+            onColorSelected = { color ->
+                pendingCustomColor = color
+                onColorSelected(color)
+                showColorSheet = false
+            },
+            allowGradient = false,
+            mode = BackgroundFillMode.Solid,
+            onModeChange = {},
+            gradientStartColor = 0L,
+            gradientEndColor = 0L,
+            activeGradientStop = 0,
+            onActiveGradientStopChange = {},
+            onGradientStartColorSelected = {},
+            onGradientEndColorSelected = {},
+            onDismiss = { showColorSheet = false }
+        )
+    }
+}
+
+@Composable
+private fun AddColorCircleButton(onClick: () -> Unit) {
+    val rainbowBrush = remember {
+        Brush.sweepGradient(
+            listOf(
+                Color(0xFFFF4D4D), Color(0xFFFFB84D), Color(0xFFFFF176),
+                Color(0xFF66BB6A), Color(0xFF4FC3F7), Color(0xFF7E57C2),
+                Color(0xFFFF4D4D)
+            )
+        )
+    }
+    Box(
+        modifier = Modifier
+            .size(42.dp)
+            .background(rainbowBrush, CircleShape)
+            .padding(2.dp)
+            .background(Color(0xFF1A1A1A), CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            Icons.Rounded.Add,
+            contentDescription = "Add color",
+            tint = Color.White,
+            modifier = Modifier.size(18.dp)
+        )
+    }
+}
+
+@Composable
+private fun ColorSwatchCircle(
+    color: Long,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size(42.dp)
+            .clip(CircleShape)
+            .background(Color(color))
+            .border(1.5.dp, Color.White.copy(alpha = 0.55f), CircleShape)
+            .clickable(onClick = onClick)
+    )
+}
+
+@Composable
+private fun PageDots(pagerState: PagerState, pageCount: Int) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        repeat(pageCount) { index ->
+            val isSelected = pagerState.currentPage == index
+            val dotWidth by animateDpAsState(
+                targetValue = if (isSelected) 16.dp else 5.dp,
+                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                label = "dotWidth"
+            )
+            val dotAlpha by animateFloatAsState(
+                targetValue = if (isSelected) 1f else 0.4f,
+                label = "dotAlpha"
+            )
+            Box(
+                modifier = Modifier
+                    .width(dotWidth)
+                    .height(5.dp)
+                    .background(Color.White.copy(alpha = dotAlpha), CircleShape)
+            )
+        }
+    }
+}
+
+// ==========================================
+// DRAW TOOLBAR
+// ==========================================
+
+@Composable
+fun DrawToolbar(
+    uiState: CustomThemeEditorUiState,
+    onBrushTypeSelected: (BrushType) -> Unit,
+    onEraserChanged: (Boolean) -> Unit,
+    onUndo: () -> Unit,
+    onClearStrokes: () -> Unit,
+    onDone: () -> Unit, // ✓ Check icon để done
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .background(Color.Black.copy(alpha = 0.68f), RoundedCornerShape(28.dp))
+            .padding(horizontal = 6.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Undo
+        IconButton(
+            onClick = onUndo,
+            enabled = uiState.strokes.isNotEmpty()
+        ) {
+            Icon(
+                Icons.AutoMirrored.Rounded.Undo,
+                contentDescription = "Undo",
+                tint = if (uiState.strokes.isNotEmpty()) Color.White else Color.White.copy(alpha = 0.3f),
+                modifier = Modifier.size(20.dp)
+            )
+        }
+
+        Box(modifier = Modifier.width(1.dp).height(20.dp).background(Color.White.copy(alpha = 0.2f)))
+
+        // Cọ nét mảnh (Fine pen)
+        DrawToolIconButton(
+            selected = uiState.brushType == BrushType.Fine && !uiState.isEraser,
+            onClick = { onBrushTypeSelected(BrushType.Fine) },
+            icon = Icons.Rounded.Edit,
+            label = "Fine"
+        )
+        // Cọ nét đậm (Bold brush)
+        DrawToolIconButton(
+            selected = uiState.brushType == BrushType.Bold && !uiState.isEraser,
+            onClick = { onBrushTypeSelected(BrushType.Bold) },
+            icon = Icons.Rounded.Brush,
+            label = "Bold"
+        )
+        // Chì (Pencil)
+        DrawToolIconButton(
+            selected = uiState.brushType == BrushType.Pencil && !uiState.isEraser,
+            onClick = { onBrushTypeSelected(BrushType.Pencil) },
+            icon = Icons.Rounded.Create,
+            label = "Pencil"
+        )
+        // Spray
+        DrawToolIconButton(
+            selected = uiState.brushType == BrushType.Spray && !uiState.isEraser,
+            onClick = { onBrushTypeSelected(BrushType.Spray) },
+            icon = Icons.Rounded.BlurOn,
+            label = "Spray"
+        )
+        // Tẩy
+        DrawToolIconButton(
+            selected = uiState.isEraser,
+            onClick = { onEraserChanged(true) },
+            icon = Icons.Rounded.FormatColorReset,
+            label = "Eraser"
+        )
+
+        Box(modifier = Modifier.width(1.dp).height(20.dp).background(Color.White.copy(alpha = 0.2f)))
+
+        // ✓ Done (Check) — thoát draw mode
+        IconButton(onClick = onDone) {
+            Icon(
+                Icons.Rounded.Check,
+                contentDescription = "Done",
+                tint = Color.White,
+                modifier = Modifier.size(22.dp)
+            )
+        }
+    }
+}
+
+// ==========================================
+// VERTICAL SIZE SLIDER
+// ==========================================
+
+@Composable
+fun VerticalSizeSlider(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .height(200.dp)
+            .width(44.dp)
+            .background(Color.Black.copy(alpha = 0.65f), RoundedCornerShape(22.dp)),
+        contentAlignment = Alignment.Center
+    ) {
+        Slider(
+            value = value,
+            onValueChange = onValueChange,
+            valueRange = 2f..40f,
+            modifier = Modifier
+                .width(180.dp)
+                .graphicsLayer { rotationZ = -90f },
+            colors = SliderDefaults.colors(
+                thumbColor = Color.White,
+                activeTrackColor = Color.White,
+                inactiveTrackColor = Color.White.copy(alpha = 0.28f)
+            )
+        )
+    }
+}
+
+// ==========================================
+// THEME PREVIEW CAPTURE (Canvas + Content)
+// ==========================================
 
 @Composable
 private fun ThemePreviewCapture(
@@ -454,10 +1342,11 @@ private fun ThemePreviewCapture(
     Box(
         modifier = modifier
             .then(
-                if (backgroundBrush != null) Modifier.background(backgroundBrush) else Modifier.background(solidBackground)
+                if (backgroundBrush != null) Modifier.background(backgroundBrush)
+                else Modifier.background(solidBackground)
             )
             .then(
-                if (uiState.selectedTool == ThemeEditorTool.Draw) {
+                if (uiState.activeEditMode == EditMode.Draw) {
                     Modifier.pointerInput(uiState.brushColor, uiState.brushSize, uiState.brushType, uiState.isEraser) {
                         awaitEachGesture {
                             val strokePoints = mutableListOf<Offset>()
@@ -502,13 +1391,13 @@ private fun ThemePreviewCapture(
                                     )
                                 )
                             }
-
                             activePoints = emptyList()
                         }
                     }
                 } else Modifier
             )
     ) {
+        // Image background
         if (!uiState.backgroundUri.isNullOrBlank()) {
             AsyncImage(
                 model = uiState.backgroundUri,
@@ -531,6 +1420,7 @@ private fun ThemePreviewCapture(
             )
         }
 
+        // Canvas strokes
         Canvas(
             modifier = Modifier
                 .fillMaxSize()
@@ -551,6 +1441,7 @@ private fun ThemePreviewCapture(
             }
         }
 
+        // Full calendar preview (Screen 5)
         if (showFullPreview) {
             ThemeCalendarMockScreen(
                 isDarkMode = isDarkMode,
@@ -565,42 +1456,44 @@ private fun ThemePreviewCapture(
                 modifier = Modifier.fillMaxSize()
             )
         } else {
+            // Light/Dark mode toggle FAB
             if (onToggleAppearance != null) {
                 AppearanceModeFab(
                     isDarkMode = isDarkMode,
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(12.dp),
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 12.dp, bottom = 80.dp),
                     onClick = onToggleAppearance
                 )
             }
 
-            when (uiState.selectedTool) {
-                ThemeEditorTool.BackgroundImage, ThemeEditorTool.BackgroundColor, ThemeEditorTool.Draw -> Unit
-                ThemeEditorTool.Colors -> {
-                    PreviewMoodIconRow(
-                        colors = uiState.iconColors,
-                        selectedIndex = if (uiState.colorFocusTarget == ColorFocusTarget.Icon) uiState.selectedIconIndex else -1,
-                        onSelected = onIconSelected,
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .fillMaxWidth()
-                            .padding(start = 20.dp, end = 20.dp, bottom = 84.dp)
-                    )
-                    MockAppBottomNavBar(
-                        primary = primary,
-                        backgroundColor = bottomBarColor,
-                        centerCutoutColor = bottomBarCutoutColor,
-                        emphasizeIcons = uiState.colorFocusTarget == ColorFocusTarget.Primary,
-                        modifier = Modifier.align(Alignment.BottomCenter),
-                        onPrimarySelected = onPrimaryFocus
-                    )
-                }
-                ThemeEditorTool.Preview -> Unit
+            // Palette mode: mood icons + bottom bar
+            if (uiState.activeEditMode == EditMode.Palette) {
+                PreviewMoodIconRow(
+                    colors = uiState.iconColors,
+                    selectedIndex = if (uiState.colorFocusTarget == ColorFocusTarget.Icon) uiState.selectedIconIndex else -1,
+                    onSelected = onIconSelected,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .padding(start = 20.dp, end = 20.dp, bottom = 80.dp)
+                )
+                MockAppBottomNavBar(
+                    primary = primary,
+                    backgroundColor = bottomBarColor,
+                    centerCutoutColor = bottomBarCutoutColor,
+                    emphasizeIcons = uiState.colorFocusTarget == ColorFocusTarget.Primary,
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                    onPrimarySelected = onPrimaryFocus
+                )
             }
         }
     }
 }
+
+// ==========================================
+// APPEARANCE MODE FAB
+// ==========================================
 
 @Composable
 private fun AppearanceModeFab(
@@ -608,7 +1501,6 @@ private fun AppearanceModeFab(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    // Semi-transparent frosted backdrop ensures icon is always visible regardless of background image brightness
     Surface(
         modifier = modifier,
         shape = CircleShape,
@@ -625,6 +1517,10 @@ private fun AppearanceModeFab(
     }
 }
 
+// ==========================================
+// THEME CALENDAR MOCK SCREEN (Preview)
+// ==========================================
+
 @Composable
 private fun ThemeCalendarMockScreen(
     isDarkMode: Boolean,
@@ -638,8 +1534,6 @@ private fun ThemeCalendarMockScreen(
     onDarkModeSelected: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val calendarCardColor = panelColor
-
     Box(modifier = modifier) {
         Column(
             modifier = Modifier
@@ -658,7 +1552,9 @@ private fun ThemeCalendarMockScreen(
                             Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
                             contentDescription = null,
                             tint = primary,
-                            modifier = Modifier.padding(6.dp).size(22.dp)
+                            modifier = Modifier
+                                .padding(6.dp)
+                                .size(22.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(10.dp))
@@ -688,9 +1584,11 @@ private fun ThemeCalendarMockScreen(
             }
 
             Surface(
-                modifier = Modifier.fillMaxWidth().weight(1f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
                 shape = RoundedCornerShape(28.dp),
-                color = calendarCardColor,
+                color = panelColor,
                 tonalElevation = if (isDarkMode) 6.dp else 0.dp,
                 shadowElevation = if (isDarkMode) 14.dp else 0.dp
             ) {
@@ -705,7 +1603,7 @@ private fun ThemeCalendarMockScreen(
                         primary = primary,
                         iconColors = iconColors,
                         contentColor = contentColor,
-                        panelColor = calendarCardColor,
+                        panelColor = panelColor,
                         transparentBackground = false,
                         modifier = Modifier.weight(1f)
                     )
@@ -750,7 +1648,7 @@ private fun MockCalendarWeekHeader(contentColor: Color) {
                 color = contentColor.copy(alpha = 0.62f),
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                textAlign = TextAlign.Center
             )
         }
     }
@@ -773,13 +1671,17 @@ private fun MockCalendarGrid(
         ) {
             repeat(5) { row ->
                 Row(
-                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     repeat(7) { column ->
                         val day = row * 7 + column - 2
                         Box(
-                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
                             contentAlignment = Alignment.Center
                         ) {
                             if (day in 1..31) {
@@ -822,21 +1724,24 @@ private fun MockCalendarGrid(
     }
 
     if (transparentBackground) {
-        Box(modifier = modifier.fillMaxWidth()) {
-            content()
-        }
+        Box(modifier = modifier.fillMaxWidth()) { content() }
     } else {
         Surface(
             shape = RoundedCornerShape(22.dp),
             color = panelColor,
             modifier = modifier.fillMaxWidth()
-        ) {
-            content()
-        }
+        ) { content() }
     }
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawStroke(stroke: DrawStroke, background: Color) {
+// ==========================================
+// CANVAS DRAW STROKE
+// ==========================================
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawStroke(
+    stroke: DrawStroke,
+    background: Color
+) {
     val path = Path()
     stroke.points.forEachIndexed { index, point ->
         if (index == 0) path.moveTo(point.x, point.y) else path.lineTo(point.x, point.y)
@@ -849,149 +1754,16 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawStroke(stroke: 
     }
     drawPath(
         path = path,
-        color = if (stroke.isEraser) Color.Transparent else stroke.color.toComposeColor().copy(alpha = if (stroke.brushType == BrushType.Pencil) 0.68f else 1f),
+        color = if (stroke.isEraser) Color.Transparent
+        else stroke.color.toComposeColor().copy(alpha = if (stroke.brushType == BrushType.Pencil) 0.68f else 1f),
         style = Stroke(width = width, cap = androidx.compose.ui.graphics.StrokeCap.Round),
         blendMode = if (stroke.isEraser) BlendMode.Clear else BlendMode.SrcOver
     )
 }
 
-@Composable
-private fun ThemeEditorBottomTools(
-    uiState: CustomThemeEditorUiState,
-    onToolSelected: (ThemeEditorTool) -> Unit,
-    onPickImage: () -> Unit,
-    onBackgroundFillModeSelected: (BackgroundFillMode) -> Unit,
-    onSolidBackgroundSelected: (Long) -> Unit,
-    onGradientStartSelected: (Long) -> Unit,
-    onGradientEndSelected: (Long) -> Unit,
-    onPrimaryFocus: () -> Unit,
-    onFocusedColorSelected: (Long) -> Unit,
-    onIconSelected: (Int) -> Unit,
-    onBrushColorSelected: (Long) -> Unit,
-    onBrushSizeChange: (Float) -> Unit,
-    onBrushTypeSelected: (BrushType) -> Unit,
-    onEraserChanged: (Boolean) -> Unit,
-    onUndo: () -> Unit,
-    onClearStrokes: () -> Unit
-) {
-    val pagerState = rememberPagerState(pageCount = { ThemeEditorTool.entries.size })
-
-    LaunchedEffect(uiState.selectedTool) {
-        val index = ThemeEditorTool.entries.indexOf(uiState.selectedTool)
-        if (index >= 0 && pagerState.currentPage != index) {
-            pagerState.animateScrollToPage(index)
-        }
-    }
-
-    LaunchedEffect(pagerState.currentPage) {
-        val tool = ThemeEditorTool.entries[pagerState.currentPage]
-        if (uiState.selectedTool != tool) {
-            onToolSelected(tool)
-        }
-    }
-
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(EditorBottomToolsHeight),
-        tonalElevation = 0.dp,
-        shadowElevation = 20.dp,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-        color = MoonTheme.customColors.popupBgColor
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-        ) {
-            TabRow(
-                selectedTabIndex = uiState.selectedTool.ordinal,
-                containerColor = Color.Transparent,
-                contentColor = MaterialTheme.colorScheme.primary,
-                divider = {}
-            ) {
-                ThemeEditorTool.entries.forEach { tool ->
-                    Tab(
-                        selected = uiState.selectedTool == tool,
-                        onClick = { onToolSelected(tool) },
-                        icon = {
-                            Icon(
-                                imageVector = when (tool) {
-                                    ThemeEditorTool.BackgroundImage -> Icons.Rounded.Image
-                                    ThemeEditorTool.BackgroundColor -> Icons.Rounded.FormatColorFill
-                                    ThemeEditorTool.Draw -> Icons.Rounded.Brush
-                                    ThemeEditorTool.Colors -> Icons.Rounded.Palette
-                                    ThemeEditorTool.Preview -> Icons.Rounded.Visibility
-                                },
-                                contentDescription = when (tool) {
-                                    ThemeEditorTool.BackgroundImage -> stringResource(R.string.custom_theme_tool_image)
-                                    ThemeEditorTool.BackgroundColor -> stringResource(R.string.custom_theme_tool_background_color)
-                                    ThemeEditorTool.Draw -> stringResource(R.string.custom_theme_tool_draw)
-                                    ThemeEditorTool.Colors -> stringResource(R.string.custom_theme_tool_colors)
-                                    ThemeEditorTool.Preview -> stringResource(R.string.custom_theme_tool_preview)
-                                }
-                            )
-                        }
-                    )
-                }
-            }
-
-            val showContent = uiState.selectedTool != ThemeEditorTool.Preview
-            AnimatedVisibility(
-                visible = showContent,
-                enter = slideInVertically { it },
-                exit = slideOutVertically { it }
-            ) {
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(EditorBottomToolContentHeight)
-                        .padding(horizontal = 12.dp)
-                        .padding(bottom = 12.dp, top = 4.dp),
-                    verticalAlignment = Alignment.Top
-                ) { page ->
-                    val scrollState = rememberScrollState()
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(scrollState)
-                    ) {
-                        when (ThemeEditorTool.entries[page]) {
-                            ThemeEditorTool.BackgroundImage -> BackgroundImageToolPanel(
-                                uiState = uiState,
-                                onPickImage = onPickImage
-                            )
-                            ThemeEditorTool.BackgroundColor -> BackgroundColorToolPanel(
-                                uiState = uiState,
-                                onBackgroundFillModeSelected = onBackgroundFillModeSelected,
-                                onSolidBackgroundSelected = onSolidBackgroundSelected,
-                                onGradientStartSelected = onGradientStartSelected,
-                                onGradientEndSelected = onGradientEndSelected
-                            )
-                            ThemeEditorTool.Draw -> DrawToolPanel(
-                                uiState = uiState,
-                                onBrushColorSelected = onBrushColorSelected,
-                                onBrushSizeChange = onBrushSizeChange,
-                                onBrushTypeSelected = onBrushTypeSelected,
-                                onEraserChanged = onEraserChanged,
-                                onUndo = onUndo,
-                                onClearStrokes = onClearStrokes
-                            )
-                            ThemeEditorTool.Colors -> ColorToolPanel(
-                                uiState = uiState,
-                                onPrimaryFocus = onPrimaryFocus,
-                                onIconSelected = onIconSelected,
-                                onFocusedColorSelected = onFocusedColorSelected
-                            )
-                            ThemeEditorTool.Preview -> Unit
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
+// ==========================================
+// MOCK APP BOTTOM NAV BAR
+// ==========================================
 
 @Composable
 private fun MockAppBottomNavBar(
@@ -1061,272 +1833,48 @@ private fun MockNavIcon(
     }
 }
 
-@Composable
-private fun BackgroundImageToolPanel(
-    uiState: CustomThemeEditorUiState,
-    onPickImage: () -> Unit
-) {
-    val hasImageBackground = !uiState.backgroundUri.isNullOrBlank()
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Icon(
-            imageVector = Icons.Rounded.CloudUpload,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
-        )
-        FilterChip(
-            selected = hasImageBackground,
-            onClick = onPickImage,
-            label = { Text(stringResource(R.string.custom_theme_upload_image)) },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Rounded.CloudUpload,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-            },
-            colors = customThemeFilterChipColors()
-        )
-    }
-}
-
-@Composable
-private fun BackgroundColorToolPanel(
-    uiState: CustomThemeEditorUiState,
-    onBackgroundFillModeSelected: (BackgroundFillMode) -> Unit,
-    onSolidBackgroundSelected: (Long) -> Unit,
-    onGradientStartSelected: (Long) -> Unit,
-    onGradientEndSelected: (Long) -> Unit
-) {
-    var showColorSheet by remember { mutableStateOf(false) }
-    var selectedGradientStop by remember { mutableIntStateOf(0) }
-    val activeBackgroundColor = if (uiState.backgroundFillMode == BackgroundFillMode.Gradient) {
-        if (selectedGradientStop == 0) uiState.gradientStartColor else uiState.gradientEndColor
-    } else {
-        uiState.solidBackgroundColor
-    }
-
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            DrawToolIconButton(
-                selected = uiState.backgroundFillMode == BackgroundFillMode.Solid,
-                onClick = { onBackgroundFillModeSelected(BackgroundFillMode.Solid) },
-                icon = Icons.Rounded.Square
-            )
-
-            DrawToolIconButton(
-                selected = uiState.backgroundFillMode == BackgroundFillMode.Gradient,
-                onClick = { onBackgroundFillModeSelected(BackgroundFillMode.Gradient) },
-                icon = Icons.Rounded.Gradient
-            )
-        }
-
-        if (uiState.backgroundFillMode == BackgroundFillMode.Gradient) {
-            GradientStopSelector(
-                startColor = uiState.gradientStartColor,
-                endColor = uiState.gradientEndColor,
-                selectedStop = selectedGradientStop,
-                onSelectedStopChange = { selectedGradientStop = it }
-            )
-        }
-
-        PaletteSwatchRow(
-            selected = activeBackgroundColor,
-            onSelected = { color ->
-                if (uiState.backgroundFillMode == BackgroundFillMode.Gradient) {
-                    if (selectedGradientStop == 0) onGradientStartSelected(color) else onGradientEndSelected(color)
-                } else {
-                    onSolidBackgroundSelected(color)
-                }
-            },
-            onAddColor = { showColorSheet = true }
-        )
-    }
-
-    if (showColorSheet) {
-        ColorPickerBottomSheet(
-            selectedColor = uiState.solidBackgroundColor,
-            onColorSelected = onSolidBackgroundSelected,
-            allowGradient = true,
-            mode = uiState.backgroundFillMode,
-            onModeChange = onBackgroundFillModeSelected,
-            gradientStartColor = uiState.gradientStartColor,
-            gradientEndColor = uiState.gradientEndColor,
-            activeGradientStop = selectedGradientStop,
-            onActiveGradientStopChange = { selectedGradientStop = it },
-            onGradientStartColorSelected = onGradientStartSelected,
-            onGradientEndColorSelected = onGradientEndSelected,
-            onDismiss = { showColorSheet = false }
-        )
-    }
-}
-
-@Composable
-private fun DrawToolPanel(
-    uiState: CustomThemeEditorUiState,
-    onBrushColorSelected: (Long) -> Unit,
-    onBrushSizeChange: (Float) -> Unit,
-    onBrushTypeSelected: (BrushType) -> Unit,
-    onEraserChanged: (Boolean) -> Unit,
-    onUndo: () -> Unit,
-    onClearStrokes: () -> Unit
-) {
-    var showColorSheet by remember { mutableStateOf(false) }
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        IconButton(onClick = onUndo, enabled = uiState.strokes.isNotEmpty()) {
-            Icon(
-                Icons.AutoMirrored.Rounded.Undo,
-                contentDescription = stringResource(R.string.undo),
-                tint = if (uiState.strokes.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.32f)
-            )
-        }
-        IconButton(onClick = onClearStrokes, enabled = uiState.strokes.isNotEmpty()) {
-            Icon(
-                Icons.Rounded.Delete,
-                contentDescription = stringResource(R.string.custom_theme_clear_strokes),
-                tint = if (uiState.strokes.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.32f)
-            )
-        }
-    }
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        BrushType.entries.forEach { type ->
-            val isSelected = !uiState.isEraser && uiState.brushType == type
-            DrawToolIconButton(
-                selected = isSelected,
-                onClick = {
-                    if (uiState.isEraser) onEraserChanged(false)
-                    onBrushTypeSelected(type)
-                },
-                icon = when (type) {
-                    BrushType.Fine -> Icons.Rounded.Gesture
-                    BrushType.Bold -> Icons.Rounded.Brush
-                    BrushType.Pencil -> Icons.Rounded.Edit
-                    BrushType.Spray -> Icons.Rounded.AutoFixHigh
-                }
-            )
-        }
-
-        VerticalDivider(
-            modifier = Modifier.height(28.dp),
-            thickness = 1.dp,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
-        )
-
-        DrawToolIconButton(
-            selected = uiState.isEraser,
-            onClick = { onEraserChanged(true) },
-            icon = Icons.Rounded.FormatColorReset
-        )
-    }
-    PaletteSwatchRow(
-        selected = uiState.brushColor,
-        onSelected = onBrushColorSelected,
-        onAddColor = { showColorSheet = true },
-        modifier = Modifier.padding(top = 8.dp)
-    )
-    Slider(
-        value = uiState.brushSize,
-        onValueChange = onBrushSizeChange,
-        valueRange = 3f..24f,
-        modifier = Modifier.padding(horizontal = 4.dp)
-    )
-
-    if (showColorSheet) {
-        ColorPickerBottomSheet(
-            selectedColor = uiState.brushColor,
-            onColorSelected = onBrushColorSelected,
-            onDismiss = { showColorSheet = false }
-        )
-    }
-}
+// ==========================================
+// DRAW TOOL ICON BUTTON
+// ==========================================
 
 @Composable
 private fun DrawToolIconButton(
     selected: Boolean,
     onClick: () -> Unit,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
     modifier: Modifier = Modifier
 ) {
-    val backgroundColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
-    val contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-
+    val bgColor by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.14f),
+        animationSpec = tween(180),
+        label = "drawToolBg"
+    )
+    val iconColor by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.onPrimary else Color.White,
+        animationSpec = tween(180),
+        label = "drawToolIcon"
+    )
     Box(
         modifier = modifier
-            .size(42.dp)
+            .size(40.dp)
             .clip(CircleShape)
-            .background(backgroundColor)
+            .background(bgColor)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = null,
-            tint = contentColor,
-            modifier = Modifier.size(22.dp)
+            contentDescription = label,
+            tint = iconColor,
+            modifier = Modifier.size(20.dp)
         )
     }
 }
 
-@Composable
-private fun ColorToolPanel(
-    uiState: CustomThemeEditorUiState,
-    onPrimaryFocus: () -> Unit,
-    onIconSelected: (Int) -> Unit,
-    onFocusedColorSelected: (Long) -> Unit,
-) {
-    var showColorSheet by remember { mutableStateOf(false) }
-    val focusedColor = when (uiState.colorFocusTarget) {
-        ColorFocusTarget.Primary -> uiState.primaryColor
-        ColorFocusTarget.Icon -> uiState.iconColors[uiState.selectedIconIndex]
-    }
-
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(
-                selected = uiState.colorFocusTarget == ColorFocusTarget.Primary,
-                onClick = onPrimaryFocus,
-                label = { Text(stringResource(R.string.custom_theme_primary_color)) },
-                colors = customThemeFilterChipColors()
-            )
-            FilterChip(
-                selected = uiState.colorFocusTarget == ColorFocusTarget.Icon,
-                onClick = { onIconSelected(uiState.selectedIconIndex) },
-                label = { Text(stringResource(R.string.custom_theme_icon_color)) },
-                colors = customThemeFilterChipColors()
-            )
-        }
-        PaletteSwatchRow(
-            selected = focusedColor,
-            onSelected = onFocusedColorSelected,
-            onAddColor = { showColorSheet = true }
-        )
-    }
-
-    if (showColorSheet) {
-        ColorPickerBottomSheet(
-            selectedColor = focusedColor,
-            onColorSelected = onFocusedColorSelected,
-            onDismiss = { showColorSheet = false }
-        )
-    }
-}
+// ==========================================
+// PREVIEW MOOD ICON ROW
+// ==========================================
 
 @Composable
 private fun PreviewMoodIconRow(
@@ -1342,13 +1890,18 @@ private fun PreviewMoodIconRow(
     ) {
         colors.take(5).forEachIndexed { index, color ->
             val selected = selectedIndex == index
+            val scale by animateFloatAsState(
+                targetValue = if (selected) 1.18f else 1f,
+                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                label = "moodScale"
+            )
             MoodFaceIcon(
                 index = index,
                 color = color.toComposeColor(),
                 modifier = Modifier
-                    .size(if (selected) 58.dp else 46.dp)
-                    .scale(if (selected) 1.08f else 1f)
-                    .shadow(if (selected) 10.dp else 0.dp, CircleShape)
+                    .size(50.dp)
+                    .scale(scale)
+                    .shadow(if (selected) 12.dp else 0.dp, CircleShape)
                     .clickable { onSelected(index) }
             )
         }
@@ -1365,7 +1918,9 @@ private fun MoodFaceIcon(index: Int, color: Color, modifier: Modifier = Modifier
         else -> R.drawable.very_sad
     }
     Box(
-        modifier = modifier.clip(CircleShape).background(color),
+        modifier = modifier
+            .clip(CircleShape)
+            .background(color),
         contentAlignment = Alignment.Center
     ) {
         Image(
@@ -1376,125 +1931,9 @@ private fun MoodFaceIcon(index: Int, color: Color, modifier: Modifier = Modifier
     }
 }
 
-@Composable
-private fun PreviewBottomIconRow(primary: Color) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(Icons.Rounded.CalendarMonth, contentDescription = null, tint = primary, modifier = Modifier.size(22.dp))
-        Icon(Icons.Rounded.BarChart, contentDescription = null, tint = primary, modifier = Modifier.size(22.dp))
-        Icon(Icons.Rounded.Add, contentDescription = null, tint = primary, modifier = Modifier.size(22.dp))
-        Icon(Icons.Rounded.Storefront, contentDescription = null, tint = primary, modifier = Modifier.size(22.dp))
-        Icon(Icons.Rounded.Person, contentDescription = null, tint = primary, modifier = Modifier.size(22.dp))
-    }
-}
-
-@Composable
-private fun AddNewColorButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    size: Dp = 40.dp
-) {
-    val rainbowBrush = remember {
-        Brush.sweepGradient(
-            listOf(
-                Color(0xFFFF4D4D),
-                Color(0xFFFFB84D),
-                Color(0xFFFFF176),
-                Color(0xFF66BB6A),
-                Color(0xFF4FC3F7),
-                Color(0xFF7E57C2),
-                Color(0xFFFF4D4D)
-            )
-        )
-    }
-
-    Box(
-        modifier = modifier
-            .size(size)
-            .background(rainbowBrush, CircleShape)
-            .padding(2.5.dp)
-            .background(MaterialTheme.colorScheme.surface, CircleShape)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = Icons.Rounded.Add,
-            contentDescription = stringResource(R.string.custom_theme_add_color),
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(size * 0.42f)
-        )
-    }
-}
-
-@Composable
-private fun customThemeFilterChipColors() = FilterChipDefaults.filterChipColors(
-    selectedContainerColor = MaterialTheme.colorScheme.primary,
-    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-    selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary,
-    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.62f),
-    labelColor = MaterialTheme.colorScheme.onSurface,
-    iconColor = MaterialTheme.colorScheme.primary
-)
-
-@Composable
-private fun PaletteSwatchRow(
-    selected: Long,
-    onSelected: (Long) -> Unit,
-    onAddColor: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val customSelectedColor = selected.takeIf { it !in CustomThemeColorPalette }
-    LazyRow(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        contentPadding = PaddingValues(horizontal = 2.dp, vertical = 2.dp)
-    ) {
-        item {
-            AddNewColorButton(onClick = onAddColor)
-        }
-        if (customSelectedColor != null) {
-            item {
-                PaletteSwatch(
-                    colorValue = customSelectedColor,
-                    selected = true,
-                    onClick = { onSelected(customSelectedColor) }
-                )
-            }
-        }
-        items(CustomThemeColorPalette) { colorValue ->
-            PaletteSwatch(
-                colorValue = colorValue,
-                selected = colorValue == selected,
-                onClick = { onSelected(colorValue) }
-            )
-        }
-    }
-}
-
-@Composable
-private fun PaletteSwatch(
-    colorValue: Long,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    size: Dp = 40.dp
-) {
-    Box(
-        modifier = modifier
-            .size(size)
-            .clip(CircleShape)
-            .background(colorValue.toComposeColor())
-            .border(
-                width = if (selected) 3.dp else 1.dp,
-                color = if (selected) MaterialTheme.colorScheme.onSurface else Color.White.copy(alpha = 0.78f),
-                shape = CircleShape
-            )
-            .clickable(onClick = onClick)
-    )
-}
+// ==========================================
+// COLOR PICKER BOTTOM SHEET (HSV)
+// ==========================================
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -1538,7 +1977,8 @@ private fun ColorPickerBottomSheet(
         localValue = hsv[2]
         hexValue = colorToHex(color)
         if (allowGradient && mode == BackgroundFillMode.Gradient) {
-            if (activeGradientStop == 0) onGradientStartColorSelected(color) else onGradientEndColorSelected(color)
+            if (activeGradientStop == 0) onGradientStartColorSelected(color)
+            else onGradientEndColorSelected(color)
         } else {
             onColorSelected(color)
         }
@@ -1596,10 +2036,17 @@ private fun ColorPickerBottomSheet(
                 selectedHue = localHue,
                 onHueChange = { hue ->
                     localHue = hue
-                    dispatchColor(colorFromHsv(hue, localSaturation.coerceAtLeast(0.01f), localValue.coerceAtLeast(0.01f)))
+                    dispatchColor(
+                        colorFromHsv(
+                            hue,
+                            localSaturation.coerceAtLeast(0.01f),
+                            localValue.coerceAtLeast(0.01f)
+                        )
+                    )
                 }
             )
 
+            // Hex input row
             Surface(
                 shape = RoundedCornerShape(22.dp),
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
@@ -1660,6 +2107,7 @@ private fun ColorPickerBottomSheet(
                 }
             }
 
+            // Suggestion swatches
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
                     text = stringResource(R.string.custom_theme_picker_suggestions),
@@ -1744,6 +2192,10 @@ private fun GradientStopChip(
     }
 }
 
+// ==========================================
+// SATURATION/VALUE PICKER (HSV Square)
+// ==========================================
+
 @Composable
 private fun SaturationValuePicker(
     hue: Float,
@@ -1757,9 +2209,10 @@ private fun SaturationValuePicker(
     fun handleTouch(offset: Offset) {
         val width = canvasSize.width.coerceAtLeast(1).toFloat()
         val height = canvasSize.height.coerceAtLeast(1).toFloat()
-        val normalizedX = (offset.x / width).coerceIn(0f, 1f)
-        val normalizedY = (offset.y / height).coerceIn(0f, 1f)
-        onChange(normalizedX, 1f - normalizedY)
+        onChange(
+            (offset.x / width).coerceIn(0f, 1f),
+            1f - (offset.y / height).coerceIn(0f, 1f)
+        )
     }
 
     Box(
@@ -1769,9 +2222,7 @@ private fun SaturationValuePicker(
             .clip(RoundedCornerShape(26.dp))
             .background(hueColor)
             .onSizeChanged { canvasSize = it }
-            .pointerInput(hue) {
-                detectTapGestures { handleTouch(it) }
-            }
+            .pointerInput(hue) { detectTapGestures { handleTouch(it) } }
             .pointerInput(hue) {
                 detectDragGestures(
                     onDragStart = { handleTouch(it) },
@@ -1783,33 +2234,18 @@ private fun SaturationValuePicker(
             }
     ) {
         Canvas(modifier = Modifier.matchParentSize()) {
-            drawRect(
-                brush = Brush.horizontalGradient(
-                    listOf(Color.White, Color.Transparent)
-                )
-            )
-            drawRect(
-                brush = Brush.verticalGradient(
-                    listOf(Color.Transparent, Color.Black)
-                )
-            )
+            drawRect(brush = Brush.horizontalGradient(listOf(Color.White, Color.Transparent)))
+            drawRect(brush = Brush.verticalGradient(listOf(Color.Transparent, Color.Black)))
             val thumbX = saturation.coerceIn(0f, 1f) * size.width
             val thumbY = (1f - value.coerceIn(0f, 1f)) * size.height
-            drawCircle(
-                color = Color.Transparent,
-                center = Offset(thumbX, thumbY),
-                radius = 12.dp.toPx(),
-                style = Stroke(width = 3.dp.toPx())
-            )
-            drawCircle(
-                color = Color.White,
-                center = Offset(thumbX, thumbY),
-                radius = 12.dp.toPx(),
-                style = Stroke(width = 3.dp.toPx())
-            )
+            drawCircle(color = Color.White, center = Offset(thumbX, thumbY), radius = 12.dp.toPx(), style = Stroke(width = 3.dp.toPx()))
         }
     }
 }
+
+// ==========================================
+// HUE SLIDER
+// ==========================================
 
 @Composable
 private fun HueSlider(
@@ -1818,12 +2254,6 @@ private fun HueSlider(
 ) {
     var sliderSize by remember { mutableStateOf(IntSize.Zero) }
 
-    fun handleTouch(offset: Offset) {
-        val width = sliderSize.width.coerceAtLeast(1).toFloat()
-        val hue = (offset.x.coerceIn(0f, width) / width) * 360f
-        onHueChange(hue)
-    }
-
     Canvas(
         modifier = Modifier
             .fillMaxWidth()
@@ -1831,13 +2261,20 @@ private fun HueSlider(
             .clip(RoundedCornerShape(99.dp))
             .onSizeChanged { sliderSize = it }
             .pointerInput(Unit) {
-                detectTapGestures { handleTouch(it) }
+                detectTapGestures { offset ->
+                    val hue = (offset.x.coerceIn(0f, sliderSize.width.toFloat()) / sliderSize.width.coerceAtLeast(1).toFloat()) * 360f
+                    onHueChange(hue)
+                }
             }
             .pointerInput(Unit) {
                 detectDragGestures(
-                    onDragStart = { handleTouch(it) },
+                    onDragStart = { offset ->
+                        val hue = (offset.x.coerceIn(0f, sliderSize.width.toFloat()) / sliderSize.width.coerceAtLeast(1).toFloat()) * 360f
+                        onHueChange(hue)
+                    },
                     onDrag = { change, _ ->
-                        handleTouch(change.position)
+                        val hue = (change.position.x.coerceIn(0f, sliderSize.width.toFloat()) / sliderSize.width.coerceAtLeast(1).toFloat()) * 360f
+                        onHueChange(hue)
                         change.consume()
                     }
                 )
@@ -1848,18 +2285,40 @@ private fun HueSlider(
             cornerRadius = androidx.compose.ui.geometry.CornerRadius(999f, 999f)
         )
         val thumbX = (selectedHue / 360f).coerceIn(0f, 1f) * size.width
-        drawCircle(
-            color = Color.White,
-            radius = 12.dp.toPx(),
-            center = Offset(thumbX, size.height / 2f)
-        )
-        drawCircle(
-            color = colorFromHsv(selectedHue, 1f, 1f).toComposeColor(),
-            radius = 8.dp.toPx(),
-            center = Offset(thumbX, size.height / 2f)
-        )
+        drawCircle(color = Color.White, radius = 12.dp.toPx(), center = Offset(thumbX, size.height / 2f))
+        drawCircle(color = colorFromHsv(selectedHue, 1f, 1f).toComposeColor(), radius = 8.dp.toPx(), center = Offset(thumbX, size.height / 2f))
     }
 }
+
+// ==========================================
+// PALETTE SWATCH
+// ==========================================
+
+@Composable
+private fun PaletteSwatch(
+    colorValue: Long,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    size: Dp = 40.dp
+) {
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(colorValue.toComposeColor())
+            .border(
+                width = if (selected) 3.dp else 1.dp,
+                color = if (selected) MaterialTheme.colorScheme.onSurface else Color.White.copy(alpha = 0.78f),
+                shape = CircleShape
+            )
+            .clickable(onClick = onClick)
+    )
+}
+
+// ==========================================
+// BACKGROUND TRANSFORM DIALOG
+// ==========================================
 
 @Composable
 private fun BackgroundTransformDialog(
@@ -1944,8 +2403,6 @@ private fun BackgroundTransformDialog(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // FIX PHẦN 2.5: Generous bottom padding (48.dp) so fingers don't accidentally
-                // trigger the Android system home/navigation gesture while dragging sliders
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1974,21 +2431,20 @@ private fun BackgroundTransformDialog(
     }
 }
 
+// ==========================================
+// COLOR CONSTANTS & UTILITIES
+// ==========================================
+
 private val CustomThemeColorPalette = listOf(
-    0xFF8D6E63, 0xFFEF9A9A, 0xFFFFCA28, 0xFF81C784, 0xFF64B5F6, 0xFFBA68C8,
-    0xFF263238, 0xFFFF8A65, 0xFFAED581, 0xFF4DB6AC, 0xFF7986CB, 0xFFF06292,
-    0xFFFFF7EC, 0xFFE1F5FE, 0xFFF3E5F5, 0xFFE8F5E9, 0xFFFFEBEE, 0xFF212121
+    0xFF8D6E63L, 0xFFEF9A9AL, 0xFFFFCA28L, 0xFF81C784L, 0xFF64B5F6L, 0xFFBA68C8L,
+    0xFF263238L, 0xFFFF8A65L, 0xFFAED581L, 0xFF4DB6ACL, 0xFF7986CBL, 0xFFF06292L,
+    0xFFFFF7ECL, 0xFFE1F5FEL, 0xFFF3E5F5L, 0xFFE8F5E9L, 0xFFFFEBEEL, 0xFF212121L
 )
 
 private val RainbowSpectrumColors = listOf(
-    Color(0xFFFF3B30),
-    Color(0xFFFF9500),
-    Color(0xFFFFCC00),
-    Color(0xFF34C759),
-    Color(0xFF00C7BE),
-    Color(0xFF007AFF),
-    Color(0xFF5856D6),
-    Color(0xFFFF2D55)
+    Color(0xFFFF3B30), Color(0xFFFF9500), Color(0xFFFFCC00),
+    Color(0xFF34C759), Color(0xFF00C7BE), Color(0xFF007AFF),
+    Color(0xFF5856D6), Color(0xFFFF2D55)
 )
 
 private fun Long.toHsv(): FloatArray = FloatArray(3).also {
@@ -2005,9 +2461,7 @@ private fun colorFromHsv(hue: Float, saturation: Float, value: Float): Long {
     ).toLong() and 0xFFFFFFFFL
 }
 
-private fun colorToHex(color: Long): String {
-    return String.format("#%06X", color.toInt() and 0x00FFFFFF)
-}
+private fun colorToHex(color: Long): String = String.format("#%06X", color.toInt() and 0x00FFFFFF)
 
 private fun sanitizeHexInput(value: String): String {
     val raw = value.uppercase().filter { it in '0'..'9' || it in 'A'..'F' }
@@ -2048,13 +2502,8 @@ private fun previewProtectionColors(
     }
 }
 
-private fun previewImageScrim(isDarkMode: Boolean): Color {
-    return if (isDarkMode) {
-        Color.Black.copy(alpha = 0.58f)
-    } else {
-        Color.White.copy(alpha = 0.50f)
-    }
-}
+private fun previewImageScrim(isDarkMode: Boolean): Color =
+    if (isDarkMode) Color.Black.copy(alpha = 0.58f) else Color.White.copy(alpha = 0.50f)
 
 private fun rotationCoverMultiplier(rotation: Float): Float {
     val normalized = kotlin.math.abs(rotation) / 45f
@@ -2063,7 +2512,6 @@ private fun rotationCoverMultiplier(rotation: Float): Float {
 
 private fun CustomThemeEditorUiState.isPreviewBackgroundDark(fallbackDark: Boolean): Boolean {
     if (!backgroundUri.isNullOrBlank()) return fallbackDark
-
     val brightness = when (backgroundFillMode) {
         BackgroundFillMode.Solid -> solidBackgroundColor.toComposeColor().perceivedBrightness()
         BackgroundFillMode.Gradient -> {
@@ -2075,8 +2523,6 @@ private fun CustomThemeEditorUiState.isPreviewBackgroundDark(fallbackDark: Boole
     return brightness < 0.5f
 }
 
-private fun Color.perceivedBrightness(): Float {
-    return red * 0.299f + green * 0.587f + blue * 0.114f
-}
+private fun Color.perceivedBrightness(): Float = red * 0.299f + green * 0.587f + blue * 0.114f
 
 private fun Long.toComposeColor(): Color = Color(this.toInt())

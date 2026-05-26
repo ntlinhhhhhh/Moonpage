@@ -35,6 +35,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import org.json.JSONArray
 import org.json.JSONObject
 import javax.inject.Inject
@@ -48,9 +52,17 @@ data class DrawStroke(
     val isEraser: Boolean = false
 )
 
-enum class ThemeEditorTool {
-    BackgroundImage, BackgroundColor, Draw, Colors, Preview
+sealed class EditorScreenState {
+    object Home : EditorScreenState()
+    object SolidBg : EditorScreenState()
+    object GradientBg : EditorScreenState()
+    object EditComponents : EditorScreenState()
+    object FinalPreview : EditorScreenState()
 }
+
+enum class GradientNode { Start, End }
+
+enum class EditMode { None, Draw, Palette }
 
 enum class BrushType {
     Fine, Bold, Pencil, Spray
@@ -103,8 +115,10 @@ data class CustomThemeEditorUiState(
     val brushSize: Float = 8f,
     val brushType: BrushType = BrushType.Fine,
     val isEraser: Boolean = false,
-    val selectedTool: ThemeEditorTool = ThemeEditorTool.BackgroundImage,
-    val lastEditingTool: ThemeEditorTool = ThemeEditorTool.BackgroundImage,
+    val currentScreen: EditorScreenState = EditorScreenState.Home,
+    val recentColors: List<Long> = emptyList(),
+    val activeGradientNode: GradientNode = GradientNode.Start,
+    val activeEditMode: EditMode = EditMode.None,
     val strokes: List<DrawStroke> = emptyList(),
     val isSaving: Boolean = false,
     val showDiscardDialog: Boolean = false,
@@ -306,17 +320,23 @@ class CustomThemeEditorViewModel @Inject constructor(
         _uiState.update { it.copy(isEraser = enabled, hasUnsavedChanges = true) }
     }
 
-    fun setTool(tool: ThemeEditorTool) {
-        _uiState.update {
-            it.copy(
-                selectedTool = tool,
-                lastEditingTool = if (tool == ThemeEditorTool.Preview) it.selectedTool else it.lastEditingTool
-            )
-        }
+    fun setScreen(screen: EditorScreenState) {
+        _uiState.update { it.copy(currentScreen = screen) }
     }
 
-    fun exitPreview() {
-        _uiState.update { it.copy(selectedTool = it.lastEditingTool) }
+    fun setEditMode(mode: EditMode) {
+        _uiState.update { it.copy(activeEditMode = mode) }
+    }
+
+    fun setGradientNode(node: GradientNode) {
+        _uiState.update { it.copy(activeGradientNode = node) }
+    }
+
+    fun addColorToRecent(color: Long) {
+        _uiState.update { state ->
+            val updated = listOf(color) + state.recentColors.filter { it != color }
+            state.copy(recentColors = updated.take(10))
+        }
     }
 
     fun addStroke(stroke: DrawStroke) {
@@ -335,10 +355,17 @@ class CustomThemeEditorViewModel @Inject constructor(
     }
 
     fun onBackRequested(onNavigateBack: () -> Unit) {
-        if (_uiState.value.hasUnsavedChanges) {
-            _uiState.update { it.copy(showDiscardDialog = true) }
-        } else {
-            onNavigateBack()
+        val state = _uiState.value
+        when (state.currentScreen) {
+            EditorScreenState.Home -> {
+                if (state.hasUnsavedChanges) {
+                    _uiState.update { it.copy(showDiscardDialog = true) }
+                } else {
+                    onNavigateBack()
+                }
+            }
+            EditorScreenState.FinalPreview -> setScreen(EditorScreenState.EditComponents)
+            else -> setScreen(EditorScreenState.Home)
         }
     }
 
@@ -350,61 +377,76 @@ class CustomThemeEditorViewModel @Inject constructor(
         val state = _uiState.value
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true) }
-            val timestamp = System.currentTimeMillis()
-            val thumbnailFileName = "custom_theme_thumb_$timestamp.webp"
-            val backgroundFileName = "custom_theme_bg_$timestamp.webp"
-            val themeName = state.name.ifBlank { localizedString(R.string.my_custom_theme) }
+            
             runCatching {
-                val user = userRepository.currentUser.value ?: userRepository.getCurrentUser().getOrThrow()
-                val themeId = "custom_${user.userId.toThemeIdPart()}_$timestamp"
-                val backgroundAppearance = state.imageBackgroundAppearance()
-                val backgroundPath = backgroundAppearance?.backgroundUri?.takeIf { it.isNotBlank() }?.let {
-                    context.saveBitmapToInternalStorage(
-                        state.createBackgroundBitmap(backgroundAppearance),
-                        backgroundFileName,
-                        format = customThemeImageFormat(),
-                        quality = CUSTOM_THEME_IMAGE_QUALITY
-                    )
+                withContext(Dispatchers.IO) {
+                    coroutineScope {
+                        val timestamp = System.currentTimeMillis()
+                        val thumbnailFileName = "custom_theme_thumb_$timestamp.webp"
+                        val backgroundFileName = "custom_theme_bg_$timestamp.webp"
+                        val themeName = state.name.ifBlank { localizedString(R.string.my_custom_theme) }
+                        
+                        val user = userRepository.currentUser.value ?: userRepository.getCurrentUser().getOrThrow()
+                        val themeId = "custom_${user.userId.toThemeIdPart()}_$timestamp"
+                        
+                        val backgroundAppearance = state.imageBackgroundAppearance()
+                        
+                        // Optimization: Decode background bitmap once and reuse
+                        val sharedBackgroundBitmap = backgroundAppearance?.backgroundUri?.let { context.decodeThemeBitmap(it) }
+                        
+                        val backgroundDeferred = async {
+                            backgroundAppearance?.backgroundUri?.takeIf { it.isNotBlank() }?.let {
+                                context.saveBitmapToInternalStorage(
+                                    state.createBackgroundBitmap(backgroundAppearance, sharedBackgroundBitmap),
+                                    backgroundFileName,
+                                    format = customThemeImageFormat(),
+                                    quality = CUSTOM_THEME_IMAGE_QUALITY
+                                )
+                            }
+                        }
+                        
+                        val thumbnailDeferred = async {
+                            context.saveBitmapToInternalStorage(
+                                state.createThumbnailBitmap(sharedBackgroundBitmap),
+                                thumbnailFileName,
+                                format = customThemeImageFormat(),
+                                quality = CUSTOM_THEME_IMAGE_QUALITY
+                            )
+                        }
+                        
+                        val backgroundPath = backgroundDeferred.await()
+                        val thumbnailPath = thumbnailDeferred.await()
+                        
+                        // Important: Recycle the shared bitmap if it was created
+                        sharedBackgroundBitmap?.recycle()
+
+                        val hasImageBackground = backgroundPath != null
+                        themeRepository.createThemes(
+                            listOf(
+                                CreateThemePayload(
+                                    id = themeId,
+                                    name = themeName,
+                                    price = CUSTOM_THEME_SLOT_PRICE,
+                                    thumbnailUrl = thumbnailPath,
+                                    backgroundUrl = backgroundPath,
+                                    primaryColor = state.lightAppearance.primaryColor.toColorHex(),
+                                    backgroundColor = null,
+                                    backgroundLightColor = if (hasImageBackground) null else state.lightAppearance.themeBackgroundPayload(),
+                                    backgroundDarkColor = if (hasImageBackground) null else state.darkAppearance.themeBackgroundPayload(),
+                                    description = state.toThemeConfigJson(backgroundPath),
+                                    isOfficial = false,
+                                    isActive = true,
+                                    moods = state.lightAppearance.toMoodPayloads()
+                                )
+                            )
+                        ).getOrThrow()
+                        
+                        buyThemeUseCase(themeId, CUSTOM_THEME_SLOT_PRICE).getOrThrow()
+                        themeRepository.setActiveTheme(themeId).getOrThrow()
+                        themeRepository.getMyThemes().getOrThrow()
+                        userRepository.getCurrentUser()
+                    }
                 }
-                val thumbnailPath = context.saveBitmapToInternalStorage(
-                    state.createThumbnailBitmap(),
-                    thumbnailFileName,
-                    format = customThemeImageFormat(),
-                    quality = CUSTOM_THEME_IMAGE_QUALITY
-                )
-                Triple(thumbnailPath, backgroundPath, themeId)
-            }.mapCatching { (thumbnailPath, backgroundPath, themeId) ->
-                val hasImageBackground = backgroundPath != null
-                themeRepository.createThemes(
-                    listOf(
-                        CreateThemePayload(
-                            id = themeId,
-                            name = themeName,
-                            price = CUSTOM_THEME_SLOT_PRICE,
-                            thumbnailUrl = thumbnailPath,
-                            backgroundUrl = backgroundPath,
-                            primaryColor = state.lightAppearance.primaryColor.toColorHex(),
-                            backgroundColor = null,
-                            backgroundLightColor = if (hasImageBackground) null else state.lightAppearance.themeBackgroundPayload(),
-                            backgroundDarkColor = if (hasImageBackground) null else state.darkAppearance.themeBackgroundPayload(),
-                            description = state.toThemeConfigJson(backgroundPath),
-                            isOfficial = false,
-                            isActive = true,
-                            moods = state.lightAppearance.toMoodPayloads()
-                        )
-                    )
-                ).getOrThrow()
-                val serverThemeId = resolveServerThemeId(
-                    thumbnailFileName = thumbnailFileName,
-                    thumbnailPath = thumbnailPath,
-                    backgroundFileName = backgroundFileName,
-                    backgroundPath = backgroundPath,
-                    themeName = themeName
-                )
-                buyThemeUseCase(serverThemeId, CUSTOM_THEME_SLOT_PRICE).getOrThrow()
-                themeRepository.setActiveTheme(serverThemeId).getOrThrow()
-                themeRepository.getMyThemes().getOrThrow()
-                userRepository.getCurrentUser()
             }.onSuccess {
                 _uiState.update { it.copy(isSaving = false, hasUnsavedChanges = false) }
                 _effect.emit(CustomThemeEditorEffect.Saved)
@@ -488,20 +530,21 @@ class CustomThemeEditorViewModel @Inject constructor(
             .put("iconColors", JSONArray(iconColors.map { it.toColorHex() }))
     }
 
-    private fun CustomThemeEditorUiState.createThumbnailBitmap(): Bitmap {
+    private fun CustomThemeEditorUiState.createThumbnailBitmap(sharedBackground: Bitmap? = null): Bitmap {
         val bitmap = Bitmap.createBitmap(THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
-        canvas.drawThemeBackground(lightAppearance, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, strokes)
+        canvas.drawThemeBackground(lightAppearance, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, strokes, sharedBackground)
         canvas.drawMoodIconStrip(lightAppearance.iconColors, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT)
         return bitmap
     }
 
     private fun CustomThemeEditorUiState.createBackgroundBitmap(
-        appearance: ThemeAppearanceState = lightAppearance
+        appearance: ThemeAppearanceState = lightAppearance,
+        sharedBackground: Bitmap? = null
     ): Bitmap {
         val bitmap = Bitmap.createBitmap(BACKGROUND_WIDTH, BACKGROUND_HEIGHT, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
-        canvas.drawThemeBackground(appearance, BACKGROUND_WIDTH, BACKGROUND_HEIGHT, strokes)
+        canvas.drawThemeBackground(appearance, BACKGROUND_WIDTH, BACKGROUND_HEIGHT, strokes, sharedBackground)
         return bitmap
     }
 
@@ -509,9 +552,10 @@ class CustomThemeEditorViewModel @Inject constructor(
         appearance: ThemeAppearanceState,
         width: Int,
         height: Int,
-        strokes: List<DrawStroke>
+        strokes: List<DrawStroke>,
+        sharedBackground: Bitmap? = null
     ) {
-        val image = appearance.backgroundUri?.let { context.decodeThemeBitmap(it) }
+        val image = sharedBackground ?: appearance.backgroundUri?.let { context.decodeThemeBitmap(it) }
         if (image != null) {
             drawBitmap(
                 image,

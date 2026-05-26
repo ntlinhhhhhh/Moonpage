@@ -21,6 +21,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import com.diary.moonpage.core.util.ThemeConstants
 import com.diary.moonpage.core.util.PredefinedTheme
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -137,57 +140,62 @@ class ThemeRepositoryImpl @Inject constructor(
                         entity.activatedAt?.let { System.currentTimeMillis() - it < ACTIVE_THEME_SYNC_GRACE_MS } == true
                     }
                     ?.id
-                val myThemes = response.body()!!
-                    .map { dto ->
-                        val dtoTheme = dto.toDomain()
-                        val networkTheme = dtoTheme.copy(
-                            collection = "Custom Theme",
-                            price = CUSTOM_THEME_PRICE,
-                            isFree = false,
-                            isOwned = true,
-                            isActive = if (recentActiveThemeId != null) dto.id == recentActiveThemeId else dto.isActive,
-                            decoration = "CUSTOM",
-                            primaryColor = dtoTheme.primaryColor.takeIfThemeColor()
-                                ?: dtoTheme.description.primaryColorForMode("light")
-                                ?: dtoTheme.description.primaryColorForMode("dark")
-                        )
-                        val cachedTheme = cachedThemes.findCachedCustomTheme(networkTheme)
-                        val cachedPrimary = cachedTheme?.primaryColor.takeIfThemeColor()
-                            ?: cachedTheme?.description.primaryColorForMode("light")
-                            ?: cachedTheme?.description.primaryColorForMode("dark")
-                        val networkPrimary = networkTheme.primaryColor.takeIfThemeColor()
-                            ?: networkTheme.description.primaryColorForMode("light")
-                            ?: networkTheme.description.primaryColorForMode("dark")
-                        val backendIconColors = loadBackendThemeMoodIconColors(networkTheme.id)
-                        val cachedIconColors = if (backendIconColors.size >= DEFAULT_MOOD_IDS.size) {
-                            emptyList()
-                        } else {
-                            loadCachedThemeMoodIconColors(cachedTheme)
+                
+                val myThemes = coroutineScope {
+                    val deferredThemes = response.body()!!.map { dto ->
+                        async {
+                            val dtoTheme = dto.toDomain()
+                            val networkTheme = dtoTheme.copy(
+                                collection = "Custom Theme",
+                                price = CUSTOM_THEME_PRICE,
+                                isFree = false,
+                                isOwned = true,
+                                isActive = if (recentActiveThemeId != null) dto.id == recentActiveThemeId else dto.isActive,
+                                decoration = "CUSTOM",
+                                primaryColor = dtoTheme.primaryColor.takeIfThemeColor()
+                                    ?: dtoTheme.description.primaryColorForMode("light")
+                                    ?: dtoTheme.description.primaryColorForMode("dark")
+                            )
+                            val cachedTheme = cachedThemes.findCachedCustomTheme(networkTheme)
+                            val cachedPrimary = cachedTheme?.primaryColor.takeIfThemeColor()
+                                ?: cachedTheme?.description.primaryColorForMode("light")
+                                ?: cachedTheme?.description.primaryColorForMode("dark")
+                            val networkPrimary = networkTheme.primaryColor.takeIfThemeColor()
+                                ?: networkTheme.description.primaryColorForMode("light")
+                                ?: networkTheme.description.primaryColorForMode("dark")
+                            val backendIconColors = loadBackendThemeMoodIconColors(networkTheme.id)
+                            val cachedIconColors = if (backendIconColors.size >= DEFAULT_MOOD_IDS.size) {
+                                emptyList()
+                            } else {
+                                loadCachedThemeMoodIconColors(cachedTheme)
+                            }
+                            val moodIconColors = backendIconColors
+                                .takeIf { it.size >= DEFAULT_MOOD_IDS.size }
+                                ?: cachedIconColors.takeIf { it.size >= DEFAULT_MOOD_IDS.size }
+                            val description = moodIconColors
+                                ?.let { (cachedTheme?.description ?: networkTheme.description).withMoodIconColors(it) }
+                                ?: cachedTheme?.description
+                                ?: networkTheme.description
+                            val moodPrimary = if (cachedPrimary == null && networkPrimary == null) {
+                                moodIconColors?.firstOrNull() ?: loadThemeMoodPrimaryColor(networkTheme.id)
+                            } else {
+                                null
+                            }
+                            networkTheme.copy(
+                                thumbnailUrl = cachedTheme?.thumbnailUrl.takeIfLocalThemeAsset()
+                                    ?: networkTheme.thumbnailUrl
+                                    ?: cachedTheme?.thumbnailUrl,
+                                backgroundUrl = cachedTheme?.backgroundUrl.takeIfLocalThemeAsset()
+                                    ?: networkTheme.backgroundUrl
+                                    ?: cachedTheme?.backgroundUrl,
+                                primaryColor = cachedPrimary ?: networkPrimary ?: moodPrimary,
+                                description = description,
+                                activatedAt = cachedTheme?.activatedAt
+                            )
                         }
-                        val moodIconColors = backendIconColors
-                            .takeIf { it.size >= DEFAULT_MOOD_IDS.size }
-                            ?: cachedIconColors.takeIf { it.size >= DEFAULT_MOOD_IDS.size }
-                        val description = moodIconColors
-                            ?.let { (cachedTheme?.description ?: networkTheme.description).withMoodIconColors(it) }
-                            ?: cachedTheme?.description
-                            ?: networkTheme.description
-                        val moodPrimary = if (cachedPrimary == null && networkPrimary == null) {
-                            moodIconColors?.firstOrNull() ?: loadThemeMoodPrimaryColor(networkTheme.id)
-                        } else {
-                            null
-                        }
-                        networkTheme.copy(
-                            thumbnailUrl = cachedTheme?.thumbnailUrl.takeIfLocalThemeAsset()
-                                ?: networkTheme.thumbnailUrl
-                                ?: cachedTheme?.thumbnailUrl,
-                            backgroundUrl = cachedTheme?.backgroundUrl.takeIfLocalThemeAsset()
-                                ?: networkTheme.backgroundUrl
-                                ?: cachedTheme?.backgroundUrl,
-                            primaryColor = cachedPrimary ?: networkPrimary ?: moodPrimary,
-                            description = description,
-                            activatedAt = cachedTheme?.activatedAt
-                        )
                     }
+                    deferredThemes.awaitAll()
+                }
 
                 if (myThemes.any { it.isActive }) {
                     dao.clearActiveTheme()
@@ -284,23 +292,30 @@ class ThemeRepositoryImpl @Inject constructor(
                 }
             }
 
-            uploadThemes.forEach { theme ->
-                val response = api.uploadTheme(
-                    id = theme.id.toTextRequestBody(),
-                    name = theme.name.toTextRequestBody(),
-                    price = theme.price.toString().toTextRequestBody(),
-                    thumbnail = theme.thumbnailUrl.toLocalFileOrNull()?.toImagePart("Thumbnail"),
-                    background = theme.backgroundUrl.toLocalFileOrNull()?.toImagePart("Background"),
-                    primaryColor = theme.primaryColor?.toTextRequestBody(),
-                    backgroundDarkColor = theme.backgroundDarkColor?.toTextRequestBody(),
-                    backgroundLightColor = theme.backgroundLightColor?.toTextRequestBody(),
-                    description = theme.description?.toTextRequestBody(),
-                    isOfficial = theme.isOfficial.toString().toTextRequestBody(),
-                    isActive = theme.isActive.toString().toTextRequestBody(),
-                    moods = theme.moods.toUploadMoodsJson().toTextRequestBody()
-                )
-                if (!response.isSuccessful) {
-                    return Result.failure(Exception(parseErrorResponse(response.errorBody()?.string())))
+            if (uploadThemes.isNotEmpty()) {
+                coroutineScope {
+                    val deferredUploads = uploadThemes.map { theme ->
+                        async {
+                            val response = api.uploadTheme(
+                                id = theme.id.toTextRequestBody(),
+                                name = theme.name.toTextRequestBody(),
+                                price = theme.price.toString().toTextRequestBody(),
+                                thumbnail = theme.thumbnailUrl.toLocalFileOrNull()?.toImagePart("Thumbnail"),
+                                background = theme.backgroundUrl.toLocalFileOrNull()?.toImagePart("Background"),
+                                primaryColor = theme.primaryColor?.toTextRequestBody(),
+                                backgroundDarkColor = theme.backgroundDarkColor?.toTextRequestBody(),
+                                backgroundLightColor = theme.backgroundLightColor?.toTextRequestBody(),
+                                description = theme.description?.toTextRequestBody(),
+                                isOfficial = theme.isOfficial.toString().toTextRequestBody(),
+                                isActive = theme.isActive.toString().toTextRequestBody(),
+                                moods = theme.moods.toUploadMoodsJson().toTextRequestBody()
+                            )
+                            if (!response.isSuccessful) {
+                                throw Exception(parseErrorResponse(response.errorBody()?.string()))
+                            }
+                        }
+                    }
+                    deferredUploads.awaitAll()
                 }
             }
 
