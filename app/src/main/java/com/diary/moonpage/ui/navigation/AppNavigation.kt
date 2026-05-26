@@ -227,7 +227,13 @@ fun AppNavigation(
                     ScreenWrapper(Screen.OnboardingBirthday.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         OnboardingBirthdayRoute(
                             viewModel = onboardingViewModel,
-                            onNavigateBack = { navController.popBackStack() },
+                            onNavigateBack = { 
+                                if (!navController.popBackStack()) {
+                                    navController.navigate(Screen.Landing.route) {
+                                        popUpTo(0) { inclusive = true }
+                                    }
+                                }
+                            },
                             onNext = { navController.navigate(Screen.OnboardingGender.route) }
                         )
                     }
@@ -237,7 +243,11 @@ fun AppNavigation(
                     ScreenWrapper(Screen.OnboardingGender.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         OnboardingGenderRoute(
                             viewModel = onboardingViewModel,
-                            onNavigateBack = { navController.popBackStack() },
+                            onNavigateBack = { 
+                                if (!navController.popBackStack()) {
+                                    navController.navigate(Screen.OnboardingBirthday.route)
+                                }
+                            },
                             onFinish = {
                                 navController.navigate(Screen.OnboardingReminder.route)
                             }
@@ -249,7 +259,11 @@ fun AppNavigation(
                     ScreenWrapper(Screen.OnboardingReminder.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         OnboardingReminderRoute(
                             viewModel = onboardingViewModel,
-                            onNavigateBack = { navController.popBackStack() },
+                            onNavigateBack = { 
+                                if (!navController.popBackStack()) {
+                                    navController.navigate(Screen.OnboardingGender.route)
+                                }
+                            },
                             onFinish = {
                                 scope.launch {
                                     val onboardingDone = authViewModel.checkOnboardingForCurrentUser()
