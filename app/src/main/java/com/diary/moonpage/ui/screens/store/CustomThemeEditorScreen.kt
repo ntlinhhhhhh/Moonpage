@@ -37,7 +37,7 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.Brush
 import androidx.compose.material.icons.rounded.CalendarMonth
-import androidx.compose.material.icons.rounded.CameraAlt
+import androidx.compose.material.icons.rounded.CloudUpload
 import androidx.compose.material.icons.rounded.Colorize
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Delete
@@ -85,6 +85,9 @@ import coil.compose.AsyncImage
 import com.diary.moonpage.R
 import com.diary.moonpage.core.theme.MoonTheme
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
+
+private val EditorBottomToolsHeight = 280.dp
+private val EditorBottomToolContentHeight = 200.dp
 
 @Composable
 fun CustomThemeEditorRoute(
@@ -870,6 +873,9 @@ private fun ThemeEditorBottomTools(
     // FIX PHẦN 1: Fixed-height container so the preview above NEVER shifts
     // FIX PHẦN 2.4: Rounded top corners + shadow to visually separate tool panel from the app's bottom nav bar
     Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(EditorBottomToolsHeight),
         tonalElevation = 0.dp,
         shadowElevation = 20.dp,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
@@ -923,7 +929,7 @@ private fun ThemeEditorBottomTools(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(220.dp)
+                        .height(EditorBottomToolContentHeight)
                         .padding(horizontal = 12.dp)
                         .padding(bottom = 12.dp, top = 4.dp)
                 ) {
@@ -1000,7 +1006,7 @@ private fun MockAppBottomNavBar(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    Icons.Rounded.CameraAlt,
+                    Icons.Rounded.Add,
                     contentDescription = null,
                     tint = primary,
                     modifier = Modifier.size(if (emphasizeIcons) 30.dp else 28.dp)
@@ -1053,6 +1059,24 @@ private fun BackgroundToolPanel(
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        FilledTonalButton(
+            onClick = onPickImage,
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
+                contentColor = MaterialTheme.colorScheme.primary
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.CloudUpload,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(stringResource(R.string.custom_theme_upload_image), fontWeight = FontWeight.SemiBold)
+        }
+
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(
                 selected = uiState.backgroundFillMode == BackgroundFillMode.Solid,
@@ -1066,46 +1090,6 @@ private fun BackgroundToolPanel(
                 label = { Text(stringResource(R.string.custom_theme_gradient_color)) },
                 colors = customThemeFilterChipColors()
             )
-        }
-
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            item {
-                FilledTonalIconButton(
-                    onClick = onPickImage,
-                    modifier = Modifier.size(64.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = IconButtonDefaults.filledTonalIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
-                        contentColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Image,
-                        contentDescription = stringResource(R.string.custom_theme_upload_image)
-                    )
-                }
-            }
-            
-            // Mock recent images
-            items(5) { index ->
-                Box(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .clickable(onClick = onPickImage),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.CameraAlt,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                    )
-                }
-            }
         }
 
         if (uiState.backgroundFillMode == BackgroundFillMode.Gradient) {
@@ -1332,7 +1316,7 @@ private fun PreviewBottomIconRow(primary: Color) {
     ) {
         Icon(Icons.Rounded.CalendarMonth, contentDescription = null, tint = primary, modifier = Modifier.size(22.dp))
         Icon(Icons.Rounded.BarChart, contentDescription = null, tint = primary, modifier = Modifier.size(22.dp))
-        Icon(Icons.Rounded.CameraAlt, contentDescription = null, tint = primary, modifier = Modifier.size(22.dp))
+        Icon(Icons.Rounded.Add, contentDescription = null, tint = primary, modifier = Modifier.size(22.dp))
         Icon(Icons.Rounded.Storefront, contentDescription = null, tint = primary, modifier = Modifier.size(22.dp))
         Icon(Icons.Rounded.Person, contentDescription = null, tint = primary, modifier = Modifier.size(22.dp))
     }

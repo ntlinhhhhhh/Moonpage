@@ -78,6 +78,7 @@ import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
 import com.diary.moonpage.ui.screens.tutorial.TutorialStep
 import androidx.compose.ui.res.stringResource
 import com.diary.moonpage.R
+import com.diary.moonpage.core.util.getTranslatedActivityName
 
 /**
  * Stateful Component
@@ -885,7 +886,7 @@ private fun DailyMoodSection(
                         if (moodVisual.drawableRes != null) {
                             Image(
                                 painter = painterResource(id = moodVisual.drawableRes),
-                                contentDescription = moodVisual.name,
+                                contentDescription = getTranslatedActivityName(moodVisual.name),
                                 modifier = Modifier
                                     .size(if (isSelected) 38.dp else 32.dp)
                                     .then(if (isAnyMoodSelected && !isSelected) Modifier.alpha(0.4f) else Modifier)
@@ -1138,7 +1139,7 @@ fun DailyLogGrid(
                         }
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            item.label,
+                            getTranslatedActivityName(item.label),
                             color = MoonTheme.customColors.logCardOnBg.copy(alpha = if (isSelected) 1f else 0.45f),
                             style = MaterialTheme.typography.bodySmall,
                             fontSize = 11.sp,

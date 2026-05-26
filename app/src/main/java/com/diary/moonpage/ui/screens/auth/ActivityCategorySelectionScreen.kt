@@ -27,6 +27,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.diary.moonpage.core.util.ActivityCategoryKeys
 
 // ── Category data ─────────────────────────────────────────────────────────────
 
@@ -38,20 +39,20 @@ data class ActivityCategoryInfo(
 )
 
 val ALL_ACTIVITY_CATEGORIES = listOf(
-    ActivityCategoryInfo("Hobbies",      R.string.activity_category_hobbies,      R.string.activity_category_hobbies_subtitle,      listOf(MoonIcons.Hobbies.Exercise,      MoonIcons.Hobbies.Movie,          MoonIcons.Hobbies.Gaming)),
-    ActivityCategoryInfo("Emotions",     R.string.activity_category_emotions,     R.string.activity_category_emotions_subtitle,     listOf(MoonIcons.Emotions.Happy,        MoonIcons.Emotions.Proud,         MoonIcons.Emotions.Anxious)),
-    ActivityCategoryInfo("Meals",        R.string.activity_category_meals,        R.string.activity_category_meals_subtitle,        listOf(MoonIcons.Meals.Breakfast,       MoonIcons.Meals.Lunch,            MoonIcons.Meals.Dinner)),
-    ActivityCategoryInfo("SelfCare",     R.string.activity_category_self_care,    R.string.activity_category_self_care_subtitle,    listOf(MoonIcons.SelfCare.Shower,       MoonIcons.SelfCare.BrushTeeth,    MoonIcons.SelfCare.WashFace)),
-    ActivityCategoryInfo("Chores",       R.string.activity_category_chores,       R.string.activity_category_chores_subtitle,       listOf(MoonIcons.Chores.Cleaning,       MoonIcons.Chores.Cooking,         MoonIcons.Chores.Laundry)),
-    ActivityCategoryInfo("Events",       R.string.activity_category_events,       R.string.activity_category_events_subtitle,       listOf(MoonIcons.Events.StayHome,       MoonIcons.Events.Cafe,            MoonIcons.Events.Travel)),
-    ActivityCategoryInfo("People",       R.string.activity_category_people,       R.string.activity_category_people_subtitle,       listOf(MoonIcons.People.Friends,        MoonIcons.People.Family,          MoonIcons.People.Partner)),
-    ActivityCategoryInfo("Beauty",       R.string.activity_category_beauty,       R.string.activity_category_beauty_subtitle,       listOf(MoonIcons.Beauty.Hair,           MoonIcons.Beauty.Nails,           MoonIcons.Beauty.Skincare)),
-    ActivityCategoryInfo("Weather",      R.string.activity_category_weather,      R.string.activity_category_weather_subtitle,      listOf(MoonIcons.Weather.Sunny,         MoonIcons.Weather.Cloudy,         MoonIcons.Weather.Rainy)),
-    ActivityCategoryInfo("Health",       R.string.activity_category_health,       R.string.activity_category_health_subtitle,       listOf(MoonIcons.Health.Sick,           MoonIcons.Health.Hospital,        MoonIcons.Health.Medicine)),
-    ActivityCategoryInfo("Work",         R.string.activity_category_work,         R.string.activity_category_work_subtitle,         listOf(MoonIcons.Work.Work,             MoonIcons.Work.Overtime,          MoonIcons.Work.Vacation)),
-    ActivityCategoryInfo("Other",        R.string.activity_category_other,        R.string.activity_category_other_subtitle,        listOf(MoonIcons.Other.Snack,           MoonIcons.Other.Coffee,           MoonIcons.Other.Tea)),
-    ActivityCategoryInfo("School",       R.string.activity_category_school,       R.string.activity_category_school_subtitle,       listOf(MoonIcons.School.Class,          MoonIcons.School.Study,           MoonIcons.School.Exam)),
-    ActivityCategoryInfo("Relationship", R.string.activity_category_relationship, R.string.activity_category_relationship_subtitle, listOf(MoonIcons.Relationship.Date,     MoonIcons.Relationship.Anniversary, MoonIcons.Relationship.Gift))
+    ActivityCategoryInfo(ActivityCategoryKeys.HOBBIES,      R.string.activity_category_hobbies,      R.string.activity_category_hobbies_subtitle,      listOf(MoonIcons.Hobbies.Exercise,      MoonIcons.Hobbies.Movie,          MoonIcons.Hobbies.Gaming)),
+    ActivityCategoryInfo(ActivityCategoryKeys.EMOTIONS,     R.string.activity_category_emotions,     R.string.activity_category_emotions_subtitle,     listOf(MoonIcons.Emotions.Happy,        MoonIcons.Emotions.Proud,         MoonIcons.Emotions.Anxious)),
+    ActivityCategoryInfo(ActivityCategoryKeys.MEALS,        R.string.activity_category_meals,        R.string.activity_category_meals_subtitle,        listOf(MoonIcons.Meals.Breakfast,       MoonIcons.Meals.Lunch,            MoonIcons.Meals.Dinner)),
+    ActivityCategoryInfo(ActivityCategoryKeys.SELF_CARE,     R.string.activity_category_self_care,    R.string.activity_category_self_care_subtitle,    listOf(MoonIcons.SelfCare.Shower,       MoonIcons.SelfCare.BrushTeeth,    MoonIcons.SelfCare.WashFace)),
+    ActivityCategoryInfo(ActivityCategoryKeys.CHORES,       R.string.activity_category_chores,       R.string.activity_category_chores_subtitle,       listOf(MoonIcons.Chores.Cleaning,       MoonIcons.Chores.Cooking,         MoonIcons.Chores.Laundry)),
+    ActivityCategoryInfo(ActivityCategoryKeys.EVENTS,       R.string.activity_category_events,       R.string.activity_category_events_subtitle,       listOf(MoonIcons.Events.StayHome,       MoonIcons.Events.Cafe,            MoonIcons.Events.Travel)),
+    ActivityCategoryInfo(ActivityCategoryKeys.PEOPLE,       R.string.activity_category_people,       R.string.activity_category_people_subtitle,       listOf(MoonIcons.People.Friends,        MoonIcons.People.Family,          MoonIcons.People.Partner)),
+    ActivityCategoryInfo(ActivityCategoryKeys.BEAUTY,       R.string.activity_category_beauty,       R.string.activity_category_beauty_subtitle,       listOf(MoonIcons.Beauty.Hair,           MoonIcons.Beauty.Nails,           MoonIcons.Beauty.Skincare)),
+    ActivityCategoryInfo(ActivityCategoryKeys.WEATHER,      R.string.activity_category_weather,      R.string.activity_category_weather_subtitle,      listOf(MoonIcons.Weather.Sunny,         MoonIcons.Weather.Cloudy,         MoonIcons.Weather.Rainy)),
+    ActivityCategoryInfo(ActivityCategoryKeys.HEALTH,       R.string.activity_category_health,       R.string.activity_category_health_subtitle,       listOf(MoonIcons.Health.Sick,           MoonIcons.Health.Hospital,        MoonIcons.Health.Medicine)),
+    ActivityCategoryInfo(ActivityCategoryKeys.WORK,         R.string.activity_category_work,         R.string.activity_category_work_subtitle,         listOf(MoonIcons.Work.Work,             MoonIcons.Work.Overtime,          MoonIcons.Work.Vacation)),
+    ActivityCategoryInfo(ActivityCategoryKeys.OTHER,        R.string.activity_category_other,        R.string.activity_category_other_subtitle,        listOf(MoonIcons.Other.Snack,           MoonIcons.Other.Coffee,           MoonIcons.Other.Tea)),
+    ActivityCategoryInfo(ActivityCategoryKeys.SCHOOL,       R.string.activity_category_school,       R.string.activity_category_school_subtitle,       listOf(MoonIcons.School.Class,          MoonIcons.School.Study,           MoonIcons.School.Exam)),
+    ActivityCategoryInfo(ActivityCategoryKeys.RELATIONSHIP, R.string.activity_category_relationship, R.string.activity_category_relationship_subtitle, listOf(MoonIcons.Relationship.Date,     MoonIcons.Relationship.Anniversary, MoonIcons.Relationship.Gift))
 )
 
 // ── Screen ────────────────────────────────────────────────────────────────────

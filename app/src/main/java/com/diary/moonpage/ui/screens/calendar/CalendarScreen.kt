@@ -37,6 +37,7 @@ import androidx.compose.ui.res.stringResource
 import com.diary.moonpage.R
 import java.time.LocalDate
 import java.time.YearMonth
+import com.diary.moonpage.core.util.getTranslatedActivityName
 
 /**
  * Stateful Component
@@ -413,8 +414,13 @@ fun CalendarSelectedLogDetail(
     val date = selectedDate ?: return
     val selectedLog = dailyLogs[date] ?: return
     val mv = MoonIcons.Moods.getMoodVisual(selectedLog.baseMoodId, themeType, customMoods)
-    val activityNames = selectedLog.activityIds?.mapNotNull { id ->
-        dynamicActivities.find { it.id == id }?.name
+    val activityItems = selectedLog.activityIds?.mapNotNull { id ->
+        dynamicActivities.find { it.id == id }?.let { activity ->
+            ActivityDisplayItem(
+                label = getTranslatedActivityName(activity.name),
+                icon = MoonIcons.getIconForActivity(activity.name)
+            )
+        }
     } ?: emptyList()
 
     Column {
@@ -455,9 +461,9 @@ fun CalendarSelectedLogDetail(
                 moodIcon = mv.vector,
                 moodDrawable = mv.drawableRes,
                 moodColor = mv.color,
-                moodLabel = mv.name,
+                moodLabel = getTranslatedActivityName(mv.name),
                 noteSnippet = selectedLog.note,
-                activityNames = activityNames,
+                activityItems = activityItems,
                 dailyPhotos = selectedLog.dailyPhotos ?: emptyList(),
                 sleepHours = selectedLog.sleepHours,
                 isMenstruation = selectedLog.isMenstruation,
@@ -550,15 +556,20 @@ fun TimelineView(
             ) { log ->
                 val date = LocalDate.parse(log.date)
                 val mv = MoonIcons.Moods.getMoodVisual(log.baseMoodId, themeType, customMoods)
-                val activityNames = log.activityIds?.mapNotNull { id ->
-                    dynamicActivities.find { it.id == id }?.name
-                } ?: emptyList<String>()
+                val activityItems = log.activityIds?.mapNotNull { id ->
+                    dynamicActivities.find { it.id == id }?.let { activity ->
+                        ActivityDisplayItem(
+                            label = getTranslatedActivityName(activity.name),
+                            icon = MoonIcons.getIconForActivity(activity.name)
+                        )
+                    }
+                } ?: emptyList()
 
                 TimelineItem(
                     log = log,
                     date = date,
                     mv = mv,
-                    activityNames = activityNames,
+                    activityItems = activityItems,
                     themeType = themeType,
                     menstruationDay = menstruationDays[date],
                     onEdit = { onEditLog(date) },
@@ -576,7 +587,7 @@ fun TimelineItem(
     log: DailyLog,
     date: LocalDate,
     mv: MoonIcon,
-    activityNames: List<String>,
+    activityItems: List<ActivityDisplayItem>,
     themeType: com.diary.moonpage.core.theme.MoonThemeType,
     menstruationDay: Int?,
     onEdit: () -> Unit,
@@ -633,9 +644,9 @@ fun TimelineItem(
                 moodIcon = mv.vector,
                 moodDrawable = mv.drawableRes,
                 moodColor = mv.color,
-                moodLabel = mv.name,
+                moodLabel = getTranslatedActivityName(mv.name),
                 noteSnippet = log.note,
-                activityNames = activityNames,
+                activityItems = activityItems,
                 dailyPhotos = log.dailyPhotos ?: emptyList(),
                 sleepHours = log.sleepHours,
                 isMenstruation = log.isMenstruation,

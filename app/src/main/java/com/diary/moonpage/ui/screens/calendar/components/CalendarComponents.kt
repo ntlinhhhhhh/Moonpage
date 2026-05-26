@@ -44,6 +44,12 @@ import com.diary.moonpage.core.theme.MoonThemeType
 
 import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
 import com.diary.moonpage.ui.screens.tutorial.TutorialStep
+import com.diary.moonpage.core.util.getTranslatedActivityName
+
+data class ActivityDisplayItem(
+    val label: String,
+    val icon: MoonIcon
+)
 
 @Composable
 fun CalendarTopBar(
@@ -329,6 +335,7 @@ fun DayDetailArea(
     moodLabel: String,
     noteSnippet: String?,
     activityNames: List<String> = emptyList(),
+    activityItems: List<ActivityDisplayItem> = emptyList(),
     dailyPhotos: List<String> = emptyList(),
     sleepHours: Double? = null,
     isMenstruation: Boolean = false,
@@ -342,6 +349,14 @@ fun DayDetailArea(
 ) {
     val cs = MaterialTheme.colorScheme
     val isActuallyDark = MoonTheme.customColors.isDark
+    val displayActivities = activityItems.ifEmpty {
+        activityNames.map { name ->
+            ActivityDisplayItem(
+                label = name,
+                icon = MoonIcons.getIconForActivity(name)
+            )
+        }
+    }
 
     Row(
         modifier = modifier
@@ -415,15 +430,15 @@ fun DayDetailArea(
 
         // --- Right: Activities and Info ---
         Column(modifier = Modifier.weight(1f)) {
-            if (activityNames.isNotEmpty()) {
+            if (displayActivities.isNotEmpty()) {
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     maxItemsInEachRow = 5
                 ) {
-                    activityNames.forEach { name ->
-                        val icon = MoonIcons.getIconForActivity(name)
+                    displayActivities.forEach { activity ->
+                        val icon = activity.icon
                         Box(
                             modifier = Modifier
                                 .size(42.dp)
@@ -436,13 +451,13 @@ fun DayDetailArea(
                             if (icon.drawableRes != null) {
                                 Image(
                                     painter = painterResource(id = icon.drawableRes),
-                                    contentDescription = name,
+                                    contentDescription = activity.label,
                                     modifier = Modifier.size(24.dp)
                                 )
                             } else if (icon.vector != null) {
                                 Icon(
                                     imageVector = icon.vector,
-                                    contentDescription = name,
+                                    contentDescription = activity.label,
                                     tint = icon.color,
                                     modifier = Modifier.size(22.dp)
                                 )
@@ -685,6 +700,7 @@ fun DayDetailBottomSheet(
     moodLabel: String,
     noteSnippet: String?,
     activityNames: List<String> = emptyList(),
+    activityItems: List<ActivityDisplayItem> = emptyList(),
     dailyPhotos: List<String> = emptyList(),
     sleepHours: Double? = null,
     isMenstruation: Boolean = false,
@@ -730,6 +746,7 @@ fun DayDetailBottomSheet(
                     moodLabel = moodLabel,
                     noteSnippet = noteSnippet,
                     activityNames = activityNames,
+                    activityItems = activityItems,
                     dailyPhotos = dailyPhotos,
                     sleepHours = sleepHours,
                     isMenstruation = isMenstruation,
@@ -1385,7 +1402,7 @@ fun FilterBottomSheet(
                         if (visual.drawableRes != null) {
                             Image(
                                 painter = painterResource(id = visual.drawableRes),
-                                contentDescription = visual.name,
+                                contentDescription = getTranslatedActivityName(visual.name),
                                 modifier = Modifier.size(34.dp)
                             )
                         }
@@ -1412,7 +1429,7 @@ fun FilterBottomSheet(
                             }.map { 
                                 com.diary.moonpage.ui.screens.calendar.DailyActivity(
                                     id = it.id,
-                                    label = it.name,
+                                    label = getTranslatedActivityName(it.name),
                                     icon = MoonIcons.getIconForActivity(it.name)
                                 )
                             },

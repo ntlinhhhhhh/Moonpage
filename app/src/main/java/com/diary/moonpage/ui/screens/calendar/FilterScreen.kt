@@ -35,6 +35,7 @@ import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.core.theme.MoonTheme
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.diary.moonpage.core.util.getTranslatedActivityName
 
 /**
  * Stateful Component
@@ -548,7 +549,7 @@ fun ActivityFilterGrid(
                 if (icon.drawableRes != null) {
                     Image(
                         painter = painterResource(id = icon.drawableRes),
-                        contentDescription = item.name,
+                        contentDescription = getTranslatedActivityName(item.name),
                         modifier = Modifier
                             .size(32.dp)
                             .alpha(iconAlpha)
@@ -556,7 +557,7 @@ fun ActivityFilterGrid(
                 } else if (icon.vector != null) {
                     Icon(
                         icon.vector,
-                        contentDescription = item.name,
+                        contentDescription = getTranslatedActivityName(item.name),
                         tint = icon.color.copy(alpha = iconAlpha),
                         modifier = Modifier.size(24.dp)
                     )

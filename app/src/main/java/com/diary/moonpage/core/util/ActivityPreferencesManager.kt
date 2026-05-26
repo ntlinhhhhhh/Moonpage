@@ -32,12 +32,17 @@ class ActivityPreferencesManager @Inject constructor(
         private val ENABLED_CATEGORIES_KEY = stringPreferencesKey("enabled_categories")
         private val ACTIVITIES_JSON_KEY = stringPreferencesKey("activities_json")
 
-        val DEFAULT_ENABLED = setOf("Hobbies", "Emotions", "Meals", "SelfCare")
+        val DEFAULT_ENABLED = setOf(
+            ActivityCategoryKeys.HOBBIES, 
+            ActivityCategoryKeys.EMOTIONS, 
+            ActivityCategoryKeys.MEALS, 
+            ActivityCategoryKeys.SELF_CARE
+        )
 
         val ALL_CATEGORY_KEYS = listOf(
-            "Hobbies", "Emotions", "Meals", "SelfCare", "Chores",
-            "Events", "People", "Beauty", "Weather", "Health",
-            "Work", "Other", "School", "Relationship"
+            ActivityCategoryKeys.HOBBIES, ActivityCategoryKeys.EMOTIONS, ActivityCategoryKeys.MEALS, ActivityCategoryKeys.SELF_CARE, ActivityCategoryKeys.CHORES,
+            ActivityCategoryKeys.EVENTS, ActivityCategoryKeys.PEOPLE, ActivityCategoryKeys.BEAUTY, ActivityCategoryKeys.WEATHER, ActivityCategoryKeys.HEALTH,
+            ActivityCategoryKeys.WORK, ActivityCategoryKeys.OTHER, ActivityCategoryKeys.SCHOOL, ActivityCategoryKeys.RELATIONSHIP
         )
     }
 

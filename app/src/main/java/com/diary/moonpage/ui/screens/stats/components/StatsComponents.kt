@@ -37,6 +37,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.diary.moonpage.core.util.MoonIcons
+import com.diary.moonpage.core.util.getTranslatedActivityName
 import com.diary.moonpage.data.remote.dto.stats.BestActivityDto
 import com.diary.moonpage.ui.screens.stats.ActivityCorrelation
 import com.diary.moonpage.ui.screens.stats.IconDeepDiveResult
@@ -1461,13 +1462,10 @@ fun FrequentlyRecordedView(activities: List<BestActivityDto>, onIconClick: (Stri
         if (activities.isNotEmpty()) {
             Spacer(modifier = Modifier.height(32.dp))
             Text(
-                text = buildAnnotatedString {
-                    append("You recorded ")
-                    withStyle(style = SpanStyle(color = primaryColor, fontWeight = FontWeight.Bold)) {
-                        append(activities.first().activityName)
-                    }
-                    append(" the most.")
-                },
+                text = recordedMostSummaryText(
+                    activityName = activities.first().activityName,
+                    highlightColor = primaryColor
+                ),
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
                 color = onSurfaceVariant,
@@ -1475,6 +1473,17 @@ fun FrequentlyRecordedView(activities: List<BestActivityDto>, onIconClick: (Stri
             )
         }
     }
+}
+
+@Composable
+private fun recordedMostSummaryText(activityName: String, highlightColor: Color) = buildAnnotatedString {
+    append(stringResource(R.string.stats_recorded_prefix).trim())
+    append(" ")
+    withStyle(style = SpanStyle(color = highlightColor, fontWeight = FontWeight.Bold)) {
+        append(getTranslatedActivityName(activityName))
+    }
+    append(" ")
+    append(stringResource(R.string.stats_recorded_suffix).trim())
 }
 
 @Composable
@@ -2113,11 +2122,11 @@ fun MoodOverviewCard(
     val dominantMoodVisual = MoonIcons.Moods.getMoodVisual(dominantMoodId, themeType, customMoods)
 
     val moodText = when (dominantMoodId) {
-        5 -> if (isMonthly) "This month looks great! 🌟" else "This year looks great! 🌟"
-        4 -> if (isMonthly) "This month has been pretty good! 😊" else "This year has been pretty good! 😊"
-        3 -> if (isMonthly) "This month has been stable. 😌" else "This year has been stable. 😌"
-        2 -> if (isMonthly) "This month has been a bit tough. 💙" else "This year has been a bit tough. 💙"
-        else -> if (isMonthly) "This month has been quite heavy. 🌙" else "This year has been quite heavy. 🌙"
+        5 -> if (isMonthly) stringResource(R.string.stats_mood_month_great) else stringResource(R.string.stats_mood_year_great)
+        4 -> if (isMonthly) stringResource(R.string.stats_mood_month_good) else stringResource(R.string.stats_mood_year_good)
+        3 -> if (isMonthly) stringResource(R.string.stats_mood_month_stable) else stringResource(R.string.stats_mood_year_stable)
+        2 -> if (isMonthly) stringResource(R.string.stats_mood_month_tough) else stringResource(R.string.stats_mood_year_tough)
+        else -> if (isMonthly) stringResource(R.string.stats_mood_month_heavy) else stringResource(R.string.stats_mood_year_heavy)
     }
 
     val processedMoodFlow = remember(moodFlow, isMonthly, year) {
@@ -2410,13 +2419,10 @@ fun ActivityHabitsCard(frequentlyRecorded: List<BestActivityDto>, onClick: () ->
                 if (top3.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = buildAnnotatedString {
-                            append("You recorded ")
-                            withStyle(style = SpanStyle(color = primaryColor, fontWeight = FontWeight.Bold)) {
-                                append(top3.first().activityName)
-                            }
-                            append(" the most.")
-                        },
+                        text = recordedMostSummaryText(
+                            activityName = top3.first().activityName,
+                            highlightColor = primaryColor
+                        ),
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
                         color = primaryColor,
