@@ -503,6 +503,8 @@
     <string name="custom_theme_discard_desc">Your edits have not been saved. Do you want to leave the editor?</string>
     <string name="custom_theme_preview_title">Today\'s Moonpage</string>
     <string name="custom_theme_preview_note">A quiet page for your thoughts, colors, and little drawings.</string>
+    <string name="custom_theme_tool_image">Image</string>
+    <string name="custom_theme_tool_background_color">Color</string>
     <string name="custom_theme_tool_background">Background</string>
     <string name="custom_theme_tool_draw">Draw</string>
     <string name="custom_theme_tool_colors">Colors</string>
