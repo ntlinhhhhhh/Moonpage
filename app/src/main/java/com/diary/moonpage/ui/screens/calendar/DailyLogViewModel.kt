@@ -590,28 +590,37 @@ class DailyLogViewModel @Inject constructor(
             DailyLogUiEvent.OnLocationPermissionGranted -> {
                 autoFetchWeather(_uiState.value.date)
             }
-            DailyLogUiEvent.OnToggleListening -> {
-                toggleListening()
+            is DailyLogUiEvent.OnToggleListening -> {
+                toggleListening(event.cursorIndex)
             }
         }
     }
 
-    private fun toggleListening() {
+    private fun toggleListening(cursorIndex: Int) {
         if (_uiState.value.isListening) {
-            // Commit any existing partial text when stopping manually
-            val currentPartial = _uiState.value.partialNoteText
-            if (currentPartial.isNotEmpty()) {
-                val newText = if (_uiState.value.noteText.isEmpty()) {
-                    currentPartial
-                } else {
-                    "${_uiState.value.noteText}\n$currentPartial"
-                }
-                _uiState.update { it.copy(noteText = newText, partialNoteText = "") }
-            }
             listeningJob?.cancel()
-            _uiState.update { it.copy(isListening = false) }
+            _uiState.update { state ->
+                val newText = state.partialNoteText
+                    .takeIf { it.isNotEmpty() }
+                    ?.let { partial -> insertSpeechText(state.noteText, state.speechInsertIndex, partial) }
+                    ?: state.noteText
+
+                state.copy(
+                    noteText = newText,
+                    partialNoteText = "",
+                    speechInsertIndex = null,
+                    isListening = false
+                )
+            }
         } else {
             listeningJob?.cancel()
+            val insertIndex = cursorIndex.coerceIn(0, _uiState.value.noteText.length)
+            _uiState.update {
+                it.copy(
+                    partialNoteText = "",
+                    speechInsertIndex = insertIndex
+                )
+            }
             listeningJob = viewModelScope.launch {
                 val currentLang = languagePreferencesManager.languageCode.first()
                 val systemLocales = context.resources.configuration.locales
@@ -623,27 +632,39 @@ class DailyLogViewModel @Inject constructor(
                 speechToTextManager.startListening(sttLang).collect { state ->
                     when (state) {
                         is SpeechToTextManager.SpeechState.Listening -> {
-                            _uiState.update { it.copy(isListening = true) }
+                            _uiState.update {
+                                it.copy(
+                                    isListening = true,
+                                    speechInsertIndex = it.speechInsertIndex ?: insertIndex
+                                )
+                            }
                         }
                         is SpeechToTextManager.SpeechState.Partial -> {
                             _uiState.update { it.copy(partialNoteText = state.text) }
                         }
                         is SpeechToTextManager.SpeechState.Success -> {
-                            val newText = if (_uiState.value.noteText.isEmpty()) {
-                                state.text
-                            } else {
-                                "${_uiState.value.noteText}\n${state.text}"
-                            }
-                            _uiState.update { 
+                            _uiState.update {
+                                val newText = state.text
+                                    .takeIf { it.isNotEmpty() }
+                                    ?.let { text -> insertSpeechText(it.noteText, it.speechInsertIndex, text) }
+                                    ?: it.noteText
+
                                 it.copy(
-                                    noteText = newText, 
+                                    noteText = newText,
                                     partialNoteText = "", 
-                                    isListening = false 
+                                    speechInsertIndex = null,
+                                    isListening = false
                                 ) 
                             }
                         }
                         is SpeechToTextManager.SpeechState.Error -> {
-                            _uiState.update { it.copy(isListening = false, partialNoteText = "") }
+                            _uiState.update {
+                                it.copy(
+                                    isListening = false,
+                                    partialNoteText = "",
+                                    speechInsertIndex = null
+                                )
+                            }
                             _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(state.message))
                         }
                         else -> {}
@@ -651,6 +672,11 @@ class DailyLogViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    private fun insertSpeechText(baseText: String, insertIndex: Int?, speechText: String): String {
+        val safeIndex = (insertIndex ?: baseText.length).coerceIn(0, baseText.length)
+        return baseText.substring(0, safeIndex) + speechText + baseText.substring(safeIndex)
     }
 
     fun checkLogExists(date: LocalDate, onResult: (Boolean) -> Unit) {

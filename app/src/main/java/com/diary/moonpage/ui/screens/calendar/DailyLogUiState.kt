@@ -17,6 +17,7 @@ data class DailyLogUiState(
     val selectedActivities: List<String> = emptyList(),
     val noteText: String = "",
     val partialNoteText: String = "",
+    val speechInsertIndex: Int? = null,
     val sleepHours: Float = 7f,
     val sleepBedTime: LocalTime = LocalTime.of(0, 0),
     val sleepWakeTime: LocalTime = LocalTime.of(7, 0),

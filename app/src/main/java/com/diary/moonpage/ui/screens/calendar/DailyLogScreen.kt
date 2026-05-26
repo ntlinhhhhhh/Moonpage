@@ -46,8 +46,13 @@ import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -217,9 +222,9 @@ fun DailyLogRoute(
         onNavigateToDailyPhoto = {
             photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         },
-        onMicClick = {
+        onMicClick = { cursorIndex ->
             if (audioPermissionState.status.isGranted) {
-                viewModel.onEvent(DailyLogUiEvent.OnToggleListening)
+                viewModel.onEvent(DailyLogUiEvent.OnToggleListening(cursorIndex))
             } else {
                 audioPermissionState.launchPermissionRequest()
             }
@@ -295,7 +300,7 @@ fun DailyLogScreen(
     onNavigateToMusic: () -> Unit,
     onNavigateToMenstrualCycle: () -> Unit,
     onNavigateToDailyPhoto: () -> Unit,
-    onMicClick: () -> Unit,
+    onMicClick: (Int) -> Unit,
     onNavigateToShare: (String) -> Unit,
     onNavigateToSettings: () -> Unit,
     onImportSteps: () -> Unit,
@@ -575,7 +580,7 @@ private fun DailyLogMainContent(
     onNavigateToMusic: () -> Unit,
     onNavigateToMenstrualCycle: () -> Unit,
     onNavigateToDailyPhoto: () -> Unit,
-    onMicClick: () -> Unit,
+    onMicClick: (Int) -> Unit,
     onImportSteps: () -> Unit,
     onLinkMusicAccount: () -> Unit,
     onPhotoDeleteRequest: (String) -> Unit,
@@ -687,6 +692,7 @@ private fun DailyLogMainContent(
             DailyNoteSection(
                 noteText = uiState.noteText,
                 partialText = uiState.partialNoteText,
+                speechInsertIndex = uiState.speechInsertIndex,
                 isListening = uiState.isListening,
                 onNoteChanged = { onEvent(DailyLogUiEvent.OnNoteChanged(it)) },
                 onMicClick = onMicClick
@@ -1382,9 +1388,10 @@ private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean
 private fun DailyNoteSection(
     noteText: String,
     partialText: String,
+    speechInsertIndex: Int?,
     isListening: Boolean,
     onNoteChanged: (String) -> Unit,
-    onMicClick: () -> Unit
+    onMicClick: (Int) -> Unit
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "micPulse")
     val micScale by infiniteTransition.animateFloat(
@@ -1396,6 +1403,40 @@ private fun DailyNoteSection(
         ),
         label = "micScale"
     )
+    val noteTextColor = MoonTheme.customColors.logCardOnBg
+    val ghostTextColor = noteTextColor.copy(alpha = 0.5f)
+    var noteFieldValue by remember {
+        mutableStateOf(TextFieldValue(text = noteText, selection = TextRange(noteText.length)))
+    }
+
+    LaunchedEffect(noteText, partialText, speechInsertIndex, isListening) {
+        val insertIndex = (speechInsertIndex ?: noteFieldValue.selection.end).coerceIn(0, noteText.length)
+        val displayText = if (isListening && partialText.isNotEmpty()) {
+            buildAnnotatedString {
+                append(noteText.substring(0, insertIndex))
+                withStyle(SpanStyle(color = ghostTextColor)) {
+                    append(partialText)
+                }
+                append(noteText.substring(insertIndex))
+            }
+        } else {
+            buildAnnotatedString {
+                append(noteText)
+            }
+        }
+        val selection = if (isListening) {
+            TextRange((insertIndex + partialText.length).coerceIn(0, displayText.length))
+        } else {
+            TextRange(noteFieldValue.selection.end.coerceIn(0, noteText.length))
+        }
+
+        if (noteFieldValue.annotatedString != displayText || noteFieldValue.selection != selection) {
+            noteFieldValue = TextFieldValue(
+                annotatedString = displayText,
+                selection = selection
+            )
+        }
+    }
 
     Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {      
         Column(modifier = Modifier.padding(16.dp)) {
@@ -1407,7 +1448,9 @@ private fun DailyNoteSection(
                 Text(stringResource(R.string.daily_log_todays_note), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
                 
                 IconButton(
-                    onClick = onMicClick,
+                    onClick = {
+                        onMicClick(noteFieldValue.selection.end.coerceIn(0, noteText.length))
+                    },
                     modifier = Modifier.size(32.dp)
                 ) {
                     Icon(
@@ -1423,8 +1466,13 @@ private fun DailyNoteSection(
                 Box(modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp).padding(horizontal = 16.dp, vertical = 12.dp)) {
                     Box {
                         OutlinedTextField(
-                            value = noteText, 
-                            onValueChange = onNoteChanged, 
+                            value = noteFieldValue,
+                            onValueChange = { newValue ->
+                                noteFieldValue = newValue
+                                if (!isListening) {
+                                    onNoteChanged(newValue.text)
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             placeholder = {
                                 if (noteText.isEmpty() && partialText.isEmpty()) {
@@ -1435,6 +1483,10 @@ private fun DailyNoteSection(
                                     )
                                 }
                             },
+                            textStyle = LocalTextStyle.current.copy(
+                                color = noteTextColor,
+                                fontSize = 16.sp
+                            ),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedContainerColor = Color.Transparent,
                                 unfocusedContainerColor = Color.Transparent,
@@ -1447,19 +1499,6 @@ private fun DailyNoteSection(
                             shape = RoundedCornerShape(12.dp),
                             maxLines = 10
                         )
-
-                        // Ghost text overlay for partial recognition
-                        if (isListening && partialText.isNotEmpty()) {
-                             Text(
-                                text = if (noteText.isEmpty()) partialText else "\n$partialText",
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                                    .alpha(0.5f),
-                                color = MoonTheme.customColors.logCardOnBg,
-                                fontSize = 16.sp // Match OutlinedTextField font size if possible
-                            )
-                        }
                     }
                 }
             }
