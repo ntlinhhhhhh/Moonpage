@@ -200,6 +200,8 @@
     <string name="dark_mode">Dark Mode</string>
     <string name="featured_collections">Featured Collections</string>
     <string name="view_all">View All</string>
+    <string name="view_more">View more</string>
+    <string name="view_less">Show less</string>
     <string name="icon_collections">Icon Collections</string>
     <string name="current_theme">CURRENT THEME</string>
     <string name="theme_updated_success">Theme updated successfully!</string>

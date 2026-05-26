@@ -182,6 +182,8 @@
     <string name="dark_mode">Chế độ tối</string>
     <string name="featured_collections">Bộ sưu tập nổi bật</string>
     <string name="view_all">Xem tất cả</string>
+    <string name="view_more">Xem thêm</string>
+    <string name="view_less">Thu nhỏ</string>
     <string name="icon_collections">Bộ sưu tập biểu tượng</string>
     <string name="current_theme">GIAO DIỆN HIỆN TẠI</string>
     <string name="theme_updated_success">Cập nhật giao diện thành công!</string>

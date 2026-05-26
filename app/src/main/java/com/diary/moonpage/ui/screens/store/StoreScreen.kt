@@ -683,6 +683,10 @@ fun CustomThemeTabContent(
     onRenameCustomTheme: (Theme) -> Unit,
     onCreateClick: () -> Unit
 ) {
+    var isExpanded by remember { mutableStateOf(false) }
+    val totalItems = customThemes.size + 1 // +1 for CreateCustomThemeCard
+    val displayedThemes = if (isExpanded) customThemes else customThemes.take(5)
+
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = Modifier.fillMaxSize(),
@@ -695,7 +699,7 @@ fun CustomThemeTabContent(
         }
 
         items(
-            items = customThemes,
+            items = displayedThemes,
             key = { it.id }
         ) { theme ->
             CustomThemeCard(
@@ -703,6 +707,15 @@ fun CustomThemeTabContent(
                 onActivateClick = { onActivateCustomTheme(theme.id) },
                 onRenameClick = { onRenameCustomTheme(theme) }
             )
+        }
+
+        if (totalItems > 6) {
+            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+                ViewMoreButton(
+                    text = if (isExpanded) stringResource(R.string.view_less) else stringResource(R.string.view_more),
+                    onClick = { isExpanded = !isExpanded }
+                )
+            }
         }
     }
 }
@@ -1083,6 +1096,27 @@ fun TabItem(text: String, isSelected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
+fun ViewMoreButton(text: String, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp),
+        contentAlignment = Alignment.CenterEnd
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable { onClick() }
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+        )
+    }
+}
+
+@Composable
 fun HomeTabContent(
     themes: List<Theme>,
     selectedCategory: String,
@@ -1090,13 +1124,17 @@ fun HomeTabContent(
     onThemeClick: (Theme) -> Unit,
     onViewAllClick: () -> Unit
 ) {
-    val filteredThemes = remember(themes, selectedCategory) {
+    var isExpanded by remember(selectedCategory) { mutableStateOf(false) }
+    
+    val allThemesInCategory = remember(themes, selectedCategory) {
         when (selectedCategory) {
             "ALL" -> themes.filter { it.type == ThemeType.THEME }
             "LIGHT", "DARK" -> themes.filter { it.type == ThemeType.THEME }
             else -> themes.filter { it.type == ThemeType.THEME && it.category == selectedCategory }
-        }.filter { !it.isOwned }.take(5)
+        }.filter { !it.isOwned }
     }
+    
+    val filteredThemes = if (isExpanded) allThemesInCategory else allThemesInCategory.take(3)
     val iconPacks = themes.filter { it.type == ThemeType.ICON_PACK }
 
     LazyColumn(
@@ -1159,6 +1197,15 @@ fun HomeTabContent(
             }
         }
 
+        if (allThemesInCategory.size > 3) {
+            item {
+                ViewMoreButton(
+                    text = if (isExpanded) stringResource(R.string.view_less) else stringResource(R.string.view_more),
+                    onClick = { isExpanded = !isExpanded }
+                )
+            }
+        }
+
 //        item {
 //            Row(
 //                modifier = Modifier
@@ -1209,8 +1256,14 @@ fun MyThemeTabContent(
     onRenameCustomTheme: (Theme) -> Unit,
     onExploreMore: () -> Unit
 ) {
+    var isOtherThemesExpanded by remember { mutableStateOf(false) }
+    var isCustomThemesExpanded by remember { mutableStateOf(false) }
+
     val currentTheme = ownedThemes.find { it.isActive }
     val otherThemes = ownedThemes.filter { !it.isActive && !it.id.startsWith("custom_") }
+    
+    val displayedOtherThemes = if (isOtherThemesExpanded) otherThemes else otherThemes.take(3)
+    val displayedCustomThemes = if (isCustomThemesExpanded) customThemes else customThemes.take(4)
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -1231,7 +1284,7 @@ fun MyThemeTabContent(
         }
 
         items(
-            items = otherThemes,
+            items = displayedOtherThemes,
             key = { it.id },
             contentType = { "theme" }
         ) { theme ->
@@ -1241,6 +1294,15 @@ fun MyThemeTabContent(
                 showSelectionIndicator = false,
                 onClick = { onThemeClick(theme) }
             )
+        }
+        
+        if (otherThemes.size > 3) {
+            item {
+                ViewMoreButton(
+                    text = if (isOtherThemesExpanded) stringResource(R.string.view_less) else stringResource(R.string.view_more),
+                    onClick = { isOtherThemesExpanded = !isOtherThemesExpanded }
+                )
+            }
         }
 
         if (customThemes.isNotEmpty()) {
@@ -1254,7 +1316,7 @@ fun MyThemeTabContent(
                 )
             }
             items(
-                items = customThemes.chunked(2),
+                items = displayedCustomThemes.chunked(2),
                 key = { row -> row.joinToString { it.id } }
             ) { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
@@ -1268,6 +1330,15 @@ fun MyThemeTabContent(
                         }
                     }
                     if (row.size == 1) Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+            
+            if (customThemes.size > 4) {
+                item {
+                    ViewMoreButton(
+                        text = if (isCustomThemesExpanded) stringResource(R.string.view_less) else stringResource(R.string.view_more),
+                        onClick = { isCustomThemesExpanded = !isCustomThemesExpanded }
+                    )
                 }
             }
         }
