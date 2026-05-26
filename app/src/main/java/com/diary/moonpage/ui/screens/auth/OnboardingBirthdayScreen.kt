@@ -144,19 +144,22 @@ fun OnboardingBirthdayScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
+                    .padding(horizontal = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = stringResource(R.string.happy_birthday),
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.ExtraBold,
-                    color = colorScheme.onBackground
+                    color = colorScheme.onBackground,
+                    textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = stringResource(R.string.when_born),
                     style = MaterialTheme.typography.bodyLarge,
-                    color = colorScheme.onBackground.copy(alpha = 0.6f)
+                    color = colorScheme.onBackground.copy(alpha = 0.6f),
+                    textAlign = TextAlign.Center
                 )
             }
 
@@ -166,7 +169,7 @@ fun OnboardingBirthdayScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(280.dp),
+                    .height(300.dp),
                 contentAlignment = Alignment.Center
             ) {
                 // Background Highlight Row
@@ -266,8 +269,15 @@ private fun InfiniteCircularList(
     val itemHeight = 60.dp
     val visibleItems = 5
     
-    val totalItems = if (isInfinite) items.size * INFINITE_MULTIPLIER else items.size
-    val firstVisibleIndex = if (isInfinite) (items.size * INFINITE_MULTIPLIER / 2) + initialIndex else initialIndex
+    // For non-infinite, we add dummy items to allow centering the first and last items
+    val displayItems = if (isInfinite) items else listOf("", "") + items + listOf("", "")
+    
+    val totalItems = if (isInfinite) items.size * INFINITE_MULTIPLIER else displayItems.size
+    val firstVisibleIndex = if (isInfinite) {
+        (items.size * INFINITE_MULTIPLIER / 2) + initialIndex - (visibleItems / 2)
+    } else {
+        initialIndex // displayItems[initialIndex + 2] will be in the center (item 3)
+    }
     
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = firstVisibleIndex)
     val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
@@ -276,7 +286,11 @@ private fun InfiniteCircularList(
     val currentIndex by remember {
         derivedStateOf {
             val centerIndex = listState.firstVisibleItemIndex + (visibleItems / 2)
-            centerIndex % items.size
+            if (isInfinite) {
+                centerIndex % items.size
+            } else {
+                (centerIndex - 2).coerceIn(0, items.size - 1)
+            }
         }
     }
 
@@ -293,8 +307,14 @@ private fun InfiniteCircularList(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             items(totalItems) { index ->
-                val actualIndex = index % items.size
-                val isSelected = actualIndex == currentIndex
+                val actualIndex = if (isInfinite) index % items.size else index
+                val isSelected = if (isInfinite) {
+                    actualIndex == currentIndex
+                } else {
+                    (index - 2) == currentIndex
+                }
+                
+                val text = if (isInfinite) items[actualIndex] else displayItems[index]
                 
                 Box(
                     modifier = Modifier
@@ -303,7 +323,7 @@ private fun InfiniteCircularList(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = items[actualIndex],
+                        text = text,
                         style = MaterialTheme.typography.titleLarge,
                         fontSize = if (isSelected) 22.sp else 18.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
