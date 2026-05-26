@@ -19,7 +19,9 @@ class CreateDailyLogUseCase @Inject constructor(
         activityIds: List<String>?,
         dailyPhotos: List<File>?,
         steps: Int?,
-        musicRecord: String?,
+        musicTitle: String?,
+        artistName: String?,
+        albumArtUrl: String?,
         calories: Int?,
         distance: Double?,
         wakeupTime: String? = null,
@@ -29,7 +31,7 @@ class CreateDailyLogUseCase @Inject constructor(
         return repository.createDailyLog(
             baseMoodId, date, note, sleepHours, sleepStartTime, 
             isMenstruation, menstruationPhase, activityIds, dailyPhotos, 
-            steps, musicRecord, calories, distance, wakeupTime, weather, temperature
+            steps, musicTitle, artistName, albumArtUrl, calories, distance, wakeupTime, weather, temperature
         )
     }
 }

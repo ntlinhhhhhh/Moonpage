@@ -333,7 +333,9 @@ fun DailyLogScreen(
             val menstruationChanged = uiState.isMenstruation != existing.isMenstruation
             val existingPhotos = (existing.dailyPhotos ?: emptyList()).mapNotNull(::normalizeAppImageUrl)
             val photosChanged = uiState.dailyPhotos != existingPhotos
-            val musicChanged = uiState.musicTitle != existing.musicRecord
+            val musicChanged = uiState.musicTitle != (existing.musicTitle ?: existing.musicRecord) ||
+                    uiState.artistName != existing.artistName ||
+                    uiState.albumArtUrl != existing.albumArtUrl
             val stepsChanged = uiState.steps != (existing.steps ?: 0)
             val caloriesChanged = uiState.calories != (existing.calories ?: 0)
             val distanceChanged = kotlin.math.abs(uiState.distance - (existing.distance ?: 0.0)) > 0.01

@@ -149,7 +149,9 @@ class DailyLogViewModel @Inject constructor(
                                 menstruationDay = menstruationDay,
                                 dailyPhotos = logPhotos,
                                 momentPhotos = momentPhotos,
-                                musicTitle = log.musicRecord,
+                                musicTitle = log.musicTitle ?: log.musicRecord,
+                                artistName = log.artistName,
+                                albumArtUrl = log.albumArtUrl,
                                 steps = log.steps ?: 0,
                                 calories = log.calories ?: 0,
                                 distance = log.distance ?: 0.0,
@@ -427,7 +429,13 @@ class DailyLogViewModel @Inject constructor(
                 _uiState.update { it.copy(zoomImageUrl = event.imageUrl) }
             }
             is DailyLogUiEvent.OnMusicChanged -> {
-                _uiState.update { it.copy(musicTitle = event.musicTitle) }
+                _uiState.update {
+                    it.copy(
+                        musicTitle = event.musicTitle,
+                        artistName = if (event.musicTitle.isNullOrBlank()) null else it.artistName,
+                        albumArtUrl = if (event.musicTitle.isNullOrBlank()) null else it.albumArtUrl
+                    )
+                }
             }
             is DailyLogUiEvent.OnMusicSelected -> {
                 _uiState.update { it.copy(
@@ -817,7 +825,9 @@ class DailyLogViewModel @Inject constructor(
                 activityIds = state.selectedActivities,
                 dailyPhotos = allPhotoFiles.takeIf { it.isNotEmpty() },
                 steps = state.steps,
-                musicRecord = state.musicTitle,
+                musicTitle = state.musicTitle,
+                artistName = state.artistName,
+                albumArtUrl = state.albumArtUrl,
                 calories = state.calories,
                 distance = state.distance,
                 wakeupTime = state.sleepWakeTime.format(timeFormatter),

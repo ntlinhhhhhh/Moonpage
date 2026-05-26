@@ -917,9 +917,6 @@ private fun ThemeEditorBottomTools(
                 }
             }
 
-            // FIX PHẦN 1 & 2.1: Fixed-height content area with AnimatedVisibility.
-            // The 4-icon tab row stays fixed; only the tool content area animates in/out.
-            // Height is locked so the Preview above never moves.
             val showContent = uiState.selectedTool != ThemeEditorTool.Preview
             AnimatedVisibility(
                 visible = showContent,

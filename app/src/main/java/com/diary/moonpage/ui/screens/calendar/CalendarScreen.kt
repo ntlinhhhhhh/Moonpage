@@ -469,7 +469,8 @@ fun CalendarSelectedLogDetail(
                 isMenstruation = selectedLog.isMenstruation,
                 menstruationDay = menstruationDays[date],
                 steps = selectedLog.steps,
-                musicRecord = selectedLog.musicRecord,
+                musicRecord = selectedLog.musicDisplayRecord(),
+                albumArtUrl = selectedLog.albumArtUrl,
                 weather = selectedLog.weather,
                 temperature = selectedLog.temperature,
                 onPhotoClick = onPhotoClick
@@ -501,7 +502,7 @@ fun TimelineView(
                         is FilterItem.Activity -> log.activityIds?.contains(filter.id) == true
                         is FilterItem.Special -> {
                             when (filter.id) {
-                                "music" -> log.activityIds?.any { it.contains("music", ignoreCase = true) } == true
+                                "music" -> log.hasMusicRecord()
                                 "sleep" -> (log.sleepHours ?: 0.0) > 0.0
                                 "sleep_long" -> (log.sleepHours ?: 0.0) in 6.0..8.0
                                 "menstruation" -> log.isMenstruation
@@ -652,11 +653,32 @@ fun TimelineItem(
                 isMenstruation = log.isMenstruation,
                 menstruationDay = menstruationDay,
                 steps = log.steps,
-                musicRecord = log.musicRecord,
+                musicRecord = log.musicDisplayRecord(),
+                albumArtUrl = log.albumArtUrl,
                 weather = log.weather,
                 temperature = log.temperature,
                 onPhotoClick = onPhotoClick
             )
         }
+    }
+}
+
+private fun DailyLog.hasMusicRecord(): Boolean {
+    return !musicTitle.isNullOrBlank() ||
+            !musicRecord.isNullOrBlank() ||
+            !artistName.isNullOrBlank() ||
+            !albumArtUrl.isNullOrBlank() ||
+            activityIds?.any { it.contains("music", ignoreCase = true) } == true
+}
+
+private fun DailyLog.musicDisplayRecord(): String? {
+    val title = musicTitle?.trim()?.takeIf { it.isNotEmpty() }
+    val artist = artistName?.trim()?.takeIf { it.isNotEmpty() }
+    val legacyRecord = musicRecord?.trim()?.takeIf { it.isNotEmpty() }
+
+    return when {
+        title != null && artist != null -> "$title - $artist"
+        title != null -> title
+        else -> legacyRecord
     }
 }

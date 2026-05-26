@@ -18,6 +18,9 @@ data class DailyLogEntity(
     val activityIdsJson: String?,   // Serialized List<String>
     val steps: Int? = null,
     val musicRecord: String? = null,
+    val musicTitle: String? = null,
+    val artistName: String? = null,
+    val albumArtUrl: String? = null,
     val createdAt: String? = null,
     val calories: Int? = null,
     val distance: Double? = null,
@@ -26,6 +29,7 @@ data class DailyLogEntity(
     val temperature: Double? = null
 ) {
     fun toResponse(): DailyLogResponseDto {
+        val domain = toDomain()
         return DailyLogResponseDto(
             id = id,
             baseMoodId = baseMoodId,
@@ -38,7 +42,10 @@ data class DailyLogEntity(
             dailyPhotos = dailyPhotosJson?.split(",")?.filter { it.isNotBlank() },
             activityIds = activityIdsJson?.split(",")?.filter { it.isNotBlank() },
             steps = steps,
-            musicRecord = musicRecord,
+            musicRecord = domain.musicRecord,
+            musicTitle = domain.musicTitle,
+            artistName = domain.artistName,
+            albumArtUrl = domain.albumArtUrl,
             createdAt = createdAt,
             calories = calories,
             distance = distance,
@@ -49,6 +56,14 @@ data class DailyLogEntity(
     }
 
     fun toDomain(): com.diary.moonpage.domain.model.DailyLog {
+        val legacyParts = musicRecord
+            ?.split(" - ", limit = 2)
+            ?.map { it.trim() }
+        val resolvedMusicTitle = musicTitle.nonBlankOrNull()
+            ?: legacyParts?.getOrNull(0).nonBlankOrNull()
+        val resolvedArtistName = artistName.nonBlankOrNull()
+            ?: legacyParts?.getOrNull(1).nonBlankOrNull()
+
         return com.diary.moonpage.domain.model.DailyLog(
             id = id,
             baseMoodId = baseMoodId,
@@ -61,7 +76,10 @@ data class DailyLogEntity(
             dailyPhotos = dailyPhotosJson?.split(",")?.filter { it.isNotBlank() },
             activityIds = activityIdsJson?.split(",")?.filter { it.isNotBlank() },
             steps = steps,
-            musicRecord = musicRecord,
+            musicRecord = musicRecord.nonBlankOrNull() ?: resolvedMusicTitle,
+            musicTitle = resolvedMusicTitle,
+            artistName = resolvedArtistName,
+            albumArtUrl = albumArtUrl.nonBlankOrNull(),
             createdAt = createdAt,
             calories = calories,
             distance = distance,
@@ -73,26 +91,32 @@ data class DailyLogEntity(
 
     companion object {
         fun fromResponse(response: DailyLogResponseDto): DailyLogEntity {
+            val domain = response.toDomain()
             return DailyLogEntity(
-                id = response.id,
-                baseMoodId = response.baseMoodId,
-                date = response.date,
-                note = response.note,
-                sleepHours = response.sleepHours,
-                sleepStartTime = response.sleepStartTime,
-                isMenstruation = response.isMenstruation,
-                menstruationPhase = response.menstruationPhase,
-                dailyPhotosJson = response.dailyPhotos?.joinToString(","),
-                activityIdsJson = response.activityIds?.joinToString(","),
-                steps = response.steps,
-                musicRecord = response.musicRecord,
-                createdAt = response.createdAt,
-                calories = response.calories,
-                distance = response.distance,
-                wakeupTime = response.wakeupTime,
-                weather = response.weather,
-                temperature = response.temperature
+                id = domain.id,
+                baseMoodId = domain.baseMoodId,
+                date = domain.date,
+                note = domain.note,
+                sleepHours = domain.sleepHours,
+                sleepStartTime = domain.sleepStartTime,
+                isMenstruation = domain.isMenstruation,
+                menstruationPhase = domain.menstruationPhase,
+                dailyPhotosJson = domain.dailyPhotos?.joinToString(","),
+                activityIdsJson = domain.activityIds?.joinToString(","),
+                steps = domain.steps,
+                musicRecord = domain.musicRecord,
+                musicTitle = domain.musicTitle,
+                artistName = domain.artistName,
+                albumArtUrl = domain.albumArtUrl,
+                createdAt = domain.createdAt,
+                calories = domain.calories,
+                distance = domain.distance,
+                wakeupTime = domain.wakeupTime,
+                weather = domain.weather,
+                temperature = domain.temperature
             )
         }
     }
 }
+
+private fun String?.nonBlankOrNull(): String? = this?.trim()?.takeIf { it.isNotEmpty() }

@@ -342,6 +342,7 @@ fun DayDetailArea(
     menstruationDay: Int? = null,
     steps: Int? = null,
     musicRecord: String? = null,
+    albumArtUrl: String? = null,
     weather: String? = null,
     temperature: Double? = null,
     onPhotoClick: (String) -> Unit = {},
@@ -568,11 +569,20 @@ fun DayDetailArea(
                                 .background(cs.primary.copy(alpha = 0.1f)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Rounded.MusicNote, contentDescription = null, tint = cs.primary)
+                            if (!albumArtUrl.isNullOrBlank()) {
+                                coil.compose.AsyncImage(
+                                    model = albumArtUrl,
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                )
+                            } else {
+                                Icon(Icons.Rounded.MusicNote, contentDescription = null, tint = cs.primary)
+                            }
                         }
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
-                            val parts = musicRecord.split(" - ")
+                            val parts = musicRecord.split(" - ", limit = 2)
                             Text(parts.first(), color = cs.onSurface, fontWeight = FontWeight.Bold, fontSize = 14.sp, maxLines = 1)
                             if (parts.size > 1) {
                                 Spacer(modifier = Modifier.height(2.dp))
@@ -707,6 +717,7 @@ fun DayDetailBottomSheet(
     menstruationDay: Int? = null,
     steps: Int? = null,
     musicRecord: String? = null,
+    albumArtUrl: String? = null,
     weather: String? = null,
     temperature: Double? = null,
     onDismiss: () -> Unit,
@@ -752,6 +763,7 @@ fun DayDetailBottomSheet(
                     isMenstruation = isMenstruation,
                     steps = steps,
                     musicRecord = musicRecord,
+                    albumArtUrl = albumArtUrl,
                     weather = weather,
                     temperature = temperature,
                     onPhotoClick = onPhotoClick

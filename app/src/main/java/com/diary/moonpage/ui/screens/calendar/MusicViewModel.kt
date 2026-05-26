@@ -83,14 +83,15 @@ class MusicViewModel @Inject constructor(
     fun onSearchQueryChanged(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
         searchJob?.cancel()
-        if (query.length > 1) {
+        val normalizedQuery = query.trim()
+        if (normalizedQuery.length > 1) {
             searchJob = viewModelScope.launch {
                 delay(500) // Debounce
                 if (currentToken != null) {
-                    searchMusic(query)
+                    searchMusic(normalizedQuery)
                 }
             }
-        } else if (query.isEmpty()) {
+        } else if (normalizedQuery.isEmpty()) {
             _uiState.update { it.copy(searchResults = emptyList(), error = null) }
         }
     }

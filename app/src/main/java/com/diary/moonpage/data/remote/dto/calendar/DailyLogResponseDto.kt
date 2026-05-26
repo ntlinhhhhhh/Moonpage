@@ -13,7 +13,10 @@ data class DailyLogResponseDto(
     @SerializedName(value = "isMenstruation", alternate = ["IsMenstruation"]) val isMenstruation: Boolean,
     @SerializedName(value = "menstruationPhase", alternate = ["MenstruationPhase"]) val menstruationPhase: String?,
     @SerializedName(value = "steps", alternate = ["Steps"]) val steps: Int? = null,
-    @SerializedName("musicRecord") val musicRecord: String? = null,
+    @SerializedName(value = "musicRecord", alternate = ["MusicRecord"]) val musicRecord: String? = null,
+    @SerializedName(value = "musicTitle", alternate = ["MusicTitle"]) val musicTitle: String? = null,
+    @SerializedName(value = "artistName", alternate = ["ArtistName"]) val artistName: String? = null,
+    @SerializedName(value = "albumArtUrl", alternate = ["AlbumArtUrl"]) val albumArtUrl: String? = null,
     @SerializedName(value = "dailyPhotos", alternate = ["DailyPhotos"]) val dailyPhotos: List<String>?,
     @SerializedName(value = "activityIds", alternate = ["ActivityIds"]) val activityIds: List<String>?,
     @SerializedName("createdAt") val createdAt: String? = null,
@@ -24,6 +27,14 @@ data class DailyLogResponseDto(
     @SerializedName(value = "temperature", alternate = ["Temperature"]) val temperature: Double? = null
 ) {
     fun toDomain(): DailyLog {
+        val legacyParts = musicRecord
+            ?.split(" - ", limit = 2)
+            ?.map { it.trim() }
+        val resolvedMusicTitle = musicTitle.nonBlankOrNull()
+            ?: legacyParts?.getOrNull(0).nonBlankOrNull()
+        val resolvedArtistName = artistName.nonBlankOrNull()
+            ?: legacyParts?.getOrNull(1).nonBlankOrNull()
+
         return DailyLog(
             id = id,
             baseMoodId = baseMoodId,
@@ -34,7 +45,10 @@ data class DailyLogResponseDto(
             isMenstruation = isMenstruation,
             menstruationPhase = menstruationPhase,
             steps = steps,
-            musicRecord = musicRecord,
+            musicRecord = musicRecord.nonBlankOrNull() ?: resolvedMusicTitle,
+            musicTitle = resolvedMusicTitle,
+            artistName = resolvedArtistName,
+            albumArtUrl = albumArtUrl.nonBlankOrNull(),
             dailyPhotos = dailyPhotos,
             activityIds = activityIds,
             createdAt = createdAt,
@@ -46,3 +60,5 @@ data class DailyLogResponseDto(
         )
     }
 }
+
+private fun String?.nonBlankOrNull(): String? = this?.trim()?.takeIf { it.isNotEmpty() }

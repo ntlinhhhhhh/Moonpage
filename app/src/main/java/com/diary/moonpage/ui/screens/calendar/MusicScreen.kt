@@ -56,7 +56,11 @@ fun MusicRoute(
             }
         },
         onSongClick = { track ->
-            onSongSelected(track.name, track.artists.firstOrNull()?.name ?: "", track.externalUrls.spotify)
+            onSongSelected(
+                track.name,
+                track.artists.firstOrNull()?.name ?: "",
+                track.album.images.firstOrNull()?.url
+            )
             onNavigateBack()
         },
         onNavigateBack = onNavigateBack

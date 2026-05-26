@@ -39,7 +39,9 @@ class DailyLogRepositoryImpl @Inject constructor(
         activityIds: List<String>?,
         dailyPhotos: List<File>?,
         steps: Int?,
-        musicRecord: String?,
+        musicTitle: String?,
+        artistName: String?,
+        albumArtUrl: String?,
         calories: Int?,
         distance: Double?,
         wakeupTime: String?,
@@ -55,7 +57,9 @@ class DailyLogRepositoryImpl @Inject constructor(
             val isMenstruationBody = isMenstruation.toString().toRequestBody("text/plain".toMediaTypeOrNull())
             val menstruationPhaseBody = menstruationPhase?.toRequestBody("text/plain".toMediaTypeOrNull())
             val stepsBody = steps?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
-            val musicRecordBody = musicRecord?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val musicTitleBody = musicTitle?.takeIf { it.isNotBlank() }?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val artistNameBody = artistName?.takeIf { it.isNotBlank() }?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val albumArtUrlBody = albumArtUrl?.takeIf { it.isNotBlank() }?.toRequestBody("text/plain".toMediaTypeOrNull())
             val caloriesBody = calories?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
             val distanceBody = distance?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
             val wakeupTimeBody = wakeupTime?.toRequestBody("text/plain".toMediaTypeOrNull())
@@ -73,7 +77,7 @@ class DailyLogRepositoryImpl @Inject constructor(
 
             val response = api.createDailyLog(
                 baseMoodIdBody, dateBody, noteBody, sleepHoursBody, sleepStartTimeBody, 
-                isMenstruationBody, menstruationPhaseBody, stepsBody, musicRecordBody,
+                isMenstruationBody, menstruationPhaseBody, stepsBody, musicTitleBody, artistNameBody, albumArtUrlBody,
                 caloriesBody, distanceBody, wakeupTimeBody, weatherBody, temperatureBody,
                 photoParts, activityParts
             )

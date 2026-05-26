@@ -322,7 +322,8 @@ fun AppNavigation(
 
                     val selectedSongTitle = savedStateHandle.get<String>("selected_song_title")
                     val selectedSongArtist = savedStateHandle.get<String>("selected_song_artist")
-                    val selectedSongUrl = savedStateHandle.get<String>("selected_song_url")
+                    val selectedSongImageUrl = savedStateHandle.get<String>("selected_song_image_url")
+                        ?: savedStateHandle.get<String>("selected_song_url")
 
                     ScreenWrapper(Screen.DailyLog.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         DailyLogRoute(
@@ -344,15 +345,16 @@ fun AppNavigation(
 
                         val viewModel: com.diary.moonpage.ui.screens.calendar.DailyLogViewModel = hiltViewModel()
                         val unknownArtist = stringResource(R.string.unknown_artist)
-                        LaunchedEffect(selectedSongTitle) {
+                        LaunchedEffect(selectedSongTitle, selectedSongImageUrl) {
                             if (selectedSongTitle != null) {
                                 viewModel.onEvent(com.diary.moonpage.ui.screens.calendar.DailyLogUiEvent.OnMusicSelected(
                                     selectedSongTitle,
                                     selectedSongArtist ?: unknownArtist,
-                                    selectedSongUrl
+                                    selectedSongImageUrl
                                 ))
                                 savedStateHandle.remove<String>("selected_song_title")
                                 savedStateHandle.remove<String>("selected_song_artist")
+                                savedStateHandle.remove<String>("selected_song_image_url")
                                 savedStateHandle.remove<String>("selected_song_url")
                             }
                         }
@@ -363,11 +365,11 @@ fun AppNavigation(
                     ScreenWrapper(Screen.Music.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         MusicRoute(
                             onNavigateBack = { navController.popBackStack() },
-                            onSongSelected = { title, artist, url ->
+                            onSongSelected = { title, artist, imageUrl ->
                                 navController.previousBackStackEntry?.savedStateHandle?.apply {
                                     set("selected_song_title", title)
                                     set("selected_song_artist", artist)
-                                    set("selected_song_url", url)
+                                    set("selected_song_image_url", imageUrl)
                                 }
                             }
                         )

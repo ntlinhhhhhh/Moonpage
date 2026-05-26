@@ -16,7 +16,7 @@ interface SpotifyApi {
         @Header("Authorization") token: String,
         @Query("q") query: String,
         @Query("type") type: String = "track",
-        @Query("limit") limit: Int = 20
+        @Query("limit") limit: Int = 10
     ): Response<SpotifySearchResponse>
 
     @GET("https://api.spotify.com/v1/me")
