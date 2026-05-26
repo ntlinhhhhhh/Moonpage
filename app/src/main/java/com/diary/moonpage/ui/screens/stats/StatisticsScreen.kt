@@ -28,6 +28,9 @@ import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
 import com.diary.moonpage.ui.screens.tutorial.TutorialStep
 import com.diary.moonpage.core.util.MoonIcons
 import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import kotlinx.coroutines.launch
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
@@ -89,7 +92,27 @@ fun StatisticsScreen(
     onNavigateToAnnualBeansDetail: () -> Unit = {},
     onNavigateToAnnualMusicDetail: () -> Unit = {}
 ) {
-    val scrollState = rememberScrollState()
+    val pagerState = rememberPagerState(initialPage = if (uiState.isMonthly) 0 else 1) { 2 }
+    val scope = rememberCoroutineScope()
+
+    // Sync UI state change to pager (only if not already scrolling)
+    LaunchedEffect(uiState.isMonthly) {
+        val targetPage = if (uiState.isMonthly) 0 else 1
+        if (pagerState.currentPage != targetPage && !pagerState.isScrollInProgress) {
+            pagerState.animateScrollToPage(targetPage)
+        }
+    }
+
+    // Sync pager settled page to VM
+    LaunchedEffect(pagerState.settledPage) {
+        val isMonthly = pagerState.settledPage == 0
+        if (uiState.isMonthly != isMonthly) {
+            onTabChange(isMonthly)
+        }
+    }
+
+    val monthlyScrollState = rememberScrollState()
+    val annualScrollState = rememberScrollState()
     var showDatePicker by remember { mutableStateOf(false) }
 
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -123,8 +146,12 @@ fun StatisticsScreen(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        TabItem(stringResource(R.string.monthly), uiState.isMonthly, onClick = { onTabChange(true) })
-                        TabItem(stringResource(R.string.annual), !uiState.isMonthly, onClick = { onTabChange(false) })
+                        TabItem(stringResource(R.string.monthly), uiState.isMonthly, onClick = {
+                            scope.launch { pagerState.animateScrollToPage(0) }
+                        })
+                        TabItem(stringResource(R.string.annual), !uiState.isMonthly, onClick = {
+                            scope.launch { pagerState.animateScrollToPage(1) }
+                        })
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -163,151 +190,159 @@ fun StatisticsScreen(
             onRefresh = onRefresh,
             modifier = Modifier.fillMaxSize().padding(paddingValues)
         ) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center),
-                    color = MaterialTheme.colorScheme.primary
-                )
-            } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(scrollState)
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    val isMale = uiState.gender == "Male" || uiState.gender == "Nam"
+            Box(modifier = Modifier.fillMaxSize()) {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize(),
+                    verticalAlignment = Alignment.Top,
+                    beyondViewportPageCount = 1
+                ) { page ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(if (page == 0) monthlyScrollState else annualScrollState)
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        if (page == 0) {
+                            // --- MONTHLY DASHBOARD VIEW ---
 
-                    if (uiState.isMonthly) {
-                        // --- MONTHLY DASHBOARD VIEW ---
+                            // 1. Mood Overview Card (full width, bấm → Mood Detail)
+                            Box(modifier = Modifier.fillMaxWidth().tutorialTarget(TutorialStep.HighlightYearlyReport)) {
+                                MoodOverviewCard(
+                                    stats = stats,
+                                    themeType = uiState.themeType,
+                                    customMoods = uiState.customMoods,
+                                    isMonthly = true,
+                                    year = uiState.selectedYear,
+                                    month = uiState.selectedMonth,
+                                    onClick = onNavigateToMoodDetail
+                                )
+                            }
 
-                        // 1. Mood Overview Card (full width, bấm → Mood Detail)
-                        Box(modifier = Modifier.fillMaxWidth().tutorialTarget(TutorialStep.HighlightYearlyReport)) {
+                            // 2. Sleep & Physical Row (2 columns, bấm → Sleep Detail)
+                            SleepPhysicalRow(
+                                stats = stats,
+                                onClick = onNavigateToSleepDetail
+                            )
+
+                            // 3. Activity & Habits Card (bấm → Activity Detail)
+                            ActivityHabitsCard(
+                                frequentlyRecorded = frequentlyRecorded,
+                                onClick = onNavigateToActivityDetail
+                            )
+
+                            // 4. Insights & Deep Dive Card (bấm → Insights Detail)
+                            InsightsTeaserCard(
+                                bestActivities = bestActivities,
+                                onClick = onNavigateToInsightsDetail
+                            )
+
+                            // 5. Top Music Card (bấm → Music Detail)
+                            TopMusicCard(
+                                musicSummary = stats?.musicSummary,
+                                onClick = onNavigateToMusicDetail
+                            )
+
+                        } else {
+                            // --- ANNUAL DASHBOARD VIEW ---
+                            
+                            // 1. Annual Mood Overview Card
                             MoodOverviewCard(
                                 stats = stats,
                                 themeType = uiState.themeType,
                                 customMoods = uiState.customMoods,
-                                isMonthly = true,
+                                isMonthly = false,
                                 year = uiState.selectedYear,
-                                month = uiState.selectedMonth,
-                                onClick = onNavigateToMoodDetail
+                                onClick = onNavigateToAnnualMoodDetail
+                            )
+
+                            // 2. Annual Sleep & Physical Row
+                            SleepPhysicalRow(
+                                stats = stats,
+                                onClick = onNavigateToAnnualSleepDetail
+                            )
+
+                            // 3. Annual Activity & Habits Card
+                            ActivityHabitsCard(
+                                frequentlyRecorded = frequentlyRecorded,
+                                onClick = onNavigateToAnnualActivityDetail
+                            )
+
+                            // 3.5. Annual Insights & Deep Dive Card (bấm → Insights Detail)
+                            InsightsTeaserCard(
+                                bestActivities = bestActivities,
+                                onClick = onNavigateToInsightsDetail
+                            )
+
+                            // 4. Year in Moonpage (Overview) Card
+                            val annualDominantMoodId = remember(stats) {
+                                val dist = stats?.moodDistribution ?: emptyList()
+                                val fromDist = dist.maxByOrNull { it.percentage }?.baseMoodId
+                                if (fromDist != null && fromDist != 0) fromDist
+                                else {
+                                    val flow = stats?.moodFlow ?: emptyList()
+                                    if (flow.isNotEmpty()) flow.groupBy { it.moodId.toInt() }.maxByOrNull { it.value.size }?.key ?: 3 else 3
+                                }
+                            }
+                            val annualMoodVisual = MoonIcons.Moods.getMoodVisual(annualDominantMoodId, uiState.themeType, uiState.customMoods)
+
+                            Card(
+                                modifier = Modifier.fillMaxWidth()
+                                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onNavigateToAnnualBeansDetail() },
+                                shape = RoundedCornerShape(32.dp),
+                                colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
+                                elevation = CardDefaults.cardElevation(0.dp)
+                            ) {
+                                Column(modifier = Modifier.padding(24.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Box(
+                                                modifier = Modifier.size(36.dp).clip(CircleShape)
+                                                    .background(annualMoodVisual.color.copy(alpha = 0.12f)),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                if (annualMoodVisual.drawableRes != null) {
+                                                    Image(
+                                                        painter = painterResource(id = annualMoodVisual.drawableRes),
+                                                        contentDescription = null,
+                                                        modifier = Modifier.size(22.dp),
+                                                        colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(annualMoodVisual.color)
+                                                    )
+                                                } else {
+                                                    Icon(Icons.Rounded.GridView, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                                                }
+                                            }
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Text(stringResource(R.string.year_in_beans), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f))
+                                        }
+                                        Icon(Icons.Rounded.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f), modifier = Modifier.size(20.dp))
+                                    }
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text(
+                                        text = stringResource(R.string.stats_emotional_journey),
+                                        fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface, lineHeight = 24.sp, fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+
+                            // 5. Annual Top Music Card
+                            TopMusicCard(
+                                musicSummary = stats?.musicSummary,
+                                onClick = onNavigateToAnnualMusicDetail
                             )
                         }
 
-                        // 2. Sleep & Physical Row (2 columns, bấm → Sleep Detail)
-                        SleepPhysicalRow(
-                            stats = stats,
-                            onClick = onNavigateToSleepDetail
-                        )
-
-                        // 3. Activity & Habits Card (bấm → Activity Detail)
-                        ActivityHabitsCard(
-                            frequentlyRecorded = frequentlyRecorded,
-                            onClick = onNavigateToActivityDetail
-                        )
-
-                        // 4. Insights & Deep Dive Card (bấm → Insights Detail)
-                        InsightsTeaserCard(
-                            bestActivities = bestActivities,
-                            onClick = onNavigateToInsightsDetail
-                        )
-
-                        // 5. Top Music Card (bấm → Music Detail)
-                        TopMusicCard(
-                            musicSummary = stats?.musicSummary,
-                            onClick = onNavigateToMusicDetail
-                        )
-
-                    } else {
-                        // --- ANNUAL DASHBOARD VIEW ---
-                        
-                        // 1. Annual Mood Overview Card
-                        MoodOverviewCard(
-                            stats = stats,
-                            themeType = uiState.themeType,
-                            customMoods = uiState.customMoods,
-                            isMonthly = false,
-                            year = uiState.selectedYear,
-                            onClick = onNavigateToAnnualMoodDetail
-                        )
-
-                        // 2. Annual Sleep & Physical Row
-                        SleepPhysicalRow(
-                            stats = stats,
-                            onClick = onNavigateToAnnualSleepDetail
-                        )
-
-                        // 3. Annual Activity & Habits Card
-                        ActivityHabitsCard(
-                            frequentlyRecorded = frequentlyRecorded,
-                            onClick = onNavigateToAnnualActivityDetail
-                        )
-
-                        // 3.5. Annual Insights & Deep Dive Card (bấm → Insights Detail)
-                        InsightsTeaserCard(
-                            bestActivities = bestActivities,
-                            onClick = onNavigateToInsightsDetail
-                        )
-
-                        // 4. Year in Moonpage (Overview) Card
-                        val annualDominantMoodId = remember(stats) {
-                            val dist = stats?.moodDistribution ?: emptyList()
-                            val fromDist = dist.maxByOrNull { it.percentage }?.baseMoodId
-                            if (fromDist != null && fromDist != 0) fromDist
-                            else {
-                                val flow = stats?.moodFlow ?: emptyList()
-                                if (flow.isNotEmpty()) flow.groupBy { it.moodId.toInt() }.maxByOrNull { it.value.size }?.key ?: 3 else 3
-                            }
-                        }
-                        val annualMoodVisual = MoonIcons.Moods.getMoodVisual(annualDominantMoodId, uiState.themeType, uiState.customMoods)
-
-                        Card(
-                            modifier = Modifier.fillMaxWidth()
-                                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { onNavigateToAnnualBeansDetail() },
-                            shape = RoundedCornerShape(32.dp),
-                            colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),
-                            elevation = CardDefaults.cardElevation(0.dp)
-                        ) {
-                            Column(modifier = Modifier.padding(24.dp)) {
-                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Box(
-                                            modifier = Modifier.size(36.dp).clip(CircleShape)
-                                                .background(annualMoodVisual.color.copy(alpha = 0.12f)),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            if (annualMoodVisual.drawableRes != null) {
-                                                Image(
-                                                    painter = painterResource(id = annualMoodVisual.drawableRes),
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(22.dp),
-                                                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(annualMoodVisual.color)
-                                                )
-                                            } else {
-                                                Icon(Icons.Rounded.GridView, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
-                                            }
-                                        }
-                                        Spacer(modifier = Modifier.width(12.dp))
-                                        Text(stringResource(R.string.year_in_beans), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f))
-                                    }
-                                    Icon(Icons.Rounded.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f), modifier = Modifier.size(20.dp))
-                                }
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text(
-                                    text = stringResource(R.string.stats_emotional_journey),
-                                    fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface, lineHeight = 24.sp, fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-
-                        // 5. Annual Top Music Card
-                        TopMusicCard(
-                            musicSummary = stats?.musicSummary,
-                            onClick = onNavigateToAnnualMusicDetail
-                        )
+                        Spacer(modifier = Modifier.height(32.dp))
                     }
+                }
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                // Show a small loader overlay if needed
+                if (uiState.isLoading && uiState.stats == null) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
         }
