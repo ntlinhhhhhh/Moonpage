@@ -50,6 +50,7 @@ fun LockRoute(
         val activity = context as? FragmentActivity
         if (
             activity == null ||
+            !uiState.isLoaded ||
             hasUnlocked ||
             isBiometricPromptShowing ||
             !uiState.isBiometricEnabled ||
@@ -118,8 +119,19 @@ fun LockRoute(
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                latestShowBiometricPrompt()
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> {
+                    // Slight delay to ensure Activity is fully ready to show the system dialog
+                    scope.launch {
+                        delay(300)
+                        latestShowBiometricPrompt()
+                    }
+                }
+                Lifecycle.Event.ON_PAUSE -> {
+                    // Reset state so it can be shown again on resume
+                    isBiometricPromptShowing = false
+                }
+                else -> {}
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -128,14 +140,15 @@ fun LockRoute(
         }
     }
 
-    LaunchedEffect(uiState.isBiometricEnabled, uiState.isBiometricAvailable) {
-        if (uiState.isBiometricEnabled && uiState.isBiometricAvailable) {
+    LaunchedEffect(uiState.isLoaded, uiState.isBiometricEnabled, uiState.isBiometricAvailable) {
+        if (uiState.isLoaded && uiState.isBiometricEnabled && uiState.isBiometricAvailable) {
             delay(150)
             showBiometricPrompt()
         }
     }
 
     LockScreen(
+        isLoaded = uiState.isLoaded,
         passcodeLength = passcode.length,
         errorMessage = errorMessage,
         isBiometricEnabled = uiState.isBiometricEnabled,
@@ -151,6 +164,7 @@ fun LockRoute(
  */
 @Composable
 fun LockScreen(
+    isLoaded: Boolean,
     passcodeLength: Int,
     errorMessage: String?,
     isBiometricEnabled: Boolean,
@@ -163,50 +177,61 @@ fun LockScreen(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(80.dp))
-
-            Text(
-                text = stringResource(R.string.enter_passcode),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            PasscodeDots(passcodeLength)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            AnimatedVisibility(visible = errorMessage != null) {
-                Text(
-                    text = errorMessage ?: "",
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+        if (!isLoaded) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(80.dp))
 
-            Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = stringResource(R.string.enter_passcode),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
 
-            NumericKeypad(
-                onNumberClick = onNumberClick,
-                onDeleteClick = onDeleteClick,
-                extraButton = if (isBiometricEnabled && isBiometricAvailable) {
-                    {
-                        KeypadButton(
-                            icon = { Icon(Icons.Default.Fingerprint, contentDescription = stringResource(R.string.content_desc_biometric)) },
-                            onClick = onBiometricClick
-                        )
-                    }
-                } else null
-            )
+                Spacer(modifier = Modifier.height(24.dp))
 
-            Spacer(modifier = Modifier.height(48.dp))
+                PasscodeDots(passcodeLength)
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                AnimatedVisibility(visible = errorMessage != null) {
+                    Text(
+                        text = errorMessage ?: "",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                NumericKeypad(
+                    onNumberClick = onNumberClick,
+                    onDeleteClick = onDeleteClick,
+                    extraButton = if (isBiometricEnabled && isBiometricAvailable) {
+                        {
+                            KeypadButton(
+                                icon = {
+                                    Icon(
+                                        Icons.Default.Fingerprint,
+                                        contentDescription = stringResource(R.string.content_desc_biometric)
+                                    )
+                                },
+                                onClick = onBiometricClick
+                            )
+                        }
+                    } else null
+                )
+
+                Spacer(modifier = Modifier.height(48.dp))
+            }
         }
     }
 }

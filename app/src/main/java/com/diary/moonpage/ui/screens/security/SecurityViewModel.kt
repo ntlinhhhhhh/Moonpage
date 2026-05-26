@@ -19,30 +19,30 @@ class SecurityViewModel @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(SecurityUiState())
-    val uiState: StateFlow<SecurityUiState> = _uiState.asStateFlow()
+    val uiState: StateFlow<SecurityUiState> = combine(
+        settingsPreferencesManager.isPasscodeEnabled,
+        settingsPreferencesManager.passcode,
+        settingsPreferencesManager.isBiometricEnabled
+    ) { isPasscodeEnabled, passcode, isBiometricEnabled ->
+        SecurityUiState(
+            isPasscodeEnabled = isPasscodeEnabled,
+            savedPasscode = passcode,
+            isBiometricEnabled = isBiometricEnabled,
+            isBiometricAvailable = checkBiometricAvailability(),
+            isLoaded = true
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = SecurityUiState(isLoaded = false)
+    )
 
     init {
-        viewModelScope.launch {
-            combine(
-                settingsPreferencesManager.isPasscodeEnabled,
-                settingsPreferencesManager.passcode,
-                settingsPreferencesManager.isBiometricEnabled
-            ) { isPasscodeEnabled, passcode, isBiometricEnabled ->
-                SecurityUiState(
-                    isPasscodeEnabled = isPasscodeEnabled,
-                    savedPasscode = passcode,
-                    isBiometricEnabled = isBiometricEnabled,
-                    isBiometricAvailable = checkBiometricAvailability()
-                )
-            }.collect { newState ->
-                _uiState.value = newState
-            }
-        }
+        // No longer need explicit collect here as we use stateIn
     }
 
     fun verifyPasscode(input: String): Boolean {
-        val saved = _uiState.value.savedPasscode
+        val saved = uiState.value.savedPasscode
         android.util.Log.d("SecurityVM", "Verifying passcode. Input: $input, Saved: $saved")
         return saved != null && input == saved
     }
