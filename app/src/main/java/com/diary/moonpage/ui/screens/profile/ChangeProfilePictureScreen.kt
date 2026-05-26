@@ -164,7 +164,7 @@ fun ChangeProfilePictureContent(
                     IconButton(onClick = onPickFromGallery) {
                         Icon(
                             Icons.Rounded.PhotoLibrary, 
-                            contentDescription = "Pick from Gallery",
+                            contentDescription = stringResource(R.string.desc_pick_gallery),
                             tint = colorScheme.primary
                         )
                     }

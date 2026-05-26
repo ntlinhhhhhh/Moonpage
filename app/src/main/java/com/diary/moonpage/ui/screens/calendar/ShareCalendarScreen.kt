@@ -396,7 +396,7 @@ fun ShareCalendarContent(
             )
             Spacer(modifier = Modifier.width(10.dp))
             Text(
-                "MoonPage",
+                stringResource(R.string.app_name),
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 color = themeColor

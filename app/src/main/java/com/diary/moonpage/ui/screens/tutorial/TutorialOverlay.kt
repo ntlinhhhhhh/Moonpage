@@ -26,6 +26,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.diary.moonpage.R
 
 @Composable
 fun TutorialOverlay(
@@ -166,7 +168,7 @@ fun TutorialOverlay(
 
         // Skip Tutorial Button at top right
         Text(
-            text = "Skip",
+            text = stringResource(R.string.skip),
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(top = 56.dp, end = 20.dp)
@@ -291,7 +293,7 @@ private fun TooltipContent(
             if (showNextButton) {
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "Continue",
+                    text = stringResource(R.string.continue_btn),
                     modifier = Modifier
                         .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(20.dp))
                         .clickable { onNextClick() }

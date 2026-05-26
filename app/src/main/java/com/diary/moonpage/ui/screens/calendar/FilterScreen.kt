@@ -138,7 +138,7 @@ fun FilterScreen(
         ) {
             if (selectedItems.isEmpty()) {
                 Text(
-                    text = "No icons selected",
+                    text = stringResource(R.string.no_icons_selected),
                     color = textColor.copy(alpha = 0.4f),
                     style = MaterialTheme.typography.bodyMedium
                 )

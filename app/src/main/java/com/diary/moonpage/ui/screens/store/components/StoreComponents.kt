@@ -455,7 +455,7 @@ fun ExploreMoreCard(onClick: () -> Unit) {
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Explore More", 
+                text = stringResource(R.string.store_explore_more), 
                 style = MaterialTheme.typography.labelLarge, 
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -497,7 +497,7 @@ fun CurrentThemeCard(theme: Theme) {
                     } else "Recently"
                 }
                 Text(
-                    text = "Active since $activatedDate", 
+                    text = stringResource(R.string.store_active_since, activatedDate), 
                     style = MaterialTheme.typography.bodySmall, 
                     color = onSurface.copy(alpha = 0.6f)
                 )
@@ -524,7 +524,7 @@ fun ConfirmPurchaseDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Confirm Purchase",
+                    text = stringResource(R.string.store_confirm_purchase),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -533,7 +533,7 @@ fun ConfirmPurchaseDialog(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Text(
-                    text = "Are you sure you want to buy ${theme.name}?",
+                    text = stringResource(R.string.store_confirm_purchase_desc, theme.name),
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
@@ -672,7 +672,7 @@ fun ConfirmActivationDialog(
             ) {
                 // Title
                 Text(
-                    text = "Confirm Activation",
+                    text = stringResource(R.string.store_confirm_activation),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface,
@@ -725,8 +725,7 @@ fun ConfirmActivationDialog(
                         ),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
                     ) {
-                        Text(
-                            "Activate",
+                        Text(stringResource(R.string.action_activate),
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
                         )

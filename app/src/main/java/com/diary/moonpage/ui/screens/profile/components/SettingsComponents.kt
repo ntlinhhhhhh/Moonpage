@@ -470,7 +470,7 @@ fun ConfirmPasswordDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Please enter your password to confirm account deletion.",
+                    text = stringResource(R.string.confirm_account_deletion),
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center
                 )

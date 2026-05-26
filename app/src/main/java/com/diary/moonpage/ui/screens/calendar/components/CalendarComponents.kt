@@ -1118,7 +1118,7 @@ fun ShareCalendarCard(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "MoonPage",
+                text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.ExtraBold,
                 color = colorScheme.primary,

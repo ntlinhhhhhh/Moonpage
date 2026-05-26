@@ -294,7 +294,7 @@ fun StatisticsScreen(
                                 }
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Text(
-                                    text = "See your complete emotional journey for the entire year...",
+                                    text = stringResource(R.string.stats_emotional_journey),
                                     fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface, lineHeight = 24.sp, fontWeight = FontWeight.Medium
                                 )
                             }

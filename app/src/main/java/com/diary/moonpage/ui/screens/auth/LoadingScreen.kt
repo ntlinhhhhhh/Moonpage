@@ -38,6 +38,7 @@ import com.diary.moonpage.core.theme.MoonPageTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun LoadingScreen(
@@ -81,7 +82,7 @@ fun LoadingScreen(
             )
 
             Text(
-                text = "MoonPage",
+                text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.displayLarge.copy(
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 2.sp

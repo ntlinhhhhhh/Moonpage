@@ -1261,7 +1261,7 @@ fun IconDeepDiveView(
         Spacer(modifier = Modifier.height(8.dp))
         Surface(shape = RoundedCornerShape(12.dp), color = successColor.copy(alpha = 0.08f), modifier = Modifier.fillMaxWidth()) {
             Text(
-                "This activity usually brings you positive energy! 🌟",
+                stringResource(R.string.stats_positive_energy),
                 modifier = Modifier.padding(12.dp), fontSize = 13.sp, color = successColor, lineHeight = 18.sp
             )
         }
@@ -1801,7 +1801,7 @@ fun YearlyRecapCard(
         ) {
             // Header
             Text(
-                text = "$year Recap",
+                text = stringResource(R.string.stats_year_recap, year),
                 fontWeight = FontWeight.Bold,
                 fontSize = 32.sp,
                 color = primaryColor
@@ -1824,7 +1824,7 @@ fun YearlyRecapCard(
 
             // Year in Pixels Grid
             Text(
-                "Your Year in Pixels",
+                stringResource(R.string.stats_year_in_pixels),
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
                 color = onSurface,
@@ -1865,7 +1865,7 @@ fun YearlyRecapCard(
             if (bestActivities.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(32.dp))
                 Text(
-                    "Top Activities",
+                    stringResource(R.string.stats_top_activities),
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = onSurface,
@@ -2153,7 +2153,7 @@ fun MoodOverviewCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Mood Overview",
+                    text = stringResource(R.string.stats_mood_overview),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = onSurfaceVariant.copy(alpha = 0.55f)
@@ -2505,7 +2505,7 @@ fun InsightsTeaserCard(bestActivities: List<BestActivityDto>, onClick: () -> Uni
             }
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Discover what sparks joy or weighs you down...",
+                text = stringResource(R.string.stats_sparks_joy),
                 fontSize = 16.sp, color = onSurface, lineHeight = 24.sp, fontWeight = FontWeight.Medium
             )
             if (bestActivities.isNotEmpty()) {
@@ -2682,7 +2682,7 @@ fun YearInMoonpageMiniatureCard(
         ) {
             // Title
             Text(
-                text = "Year in Moonpage",
+                text = stringResource(R.string.stats_year_in_moonpage),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -2696,7 +2696,7 @@ fun YearInMoonpageMiniatureCard(
                 horizontalArrangement = Arrangement.Start
             ) {
                 Text(
-                    text = "Look back on your ",
+                    text = stringResource(R.string.stats_look_back_year, "").replace(".", ""),
                     fontSize = 15.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

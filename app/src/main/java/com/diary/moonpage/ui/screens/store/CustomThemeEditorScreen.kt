@@ -4,8 +4,11 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -25,6 +28,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
@@ -597,18 +601,18 @@ private fun AppearanceModeFab(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
+    // Semi-transparent frosted backdrop ensures icon is always visible regardless of background image brightness
     Surface(
         modifier = modifier,
         shape = CircleShape,
-        tonalElevation = 8.dp,
-        shadowElevation = 10.dp,
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)
+        shadowElevation = 12.dp,
+        color = if (isDarkMode) Color.Black.copy(alpha = 0.52f) else Color.White.copy(alpha = 0.52f)
     ) {
         IconButton(onClick = onClick) {
             Icon(
                 imageVector = if (isDarkMode) Icons.Rounded.DarkMode else Icons.Rounded.LightMode,
                 contentDescription = stringResource(if (isDarkMode) R.string.dark else R.string.light),
-                tint = MaterialTheme.colorScheme.primary
+                tint = if (isDarkMode) Color.White else Color(0xFF1A1A1A)
             )
         }
     }
@@ -863,9 +867,26 @@ private fun ThemeEditorBottomTools(
     onUndo: () -> Unit,
     onClearStrokes: () -> Unit
 ) {
-    Surface(tonalElevation = 8.dp, color = MoonTheme.customColors.popupBgColor) {
-        Column(modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(12.dp)) {
-            TabRow(selectedTabIndex = uiState.selectedTool.ordinal) {
+    // FIX PHẦN 1: Fixed-height container so the preview above NEVER shifts
+    // FIX PHẦN 2.4: Rounded top corners + shadow to visually separate tool panel from the app's bottom nav bar
+    Surface(
+        tonalElevation = 0.dp,
+        shadowElevation = 20.dp,
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        color = MoonTheme.customColors.popupBgColor
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+        ) {
+            // FIX PHẦN 2.1: Transparent TabRow — 4 icons float naturally on the app background
+            TabRow(
+                selectedTabIndex = uiState.selectedTool.ordinal,
+                containerColor = Color.Transparent,
+                contentColor = MaterialTheme.colorScheme.primary,
+                divider = {}
+            ) {
                 ThemeEditorTool.entries.forEach { tool ->
                     Tab(
                         selected = uiState.selectedTool == tool,
@@ -890,33 +911,57 @@ private fun ThemeEditorBottomTools(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            when (uiState.selectedTool) {
-                ThemeEditorTool.Background -> BackgroundToolPanel(
-                    uiState = uiState,
-                    onPickImage = onPickImage,
-                    onBackgroundFillModeSelected = onBackgroundFillModeSelected,
-                    onSolidBackgroundSelected = onSolidBackgroundSelected,
-                    onGradientStartSelected = onGradientStartSelected,
-                    onGradientEndSelected = onGradientEndSelected
-                )
-                ThemeEditorTool.Draw -> DrawToolPanel(
-                    uiState = uiState,
-                    onBrushColorSelected = onBrushColorSelected,
-                    onBrushSizeChange = onBrushSizeChange,
-                    onBrushTypeSelected = onBrushTypeSelected,
-                    onEraserChanged = onEraserChanged,
-                    onUndo = onUndo,
-                    onClearStrokes = onClearStrokes
-                )
-                ThemeEditorTool.Colors -> ColorToolPanel(
-                    uiState = uiState,
-                    onPrimaryFocus = onPrimaryFocus,
-                    onIconSelected = onIconSelected,
-                    onFocusedColorSelected = onFocusedColorSelected
-                )
-                ThemeEditorTool.Preview -> Unit
+            // FIX PHẦN 1 & 2.1: Fixed-height content area with AnimatedVisibility.
+            // The 4-icon tab row stays fixed; only the tool content area animates in/out.
+            // Height is locked so the Preview above never moves.
+            val showContent = uiState.selectedTool != ThemeEditorTool.Preview
+            AnimatedVisibility(
+                visible = showContent,
+                enter = slideInVertically { it },
+                exit = slideOutVertically { it }
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(220.dp)
+                        .padding(horizontal = 12.dp)
+                        .padding(bottom = 12.dp, top = 4.dp)
+                ) {
+                    // FIX PHẦN 1: verticalScroll inside fixed area handles overflow (e.g. Background tab with many sliders)
+                    val scrollState = rememberScrollState()
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(scrollState)
+                    ) {
+                        when (uiState.selectedTool) {
+                            ThemeEditorTool.Background -> BackgroundToolPanel(
+                                uiState = uiState,
+                                onPickImage = onPickImage,
+                                onBackgroundFillModeSelected = onBackgroundFillModeSelected,
+                                onSolidBackgroundSelected = onSolidBackgroundSelected,
+                                onGradientStartSelected = onGradientStartSelected,
+                                onGradientEndSelected = onGradientEndSelected
+                            )
+                            ThemeEditorTool.Draw -> DrawToolPanel(
+                                uiState = uiState,
+                                onBrushColorSelected = onBrushColorSelected,
+                                onBrushSizeChange = onBrushSizeChange,
+                                onBrushTypeSelected = onBrushTypeSelected,
+                                onEraserChanged = onEraserChanged,
+                                onUndo = onUndo,
+                                onClearStrokes = onClearStrokes
+                            )
+                            ThemeEditorTool.Colors -> ColorToolPanel(
+                                uiState = uiState,
+                                onPrimaryFocus = onPrimaryFocus,
+                                onIconSelected = onIconSelected,
+                                onFocusedColorSelected = onFocusedColorSelected
+                            )
+                            ThemeEditorTool.Preview -> Unit
+                        }
+                    }
+                }
             }
         }
     }
@@ -1023,18 +1068,44 @@ private fun BackgroundToolPanel(
             )
         }
 
-        FilledTonalIconButton(
-            onClick = onPickImage,
-            modifier = Modifier.size(48.dp),
-            colors = IconButtonDefaults.filledTonalIconButtonColors(
-                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
-                contentColor = MaterialTheme.colorScheme.primary
-            )
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Icon(
-                imageVector = Icons.Rounded.Image,
-                contentDescription = stringResource(R.string.custom_theme_upload_image)
-            )
+            item {
+                FilledTonalIconButton(
+                    onClick = onPickImage,
+                    modifier = Modifier.size(64.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
+                        contentColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Image,
+                        contentDescription = stringResource(R.string.custom_theme_upload_image)
+                    )
+                }
+            }
+            
+            // Mock recent images
+            items(5) { index ->
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .clickable(onClick = onPickImage),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.CameraAlt,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    )
+                }
+            }
         }
 
         if (uiState.backgroundFillMode == BackgroundFillMode.Gradient) {
@@ -1820,11 +1891,13 @@ private fun BackgroundTransformDialog(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
+                // FIX PHẦN 2.5: Generous bottom padding (48.dp) so fingers don't accidentally
+                // trigger the Android system home/navigation gesture while dragging sliders
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .navigationBarsPadding()
-                        .padding(bottom = 32.dp),
+                        .padding(bottom = 48.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(

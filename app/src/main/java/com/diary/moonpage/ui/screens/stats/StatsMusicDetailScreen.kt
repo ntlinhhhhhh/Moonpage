@@ -193,7 +193,7 @@ private fun MusicDetailRow(rank: Int, item: MusicSummaryDto) {
                 Text(item.songTitle, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
                 Text(item.artistName, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), maxLines = 1)
             }
-            Text("${item.occurrence}×", fontSize = 13.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.stats_plays_count, item.occurrence).replace(" lượt phát", "×").replace(" plays", "×"), fontSize = 13.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
         }
     }
 }

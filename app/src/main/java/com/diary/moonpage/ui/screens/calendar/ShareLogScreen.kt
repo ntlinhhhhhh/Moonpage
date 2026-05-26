@@ -245,7 +245,7 @@ fun ShareLogCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    "MoonPage",
+                    stringResource(R.string.app_name),
                     fontWeight = FontWeight.Bold,
                     fontStyle = FontStyle.Normal,
                     fontSize = 18.sp,
@@ -522,7 +522,7 @@ fun ShareLogCard(
         ) {
             Column {
                 Text(
-                    "MoonPage Daily Log",
+                    stringResource(R.string.app_name) + " Daily Log",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     fontStyle = FontStyle.Normal,

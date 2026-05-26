@@ -92,7 +92,7 @@ fun StatsAnnualMusicDetailScreen(
                                     )
                                 }
                                 Text(
-                                    "${song.occurrence} plays",
+                                    stringResource(R.string.stats_plays_count, song.occurrence),
                                     fontSize = 13.sp,
                                     color = MaterialTheme.colorScheme.primary,
                                     fontWeight = FontWeight.Bold

@@ -1339,7 +1339,7 @@ private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "Are you on your period?",
+                text = stringResource(R.string.question_period),
                 fontWeight = FontWeight.Bold,
                 color = MoonTheme.customColors.logCardOnBg
             )
@@ -1357,7 +1357,7 @@ private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean
                         contentColor = if (!isMenstruation) Color.White else MoonTheme.customColors.logCardOnBg
                     )
                 ) {
-                    Text("No")
+                    Text(stringResource(R.string.action_no))
                 }
                 // Yes Button
                 Button(
@@ -1368,7 +1368,7 @@ private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean
                         contentColor = if (isMenstruation) Color.White else MoonTheme.customColors.logCardOnBg
                     )
                 ) {
-                    Text("Yes")
+                    Text(stringResource(R.string.action_yes))
                 }
             }
         }
@@ -1409,7 +1409,7 @@ private fun DailyNoteSection(
                 ) {
                     Icon(
                         if (isListening) Icons.Rounded.StopCircle else Icons.Rounded.Mic,
-                        contentDescription = "Voice Note",
+                        contentDescription = stringResource(R.string.desc_voice_note),
                         tint = if (isListening) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                         modifier = if (isListening) Modifier.graphicsLayer(scaleX = micScale, scaleY = micScale) else Modifier
                     )
@@ -1626,8 +1626,7 @@ private fun DailyLogExitDialog(onDismiss: () -> Unit, onExit: () -> Unit) {
                         shape = RoundedCornerShape(14.dp),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
                     ) {
-                        Text(
-                            "Cancel",
+                        Text(stringResource(R.string.cancel),
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
                         )
@@ -1642,8 +1641,7 @@ private fun DailyLogExitDialog(onDismiss: () -> Unit, onExit: () -> Unit) {
                         shape = RoundedCornerShape(14.dp),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
                     ) {
-                        Text(
-                            "Exit",
+                        Text(stringResource(R.string.action_exit),
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
                         )
@@ -1813,8 +1811,7 @@ fun DailyLogDatePickerDialog(initialDate: LocalDate, onDateSelected: (LocalDate)
                         shape = RoundedCornerShape(14.dp),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
                     ) {
-                        Text(
-                            "Cancel",
+                        Text(stringResource(R.string.cancel),
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
                         )
@@ -1829,8 +1826,7 @@ fun DailyLogDatePickerDialog(initialDate: LocalDate, onDateSelected: (LocalDate)
                         shape = RoundedCornerShape(14.dp),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
                     ) {
-                        Text(
-                            "OK",
+                        Text(stringResource(R.string.ok),
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
                         )
@@ -1900,8 +1896,7 @@ fun SpotifyAuthDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
                         shape = RoundedCornerShape(14.dp),
                         elevation = ButtonDefaults.buttonElevation(0.dp)
                     ) {
-                        Text(
-                            "Cancel",
+                        Text(stringResource(R.string.cancel),
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.bodyLarge
                         )

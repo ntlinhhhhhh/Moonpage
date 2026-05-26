@@ -82,7 +82,7 @@ fun SleepRecordDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    "Record sleep",
+                    stringResource(R.string.record_sleep),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = onSurfaceColor
