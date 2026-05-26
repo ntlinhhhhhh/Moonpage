@@ -33,6 +33,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.Velocity
+import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.components.feedback.MoonDeleteConfirmDialog
 import com.diary.moonpage.ui.components.refresh.MoonPullToRefreshBox
@@ -63,7 +64,7 @@ fun MomentHistoryRoute(
         viewModel.uiEffect.collect { effect ->
             when (effect) {
                 is MomentUiEffect.ShowSnackBar -> {
-                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                    GlobalSnackbarManager.show(effect.message.asString(context))
                 }
                 is MomentUiEffect.ShareMoment -> {
                     coroutineScope.launch {
@@ -76,7 +77,7 @@ fun MomentHistoryRoute(
                             com.diary.moonpage.core.util.ImageUtils.shareImage(context, bitmap, context.getString(R.string.share_moment))
                         } else {
                             android.util.Log.e("MomentHistory", "Failed to load image")
-                            snackbarHostState.showSnackbar(context.getString(R.string.failed_to_load_image_for_sharing))
+                            GlobalSnackbarManager.show(context.getString(R.string.failed_to_load_image_for_sharing))
                         }
                     }
                 }
@@ -366,7 +367,5 @@ fun MomentHistoryScreen(
                     }
                 }
             }
-            
-            MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
 }

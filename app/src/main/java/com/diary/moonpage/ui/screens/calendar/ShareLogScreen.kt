@@ -45,6 +45,7 @@ import java.time.format.TextStyle
 import java.util.*
 import com.diary.moonpage.ui.screens.moment.components.DashedDivider
 import com.diary.moonpage.core.theme.MoonTheme
+import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
 import com.diary.moonpage.ui.components.media.PhotoFullscreenPreview
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -97,7 +98,7 @@ fun ShareLogRoute(
                                 }.onSuccess { bitmap ->
                                     ImageUtils.saveBitmapToGallery(context, bitmap)
                                 }.onFailure { error ->
-                                    snackbarHostState.showSnackbar(context.getString(R.string.share_save_failed, error.message ?: context.getString(R.string.error_unknown)))
+                                    GlobalSnackbarManager.show(context.getString(R.string.share_save_failed, error.message ?: context.getString(R.string.error_unknown)))
                                 }
                             }
                         }
@@ -125,7 +126,7 @@ fun ShareLogRoute(
                             }.onSuccess { bitmap ->
                                 ImageUtils.shareImage(context, bitmap, context.getString(R.string.my_daily_log))
                             }.onFailure { error ->
-                                snackbarHostState.showSnackbar(context.getString(R.string.share_failed, error.message ?: context.getString(R.string.error_unknown)))
+                                GlobalSnackbarManager.show(context.getString(R.string.share_failed, error.message ?: context.getString(R.string.error_unknown)))
                             }
                         }
                     },
@@ -143,7 +144,6 @@ fun ShareLogRoute(
                 }
             }
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         if (uiState.isLoading) {

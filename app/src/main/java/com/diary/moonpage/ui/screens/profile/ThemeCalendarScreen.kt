@@ -29,7 +29,10 @@ import com.diary.moonpage.core.util.ThemeConstants
 import com.diary.moonpage.core.theme.MoonThemeType
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.ui.screens.store.components.ConfirmActivationDialog
+import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
+import com.diary.moonpage.core.util.UiText
+import com.diary.moonpage.ui.components.feedback.SnackbarType
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
@@ -57,7 +60,6 @@ fun ThemeCalendarRoute(
     val currentThemeId = mainUiState.activeTheme?.id
     val isDarkModePref = mainUiState.isDarkMode
     val defaultThemeName = stringResource(R.string.theme_calendar_classic_yellow)
-    val themeUpdatedMessage = stringResource(R.string.theme_updated_success)
     val currentSelectionKey = currentThemeId ?: currentThemeType.name
 
     // Track initial values to enable/disable Done button
@@ -112,10 +114,13 @@ fun ThemeCalendarRoute(
         storeViewModel.uiEffect.collect { effect ->
             when (effect) {
                 is com.diary.moonpage.ui.screens.store.StoreUiEffect.ShowSnackBar -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    GlobalSnackbarManager.show(effect.message, effect.type)
                 }
                 is com.diary.moonpage.ui.screens.store.StoreUiEffect.ThemeActivated -> {
-                    snackbarHostState.showSnackbar(themeUpdatedMessage)
+                    GlobalSnackbarManager.show(
+                        effect.message ?: UiText.StringResource(R.string.theme_updated_success),
+                        SnackbarType.SUCCESS
+                    )
                 }
                 is com.diary.moonpage.ui.screens.store.StoreUiEffect.NavigateBack -> {
                     onNavigateBack()
@@ -319,14 +324,6 @@ private fun ThemePickerContent(
                     }
                 }
             }
-
-            // Snackbar at top
-            MoonSnackbarHost(
-                hostState = snackbarHostState,
-                modifier = Modifier.align(Alignment.TopCenter),
-                topPadding = 45.dp
-            )
-
             if (showConfirmActivation) {
                 val themeData = availableThemes.find { it.id == temporarySelectedThemeId }
                 ConfirmActivationDialog(

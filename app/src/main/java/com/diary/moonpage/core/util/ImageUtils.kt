@@ -10,7 +10,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
-import android.widget.Toast
 import androidx.camera.core.CameraSelector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -25,6 +24,8 @@ import androidx.core.graphics.drawable.toBitmap
 import coil.imageLoader
 import coil.request.ImageRequest
 import com.diary.moonpage.R
+import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
+import com.diary.moonpage.ui.components.feedback.SnackbarType
 import kotlinx.coroutines.*
 
 object ImageUtils {
@@ -72,7 +73,10 @@ object ImageUtils {
             } catch (e: Exception) {
                 android.util.Log.e("ImageUtils", "Share failed: ${e.message}", e)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, context.getString(R.string.failed_to_share_image, e.message ?: ""), Toast.LENGTH_SHORT).show()
+                    GlobalSnackbarManager.show(
+                        context.getString(R.string.failed_to_share_image, e.message ?: ""),
+                        SnackbarType.ERROR
+                    )
                 }
             }
         }
@@ -95,7 +99,10 @@ object ImageUtils {
             } catch (e: Exception) {
                 android.util.Log.e("ImageUtils", "shareImageFromUrl failed", e)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, context.getString(R.string.failed_to_load_image_for_sharing), Toast.LENGTH_SHORT).show()
+                    GlobalSnackbarManager.show(
+                        context.getString(R.string.failed_to_load_image_for_sharing),
+                        SnackbarType.ERROR
+                    )
                 }
             }
         }
@@ -237,7 +244,11 @@ object ImageUtils {
         }
     }
 
-    suspend fun saveBitmapToGallery(context: Context, bitmap: Bitmap) {
+    suspend fun saveBitmapToGallery(
+        context: Context,
+        bitmap: Bitmap,
+        successMessage: String = context.getString(R.string.share_saved_to_gallery)
+    ) {
         withContext(Dispatchers.IO) {
             var success = false
             try {
@@ -287,15 +298,21 @@ object ImageUtils {
 
                 withContext(Dispatchers.Main) {
                     if (success) {
-                        Toast.makeText(context, context.getString(R.string.share_saved_to_gallery), Toast.LENGTH_SHORT).show()
+                        GlobalSnackbarManager.show(successMessage, SnackbarType.SUCCESS)
                     } else {
-                        Toast.makeText(context, context.getString(R.string.failed_to_save_image), Toast.LENGTH_SHORT).show()
+                        GlobalSnackbarManager.show(
+                            context.getString(R.string.failed_to_save_image),
+                            SnackbarType.ERROR
+                        )
                     }
                 }
             } catch (e: Exception) {
                 android.util.Log.e("ImageUtils", "Save to gallery failed: ${e.message}", e)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, context.getString(R.string.error_saving, e.message ?: ""), Toast.LENGTH_SHORT).show()
+                    GlobalSnackbarManager.show(
+                        context.getString(R.string.error_saving, e.message ?: ""),
+                        SnackbarType.ERROR
+                    )
                 }
             }
         }
@@ -314,13 +331,19 @@ object ImageUtils {
                     saveBitmapToGallery(context, bitmap)
                 } else {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(context, context.getString(R.string.failed_to_download_image), Toast.LENGTH_SHORT).show()
+                        GlobalSnackbarManager.show(
+                            context.getString(R.string.failed_to_download_image),
+                            SnackbarType.ERROR
+                        )
                     }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, context.getString(R.string.failed_to_download_image), Toast.LENGTH_SHORT).show()
+                    GlobalSnackbarManager.show(
+                        context.getString(R.string.failed_to_download_image),
+                        SnackbarType.ERROR
+                    )
                 }
             }
         }

@@ -33,7 +33,9 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.R
+import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
+import com.diary.moonpage.ui.components.feedback.SnackbarType
 import com.diary.moonpage.ui.screens.profile.components.*
 import kotlinx.coroutines.launch
 import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
@@ -96,7 +98,7 @@ fun AccountRoute(
         viewModel.uiEffect.collect { effect ->
             when(effect) {
                 is ProfileUiEffect.ShowSnackBar -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    GlobalSnackbarManager.show(effect.message)
                 }
                 is ProfileUiEffect.UpdateSuccess -> {
                     // Success logic if needed
@@ -154,7 +156,6 @@ fun AccountRoute(
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         }
-        MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
     }
 
     if (currentBottomSheet != BottomSheetType.NONE) {
@@ -469,7 +470,7 @@ fun AccountScreen(
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     clipboardManager.setText(AnnotatedString(userIdFull))
                     coroutineScope.launch {
-                        snackbarHostState.showSnackbar(userIdCopiedMessage)
+                        GlobalSnackbarManager.show(userIdCopiedMessage, SnackbarType.INFO)
                     }
                 }
             )

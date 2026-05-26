@@ -15,7 +15,9 @@ import com.diary.moonpage.R
 import com.diary.moonpage.core.theme.MoonThemeType
 import com.diary.moonpage.core.util.SettingsPreferencesManager
 import com.diary.moonpage.core.util.TokenManager
+import com.diary.moonpage.core.util.UiText
 import com.diary.moonpage.data.remote.api.SpotifyApi
+import com.diary.moonpage.ui.components.feedback.SnackbarType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
@@ -71,7 +73,7 @@ class MainViewModel @Inject constructor(
 
         viewModelScope.launch {
             notificationBus.events.collect { event ->
-                showSnackbar("${event.title}: ${event.body}")
+                showSnackbar(UiText.DynamicString("${event.title}: ${event.body}"))
                 fetchNotifications()
             }
         }
@@ -131,8 +133,8 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun showSnackbar(message: String) {
-        _uiState.update { it.copy(snackbarMessage = message) }
+    fun showSnackbar(message: UiText, type: SnackbarType = SnackbarType.INFO) {
+        _uiState.update { it.copy(snackbarMessage = message, snackbarType = type) }
     }
 
     fun dismissSnackbar() {
@@ -157,7 +159,7 @@ class MainViewModel @Inject constructor(
             val error = uri.getQueryParameter("error")
             
             if (error != null) {
-                showSnackbar(context.getString(R.string.spotify_error, error))
+                showSnackbar(UiText.StringResource(R.string.spotify_error, error), SnackbarType.ERROR)
                 return
             }
 
@@ -175,15 +177,24 @@ class MainViewModel @Inject constructor(
                             if (response.isSuccessful && response.body() != null) {
                                 val body = response.body()!!
                                 tokenManager.saveSpotifyToken(body.accessToken, body.refreshToken, body.expiresIn)
-                                showSnackbar(context.getString(R.string.spotify_linked_success))
+                                showSnackbar(UiText.StringResource(R.string.spotify_linked_success), SnackbarType.SUCCESS)
                             } else {
-                                showSnackbar(context.getString(R.string.token_exchange_failed, response.errorBody()?.string() ?: ""))
+                                showSnackbar(
+                                    UiText.StringResource(
+                                        R.string.token_exchange_failed,
+                                        response.errorBody()?.string() ?: ""
+                                    ),
+                                    SnackbarType.ERROR
+                                )
                             }
                         } catch (e: Exception) {
-                            showSnackbar(context.getString(R.string.api_error, e.message ?: ""))
+                            showSnackbar(
+                                UiText.StringResource(R.string.api_error, e.message ?: ""),
+                                SnackbarType.ERROR
+                            )
                         }
                     } else {
-                        showSnackbar(context.getString(R.string.missing_local_verifier))
+                        showSnackbar(UiText.StringResource(R.string.missing_local_verifier), SnackbarType.ERROR)
                     }
                 }
             }

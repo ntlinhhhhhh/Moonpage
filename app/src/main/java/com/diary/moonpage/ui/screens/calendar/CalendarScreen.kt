@@ -29,12 +29,15 @@ import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.domain.model.DailyLog
 import com.diary.moonpage.core.util.MoonIcon
 import com.diary.moonpage.ui.screens.calendar.components.*
+import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.components.feedback.MoonDeleteConfirmDialog
 import com.diary.moonpage.ui.components.media.PhotoFullscreenPreview
 import com.diary.moonpage.ui.components.refresh.MoonPullToRefreshBox
 import androidx.compose.ui.res.stringResource
 import com.diary.moonpage.R
+import com.diary.moonpage.core.util.UiText
+import com.diary.moonpage.ui.components.feedback.SnackbarType
 import java.time.LocalDate
 import java.time.YearMonth
 import com.diary.moonpage.core.util.getTranslatedActivityName
@@ -46,7 +49,7 @@ import com.diary.moonpage.core.util.getTranslatedActivityName
 fun CalendarRoute(
     createdLogDate: String? = null,
     onLogDateHandled: () -> Unit = {},
-    logSavedMessage: String? = null,
+    logSavedMessageResId: Int? = null,
     onMessageShown: () -> Unit = {},
     onNavigateToSettings: () -> Unit,
     onNavigateToDailyLog: (String) -> Unit,
@@ -69,9 +72,9 @@ fun CalendarRoute(
         }
     }
 
-    LaunchedEffect(logSavedMessage) {
-        if (!logSavedMessage.isNullOrBlank()) {
-            viewModel.showSnackbar(logSavedMessage)
+    LaunchedEffect(logSavedMessageResId) {
+        logSavedMessageResId?.let { resId ->
+            viewModel.showSnackbar(UiText.StringResource(resId), SnackbarType.SUCCESS)
             onMessageShown()
         }
     }
@@ -104,15 +107,13 @@ fun CalendarScreen(
     onNavigateToShareCalendar: (String) -> Unit,
     onNavigateToThemeCalendar: () -> Unit,
     onStreakClick: () -> Unit,
-    showSnackbar: (String) -> Unit,
+    showSnackbar: (UiText, SnackbarType) -> Unit,
     onRefresh: () -> Unit
 ) {
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var dateToDelete by remember { mutableStateOf<LocalDate?>(null) }
     var previewPhotoUrl by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
-    val futureDateError = stringResource(R.string.future_date_error)
-
     val initialPage = 500 * 12
     val baseYearMonth = remember { YearMonth.from(LocalDate.now().withDayOfMonth(1)) }
     val pagerState = rememberPagerState(initialPage = initialPage, pageCount = { initialPage * 2 })
@@ -137,7 +138,7 @@ fun CalendarScreen(
 
     LaunchedEffect(uiState.snackbarMessage) {
         uiState.snackbarMessage?.let {
-            snackbarHostState.showSnackbar(it)
+            GlobalSnackbarManager.show(it, uiState.snackbarType)
             onEvent(CalendarUiEvent.DismissMessage)
         }
     }
@@ -220,7 +221,7 @@ fun CalendarScreen(
                                     customMoods = uiState.customMoods,
                                     onDateSelected = { date ->
                                         if (date.isAfter(LocalDate.now())) {
-                                            showSnackbar(futureDateError)
+                                            showSnackbar(UiText.StringResource(R.string.future_date_error), SnackbarType.WARNING)
                                         } else {
                                             onEvent(CalendarUiEvent.OnDateSelected(date))
                                             if (uiState.dailyLogs[date] == null) {
@@ -284,10 +285,6 @@ fun CalendarScreen(
                                         }                    }
                 }
             }
-        }
-        
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 

@@ -10,6 +10,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -27,11 +28,17 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.core.theme.MoonPageTheme
 import com.diary.moonpage.domain.model.Theme
+import com.diary.moonpage.ui.components.feedback.AppSnackbarVisuals
+import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.navigation.AppNavigation
 import coil.compose.AsyncImage
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.io.File
+
+private const val AppSnackbarDisplayMillis = 2000L
 
 /**
  * Stateful Component
@@ -41,10 +48,33 @@ fun MoonPageApp(viewModel: MainViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isDark = uiState.isDarkMode ?: isSystemInDarkTheme()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        GlobalSnackbarManager.messages.collect { message ->
+            snackbarHostState.currentSnackbarData?.dismiss()
+            val snackbarJob = launch {
+                snackbarHostState.showSnackbar(
+                    AppSnackbarVisuals(
+                        uiText = message.uiText,
+                        type = message.type,
+                        actionLabel = message.actionLabel,
+                        duration = SnackbarDuration.Indefinite,
+                        withDismissAction = message.withDismissAction
+                    )
+                )
+            }
+            val timeoutJob = launch {
+                delay(AppSnackbarDisplayMillis)
+                snackbarHostState.currentSnackbarData?.dismiss()
+            }
+            snackbarJob.join()
+            timeoutJob.cancel()
+        }
+    }
     
     LaunchedEffect(uiState.snackbarMessage) {
         uiState.snackbarMessage?.let {
-            snackbarHostState.showSnackbar(it)
+            GlobalSnackbarManager.show(it, uiState.snackbarType)
             viewModel.dismissSnackbar()
         }
     }

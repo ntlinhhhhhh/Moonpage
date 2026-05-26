@@ -29,6 +29,8 @@ import com.diary.moonpage.ui.screens.profile.components.*
 import com.diary.moonpage.ui.components.layout.SectionTitle
 import com.diary.moonpage.ui.components.inputs.MoonTimePicker
 import com.diary.moonpage.core.theme.*
+import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
+import com.diary.moonpage.ui.components.feedback.SnackbarType
 import kotlinx.coroutines.launch
 
 @Composable
@@ -86,7 +88,9 @@ fun SettingsRoute(
             onConfirm = { old, new ->
                 viewModel.changePassword(old, new) {
                     showChangePasswordDialog = false
-                    android.widget.Toast.makeText(context, passwordChangedMessage, android.widget.Toast.LENGTH_SHORT).show()
+                    scope.launch {
+                        GlobalSnackbarManager.show(passwordChangedMessage, SnackbarType.SUCCESS)
+                    }
                 }
             }
         )
@@ -169,7 +173,7 @@ fun SettingsRoute(
 
     uiState.error?.let { error ->
         LaunchedEffect(error) {
-            android.widget.Toast.makeText(context, error, android.widget.Toast.LENGTH_LONG).show()
+            GlobalSnackbarManager.show(error, SnackbarType.ERROR)
             viewModel.clearError()
         }
     }
@@ -177,7 +181,7 @@ fun SettingsRoute(
     uiState.errorResId?.let { errorResId ->
         val error = stringResource(errorResId)
         LaunchedEffect(errorResId) {
-            android.widget.Toast.makeText(context, error, android.widget.Toast.LENGTH_LONG).show()
+            GlobalSnackbarManager.show(error, SnackbarType.ERROR)
             viewModel.clearError()
         }
     }

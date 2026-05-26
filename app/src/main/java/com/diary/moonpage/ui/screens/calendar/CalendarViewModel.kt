@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import android.content.Context
 import com.diary.moonpage.R
+import com.diary.moonpage.core.util.UiText
+import com.diary.moonpage.ui.components.feedback.SnackbarType
 import com.diary.moonpage.core.util.normalizeAppImageUrl
 import com.diary.moonpage.core.util.resolveLogDate
 import com.diary.moonpage.core.util.MoonIcons
@@ -283,15 +285,26 @@ class CalendarViewModel @Inject constructor(
                 statisticsRepository.triggerRefresh()
                 _uiState.update { currentState ->
                     val newLogs = currentState.dailyLogs.filterKeys { it != date }
-                    currentState.copy(dailyLogs = newLogs, selectedDate = null, snackbarMessage = context.getString(R.string.record_deleted_success))
+                    currentState.copy(
+                        dailyLogs = newLogs,
+                        selectedDate = null,
+                        snackbarMessage = UiText.StringResource(R.string.record_deleted_success),
+                        snackbarType = SnackbarType.SUCCESS
+                    )
                 }
             }.onFailure { exception ->
-                _uiState.update { it.copy(snackbarMessage = exception.message ?: context.getString(R.string.failed_delete_log)) }
+                _uiState.update {
+                    it.copy(
+                        snackbarMessage = exception.message?.let(UiText::DynamicString)
+                            ?: UiText.StringResource(R.string.failed_delete_log),
+                        snackbarType = SnackbarType.ERROR
+                    )
+                }
             }
         }
     }
 
-    fun showSnackbar(message: String) {
-        _uiState.update { it.copy(snackbarMessage = message) }
+    fun showSnackbar(message: UiText, type: SnackbarType = SnackbarType.INFO) {
+        _uiState.update { it.copy(snackbarMessage = message, snackbarType = type) }
     }
 }

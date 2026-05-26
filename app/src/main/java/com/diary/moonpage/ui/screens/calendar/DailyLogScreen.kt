@@ -62,6 +62,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.core.util.MoonIcon
 import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.core.util.normalizeAppImageUrl
+import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.components.feedback.MoonDeleteConfirmDialog
 import com.diary.moonpage.ui.components.media.PhotoFullscreenPreview
@@ -98,7 +99,7 @@ fun DailyLogRoute(
     onNavigateToDailyPhoto: () -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToShare: (String) -> Unit,
-    onDone: (String, String) -> Unit,
+    onDone: (String, Int) -> Unit,
     viewModel: DailyLogViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -173,7 +174,7 @@ fun DailyLogRoute(
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
             when (effect) {
-                is DailyLogUiEffect.SaveSuccess -> onDone(effect.date, effect.snackbarMessage)
+                is DailyLogUiEffect.SaveSuccess -> onDone(effect.date, effect.snackbarMessageResId)
                 is DailyLogUiEffect.LaunchHealthPermissions -> {
                     // Safe launch of permission activity with a small delay to avoid transition conflicts on MIUI
                     scope.launch {
@@ -183,7 +184,7 @@ fun DailyLogRoute(
                 }
                 is DailyLogUiEffect.ShowSnackBar -> {
                    scope.launch {
-                       snackbarHostState.showSnackbar(effect.message)
+                       GlobalSnackbarManager.show(effect.message, effect.type)
                    }
                 }
                 is DailyLogUiEffect.NavigateToPlayStore -> {
@@ -403,8 +404,6 @@ fun DailyLogScreen(
                 onPhotoDeleteRequest = onPhotoDeleteRequest,
                 onPhotoZoomRequest = onPhotoZoomRequest
             )
-            
-            MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 

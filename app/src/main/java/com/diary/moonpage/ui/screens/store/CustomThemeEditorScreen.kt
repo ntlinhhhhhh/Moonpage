@@ -84,7 +84,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.diary.moonpage.R
 import com.diary.moonpage.core.theme.MoonTheme
-import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
+import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
 
 private val EditorBottomToolsHeight = 280.dp
 private val EditorBottomToolContentHeight = 200.dp
@@ -95,20 +95,18 @@ fun CustomThemeEditorRoute(
     viewModel: CustomThemeEditorViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 CustomThemeEditorEffect.Saved -> onNavigateBack()
-                is CustomThemeEditorEffect.Error -> snackbarHostState.showSnackbar(effect.message)
+                is CustomThemeEditorEffect.Error -> GlobalSnackbarManager.show(effect.message)
             }
         }
     }
 
     CustomThemeEditorScreen(
         uiState = uiState,
-        snackbarHostState = snackbarHostState,
         onNameChange = viewModel::updateName,
         onImagePicked = viewModel::setBackgroundUri,
         onApplyEditedImage = viewModel::applyPendingBackground,
@@ -146,7 +144,6 @@ fun CustomThemeEditorRoute(
 @Composable
 fun CustomThemeEditorScreen(
     uiState: CustomThemeEditorUiState,
-    snackbarHostState: SnackbarHostState,
     onNameChange: (String) -> Unit,
     onImagePicked: (String?) -> Unit,
     onApplyEditedImage: (Float, Float, Float, Float) -> Unit,
@@ -287,7 +284,6 @@ fun CustomThemeEditorScreen(
                 )
             }
         },
-        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Surface(

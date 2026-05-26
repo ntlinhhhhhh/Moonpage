@@ -24,7 +24,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.diary.moonpage.R
+import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
+import com.diary.moonpage.ui.components.feedback.SnackbarType
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -132,7 +134,7 @@ fun InviteFriendScreen(
                     IconButton(onClick = { 
                         clipboardManager.setText(AnnotatedString(referralCode))
                         coroutineScope.launch {
-                            snackbarHostState.showSnackbar(copiedText)
+                            GlobalSnackbarManager.show(copiedText, SnackbarType.INFO)
                         }
                     }) {
                         Icon(Icons.Rounded.ContentCopy, contentDescription = stringResource(R.string.copy), tint = colorScheme.primary)
@@ -157,11 +159,6 @@ fun InviteFriendScreen(
                     Text(stringResource(R.string.invite_share_invitation), style = MaterialTheme.typography.titleMedium)
                 }
             }
-            
-            MoonSnackbarHost(
-                hostState = snackbarHostState,
-                modifier = Modifier.align(Alignment.TopCenter)
-            )
         }
     }
 }

@@ -35,7 +35,7 @@ import com.diary.moonpage.R
 import com.diary.moonpage.ui.screens.auth.components.AuthFooter
 import com.diary.moonpage.ui.screens.auth.components.AuthHeader
 import com.diary.moonpage.ui.components.buttons.MoonPrimaryButton
-import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
+import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
 import com.diary.moonpage.ui.components.inputs.MoonTextField
 import com.diary.moonpage.ui.components.navigation.TopCircularIcon
 import com.diary.moonpage.core.theme.*
@@ -83,7 +83,6 @@ fun ForgotPasswordScreen(
     onNavigateToVerifyOtp: (String) -> Unit
 ) {
     val scrollState = rememberScrollState()
-    val snackBarHostState = remember { SnackbarHostState() }
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
@@ -101,8 +100,7 @@ fun ForgotPasswordScreen(
                 }
                 is AuthUiEvent.ShowSnackBar -> {
                     launch {
-                        snackBarHostState.currentSnackbarData?.dismiss()
-                        snackBarHostState.showSnackbar(
+                        GlobalSnackbarManager.show(
                             message = event.message.asString(context),
                             duration = SnackbarDuration.Short
                         )
@@ -249,7 +247,6 @@ fun ForgotPasswordScreen(
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         }
-        MoonSnackbarHost(hostState = snackBarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 }

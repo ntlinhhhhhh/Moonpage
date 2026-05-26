@@ -33,7 +33,7 @@ import com.diary.moonpage.R
 import com.diary.moonpage.ui.screens.auth.components.AuthFooter
 import com.diary.moonpage.ui.screens.auth.components.AuthHeader
 import com.diary.moonpage.ui.components.buttons.MoonPrimaryButton
-import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
+import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
 import com.diary.moonpage.ui.components.inputs.MoonOtpField
 import com.diary.moonpage.ui.components.navigation.TopCircularIcon
 import com.diary.moonpage.core.theme.*
@@ -83,7 +83,6 @@ fun VerifyOtpCodeScreen(
     onResendOtpClick: () -> Unit
 ) {
     val scrollState = rememberScrollState()
-    val snackBarHostState = remember { SnackbarHostState() }
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
@@ -97,8 +96,7 @@ fun VerifyOtpCodeScreen(
         uiEvent.collect { event ->
             if (event is AuthUiEvent.ShowSnackBar) {
                 launch {
-                    snackBarHostState.currentSnackbarData?.dismiss()
-                    snackBarHostState.showSnackbar(event.message.asString(context))
+                    GlobalSnackbarManager.show(event.message.asString(context))
                 }
             }
         }
@@ -214,7 +212,6 @@ fun VerifyOtpCodeScreen(
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         }
-        MoonSnackbarHost(hostState = snackBarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 }

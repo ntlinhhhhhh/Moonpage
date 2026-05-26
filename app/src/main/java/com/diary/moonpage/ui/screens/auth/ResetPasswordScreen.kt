@@ -35,7 +35,7 @@ import com.diary.moonpage.R
 import com.diary.moonpage.ui.screens.auth.components.AuthFooter
 import com.diary.moonpage.ui.screens.auth.components.AuthHeader
 import com.diary.moonpage.ui.components.buttons.MoonPrimaryButton
-import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
+import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
 import com.diary.moonpage.ui.components.inputs.MoonTextField
 import com.diary.moonpage.ui.components.navigation.TopCircularIcon
 import com.diary.moonpage.core.theme.*
@@ -52,7 +52,6 @@ fun ResetPasswordRoute(
     onNavigateToLogin: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackBarHostState = remember { SnackbarHostState() }
     val context = androidx.compose.ui.platform.LocalContext.current
 
     LaunchedEffect(Unit) {
@@ -60,12 +59,10 @@ fun ResetPasswordRoute(
             when (event) {
                 AuthUiEvent.NavigateToLogin -> onNavigateToLogin()
                 is AuthUiEvent.ResetPasswordSuccess -> {
-                    snackBarHostState.currentSnackbarData?.dismiss()
-                    snackBarHostState.showSnackbar(event.message)
+                    GlobalSnackbarManager.show(event.message)
                 }
                 is AuthUiEvent.ShowSnackBar -> {
-                    snackBarHostState.currentSnackbarData?.dismiss()
-                    snackBarHostState.showSnackbar(event.message.asString(context))
+                    GlobalSnackbarManager.show(event.message.asString(context))
                 }
                 else -> Unit
             }
@@ -74,7 +71,6 @@ fun ResetPasswordRoute(
 
     ResetPasswordScreen(
         uiState = uiState,
-        snackBarHostState = snackBarHostState,
         onPasswordChange = viewModel::onPasswordChange,
         onConfirmPasswordChange = viewModel::onConfirmPasswordChange,
         onResetClick = { viewModel.resetPassword(email, resetToken) },
@@ -86,7 +82,6 @@ fun ResetPasswordRoute(
 @Composable
 fun ResetPasswordScreen(
     uiState: AuthUiState,
-    snackBarHostState: SnackbarHostState = remember { SnackbarHostState() },
     onPasswordChange: (String) -> Unit,
     onConfirmPasswordChange: (String) -> Unit,
     onResetClick: () -> Unit,
@@ -230,7 +225,6 @@ fun ResetPasswordScreen(
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         }
-        MoonSnackbarHost(hostState = snackBarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 }

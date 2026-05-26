@@ -11,6 +11,8 @@ import com.diary.moonpage.domain.usecase.theme.GetOwnedThemesUseCase
 import com.diary.moonpage.domain.usecase.theme.GetThemesUseCase
 import com.diary.moonpage.domain.usecase.theme.SetActiveThemeUseCase
 import com.diary.moonpage.core.theme.MoonThemeType
+import com.diary.moonpage.core.util.UiText
+import com.diary.moonpage.ui.components.feedback.SnackbarType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
@@ -228,7 +230,13 @@ class StoreViewModel @Inject constructor(
                 _uiEffect.emit(StoreUiEffect.RecoverSuccess)
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false) }
-                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: context.getString(R.string.recovery_failed)))
+                _uiEffect.emit(
+                    StoreUiEffect.ShowSnackBar(
+                        error.message?.let(UiText::DynamicString)
+                            ?: UiText.StringResource(R.string.recovery_failed),
+                        SnackbarType.ERROR
+                    )
+                )
             }
         }
     }
@@ -242,7 +250,13 @@ class StoreViewModel @Inject constructor(
                 _uiEffect.emit(StoreUiEffect.PurchaseSuccess)
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false) }
-                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: context.getString(R.string.purchase_failed)))
+                _uiEffect.emit(
+                    StoreUiEffect.ShowSnackBar(
+                        error.message?.let(UiText::DynamicString)
+                            ?: UiText.StringResource(R.string.purchase_failed),
+                        SnackbarType.ERROR
+                    )
+                )
             }
         }
     }
@@ -269,20 +283,38 @@ class StoreViewModel @Inject constructor(
             // 2. Fetch All Themes for Store (Background refresh)
             getThemesUseCase().onFailure { error ->
                 if (_uiState.value.themes.isEmpty()) {
-                    _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: context.getString(R.string.failed_load_store_themes)))
+                    _uiEffect.emit(
+                        StoreUiEffect.ShowSnackBar(
+                            error.message?.let(UiText::DynamicString)
+                                ?: UiText.StringResource(R.string.failed_load_store_themes),
+                            SnackbarType.ERROR
+                        )
+                    )
                 }
             }
 
             // 3. Fetch Owned Themes (Background refresh)
             getOwnedThemesUseCase().onFailure { error ->
                 if (_uiState.value.ownedThemes.isEmpty()) {
-                    _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: context.getString(R.string.failed_load_owned_themes)))
+                    _uiEffect.emit(
+                        StoreUiEffect.ShowSnackBar(
+                            error.message?.let(UiText::DynamicString)
+                                ?: UiText.StringResource(R.string.failed_load_owned_themes),
+                            SnackbarType.ERROR
+                        )
+                    )
                 }
             }
 
             // 4. Fetch custom themes created by the current user
             themeRepository.getMyThemes().onFailure { error ->
-                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: context.getString(R.string.failed_load_custom_themes)))
+                _uiEffect.emit(
+                    StoreUiEffect.ShowSnackBar(
+                        error.message?.let(UiText::DynamicString)
+                            ?: UiText.StringResource(R.string.failed_load_custom_themes),
+                        SnackbarType.ERROR
+                    )
+                )
             }
 
             _uiState.update { it.copy(isLoading = false) }
@@ -323,7 +355,13 @@ class StoreViewModel @Inject constructor(
                 _uiEffect.emit(StoreUiEffect.PurchaseSuccess)
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false) }
-                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: context.getString(R.string.purchase_failed)))
+                _uiEffect.emit(
+                    StoreUiEffect.ShowSnackBar(
+                        error.message?.let(UiText::DynamicString)
+                            ?: UiText.StringResource(R.string.purchase_failed),
+                        SnackbarType.ERROR
+                    )
+                )
             }
         }
     }
@@ -355,12 +393,23 @@ class StoreViewModel @Inject constructor(
             }
 
             // Emit effect immediately for instant feedback
-            val themeName = theme?.name ?: context.getString(R.string.theme_fallback)
-            _uiEffect.emit(StoreUiEffect.ThemeActivated(message = context.getString(R.string.theme_activated_success, themeName)))
+            _uiEffect.emit(
+                StoreUiEffect.ThemeActivated(
+                    message = theme?.name?.let {
+                        UiText.StringResource(R.string.theme_activated_success, it)
+                    } ?: UiText.StringResource(R.string.theme_updated_success)
+                )
+            )
 
             // Call the UseCase (which now handles optimistic DB/DataStore updates)
             setActiveThemeUseCase(themeId).onFailure { error ->
-                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: context.getString(R.string.failed_sync_theme_activation)))
+                _uiEffect.emit(
+                    StoreUiEffect.ShowSnackBar(
+                        error.message?.let(UiText::DynamicString)
+                            ?: UiText.StringResource(R.string.failed_sync_theme_activation),
+                        SnackbarType.ERROR
+                    )
+                )
             }
         }
     }
@@ -369,7 +418,12 @@ class StoreViewModel @Inject constructor(
         viewModelScope.launch {
             val themeId = theme.id.trim()
             if (themeId.isBlank()) {
-                _uiEffect.emit(StoreUiEffect.ShowSnackBar(context.getString(R.string.theme_id_missing)))
+                _uiEffect.emit(
+                    StoreUiEffect.ShowSnackBar(
+                        UiText.StringResource(R.string.theme_id_missing),
+                        SnackbarType.WARNING
+                    )
+                )
                 return@launch
             }
             _uiState.update { it.copy(isRenamingTheme = true) }
@@ -389,10 +443,21 @@ class StoreViewModel @Inject constructor(
                         isRenamingTheme = false
                     )
                 }
-                _uiEffect.emit(StoreUiEffect.ShowSnackBar(context.getString(R.string.theme_renamed)))
+                _uiEffect.emit(
+                    StoreUiEffect.ShowSnackBar(
+                        UiText.StringResource(R.string.theme_renamed),
+                        SnackbarType.SUCCESS
+                    )
+                )
             }.onFailure { error ->
                 _uiState.update { it.copy(isRenamingTheme = false) }
-                _uiEffect.emit(StoreUiEffect.ShowSnackBar(error.message ?: context.getString(R.string.failed_rename_theme)))
+                _uiEffect.emit(
+                    StoreUiEffect.ShowSnackBar(
+                        error.message?.let(UiText::DynamicString)
+                            ?: UiText.StringResource(R.string.failed_rename_theme),
+                        SnackbarType.ERROR
+                    )
+                )
             }
         }
     }

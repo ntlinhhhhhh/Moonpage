@@ -1,9 +1,11 @@
 package com.diary.moonpage.ui.screens.calendar
 
 import androidx.annotation.StringRes
+import com.diary.moonpage.core.util.UiText
 import com.diary.moonpage.domain.model.DailyLog
 import com.diary.moonpage.domain.model.Activity
 import com.diary.moonpage.core.theme.MoonThemeType
+import com.diary.moonpage.ui.components.feedback.SnackbarType
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -24,7 +26,8 @@ data class CalendarUiState(
     val dailyLogs: Map<LocalDate, DailyLog> = emptyMap(),
     val menstruationDays: Map<LocalDate, Int> = emptyMap(),
     val dynamicActivities: List<Activity> = emptyList(),
-    val snackbarMessage: String? = null,
+    val snackbarMessage: UiText? = null,
+    val snackbarType: SnackbarType = SnackbarType.INFO,
     val showMonthPicker: Boolean = false,
     val showFilterSheet: Boolean = false,
     val showShareSheet: Boolean = false,

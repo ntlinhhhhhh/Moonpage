@@ -31,6 +31,7 @@ import com.diary.moonpage.core.theme.MoonThemeType
 import com.diary.moonpage.core.util.ImageUtils
 import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.data.remote.dto.stats.MoodFlowDto
+import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.screens.stats.components.*
 import kotlinx.coroutines.launch
@@ -105,9 +106,8 @@ fun StatsAnnualBeansDetailScreen(
                                         val layer = if (selectedTab == 0) graphicsLayerEntire else graphicsLayerMonth
                                         val bitmap = layer.toImageBitmap().asAndroidBitmap()
                                         ImageUtils.saveBitmapToGallery(context, bitmap)
-                                        snackbarHostState.showSnackbar(context.getString(com.diary.moonpage.R.string.share_saved_to_gallery))
                                     } catch (e: Exception) {
-                                        snackbarHostState.showSnackbar(context.getString(com.diary.moonpage.R.string.share_save_failed, e.message ?: ""))
+                                        GlobalSnackbarManager.show(context.getString(com.diary.moonpage.R.string.share_save_failed, e.message ?: ""))
                                     }
                                 }
                             }
@@ -138,7 +138,7 @@ fun StatsAnnualBeansDetailScreen(
                                     val roundedBitmap = ImageUtils.applyRoundedCorners(bitmap, 32.dp.value * context.resources.displayMetrics.density)
                                     ImageUtils.shareImage(context, roundedBitmap, context.getString(com.diary.moonpage.R.string.my_yearly_recap))
                                 } catch (e: Exception) {
-                                    snackbarHostState.showSnackbar(context.getString(com.diary.moonpage.R.string.share_failed, e.message ?: ""))
+                                    GlobalSnackbarManager.show(context.getString(com.diary.moonpage.R.string.share_failed, e.message ?: ""))
                                 }
                             }
                         },
@@ -156,7 +156,6 @@ fun StatsAnnualBeansDetailScreen(
                 }
             }
         },
-        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         if (!showRecapDetail) {

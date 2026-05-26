@@ -637,9 +637,14 @@
     <string name="upload_failed">Tải lên thất bại</string>
     <string name="failed_to_load_image_for_sharing">Không thể tải ảnh để chia sẻ</string>
     <string name="no_health_data_found">Không tìm thấy dữ liệu sức khỏe cho ngày này trong Health Connect. Hãy đảm bảo Google Fit đang đồng bộ.</string>
+    <string name="health_connect_unavailable_status">Health Connect không khả dụng (trạng thái: %1$s).</string>
+    <string name="health_import_success">Đã nhập dữ liệu sức khỏe thành công.</string>
     <string name="import_failed">Nhập dữ liệu thất bại: %1$s</string>
+    <string name="import_failed_unknown">Nhập dữ liệu thất bại: lỗi không xác định.</string>
     <string name="select_mood_first">Vui lòng chọn cảm xúc trước!</string>
     <string name="failed_to_save_log">Không thể lưu nhật ký</string>
+    <string name="record_created_success">Đã tạo bản ghi thành công!</string>
+    <string name="record_updated_success">Đã cập nhật bản ghi thành công!</string>
     <string name="record_deleted_success">Đã xóa bản ghi thành công!</string>
     <string name="failed_delete_log">Không thể xóa nhật ký</string>
     <string name="recovery_failed">Khôi phục thất bại</string>

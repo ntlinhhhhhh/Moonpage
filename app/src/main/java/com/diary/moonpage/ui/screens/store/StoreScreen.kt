@@ -44,7 +44,9 @@ import com.diary.moonpage.R
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.domain.model.ThemeType
 import com.diary.moonpage.ui.components.layout.SectionTitle
+import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
+import com.diary.moonpage.core.util.UiText
 import com.diary.moonpage.ui.components.refresh.MoonPullToRefreshBox
 import com.diary.moonpage.ui.screens.store.components.*
 import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
@@ -66,17 +68,18 @@ fun StoreRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    val themeUpdatedMessage = stringResource(R.string.theme_updated_success)
 
     LaunchedEffect(Unit) {
         viewModel.uiEffect.collect { effect ->
             when (effect) {
                 is StoreUiEffect.ShowSnackBar -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    GlobalSnackbarManager.show(effect.message, effect.type)
                 }
                 is StoreUiEffect.ThemeActivated -> {
-                    val msg = effect.message ?: themeUpdatedMessage
-                    snackbarHostState.showSnackbar(msg)
+                    GlobalSnackbarManager.show(
+                        effect.message ?: UiText.StringResource(R.string.theme_updated_success),
+                        com.diary.moonpage.ui.components.feedback.SnackbarType.SUCCESS
+                    )
                 }
                 is StoreUiEffect.NavigateBack -> {
                     onNavigateBack()
@@ -222,14 +225,6 @@ fun StoreScreen(
                     }
                 }
             }
-
-            // Snackbar at top
-            MoonSnackbarHost(
-                hostState = snackbarHostState,
-                modifier = Modifier.align(Alignment.TopCenter),
-                topPadding = 45.dp
-            )
-            
             if (uiState.showConfirmActivationDialog) {
                 val tempTheme = remember(uiState.temporarySelectedThemeId, uiState.ownedThemes, uiState.customThemes) {
                     (uiState.ownedThemes + uiState.customThemes).distinctBy { it.id }

@@ -8,7 +8,6 @@ import android.location.Location
 import android.location.LocationManager
 import android.net.Uri
 import android.provider.Settings
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -39,6 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.imageLoader
 import coil.request.ImageRequest
 import com.diary.moonpage.R
+import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.screens.moment.components.CameraMainUI
 import com.diary.moonpage.ui.screens.moment.components.MomentTag
@@ -125,7 +125,7 @@ fun MomentCameraScreen(
                     isSuccess = true
                 }
                 is MomentUiEffect.ShowSnackBar -> {
-                    snackbarHostState.showSnackbar(effect.message.asString(context))
+                    GlobalSnackbarManager.show(effect.message.asString(context))
                 }
                 is MomentUiEffect.ShareMoment -> {
                     coroutineScope.launch {
@@ -137,7 +137,7 @@ fun MomentCameraScreen(
                             val bitmap = (result.drawable as android.graphics.drawable.BitmapDrawable).bitmap
                             com.diary.moonpage.core.util.ImageUtils.shareImage(context, bitmap, context.getString(R.string.share_moment))
                         } else {
-                            snackbarHostState.showSnackbar(context.getString(R.string.failed_to_load_image_for_sharing))
+                            GlobalSnackbarManager.show(context.getString(R.string.failed_to_load_image_for_sharing))
                         }
                     }
                 }
@@ -449,7 +449,6 @@ fun MomentCameraScreenContent(
                     }
                 )
             }
-            MoonSnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 }

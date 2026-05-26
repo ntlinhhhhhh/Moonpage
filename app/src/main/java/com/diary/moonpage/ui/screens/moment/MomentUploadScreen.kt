@@ -1,7 +1,6 @@
 package com.diary.moonpage.ui.screens.moment
 
 import android.net.Uri
-import android.widget.Toast
 import androidx.camera.core.CameraSelector
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateDpAsState
@@ -56,6 +55,8 @@ import com.diary.moonpage.core.util.ImageUtils
 import com.diary.moonpage.ui.screens.moment.components.MomentTag
 import com.diary.moonpage.core.theme.nunitoFontFamily
 import com.diary.moonpage.core.util.MoonIcons
+import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
+import com.diary.moonpage.ui.components.feedback.SnackbarType
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -191,11 +192,17 @@ fun MomentUploadScreen(
                                 val inputStream = context.contentResolver.openInputStream(capturedImageUri)
                                 val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
                                 if (bitmap != null) {
-                                    ImageUtils.saveBitmapToGallery(context, bitmap)
-                                    Toast.makeText(context, context.getString(R.string.image_saved_to_gallery), Toast.LENGTH_SHORT).show()
+                                    ImageUtils.saveBitmapToGallery(
+                                        context,
+                                        bitmap,
+                                        context.getString(R.string.image_saved_to_gallery)
+                                    )
                                 }
                             } catch (e: Exception) {
-                                Toast.makeText(context, context.getString(R.string.failed_to_save_image), Toast.LENGTH_SHORT).show()
+                                GlobalSnackbarManager.show(
+                                    context.getString(R.string.failed_to_save_image),
+                                    SnackbarType.ERROR
+                                )
                             }
                         }
                     }
@@ -353,7 +360,10 @@ fun MomentUploadScreen(
                         if (compressedFile != null) {
                             onUpload(compressedFile, caption)
                         } else {
-                            Toast.makeText(context, context.getString(R.string.failed_to_process_image), Toast.LENGTH_SHORT).show()
+                            GlobalSnackbarManager.show(
+                                context.getString(R.string.failed_to_process_image),
+                                SnackbarType.ERROR
+                            )
                         }
                     }
                 },

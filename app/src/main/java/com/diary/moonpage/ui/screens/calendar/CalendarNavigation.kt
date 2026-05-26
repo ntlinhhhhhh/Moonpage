@@ -31,13 +31,13 @@ fun NavGraphBuilder.calendarScreen(
         // Use collectAsStateWithLifecycle to ensure we respect the NavBackStackEntry's lifecycle.
         // This prevents IllegalStateException when the entry is being destroyed.
         val createdLogDate by savedStateHandle.getStateFlow<String?>("created_log_date", null).collectAsStateWithLifecycle()
-        val logSavedMessage by savedStateHandle.getStateFlow<String?>("logSavedMessage", null).collectAsStateWithLifecycle()
+        val logSavedMessageResId by savedStateHandle.getStateFlow<Int?>("logSavedMessageResId", null).collectAsStateWithLifecycle()
 
         CalendarRoute(
             createdLogDate = createdLogDate,
             onLogDateHandled = { savedStateHandle.set("created_log_date", null) },
-            logSavedMessage = logSavedMessage,
-            onMessageShown = { savedStateHandle.set("logSavedMessage", null) },
+            logSavedMessageResId = logSavedMessageResId,
+            onMessageShown = { savedStateHandle.set("logSavedMessageResId", null) },
             onNavigateToSettings = onNavigateToSettings,
             onNavigateToDailyLog = onNavigateToDailyLog,
             onNavigateToShareLog = onNavigateToShareLog,

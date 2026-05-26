@@ -1,6 +1,8 @@
 package com.diary.moonpage.ui.screens.store
 
 import com.diary.moonpage.domain.model.Theme
+import com.diary.moonpage.core.util.UiText
+import com.diary.moonpage.ui.components.feedback.SnackbarType
 
 /**
  * Events: UI -> VM
@@ -34,10 +36,13 @@ sealed class StoreUiEvent {
  * Effects: VM -> UI
  */
 sealed class StoreUiEffect {
-    data class ShowSnackBar(val message: String) : StoreUiEffect()
+    data class ShowSnackBar(
+        val message: UiText,
+        val type: SnackbarType = SnackbarType.INFO
+    ) : StoreUiEffect()
     object PurchaseSuccess : StoreUiEffect()
     object RecoverSuccess : StoreUiEffect()
-    data class ThemeActivated(val message: String? = null) : StoreUiEffect()
+    data class ThemeActivated(val message: UiText? = null) : StoreUiEffect()
     object NavigateBack : StoreUiEffect()
     object NavigateToCustomThemeEditor : StoreUiEffect()
 }

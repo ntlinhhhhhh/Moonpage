@@ -25,7 +25,10 @@ import androidx.compose.ui.res.stringResource
 import com.diary.moonpage.R
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.ui.components.buttons.MoonPrimaryButton
+import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
+import com.diary.moonpage.core.util.UiText
+import com.diary.moonpage.ui.components.feedback.SnackbarType
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -47,7 +50,6 @@ fun ThemeDetailRoute(
     val theme = uiState.selectedThemeDetail
     val snackbarHostState = remember { SnackbarHostState() }
     val haptic = LocalHapticFeedback.current
-    val themeUpdatedMessage = stringResource(R.string.theme_updated_success)
 
     if (theme == null) {
         LaunchedEffect(Unit) {
@@ -60,11 +62,13 @@ fun ThemeDetailRoute(
         viewModel.uiEffect.collect { effect ->
             when (effect) {
                 is StoreUiEffect.ShowSnackBar -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    GlobalSnackbarManager.show(effect.message, effect.type)
                 }
                 is StoreUiEffect.ThemeActivated -> {
-                    val msg = effect.message ?: themeUpdatedMessage
-                    snackbarHostState.showSnackbar(msg)
+                    GlobalSnackbarManager.show(
+                        effect.message ?: UiText.StringResource(R.string.theme_updated_success),
+                        SnackbarType.SUCCESS
+                    )
                 }
                 is StoreUiEffect.NavigateBack -> {
                     onNavigateBack()
@@ -269,14 +273,6 @@ fun ThemeDetailScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
             }
-
-            // Snackbar at top
-            MoonSnackbarHost(
-                hostState = snackbarHostState,
-                modifier = Modifier.align(Alignment.TopCenter),
-                topPadding = 45.dp
-            )
-
             if (uiState.showConfirmPurchaseDialog && uiState.themeToPurchase != null) {
                 ConfirmPurchaseDialog(
                     theme = uiState.themeToPurchase!!,

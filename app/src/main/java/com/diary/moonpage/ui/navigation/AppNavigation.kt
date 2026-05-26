@@ -337,7 +337,7 @@ fun AppNavigation(
                             onDone = { date, message ->
                                 navController.previousBackStackEntry?.savedStateHandle?.apply {
                                     set("created_log_date", date)
-                                    set("logSavedMessage", message)
+                                    set("logSavedMessageResId", message)
                                 }
                                 navController.popBackStack()
                             }

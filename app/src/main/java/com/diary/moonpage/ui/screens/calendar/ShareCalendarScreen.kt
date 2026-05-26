@@ -35,6 +35,8 @@ import com.diary.moonpage.core.util.ImageUtils
 import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.core.theme.MoonThemeType
 import com.diary.moonpage.core.theme.getThemeShades
+import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
+import com.diary.moonpage.ui.components.feedback.SnackbarType
 import kotlinx.coroutines.launch
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import java.time.LocalDate
@@ -58,7 +60,6 @@ fun ShareCalendarRoute(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     val graphicsLayer = rememberGraphicsLayer()
-    val savedToGalleryMessage = stringResource(R.string.share_saved_to_gallery)
     val calendarImageTitle = stringResource(R.string.share_calendar_image_title)
     
     var selectedRatio by remember { mutableStateOf("1:1") }
@@ -102,9 +103,8 @@ fun ShareCalendarRoute(
                                 try {
                                     val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
                                     ImageUtils.saveBitmapToGallery(context, bitmap)
-                                    snackbarHostState.showSnackbar(savedToGalleryMessage)
                                 } catch (e: Exception) {
-                                    snackbarHostState.showSnackbar(context.getString(R.string.share_save_failed, e.message ?: ""))
+                                    GlobalSnackbarManager.show(context.getString(R.string.share_save_failed, e.message ?: ""), SnackbarType.ERROR)
                                 }
                             }
                         }
@@ -133,7 +133,7 @@ fun ShareCalendarRoute(
                                 val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
                                 ImageUtils.shareImage(context, bitmap, calendarImageTitle)
                             } catch (e: Exception) {
-                                snackbarHostState.showSnackbar(context.getString(R.string.share_failed, e.message ?: ""))
+                                GlobalSnackbarManager.show(context.getString(R.string.share_failed, e.message ?: ""), SnackbarType.ERROR)
                             }
                         }
                     },
@@ -151,7 +151,6 @@ fun ShareCalendarRoute(
                 }
             }
         },
-        snackbarHost = { MoonSnackbarHost(hostState = snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(

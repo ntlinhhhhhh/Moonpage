@@ -39,7 +39,7 @@ import com.diary.moonpage.ui.screens.auth.components.AuthFooter
 import com.diary.moonpage.ui.screens.auth.components.AuthHeader
 import com.diary.moonpage.ui.screens.auth.components.SocialLoginButton
 import com.diary.moonpage.ui.components.buttons.MoonPrimaryButton
-import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
+import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
 import com.diary.moonpage.ui.components.inputs.MoonTextField
 import com.diary.moonpage.ui.components.layout.MoonDivider
 import com.diary.moonpage.core.theme.MoonPageTheme
@@ -96,7 +96,6 @@ fun LoginScreen(
     onNavigateToForgotPassword: () -> Unit
 ) {
     val scrollState = rememberScrollState()
-    val snackBarHostState = remember { SnackbarHostState() }
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
@@ -112,8 +111,7 @@ fun LoginScreen(
         uiEvent.collect { event ->
             if (event is AuthUiEvent.ShowSnackBar) {
                 launch {
-                    snackBarHostState.currentSnackbarData?.dismiss()
-                    snackBarHostState.showSnackbar(event.message.asString(context))
+                    GlobalSnackbarManager.show(event.message.asString(context))
                 }
             }
         }
@@ -257,15 +255,15 @@ fun LoginScreen(
                                             val googleIdToken = GoogleIdTokenCredential.createFrom(credential.data)
                                             onGoogleLoginClick(googleIdToken.idToken)
                                         } else {
-                                            snackBarHostState.showSnackbar(context.getString(R.string.google_login_failed))
+                                            GlobalSnackbarManager.show(context.getString(R.string.google_login_failed))
                                         }
                                     } catch (e: GetCredentialCancellationException) {
                                         // User cancelled the Google account picker.
                                     } catch (e: NoCredentialException) {
-                                        snackBarHostState.showSnackbar(context.getString(R.string.google_sign_in_required))
+                                        GlobalSnackbarManager.show(context.getString(R.string.google_sign_in_required))
                                     } catch (e: Exception) {
                                         val reason = e.localizedMessage ?: e::class.java.simpleName
-                                        snackBarHostState.showSnackbar(
+                                        GlobalSnackbarManager.show(
                                             context.getString(R.string.google_sign_in_failed_with_reason, reason)
                                         )
                                     }
@@ -296,7 +294,6 @@ fun LoginScreen(
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             }
-            MoonSnackbarHost(hostState = snackBarHostState, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 }

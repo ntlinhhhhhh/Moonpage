@@ -41,6 +41,8 @@ import com.diary.moonpage.domain.usecase.notification.CheckAndTriggerNotificatio
 import com.diary.moonpage.core.util.HealthConnectManager
 import android.content.Context
 import kotlinx.coroutines.CoroutineScope
+import com.diary.moonpage.ui.components.feedback.SnackbarType
+import com.diary.moonpage.core.util.UiText
 
 import com.diary.moonpage.data.remote.api.SpotifyApi
 
@@ -460,23 +462,30 @@ class DailyLogViewModel @Inject constructor(
                                 val providerPackageName = "com.google.android.apps.healthdata"
                                 _uiEffect.emit(DailyLogUiEffect.NavigateToPlayStore(providerPackageName))
                             } else {
-                                val msg = "Health Connect is not available (Status: $status)."
-                                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(msg))
+                                _uiEffect.emit(
+                                    DailyLogUiEffect.ShowSnackBar(
+                                        UiText.StringResource(R.string.health_connect_unavailable_status, status),
+                                        SnackbarType.ERROR
+                                    )
+                                )
                             }
                             _uiState.update { it.copy(isImportingHealth = false) }
                         } else if (healthConnectManager.hasAllPermissions()) {
                             val data = healthConnectManager.readHealthData(_uiState.value.date)
                             if (data.steps == 0 && data.calories == 0 && data.distance == 0.0 && data.sleepHours == 0.0) {
-                                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(context.getString(R.string.no_health_data_found)))
+                                _uiEffect.emit(
+                                    DailyLogUiEffect.ShowSnackBar(
+                                        UiText.StringResource(R.string.no_health_data_found),
+                                        SnackbarType.INFO
+                                    )
+                                )
                             } else {
-                                val msg = buildString {
-                                    append("Imported:")
-                                    if (data.steps > 0) append(" ${data.steps} steps")
-                                    if (data.calories > 0) append("${if (this.length > 9) "," else ""} ${data.calories} kcal")
-                                    if (data.distance > 0.0) append("${if (this.length > 9) "," else ""} ${String.format(java.util.Locale.ENGLISH, "%.1f", data.distance)} km")
-                                    if (data.sleepHours > 0) append("${if (this.length > 9) "," else ""} ${String.format(java.util.Locale.ENGLISH, "%.1f", data.sleepHours)}h sleep")
-                                }
-                                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(msg))
+                                _uiEffect.emit(
+                                    DailyLogUiEffect.ShowSnackBar(
+                                        UiText.StringResource(R.string.health_import_success),
+                                        SnackbarType.SUCCESS
+                                    )
+                                )
                             }
                             _uiState.update { state -> state.copy(
                                 steps = data.steps,
@@ -493,7 +502,10 @@ class DailyLogViewModel @Inject constructor(
                         }
                     } catch (e: Exception) {
                         android.util.Log.e("DailyLogVM", "Import failed", e)
-                        _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(context.getString(R.string.import_failed, e.localizedMessage ?: context.getString(R.string.error_unknown))))
+                        val message = e.localizedMessage?.let {
+                            UiText.StringResource(R.string.import_failed, it)
+                        } ?: UiText.StringResource(R.string.import_failed_unknown)
+                        _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(message, SnackbarType.ERROR))
                         _uiState.update { it.copy(isImportingHealth = false) }
                     }
                 }
@@ -665,7 +677,12 @@ class DailyLogViewModel @Inject constructor(
                                     speechInsertIndex = null
                                 )
                             }
-                            _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(state.message))
+                            _uiEffect.emit(
+                                DailyLogUiEffect.ShowSnackBar(
+                                    UiText.DynamicString(state.message),
+                                    SnackbarType.ERROR
+                                )
+                            )
                         }
                         else -> {}
                     }
@@ -796,7 +813,12 @@ class DailyLogViewModel @Inject constructor(
         val state = _uiState.value
         if (state.selectedMood == null || state.selectedMood == 0) {
             viewModelScope.launch {
-                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(context.getString(R.string.select_mood_first)))
+                _uiEffect.emit(
+                    DailyLogUiEffect.ShowSnackBar(
+                        UiText.StringResource(R.string.select_mood_first),
+                        SnackbarType.WARNING
+                    )
+                )
             }
             return
         }
@@ -860,7 +882,11 @@ class DailyLogViewModel @Inject constructor(
                 weather = state.suggestedWeather?.condition,
                 temperature = state.suggestedWeather?.temp
             ).onSuccess {
-                val msg = if (state.existingLog != null) "Record updated successfully!" else "Record created successfully!"
+                val messageResId = if (state.existingLog != null) {
+                    R.string.record_updated_success
+                } else {
+                    R.string.record_created_success
+                }
                 statisticsRepository.triggerRefresh()
                 MoonpageWidgets.refreshAll(context)
 
@@ -876,11 +902,17 @@ class DailyLogViewModel @Inject constructor(
                     }
                 }
 
-                _uiEffect.emit(DailyLogUiEffect.SaveSuccess(state.date.toString(), msg))
+                _uiEffect.emit(DailyLogUiEffect.SaveSuccess(state.date.toString(), messageResId))
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false) }
                 existingPhotoFiles.forEach { it.delete() }
-                _uiEffect.emit(DailyLogUiEffect.ShowSnackBar(error.message ?: context.getString(R.string.failed_to_save_log)))
+                _uiEffect.emit(
+                    DailyLogUiEffect.ShowSnackBar(
+                        error.message?.let(UiText::DynamicString)
+                            ?: UiText.StringResource(R.string.failed_to_save_log),
+                        SnackbarType.ERROR
+                    )
+                )
             }
         }
     }

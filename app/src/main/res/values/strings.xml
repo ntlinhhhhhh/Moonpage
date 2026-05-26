@@ -655,9 +655,14 @@
     <string name="upload_failed">Upload failed</string>
     <string name="failed_to_load_image_for_sharing">Failed to load image for sharing</string>
     <string name="no_health_data_found">No health data found for this day in Health Connect. Make sure Google Fit is syncing.</string>
+    <string name="health_connect_unavailable_status">Health Connect is not available (status: %1$s).</string>
+    <string name="health_import_success">Health data imported successfully.</string>
     <string name="import_failed">Import failed: %1$s</string>
+    <string name="import_failed_unknown">Import failed: unknown error.</string>
     <string name="select_mood_first">Please select a mood first!</string>
     <string name="failed_to_save_log">Failed to save log</string>
+    <string name="record_created_success">Record created successfully!</string>
+    <string name="record_updated_success">Record updated successfully!</string>
     <string name="record_deleted_success">Record deleted successfully!</string>
     <string name="failed_delete_log">Failed to delete log</string>
     <string name="recovery_failed">Recovery failed</string>

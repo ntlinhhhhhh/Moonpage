@@ -12,6 +12,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.diary.moonpage.core.theme.MoonTheme
@@ -25,9 +28,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 fun MoonSnackbarHost(
     hostState: SnackbarHostState,
     modifier: Modifier = Modifier,
-    topPadding: Dp = 45.dp
+    topPadding: Dp = 60.dp
 ) {
-    // Always overlay at top of the enclosing Box
     SnackbarHost(
         hostState = hostState,
         modifier = modifier
@@ -35,29 +37,16 @@ fun MoonSnackbarHost(
             .padding(top = topPadding)
             .padding(horizontal = 16.dp)
     ) { data ->
-        val isError = data.visuals.message.contains("future", ignoreCase = true) ||
-                data.visuals.message.contains("Failed", ignoreCase = true) ||
-                data.visuals.message.contains("Please select", ignoreCase = true) ||
-                data.visuals.message.contains("error", ignoreCase = true) ||
-                data.visuals.message.contains("invalid", ignoreCase = true)
+        val appVisuals = data.visuals as? AppSnackbarVisuals
+        val type = appVisuals?.type ?: inferType(data.visuals.message)
+        val message = appVisuals?.uiText?.asString() ?: data.visuals.message
+        val backgroundColor = MoonTheme.customColors.snackbarBg
+        val contentColor = MoonTheme.customColors.snackbarOnBg
+        val (icon, iconTint) = snackbarIconStyle(type)
 
-        val isSuccess = data.visuals.message.contains("success", ignoreCase = true) ||
-                data.visuals.message.contains("deleted", ignoreCase = true) ||
-                data.visuals.message.contains("recorded", ignoreCase = true) ||
-                data.visuals.message.contains("activated", ignoreCase = true) ||
-                data.visuals.message.contains("updated", ignoreCase = true) ||
-                data.visuals.message.contains("edited", ignoreCase = true) ||
-                data.visuals.message.contains("saved", ignoreCase = true) ||
-                data.visuals.message.contains("sent", ignoreCase = true)
-
-        val isWarning = data.visuals.message.contains("already", ignoreCase = true) ||
-                data.visuals.message.contains("warning", ignoreCase = true)
-
-        val iconColor = when {
-            isSuccess -> MoonTheme.customColors.successColor
-            isWarning -> MoonTheme.customColors.warningColor
-            isError -> MoonTheme.customColors.errorColor
-            else -> MoonTheme.customColors.snackbarOnBg
+        if (appVisuals == null && message.isBlank()) {
+            Snackbar(snackbarData = data)
+            return@SnackbarHost
         }
 
         val dismissState = rememberSwipeToDismissBoxState(
@@ -78,29 +67,35 @@ fun MoonSnackbarHost(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(MoonTheme.customColors.snackbarBg, RoundedCornerShape(12.dp))
+                        .background(backgroundColor, RoundedCornerShape(12.dp))
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = when {
-                            isError -> Icons.Rounded.Error
-                            isWarning -> Icons.Rounded.Warning
-                            isSuccess -> Icons.Rounded.CheckCircle
-                            else -> Icons.Rounded.Info
-                        },
+                        imageVector = icon,
                         contentDescription = null,
-                        tint = iconColor,
+                        tint = iconTint,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = data.visuals.message,
-                        color = MoonTheme.customColors.snackbarOnBg,
-                        style = MaterialTheme.typography.bodyMedium
+                        text = message,
+                        color = contentColor,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
                     )
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun snackbarIconStyle(type: SnackbarType): Pair<ImageVector, Color> {
+    return when (type) {
+        SnackbarType.SUCCESS -> Icons.Rounded.CheckCircle to MoonTheme.customColors.successColor
+        SnackbarType.ERROR -> Icons.Rounded.Error to MoonTheme.customColors.errorColor
+        SnackbarType.WARNING -> Icons.Rounded.Warning to MoonTheme.customColors.warningColor
+        SnackbarType.INFO -> Icons.Rounded.Info to MoonTheme.customColors.snackbarOnBg
     }
 }
