@@ -27,8 +27,16 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.diary.moonpage.R
@@ -41,12 +49,20 @@ fun PhotoFullscreenPreview(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    val dismissThreshold = remember { with(density) { 150.dp.toPx() } }
+    
     val imageData = remember(localPath, imageUrl) {
         if (localPath != null && File(localPath).exists()) File(localPath) else imageUrl
     }
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
+
+    val swipeOffsetY = remember { Animatable(0f) }
+
     val backgroundColor = MaterialTheme.colorScheme.background
+    val backgroundAlpha = (1f - (swipeOffsetY.value / 600f)).coerceIn(0f, 1f)
 
     Surface(
         modifier = Modifier
@@ -63,10 +79,27 @@ fun PhotoFullscreenPreview(
                     }
                 )
             },
-        color = backgroundColor
+        color = backgroundColor.copy(alpha = backgroundAlpha)
     ) {
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    awaitEachGesture {
+                        awaitFirstDown()
+                        do {
+                            val event = awaitPointerEvent()
+                        } while (event.changes.any { it.pressed })
+
+                        if (swipeOffsetY.value > dismissThreshold) {
+                            onDismiss()
+                        } else {
+                            scope.launch {
+                                swipeOffsetY.animateTo(0f, spring(stiffness = Spring.StiffnessLow))
+                            }
+                        }
+                    }
+                },
             contentAlignment = Alignment.Center
         ) {
             AsyncImage(
@@ -83,16 +116,21 @@ fun PhotoFullscreenPreview(
                         scaleX = scale,
                         scaleY = scale,
                         translationX = offset.x,
-                        translationY = offset.y
+                        translationY = offset.y + swipeOffsetY.value
                     )
                     .pointerInput(Unit) {
                         detectTransformGestures { _, pan, zoom, _ ->
                             val nextScale = (scale * zoom).coerceIn(1f, 5f)
-                            scale = nextScale
-                            offset = if (nextScale > 1f) {
-                                offset + pan
+                            if (nextScale > 1f || scale > 1f) {
+                                scale = nextScale
+                                offset += pan
                             } else {
-                                Offset.Zero
+                                // scale is 1f
+                                if (pan.y > 0 || swipeOffsetY.value > 0) {
+                                    scope.launch {
+                                        swipeOffsetY.snapTo((swipeOffsetY.value + pan.y).coerceAtLeast(0f))
+                                    }
+                                }
                             }
                         }
                     },
