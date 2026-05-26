@@ -49,7 +49,7 @@ data class DrawStroke(
 )
 
 enum class ThemeEditorTool {
-    Background, Draw, Colors, Preview
+    BackgroundImage, BackgroundColor, Draw, Colors, Preview
 }
 
 enum class BrushType {
@@ -103,8 +103,8 @@ data class CustomThemeEditorUiState(
     val brushSize: Float = 8f,
     val brushType: BrushType = BrushType.Fine,
     val isEraser: Boolean = false,
-    val selectedTool: ThemeEditorTool = ThemeEditorTool.Background,
-    val lastEditingTool: ThemeEditorTool = ThemeEditorTool.Background,
+    val selectedTool: ThemeEditorTool = ThemeEditorTool.BackgroundImage,
+    val lastEditingTool: ThemeEditorTool = ThemeEditorTool.BackgroundImage,
     val strokes: List<DrawStroke> = emptyList(),
     val isSaving: Boolean = false,
     val showDiscardDialog: Boolean = false,

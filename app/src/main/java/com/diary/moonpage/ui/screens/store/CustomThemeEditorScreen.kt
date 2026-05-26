@@ -26,6 +26,8 @@ import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -34,6 +36,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.Undo
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.AutoFixHigh
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.Brush
 import androidx.compose.material.icons.rounded.CalendarMonth
@@ -41,11 +44,16 @@ import androidx.compose.material.icons.rounded.CloudUpload
 import androidx.compose.material.icons.rounded.Colorize
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.FormatColorFill
 import androidx.compose.material.icons.rounded.FormatColorReset
+import androidx.compose.material.icons.rounded.Gesture
+import androidx.compose.material.icons.rounded.Gradient
 import androidx.compose.material.icons.rounded.Image
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Square
 import androidx.compose.material.icons.rounded.Storefront
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material3.*
@@ -86,8 +94,8 @@ import com.diary.moonpage.R
 import com.diary.moonpage.core.theme.MoonTheme
 import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
 
-private val EditorBottomToolsHeight = 280.dp
-private val EditorBottomToolContentHeight = 200.dp
+private val EditorBottomToolsHeight = 240.dp
+private val EditorBottomToolContentHeight = 160.dp
 
 @Composable
 fun CustomThemeEditorRoute(
@@ -173,7 +181,7 @@ fun CustomThemeEditorScreen(
     var editorZoom by remember { mutableFloatStateOf(1f) }
     var editorPan by remember { mutableStateOf(Offset.Zero) }
     val previewTargetScale = when (uiState.selectedTool) {
-        ThemeEditorTool.Background, ThemeEditorTool.Draw, ThemeEditorTool.Colors -> 0.82f
+        ThemeEditorTool.BackgroundImage, ThemeEditorTool.BackgroundColor, ThemeEditorTool.Draw, ThemeEditorTool.Colors -> 0.82f
         ThemeEditorTool.Preview -> 1f
     }
     val animatedPreviewScale by animateFloatAsState(targetValue = previewTargetScale, label = "customThemePreviewScale")
@@ -568,7 +576,7 @@ private fun ThemePreviewCapture(
             }
 
             when (uiState.selectedTool) {
-                ThemeEditorTool.Background, ThemeEditorTool.Draw -> Unit
+                ThemeEditorTool.BackgroundImage, ThemeEditorTool.BackgroundColor, ThemeEditorTool.Draw -> Unit
                 ThemeEditorTool.Colors -> {
                     PreviewMoodIconRow(
                         colors = uiState.iconColors,
@@ -866,8 +874,22 @@ private fun ThemeEditorBottomTools(
     onUndo: () -> Unit,
     onClearStrokes: () -> Unit
 ) {
-    // FIX PHẦN 1: Fixed-height container so the preview above NEVER shifts
-    // FIX PHẦN 2.4: Rounded top corners + shadow to visually separate tool panel from the app's bottom nav bar
+    val pagerState = rememberPagerState(pageCount = { ThemeEditorTool.entries.size })
+
+    LaunchedEffect(uiState.selectedTool) {
+        val index = ThemeEditorTool.entries.indexOf(uiState.selectedTool)
+        if (index >= 0 && pagerState.currentPage != index) {
+            pagerState.animateScrollToPage(index)
+        }
+    }
+
+    LaunchedEffect(pagerState.currentPage) {
+        val tool = ThemeEditorTool.entries[pagerState.currentPage]
+        if (uiState.selectedTool != tool) {
+            onToolSelected(tool)
+        }
+    }
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -882,7 +904,6 @@ private fun ThemeEditorBottomTools(
                 .fillMaxWidth()
                 .navigationBarsPadding()
         ) {
-            // FIX PHẦN 2.1: Transparent TabRow — 4 icons float naturally on the app background
             TabRow(
                 selectedTabIndex = uiState.selectedTool.ordinal,
                 containerColor = Color.Transparent,
@@ -896,13 +917,15 @@ private fun ThemeEditorBottomTools(
                         icon = {
                             Icon(
                                 imageVector = when (tool) {
-                                    ThemeEditorTool.Background -> Icons.Rounded.Image
+                                    ThemeEditorTool.BackgroundImage -> Icons.Rounded.Image
+                                    ThemeEditorTool.BackgroundColor -> Icons.Rounded.FormatColorFill
                                     ThemeEditorTool.Draw -> Icons.Rounded.Brush
                                     ThemeEditorTool.Colors -> Icons.Rounded.Palette
                                     ThemeEditorTool.Preview -> Icons.Rounded.Visibility
                                 },
                                 contentDescription = when (tool) {
-                                    ThemeEditorTool.Background -> stringResource(R.string.custom_theme_tool_background)
+                                    ThemeEditorTool.BackgroundImage -> stringResource(R.string.custom_theme_tool_image)
+                                    ThemeEditorTool.BackgroundColor -> stringResource(R.string.custom_theme_tool_background_color)
                                     ThemeEditorTool.Draw -> stringResource(R.string.custom_theme_tool_draw)
                                     ThemeEditorTool.Colors -> stringResource(R.string.custom_theme_tool_colors)
                                     ThemeEditorTool.Preview -> stringResource(R.string.custom_theme_tool_preview)
@@ -919,24 +942,28 @@ private fun ThemeEditorBottomTools(
                 enter = slideInVertically { it },
                 exit = slideOutVertically { it }
             ) {
-                Box(
+                HorizontalPager(
+                    state = pagerState,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(EditorBottomToolContentHeight)
                         .padding(horizontal = 12.dp)
-                        .padding(bottom = 12.dp, top = 4.dp)
-                ) {
-                    // FIX PHẦN 1: verticalScroll inside fixed area handles overflow (e.g. Background tab with many sliders)
+                        .padding(bottom = 12.dp, top = 4.dp),
+                    verticalAlignment = Alignment.Top
+                ) { page ->
                     val scrollState = rememberScrollState()
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
                             .verticalScroll(scrollState)
                     ) {
-                        when (uiState.selectedTool) {
-                            ThemeEditorTool.Background -> BackgroundToolPanel(
+                        when (ThemeEditorTool.entries[page]) {
+                            ThemeEditorTool.BackgroundImage -> BackgroundImageToolPanel(
                                 uiState = uiState,
-                                onPickImage = onPickImage,
+                                onPickImage = onPickImage
+                            )
+                            ThemeEditorTool.BackgroundColor -> BackgroundColorToolPanel(
+                                uiState = uiState,
                                 onBackgroundFillModeSelected = onBackgroundFillModeSelected,
                                 onSolidBackgroundSelected = onSolidBackgroundSelected,
                                 onGradientStartSelected = onGradientStartSelected,
@@ -1035,9 +1062,41 @@ private fun MockNavIcon(
 }
 
 @Composable
-private fun BackgroundToolPanel(
+private fun BackgroundImageToolPanel(
     uiState: CustomThemeEditorUiState,
-    onPickImage: () -> Unit,
+    onPickImage: () -> Unit
+) {
+    val hasImageBackground = !uiState.backgroundUri.isNullOrBlank()
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.CloudUpload,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
+        )
+        FilterChip(
+            selected = hasImageBackground,
+            onClick = onPickImage,
+            label = { Text(stringResource(R.string.custom_theme_upload_image)) },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Rounded.CloudUpload,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+            },
+            colors = customThemeFilterChipColors()
+        )
+    }
+}
+
+@Composable
+private fun BackgroundColorToolPanel(
+    uiState: CustomThemeEditorUiState,
     onBackgroundFillModeSelected: (BackgroundFillMode) -> Unit,
     onSolidBackgroundSelected: (Long) -> Unit,
     onGradientStartSelected: (Long) -> Unit,
@@ -1052,36 +1111,21 @@ private fun BackgroundToolPanel(
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        FilledTonalButton(
-            onClick = onPickImage,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
-                contentColor = MaterialTheme.colorScheme.primary
-            )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Rounded.CloudUpload,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.custom_theme_upload_image), fontWeight = FontWeight.SemiBold)
-        }
-
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(
+            DrawToolIconButton(
                 selected = uiState.backgroundFillMode == BackgroundFillMode.Solid,
                 onClick = { onBackgroundFillModeSelected(BackgroundFillMode.Solid) },
-                label = { Text(stringResource(R.string.custom_theme_solid_color)) },
-                colors = customThemeFilterChipColors()
+                icon = Icons.Rounded.Square
             )
-            FilterChip(
+
+            DrawToolIconButton(
                 selected = uiState.backgroundFillMode == BackgroundFillMode.Gradient,
                 onClick = { onBackgroundFillModeSelected(BackgroundFillMode.Gradient) },
-                label = { Text(stringResource(R.string.custom_theme_gradient_color)) },
-                colors = customThemeFilterChipColors()
+                icon = Icons.Rounded.Gradient
             )
         }
 
@@ -1157,47 +1201,85 @@ private fun DrawToolPanel(
             )
         }
     }
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         BrushType.entries.forEach { type ->
-            FilterChip(
-                selected = !uiState.isEraser && uiState.brushType == type,
+            val isSelected = !uiState.isEraser && uiState.brushType == type
+            DrawToolIconButton(
+                selected = isSelected,
                 onClick = {
                     if (uiState.isEraser) onEraserChanged(false)
                     onBrushTypeSelected(type)
                 },
-                colors = customThemeFilterChipColors(),
-                label = {
-                    Text(
-                        when (type) {
-                            BrushType.Fine -> stringResource(R.string.custom_theme_brush_fine)
-                            BrushType.Bold -> stringResource(R.string.custom_theme_brush_bold)
-                            BrushType.Pencil -> stringResource(R.string.custom_theme_brush_pencil)
-                            BrushType.Spray -> stringResource(R.string.custom_theme_brush_spray)
-                        }
-                    )
+                icon = when (type) {
+                    BrushType.Fine -> Icons.Rounded.Gesture
+                    BrushType.Bold -> Icons.Rounded.Brush
+                    BrushType.Pencil -> Icons.Rounded.Edit
+                    BrushType.Spray -> Icons.Rounded.AutoFixHigh
                 }
             )
         }
-        FilterChip(
+
+        VerticalDivider(
+            modifier = Modifier.height(28.dp),
+            thickness = 1.dp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+        )
+
+        DrawToolIconButton(
             selected = uiState.isEraser,
             onClick = { onEraserChanged(true) },
-            label = { Text(stringResource(R.string.custom_theme_eraser)) },
-            leadingIcon = { Icon(Icons.Rounded.FormatColorReset, contentDescription = null, modifier = Modifier.size(18.dp)) },
-            colors = customThemeFilterChipColors()
+            icon = Icons.Rounded.FormatColorReset
         )
     }
     PaletteSwatchRow(
         selected = uiState.brushColor,
         onSelected = onBrushColorSelected,
-        onAddColor = { showColorSheet = true }
+        onAddColor = { showColorSheet = true },
+        modifier = Modifier.padding(top = 8.dp)
     )
-    Slider(value = uiState.brushSize, onValueChange = onBrushSizeChange, valueRange = 3f..24f)
+    Slider(
+        value = uiState.brushSize,
+        onValueChange = onBrushSizeChange,
+        valueRange = 3f..24f,
+        modifier = Modifier.padding(horizontal = 4.dp)
+    )
 
     if (showColorSheet) {
         ColorPickerBottomSheet(
             selectedColor = uiState.brushColor,
             onColorSelected = onBrushColorSelected,
             onDismiss = { showColorSheet = false }
+        )
+    }
+}
+
+@Composable
+private fun DrawToolIconButton(
+    selected: Boolean,
+    onClick: () -> Unit,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    modifier: Modifier = Modifier
+) {
+    val backgroundColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
+    val contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+
+    Box(
+        modifier = modifier
+            .size(42.dp)
+            .clip(CircleShape)
+            .background(backgroundColor)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = contentColor,
+            modifier = Modifier.size(22.dp)
         )
     }
 }
@@ -1230,12 +1312,6 @@ private fun ColorToolPanel(
                 colors = customThemeFilterChipColors()
             )
         }
-        PreviewMoodIconRow(
-            colors = uiState.iconColors,
-            selectedIndex = if (uiState.colorFocusTarget == ColorFocusTarget.Icon) uiState.selectedIconIndex else -1,
-            onSelected = onIconSelected,
-            modifier = Modifier.fillMaxWidth()
-        )
         PaletteSwatchRow(
             selected = focusedColor,
             onSelected = onFocusedColorSelected,
