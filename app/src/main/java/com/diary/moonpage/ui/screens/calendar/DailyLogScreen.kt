@@ -1419,38 +1419,46 @@ private fun DailyNoteSection(
             Spacer(modifier = Modifier.height(12.dp))
             Surface(color = MoonTheme.customColors.logItemBg, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
                 Box(modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp).padding(horizontal = 16.dp, vertical = 12.dp)) {
-                    // Display existing note text + ghost partial text
-                    val displayText = if (isListening && partialText.isNotEmpty()) {
-                        if (noteText.isEmpty()) partialText else "$noteText\n$partialText"
-                    } else {
-                        noteText
-                    }
-
-                    if (displayText.isEmpty()) {
-                        Text(
-                            text = stringResource(R.string.daily_log_note_placeholder),
-                            color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f),
-                            fontSize = 14.sp
+                    Box {
+                        OutlinedTextField(
+                            value = noteText, 
+                            onValueChange = onNoteChanged, 
+                            modifier = Modifier.fillMaxWidth(),
+                            placeholder = {
+                                if (noteText.isEmpty() && partialText.isEmpty()) {
+                                    Text(
+                                        text = stringResource(R.string.daily_log_note_placeholder),
+                                        color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.5f),
+                                        fontSize = 14.sp
+                                    )
+                                }
+                            },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedBorderColor = Color.Transparent,
+                                unfocusedBorderColor = Color.Transparent,
+                                cursorColor = MoonTheme.customColors.logCardOnBg,
+                                focusedTextColor = MoonTheme.customColors.logCardOnBg,
+                                unfocusedTextColor = MoonTheme.customColors.logCardOnBg
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            maxLines = 10
                         )
-                    }
 
-                    OutlinedTextField(
-                        value = displayText, 
-                        onValueChange = onNoteChanged, 
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedBorderColor = Color.Transparent,
-                            unfocusedBorderColor = Color.Transparent,
-                            cursorColor = MoonTheme.customColors.logCardOnBg,
-                            focusedTextColor = MoonTheme.customColors.logCardOnBg,
-                            unfocusedTextColor = MoonTheme.customColors.logCardOnBg
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        maxLines = 10,
-                        readOnly = isListening // Prevent typing while voice recording
-                    )
+                        // Ghost text overlay for partial recognition
+                        if (isListening && partialText.isNotEmpty()) {
+                             Text(
+                                text = if (noteText.isEmpty()) partialText else "\n$partialText",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                                    .alpha(0.5f),
+                                color = MoonTheme.customColors.logCardOnBg,
+                                fontSize = 16.sp // Match OutlinedTextField font size if possible
+                            )
+                        }
+                    }
                 }
             }
         }

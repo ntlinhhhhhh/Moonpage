@@ -55,7 +55,7 @@ interface SpotifyApi {
     ): Response<SpotifyTokenResponse>
 
     companion object {
-        const val CLIENT_ID = "61d0e03380e44e42b515534d6d133598"
+        const val CLIENT_ID = "108e0ac9178f446ab4341f040bb9cea6"
         const val REDIRECT_URI = "moonpage://spotify-callback/"
         const val AUTH_URL = "https://accounts.spotify.com/authorize"
         

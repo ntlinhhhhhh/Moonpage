@@ -590,6 +590,16 @@ class DailyLogViewModel @Inject constructor(
 
     private fun toggleListening() {
         if (_uiState.value.isListening) {
+            // Commit any existing partial text when stopping manually
+            val currentPartial = _uiState.value.partialNoteText
+            if (currentPartial.isNotEmpty()) {
+                val newText = if (_uiState.value.noteText.isEmpty()) {
+                    currentPartial
+                } else {
+                    "${_uiState.value.noteText}\n$currentPartial"
+                }
+                _uiState.update { it.copy(noteText = newText, partialNoteText = "") }
+            }
             listeningJob?.cancel()
             _uiState.update { it.copy(isListening = false) }
         } else {
