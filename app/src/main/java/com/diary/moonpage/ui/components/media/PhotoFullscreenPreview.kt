@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.FileDownload
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +41,7 @@ import kotlinx.coroutines.launch
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.diary.moonpage.R
+import com.diary.moonpage.core.util.ImageUtils
 import java.io.File
 
 @Composable
@@ -137,6 +139,7 @@ fun PhotoFullscreenPreview(
                 contentScale = ContentScale.Fit
             )
 
+            // Close Button (Top Start)
             IconButton(
                 onClick = onDismiss,
                 modifier = Modifier
@@ -148,6 +151,26 @@ fun PhotoFullscreenPreview(
                 Icon(
                     imageVector = Icons.Rounded.Close,
                     contentDescription = stringResource(R.string.close),
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            // Download Button (Top End)
+            IconButton(
+                onClick = {
+                    scope.launch {
+                        ImageUtils.saveImageToGallery(context, imageData)
+                    }
+                },
+                modifier = Modifier
+                    .statusBarsPadding()
+                    .padding(16.dp)
+                    .align(Alignment.TopEnd)
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f), CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.FileDownload,
+                    contentDescription = stringResource(R.string.download),
                     tint = MaterialTheme.colorScheme.onSurface
                 )
             }

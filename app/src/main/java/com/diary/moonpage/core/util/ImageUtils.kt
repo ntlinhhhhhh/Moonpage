@@ -318,11 +318,11 @@ object ImageUtils {
         }
     }
 
-    suspend fun downloadAndSaveImage(context: Context, imageUrl: String) {
+    suspend fun saveImageToGallery(context: Context, data: Any) {
         withContext(Dispatchers.IO) {
             try {
                 val request = ImageRequest.Builder(context)
-                    .data(imageUrl)
+                    .data(data)
                     .build()
                 val result = context.imageLoader.execute(request)
                 val drawable = (result as? coil.request.SuccessResult)?.drawable
@@ -347,5 +347,9 @@ object ImageUtils {
                 }
             }
         }
+    }
+
+    suspend fun downloadAndSaveImage(context: Context, imageUrl: String) {
+        saveImageToGallery(context, imageUrl)
     }
 }
