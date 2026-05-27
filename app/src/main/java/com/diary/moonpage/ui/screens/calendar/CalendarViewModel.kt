@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
 import java.time.LocalDate
 import java.time.YearMonth
 import javax.inject.Inject
@@ -152,7 +153,7 @@ class CalendarViewModel @Inject constructor(
     }
 
     private fun observeData() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             combine(
                 currentMonth.flatMapLatest { month -> 
                     refreshTrigger.flatMapLatest {
@@ -281,21 +282,53 @@ class CalendarViewModel @Inject constructor(
 
     private fun deleteDailyLog(date: LocalDate) {
         viewModelScope.launch {
-            repository.deleteDailyLog(date.toString()).onSuccess {
-                statisticsRepository.triggerRefresh()
-                _uiState.update { currentState ->
-                    val newLogs = currentState.dailyLogs.filterKeys { it != date }
-                    currentState.copy(
-                        dailyLogs = newLogs,
-                        selectedDate = null,
-                        snackbarMessage = UiText.StringResource(R.string.record_deleted_success),
-                        snackbarType = SnackbarType.SUCCESS
-                    )
+            _uiState.update { it.copy(isLoading = true) }
+            
+            val dateString = date.toString()
+            
+            try {
+                // 1. Fetch latest moments from server
+                val momentsResult = momentRepository.getMyMoments()
+                val allMoments = momentsResult.getOrNull()
+                
+                if (allMoments != null) {
+                    // 2. Identify moments for this date
+                    val momentsToDelete = allMoments.filter { it.resolveLogDate() == date }
+                    
+                    // 3. Delete each moment via API
+                    for (moment in momentsToDelete) {
+                        momentRepository.deleteMoment(moment.id)
+                    }
                 }
-            }.onFailure { exception ->
+
+                // 4. Delete the log
+                repository.deleteDailyLog(dateString).onSuccess {
+                    statisticsRepository.triggerRefresh()
+                    _uiState.update { currentState ->
+                        val newLogs = currentState.dailyLogs.filterKeys { it != date }
+                        currentState.copy(
+                            dailyLogs = newLogs,
+                            selectedDate = null,
+                            isLoading = false,
+                            snackbarMessage = UiText.StringResource(R.string.record_deleted_success),
+                            snackbarType = SnackbarType.SUCCESS
+                        )
+                    }
+                }.onFailure { exception ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            snackbarMessage = exception.message?.let(UiText::DynamicString)
+                                ?: UiText.StringResource(R.string.failed_delete_log),
+                            snackbarType = SnackbarType.ERROR
+                        )
+                    }
+                }
+            } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
-                        snackbarMessage = exception.message?.let(UiText::DynamicString)
+                        isLoading = false,
+                        snackbarMessage = e.message?.let(UiText::DynamicString)
                             ?: UiText.StringResource(R.string.failed_delete_log),
                         snackbarType = SnackbarType.ERROR
                     )

@@ -45,6 +45,7 @@ import com.diary.moonpage.core.util.UiText
 import com.diary.moonpage.ui.components.feedback.SnackbarType
 import java.time.LocalDate
 import java.time.YearMonth
+import kotlin.math.abs
 import com.diary.moonpage.core.util.getTranslatedActivityName
 
 /**
@@ -149,7 +150,12 @@ fun CalendarScreen(
         val targetOffset = java.time.temporal.ChronoUnit.MONTHS.between(baseYearMonth, uiState.currentYearMonth).toInt()
         val targetPage = initialPage + targetOffset
         if (pagerState.currentPage != targetPage) {
-            pagerState.animateScrollToPage(targetPage)
+            val distance = kotlin.math.abs(pagerState.currentPage - targetPage)
+            if (distance > 3) {
+                pagerState.scrollToPage(targetPage)
+            } else {
+                pagerState.animateScrollToPage(targetPage)
+            }
         }
     }
 
