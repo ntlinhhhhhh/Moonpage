@@ -169,7 +169,7 @@ fun StoreScreen(
         }
     }
 
-    // Sync pager scroll back to VM
+    // Sync pager settled page back to VM
     LaunchedEffect(pagerState.settledPage) {
         if (uiState.selectedTabIndex != pagerState.settledPage) {
             onTabSelected(pagerState.settledPage)
@@ -200,7 +200,7 @@ fun StoreScreen(
                 )
 
                 StoreTabs(
-                    selectedIndex = uiState.selectedTabIndex,
+                    selectedIndex = pagerState.currentPage,
                     onTabSelected = { index -> 
                         scope.launch { pagerState.animateScrollToPage(index) }
                     }
