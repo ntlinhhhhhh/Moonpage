@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
 import java.time.LocalDate
 import java.time.YearMonth
 import javax.inject.Inject
@@ -152,7 +153,7 @@ class CalendarViewModel @Inject constructor(
     }
 
     private fun observeData() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             combine(
                 currentMonth.flatMapLatest { month -> 
                     refreshTrigger.flatMapLatest {
