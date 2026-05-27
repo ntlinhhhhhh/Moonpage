@@ -37,7 +37,7 @@ fun StatsSleepDetailScreen(
     uiState: StatisticsUiState,
     onNavigateBack: () -> Unit
 ) {
-    val stats = uiState.stats
+    val stats = uiState.currentData.stats
     val scrollState = rememberScrollState()
     val backText = stringResource(R.string.back)
 
@@ -73,7 +73,7 @@ fun StatsSleepDetailScreen(
                     SleepSummaryView(
                         averageSleepHours = s.averageSleepHours ?: 0.0,
                         averageSleepStartTime = s.averageSleepStartTime,
-                        averageWakeUpTime = uiState.averageWakeUpTime,
+                        averageWakeUpTime = uiState.currentData.averageWakeUpTime,
                         avgSteps = s.averageSteps?.toInt() ?: 0,
                         avgCalories = s.averageCalories?.toInt() ?: 0,
                         avgDistance = s.averageDistance ?: 0.0
@@ -105,3 +105,4 @@ fun StatsSleepDetailScreen(
         }
     }
 }
+

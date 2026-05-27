@@ -265,7 +265,7 @@ fun ShareCalendarContent(
     val textColor = if (isDark) Color(0xFFEEEEEE) else Color(0xFF424242)
     val secondaryTextColor = if (isDark) Color(0xFFAAAAAA) else Color(0xFF9E9E9E)
     val headerColor = if (isDark) Color(0xFF888888) else Color(0xFFBDBDBD)
-    val emptyCellColor = if (isDark) Color(0xFF505457) else Color(0xFFEDEDE9).copy(alpha = 0.6f)
+    val emptyCellColor = if (isDark) Color(0xFF505457) else Color(0xFFDFE0E0)
 
     Column(
         modifier = Modifier

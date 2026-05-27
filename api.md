@@ -1342,6 +1342,8 @@ GET /api/themes
     "backgroundUrl": "https://...",
     "backgroundDarkColor": "0xFFF4F6F1",
     "backgroundLightColor": "0xFF1C1C1C",
+    "primaryDarkColor": "0xFFF4F6F1",
+    "primaryLightColor": "0xFF1C1C1C",
     "authorId": "system",
     "isOfficial": true
   }
@@ -1373,6 +1375,8 @@ GET /api/themes/me
     "backgroundUrl": "https://...",
     "backgroundDarkColor": "0xFFF4F6F1",
     "backgroundLightColor": "0xFF1C1C1C",
+    "primaryDarkColor": "0xFFF4F6F1",
+    "primaryLightColor": "0xFF1C1C1C",
     "authorId": "user_id_here",
     "isOfficial": false
   }
@@ -1429,6 +1433,8 @@ POST /api/themes/upload
 - Background (File, Optional): Background image file.
 - BackgroundDarkColor (string, Optional): Hex color (e.g., "0xFFF4F6F1").
 - BackgroundLightColor (string, Optional): Hex color (e.g., "0xFF1C1C1C").
+- PrimaryDarkColor (string, Optional): Hex color (e.g., "0xFFF4F6F1").
+- PrimaryLightColor (string, Optional): Hex color (e.g., "0xFF1C1C1C").
 - IsOfficial (bool, Optional): Default is false.
 - IsActive (bool, Optional): Default is true.
 - Moods (string, Optional): A JSON string representing a list of mood icons.
@@ -1472,6 +1478,8 @@ POST /api/themes/list
     - backgroundUrl (string, Optional)
     - backgroundDarkColor (string, Optional)
     - backgroundLightColor (string, Optional)
+    - primaryDarkColor (string, Optional)
+    - primaryLightColor (string, Optional)
     - isOfficial (bool, Optional)
     - isActive (bool, Optional)
     - moods (array, Required): List of objects (`baseMoodId`, `iconColor`, `customName`).
@@ -1485,6 +1493,10 @@ POST /api/themes/list
     "isOfficial": true,
     "thumbnailUrl": "themes/summer_thumb.png",
     "backgroundUrl": "themes/summer_bg.png",
+    "backgroundDarkColor": "0xFFF4F6F1",
+    "backgroundLightColor": "0xFF1C1C1C",
+    "primaryDarkColor": "0xFFF4F6F1",
+    "primaryLightColor": "0xFF1C1C1C",
     "moods": [
       { "baseMoodId": 5, "iconColor": "#FFD700", "customName": "Sunshine" }
     ]

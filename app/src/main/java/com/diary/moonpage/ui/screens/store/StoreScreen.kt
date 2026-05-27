@@ -1,6 +1,7 @@
 package com.diary.moonpage.ui.screens.store
 
 import androidx.compose.animation.*
+import kotlinx.coroutines.launch
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,6 +29,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AcUnit
 import androidx.compose.material.icons.rounded.Add
@@ -156,6 +159,23 @@ fun StoreScreen(
     onDismissRenameCustomTheme: () -> Unit,
     onRefresh: () -> Unit
 ) {
+    val pagerState = rememberPagerState(initialPage = uiState.selectedTabIndex) { 5 }
+    val scope = rememberCoroutineScope()
+
+    // Sync VM tab state to pager when it changes externally (e.g. from top bar streak click)
+    LaunchedEffect(uiState.selectedTabIndex) {
+        if (pagerState.currentPage != uiState.selectedTabIndex && !pagerState.isScrollInProgress) {
+            pagerState.animateScrollToPage(uiState.selectedTabIndex)
+        }
+    }
+
+    // Sync pager scroll back to VM
+    LaunchedEffect(pagerState.settledPage) {
+        if (uiState.selectedTabIndex != pagerState.settledPage) {
+            onTabSelected(pagerState.settledPage)
+        }
+    }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
@@ -181,15 +201,18 @@ fun StoreScreen(
 
                 StoreTabs(
                     selectedIndex = uiState.selectedTabIndex,
-                    onTabSelected = onTabSelected
+                    onTabSelected = { index -> 
+                        scope.launch { pagerState.animateScrollToPage(index) }
+                    }
                 )
 
-                Crossfade(
-                    targetState = uiState.selectedTabIndex,
-                    animationSpec = tween(300),
-                    label = "TabAnimation"
-                ) { targetIndex ->
-                    when (targetIndex) {
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize(),
+                    verticalAlignment = Alignment.Top,
+                    beyondViewportPageCount = 1
+                ) { page ->
+                    when (page) {
                         0 -> HomeTabContent(
                             themes = uiState.themes,
                             selectedCategory = uiState.selectedCategory,
@@ -204,7 +227,7 @@ fun StoreScreen(
                             onThemeClick = onThemeClick,
                             onActivateCustomTheme = onActivateCustomTheme,
                             onRenameCustomTheme = onRenameCustomTheme,
-                            onExploreMore = { onTabSelected(0) }
+                            onExploreMore = { scope.launch { pagerState.animateScrollToPage(0) } }
                         )
                         2 -> CustomThemeTabContent(
                             customThemes = uiState.customThemes,
@@ -1424,3 +1447,5 @@ fun MoonFilterChip(text: String, isSelected: Boolean, onClick: () -> Unit) {
         )
     }
 }
+
+

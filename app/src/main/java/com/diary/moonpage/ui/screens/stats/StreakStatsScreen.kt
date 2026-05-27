@@ -40,7 +40,7 @@ fun StreakStatsScreen(
                 title = { Text(stringResource(R.string.streak), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Rounded.ArrowBack, contentDescription = backText)
+                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = backText)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -62,7 +62,7 @@ fun StreakStatsScreen(
             // Current Streak Card
             StreakBigCard(
                 title = stringResource(R.string.current_streak),
-                value = uiState.stats?.currentStreak?.toString() ?: "0",
+                value = uiState.currentData.stats?.currentStreak?.toString() ?: "0",
                 icon = Icons.Rounded.Whatshot,
                 color = Color(0xFFFF9800)
             )
@@ -75,13 +75,13 @@ fun StreakStatsScreen(
             ) {
                 StreakSmallCard(
                     title = stringResource(R.string.longest_streak),
-                    value = uiState.stats?.longestStreak?.toString() ?: "0",
+                    value = uiState.currentData.stats?.longestStreak?.toString() ?: "0",
                     icon = Icons.Rounded.EmojiEvents,
                     modifier = Modifier.weight(1f)
                 )
                 StreakSmallCard(
                     title = stringResource(R.string.streak_total_days),
-                    value = uiState.stats?.totalLogs?.toString() ?: "0",
+                    value = uiState.currentData.stats?.totalLogs?.toString() ?: "0",
                     icon = Icons.Rounded.CalendarToday,
                     modifier = Modifier.weight(1f)
                 )
@@ -154,9 +154,9 @@ fun StreakBigCard(
 
             Text(
                 text = value,
-                style = MaterialTheme.typography.displayLarge.copy(
+                style = MaterialTheme.typography.headlineLarge.copy(
                     fontWeight = FontWeight.Bold,
-                    fontSize = 64.sp
+                    fontSize = 48.sp
                 ),
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
@@ -164,11 +164,10 @@ fun StreakBigCard(
 
             Text(
                 text = stringResource(R.string.days_label).uppercase(),
-                style = MaterialTheme.typography.labelLarge.copy(
-                    letterSpacing = 2.sp,
+                style = MaterialTheme.typography.titleSmall.copy(
                     fontWeight = FontWeight.Bold
                 ),
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 textAlign = TextAlign.Center
             )
 
@@ -218,7 +217,7 @@ fun StreakSmallCard(
             )
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center
             )
@@ -269,3 +268,5 @@ fun StreakInfoItem(
         }
     }
 }
+
+

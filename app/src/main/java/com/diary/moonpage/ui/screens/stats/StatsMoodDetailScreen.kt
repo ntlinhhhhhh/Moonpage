@@ -39,7 +39,7 @@ fun StatsMoodDetailScreen(
     uiState: StatisticsUiState,
     onNavigateBack: () -> Unit
 ) {
-    val stats = uiState.stats
+    val stats = uiState.currentData.stats
     val isMale = uiState.gender == "Male" || uiState.gender == "Nam"
     val scrollState = rememberScrollState()
     val backText = stringResource(R.string.back)

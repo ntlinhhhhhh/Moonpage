@@ -60,7 +60,7 @@ fun StatsAnnualBeansDetailScreen(
     uiState: StatisticsUiState,
     onBack: () -> Unit
 ) {
-    val stats = uiState.stats
+    val stats = uiState.currentData.stats
     // Prefer yearlyMoodGrid, fall back to moodFlow
     val moodData: List<MoodFlowDto> = stats?.yearlyMoodGrid ?: stats?.moodFlow ?: emptyList()
 

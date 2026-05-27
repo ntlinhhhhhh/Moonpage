@@ -10,6 +10,7 @@ import com.diary.moonpage.domain.repository.DailyLogRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
 import javax.inject.Inject
 
 @HiltViewModel
@@ -89,8 +90,6 @@ class StatisticsViewModel @Inject constructor(
             } else {
                 _uiState.update { it.copy(customMoods = null) }
             }
-        } else {
-            _uiState.update { it.copy(customMoods = null) }
         }
     }
 
@@ -98,82 +97,21 @@ class StatisticsViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                val isMonthly = _uiState.value.isMonthly
                 val selectedYear = _uiState.value.selectedYear
                 val selectedMonth = _uiState.value.selectedMonth
 
-                val response = repository.getStatisticsSummary(
-                    selectedYear,
-                    if (isMonthly) selectedMonth else null,
-                    isMonthly
-                )
-                
-                // Fetch logs for correlation computing
-                val allLogs = logRepository.getAllDailyLogsFlow().first()
-                val periodLogs = ActivityInsightsEngine.filterLogsByPeriod(
-                    allLogs, selectedYear, if (isMonthly) selectedMonth else null, isMonthly
-                )
+                val monthlyDeferred = async { fetchStatsData(selectedYear, selectedMonth, true) }
+                val annualDeferred = async { fetchStatsData(selectedYear, selectedMonth, false) }
 
-                if (response.isSuccessful && response.body() != null) {
-                    val stats = response.body()!!
-                    val activityCategoriesById = buildActivityCategoriesById(stats.bestActivities)
-                    val availableActivityCategories = stats.bestActivities
-                        .mapNotNull { activityCategoriesById[it.activityId] }
-                        .toCollection(linkedSetOf())
-                    
-                    val freq = stats.bestActivities.sortedByDescending { it.occurrence }.take(3)
-                    
-                    // Compute correlations using the engine
-                    val (bestCorr, worstCorr) = ActivityInsightsEngine.computeBestWorst(periodLogs, stats.bestActivities)
-                    
-                    // Compute initial deep dive
-                    val targetIconId = _uiState.value.selectedIconId ?: stats.bestActivities.firstOrNull()?.activityId
-                    val deepDive = ActivityInsightsEngine.computeIconDeepDive(targetIconId, periodLogs, stats.bestActivities)
+                val monthlyResult = runCatching { monthlyDeferred.await() }.getOrNull()
+                val annualResult = runCatching { annualDeferred.await() }.getOrNull()
 
-                    // Apply initial filtering and sorting
-                    val filtered = filterAndSortActivities(
-                        stats.bestActivities,
-                        availableActivityCategories,
-                        _uiState.value.sortOrder,
-                        activityCategoriesById
-                    )
-
-                    // Legacy best/worst for fallback
-                    val relevantActivities = stats.bestActivities.filter { it.occurrence >= 1 }
-                    val bestLegacy = relevantActivities.sortedByDescending { it.averageMoodScore }.take(3)
-                    val worstLegacy = relevantActivities.sortedBy { it.averageMoodScore }.take(3)
-                    
-                    // Calculate Average Wake Up Time based on average bedtime and sleep hours
-                    val avgWakeUpTime = stats.averageWakeupTime ?: if (stats.averageSleepStartTime != null && stats.averageSleepHours != null) {
-                        try {
-                            val sdf = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.ENGLISH)
-                            val date = sdf.parse(stats.averageSleepStartTime)
-                            if (date != null) {
-                                val cal = java.util.Calendar.getInstance().apply { time = date }
-                                cal.add(java.util.Calendar.MINUTE, (stats.averageSleepHours * 60).toInt())
-                                sdf.format(cal.time)
-                            } else null
-                        } catch (e: Exception) { null }
-                    } else null
-
-                    
-                    _uiState.update { it.copy(
-                        stats = stats, 
-                        frequentlyRecorded = freq,
-                        filteredActivities = filtered,
-                        activityFilter = availableActivityCategories,
-                        availableActivityCategories = availableActivityCategories,
-                        activityCategoriesById = activityCategoriesById,
-                        bestActivities = bestLegacy,
-                        worstActivities = worstLegacy,
-                        bestCorrelations = bestCorr,
-                        worstCorrelations = worstCorr,
-                        iconDeepDive = deepDive,
-                        averageWakeUpTime = avgWakeUpTime,
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        monthlyData = monthlyResult ?: currentState.monthlyData,
+                        annualData = annualResult ?: currentState.annualData,
                         isLoading = false
-                    ) }
-                } else {
-                    _uiState.update { it.copy(error = "Failed to load statistics", isLoading = false) }
+                    )
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = e.message, isLoading = false) }
@@ -181,21 +119,105 @@ class StatisticsViewModel @Inject constructor(
         }
     }
 
+    private suspend fun fetchStatsData(selectedYear: Int, selectedMonth: Int, isMonthly: Boolean): StatsData {
+        val response = repository.getStatisticsSummary(
+            selectedYear,
+            if (isMonthly) selectedMonth else null,
+            isMonthly
+        )
+
+        val allLogs = logRepository.getAllDailyLogsFlow().first()
+        val periodLogs = ActivityInsightsEngine.filterLogsByPeriod(
+            allLogs, selectedYear, if (isMonthly) selectedMonth else null, isMonthly
+        )
+
+        if (response.isSuccessful && response.body() != null) {
+            val stats = response.body()!!
+            val activityCategoriesById = buildActivityCategoriesById(stats.bestActivities)
+            val availableActivityCategories = stats.bestActivities
+                .mapNotNull { activityCategoriesById[it.activityId] }
+                .toCollection(linkedSetOf())
+
+            val freq = stats.bestActivities.sortedByDescending { it.occurrence }.take(3)
+            val (bestCorr, worstCorr) = ActivityInsightsEngine.computeBestWorst(periodLogs, stats.bestActivities)
+            
+            val targetIconId = _uiState.value.selectedIconId ?: stats.bestActivities.firstOrNull()?.activityId
+            val deepDive = ActivityInsightsEngine.computeIconDeepDive(targetIconId, periodLogs, stats.bestActivities)
+
+            val baseFilter = if (isMonthly) _uiState.value.monthlyData.activityFilter else _uiState.value.annualData.activityFilter
+            val filtered = filterAndSortActivities(
+                stats.bestActivities,
+                baseFilter.ifEmpty { availableActivityCategories },
+                _uiState.value.sortOrder,
+                activityCategoriesById
+            )
+
+            val relevantActivities = stats.bestActivities.filter { it.occurrence >= 1 }
+            val bestLegacy = relevantActivities.sortedByDescending { it.averageMoodScore }.take(3)
+            val worstLegacy = relevantActivities.sortedBy { it.averageMoodScore }.take(3)
+
+            val avgWakeUpTime = stats.averageWakeupTime ?: if (stats.averageSleepStartTime != null && stats.averageSleepHours != null) {
+                try {
+                    val sdf = java.text.SimpleDateFormat("hh:mm a", java.util.Locale.ENGLISH)
+                    val date = sdf.parse(stats.averageSleepStartTime)
+                    if (date != null) {
+                        val cal = java.util.Calendar.getInstance().apply { time = date }
+                        cal.add(java.util.Calendar.MINUTE, (stats.averageSleepHours * 60).toInt())
+                        sdf.format(cal.time)
+                    } else null
+                } catch (e: Exception) { null }
+            } else null
+
+            return StatsData(
+                stats = stats,
+                frequentlyRecorded = freq,
+                filteredActivities = filtered,
+                activityFilter = availableActivityCategories,
+                availableActivityCategories = availableActivityCategories,
+                activityCategoriesById = activityCategoriesById,
+                bestActivities = bestLegacy,
+                worstActivities = worstLegacy,
+                bestCorrelations = bestCorr,
+                worstCorrelations = worstCorr,
+                iconDeepDive = deepDive,
+                averageWakeUpTime = avgWakeUpTime
+            )
+        } else {
+            throw Exception("Failed to load statistics")
+        }
+    }
+
     fun updateFilter(category: String, isSelected: Boolean) {
         _uiState.update { currentState ->
-            val newFilter = if (isSelected) {
-                currentState.activityFilter + category
+            val newFilterMonthly = if (isSelected) {
+                currentState.monthlyData.activityFilter + category
             } else {
-                currentState.activityFilter - category
+                currentState.monthlyData.activityFilter - category
             }
+            
+            val newFilterAnnual = if (isSelected) {
+                currentState.annualData.activityFilter + category
+            } else {
+                currentState.annualData.activityFilter - category
+            }
+            
+            val newMonthlyFiltered = filterAndSortActivities(
+                currentState.monthlyData.stats?.bestActivities ?: emptyList(), 
+                newFilterMonthly.ifEmpty { currentState.monthlyData.availableActivityCategories }, 
+                currentState.sortOrder, 
+                currentState.monthlyData.activityCategoriesById
+            )
+            
+            val newAnnualFiltered = filterAndSortActivities(
+                currentState.annualData.stats?.bestActivities ?: emptyList(), 
+                newFilterAnnual.ifEmpty { currentState.annualData.availableActivityCategories }, 
+                currentState.sortOrder, 
+                currentState.annualData.activityCategoriesById
+            )
+
             currentState.copy(
-                activityFilter = newFilter,
-                filteredActivities = filterAndSortActivities(
-                    currentState.stats?.bestActivities ?: emptyList(),
-                    newFilter,
-                    currentState.sortOrder,
-                    currentState.activityCategoriesById
-                )
+                monthlyData = currentState.monthlyData.copy(filteredActivities = newMonthlyFiltered, activityFilter = newFilterMonthly),
+                annualData = currentState.annualData.copy(filteredActivities = newAnnualFiltered, activityFilter = newFilterAnnual)
             )
         }
     }
@@ -207,14 +229,24 @@ class StatisticsViewModel @Inject constructor(
             } else {
                 SortOrder.MOST_RECORDED
             }
+            
+            val newMonthlyFiltered = filterAndSortActivities(
+                currentState.monthlyData.stats?.bestActivities ?: emptyList(), 
+                currentState.monthlyData.activityFilter.ifEmpty { currentState.monthlyData.availableActivityCategories }, 
+                newSortOrder, 
+                currentState.monthlyData.activityCategoriesById
+            )
+            val newAnnualFiltered = filterAndSortActivities(
+                currentState.annualData.stats?.bestActivities ?: emptyList(), 
+                currentState.annualData.activityFilter.ifEmpty { currentState.annualData.availableActivityCategories }, 
+                newSortOrder, 
+                currentState.annualData.activityCategoriesById
+            )
+
             currentState.copy(
                 sortOrder = newSortOrder,
-                filteredActivities = filterAndSortActivities(
-                    currentState.stats?.bestActivities ?: emptyList(),
-                    currentState.activityFilter,
-                    newSortOrder,
-                    currentState.activityCategoriesById
-                )
+                monthlyData = currentState.monthlyData.copy(filteredActivities = newMonthlyFiltered),
+                annualData = currentState.annualData.copy(filteredActivities = newAnnualFiltered)
             )
         }
     }
@@ -266,25 +298,26 @@ class StatisticsViewModel @Inject constructor(
         }
     }
 
-
     fun onIconClick(id: String?) {
         viewModelScope.launch {
             _uiState.update { it.copy(selectedIconId = id) }
             
-            // Recompute deep dive for selected icon
             val allLogs = logRepository.getAllDailyLogsFlow().first()
-            val periodLogs = ActivityInsightsEngine.filterLogsByPeriod(
-                allLogs, 
-                _uiState.value.selectedYear, 
-                if (_uiState.value.isMonthly) _uiState.value.selectedMonth else null, 
-                _uiState.value.isMonthly
-            )
-            val deepDive = ActivityInsightsEngine.computeIconDeepDive(
-                id, 
-                periodLogs, 
-                _uiState.value.stats?.bestActivities ?: emptyList()
-            )
-            _uiState.update { it.copy(iconDeepDive = deepDive) }
+            val year = _uiState.value.selectedYear
+            val month = _uiState.value.selectedMonth
+
+            val monthlyLogs = ActivityInsightsEngine.filterLogsByPeriod(allLogs, year, month, true)
+            val annualLogs = ActivityInsightsEngine.filterLogsByPeriod(allLogs, year, null, false)
+
+            val monthlyDeepDive = ActivityInsightsEngine.computeIconDeepDive(id, monthlyLogs, _uiState.value.monthlyData.stats?.bestActivities ?: emptyList())
+            val annualDeepDive = ActivityInsightsEngine.computeIconDeepDive(id, annualLogs, _uiState.value.annualData.stats?.bestActivities ?: emptyList())
+
+            _uiState.update { 
+                it.copy(
+                    monthlyData = it.monthlyData.copy(iconDeepDive = monthlyDeepDive),
+                    annualData = it.annualData.copy(iconDeepDive = annualDeepDive)
+                ) 
+            }
         }
     }
 
@@ -296,7 +329,6 @@ class StatisticsViewModel @Inject constructor(
     fun setMonthly(isMonthly: Boolean) {
         if (_uiState.value.isMonthly != isMonthly) {
             _uiState.update { it.copy(isMonthly = isMonthly) }
-            loadStatistics()
         }
     }
 
@@ -306,7 +338,7 @@ class StatisticsViewModel @Inject constructor(
             try {
                 com.diary.moonpage.core.util.ImageUtils.shareImage(context, bitmap, "My Year in Beans")
             } catch (e: Exception) {
-                _uiState.update { it.copy(captureError = "Failed to share: ${e.message}") }
+                _uiState.update { it.copy(captureError = "Failed to share: ") }
             } finally {
                 _uiState.update { it.copy(isCapturing = false) }
             }
@@ -319,7 +351,7 @@ class StatisticsViewModel @Inject constructor(
             try {
                 com.diary.moonpage.core.util.ImageUtils.saveBitmapToGallery(context, bitmap)
             } catch (e: Exception) {
-                _uiState.update { it.copy(captureError = "Failed to download: ${e.message}") }
+                _uiState.update { it.copy(captureError = "Failed to download: ") }
             } finally {
                 _uiState.update { it.copy(isCapturing = false) }
             }
@@ -333,7 +365,7 @@ class StatisticsViewModel @Inject constructor(
                 com.diary.moonpage.core.util.ImageUtils.saveBitmapToGallery(context, bitmap)
                 com.diary.moonpage.core.util.ImageUtils.shareImage(context, bitmap, "My Year in Beans")
             } catch (e: Exception) {
-                _uiState.update { it.copy(captureError = "Failed to save: ${e.message}") }
+                _uiState.update { it.copy(captureError = "Failed to save: ") }
             } finally {
                 _uiState.update { it.copy(isCapturing = false) }
             }

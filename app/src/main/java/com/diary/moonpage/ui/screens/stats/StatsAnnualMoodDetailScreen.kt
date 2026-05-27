@@ -35,7 +35,7 @@ fun StatsAnnualMoodDetailScreen(
     uiState: StatisticsUiState,
     onBack: () -> Unit
 ) {
-    val stats = uiState.stats
+    val stats = uiState.currentData.stats
 
     Scaffold(
         topBar = {

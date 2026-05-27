@@ -506,7 +506,7 @@ fun AppNavigation(
                     val statsEntry = remember(backStackEntry) { navController.getBackStackEntry(Screen.Stats.route) }
                     val viewModel: StatisticsViewModel = hiltViewModel(statsEntry)
                     ScreenWrapper(Screen.StatsAnnualMusicDetail.route, mainAppRoutes, totalBottomPadding, paddingValues) {
-                        StatsAnnualMusicDetailRoute(viewModel = viewModel, onBack = { navController.popBackStack() })
+                        StatsAnnualMusicDetailRoute(viewModel = viewModel, onNavigateBack = { navController.popBackStack() })
                     }
                 }
 

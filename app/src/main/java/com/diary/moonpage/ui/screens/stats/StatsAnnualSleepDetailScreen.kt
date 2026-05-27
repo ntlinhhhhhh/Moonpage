@@ -35,7 +35,7 @@ fun StatsAnnualSleepDetailScreen(
     uiState: StatisticsUiState,
     onBack: () -> Unit
 ) {
-    val stats = uiState.stats
+    val stats = uiState.currentData.stats
 
     Scaffold(
         topBar = {
@@ -58,7 +58,7 @@ fun StatsAnnualSleepDetailScreen(
             SleepSummaryView(
                 averageSleepHours = stats?.averageSleepHours ?: 0.0,
                 averageSleepStartTime = stats?.averageSleepStartTime,
-                averageWakeUpTime = uiState.averageWakeUpTime,
+                averageWakeUpTime = uiState.currentData.averageWakeUpTime,
                 avgSteps = stats?.averageSteps?.toInt() ?: 0,
                 avgCalories = stats?.averageCalories?.toInt() ?: 0,
                 avgDistance = stats?.averageDistance ?: 0.0

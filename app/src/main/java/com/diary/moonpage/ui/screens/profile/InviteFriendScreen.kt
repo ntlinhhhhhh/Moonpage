@@ -15,6 +15,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
@@ -35,6 +37,8 @@ fun InviteFriendScreen(
     onNavigateBack: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
+    val isDark = colorScheme.background.luminance() < 0.5f
+    val textColor = if (isDark) Color.White else Color.Black
     val referralCode = "MOON-2026-HAPPY"
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
@@ -48,6 +52,7 @@ fun InviteFriendScreen(
 
     Scaffold(
         containerColor = colorScheme.background,
+        contentColor = textColor,
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -59,7 +64,7 @@ fun InviteFriendScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = backText)
+                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = backText, tint = textColor)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -98,7 +103,7 @@ fun InviteFriendScreen(
                 Text(
                     stringResource(R.string.invite_share_joy_desc),
                     style = MaterialTheme.typography.bodyLarge,
-                    color = colorScheme.onSurfaceVariant,
+                    color = textColor.copy(alpha = 0.7f),
                     lineHeight = 24.sp,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
@@ -162,3 +167,5 @@ fun InviteFriendScreen(
         }
     }
 }
+
+

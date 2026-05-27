@@ -72,19 +72,19 @@ fun StatsInsightsDetailScreen(
                 // Best & Worst section — now uses correlation-based data
                 StatsCard(title = stringResource(R.string.best_worst)) {
                     BestAndWorstView(
-                        bestCorrelations = uiState.bestCorrelations,
-                        worstCorrelations = uiState.worstCorrelations,
+                        bestCorrelations = uiState.currentData.bestCorrelations,
+                        worstCorrelations = uiState.currentData.worstCorrelations,
                         // Fallback to legacy averageMoodScore list if correlations unavailable
-                        bestLegacy = uiState.bestActivities,
-                        worstLegacy = uiState.worstActivities
+                        bestLegacy = uiState.currentData.bestActivities,
+                        worstLegacy = uiState.currentData.worstActivities
                     )
                 }
 
                 // Icon Deep Dive — now uses fully computed data
                 StatsCard(title = stringResource(R.string.icon_deep_dive)) {
                     IconDeepDiveView(
-                        deepDive = uiState.iconDeepDive,
-                        allActivities = uiState.stats?.bestActivities ?: emptyList(),
+                        deepDive = uiState.currentData.iconDeepDive,
+                        allActivities = uiState.currentData.stats?.bestActivities ?: emptyList(),
                         selectedIconId = uiState.selectedIconId,
                         themeType = uiState.themeType,
                         onIconClick = onIconClick

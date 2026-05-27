@@ -66,8 +66,8 @@ fun StatsActivityDetailScreen(
     ) { padding ->
         if (showFilterModal) {
             ActivityFilterModal(
-                categories = uiState.availableActivityCategories,
-                selectedFilter = uiState.activityFilter,
+                categories = uiState.currentData.availableActivityCategories,
+                selectedFilter = uiState.currentData.activityFilter,
                 onFilterChange = onFilterChange,
                 onDismiss = { showFilterModal = false }
             )
@@ -79,7 +79,7 @@ fun StatsActivityDetailScreen(
             }
         } else {
             RankedActivityList(
-                activities = uiState.filteredActivities,
+                activities = uiState.currentData.filteredActivities,
                 modifier = Modifier.padding(padding)
             )
         }

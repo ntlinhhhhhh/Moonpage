@@ -11,6 +11,8 @@ import androidx.compose.material.icons.rounded.Widgets
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -29,9 +31,12 @@ fun WidgetsScreen(
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val backText = stringResource(R.string.back)
+    val isDark = colorScheme.background.luminance() < 0.5f
+    val textColor = if (isDark) Color.White else Color.Black
 
     Scaffold(
         containerColor = colorScheme.background,
+        contentColor = textColor,
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -43,7 +48,7 @@ fun WidgetsScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = backText)
+                        Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = backText, tint = textColor)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -80,7 +85,7 @@ fun WidgetsScreen(
             Text(
                 stringResource(R.string.widgets_moonpage_desc),
                 style = MaterialTheme.typography.bodyMedium,
-                color = colorScheme.onSurfaceVariant,
+                color = textColor.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 8.dp)
             )
@@ -137,13 +142,13 @@ fun WidgetInstructionStep(
             modifier = Modifier
                 .size(32.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .background(MaterialTheme.colorScheme.primaryContainer),
+                .background(MaterialTheme.colorScheme.primary),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 stepNumber.toString(),
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = Color.White
             )
         }
         
@@ -155,3 +160,5 @@ fun WidgetInstructionStep(
         )
     }
 }
+
+

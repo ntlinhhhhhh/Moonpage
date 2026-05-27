@@ -51,7 +51,7 @@ private data class ThemePickerItem(
 fun ThemeCalendarRoute(
     onNavigateBack: () -> Unit,
     onActivated: () -> Unit = onNavigateBack,
-    mainViewModel: MainViewModel = hiltViewModel(),
+    mainViewModel: MainViewModel = hiltViewModel(androidx.compose.ui.platform.LocalContext.current as androidx.activity.ComponentActivity),
     storeViewModel: com.diary.moonpage.ui.screens.store.StoreViewModel = hiltViewModel()
 ) {
     val uiState by storeViewModel.uiState.collectAsState()
@@ -425,3 +425,4 @@ fun AppThemeItem(
         )
     }
 }
+

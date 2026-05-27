@@ -233,7 +233,7 @@ fun DayItem(
     val circleBg = remember(moodColor, isFiltered, isDimmed, isActuallyDark, shades) {
         when {
             moodColor != null && (!isFiltered || !isDimmed) -> moodColor
-            else -> if (isActuallyDark) Color(0xFF505457) else shades[0].copy(alpha = 0.4f)
+            else -> if (isActuallyDark) Color(0xFF505457) else Color(0xFFDFE0E0)
         }
     }
     val todayIndicatorShape = RoundedCornerShape(18.dp)
@@ -1477,3 +1477,4 @@ fun FilterBottomSheet(
         }
     }
 }
+

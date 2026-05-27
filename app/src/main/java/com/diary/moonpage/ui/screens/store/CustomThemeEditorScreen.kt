@@ -1644,8 +1644,8 @@ private fun ThemePreviewCapture(
             )
         } else {
 
-            // Preview mock UI elements: show on Home and Palette mode
-            if (uiState.activeEditMode == EditMode.Palette || uiState.currentScreen == EditorScreenState.Home) {
+            // Preview mock UI elements: show only on EditComponents Palette mode
+            if (uiState.currentScreen == EditorScreenState.EditComponents && uiState.activeEditMode == EditMode.Palette) {
                 PreviewMoodIconRow(
                     colors = uiState.iconColors,
                     selectedIndex = if (uiState.activeEditMode == EditMode.Palette && uiState.colorFocusTarget == ColorFocusTarget.Icon) uiState.selectedIconIndex else -1,

@@ -1,5 +1,10 @@
 package com.diary.moonpage.ui.screens.calendar
 
+import androidx.activity.compose.BackHandler
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import android.app.Activity
+
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import java.util.Locale
@@ -60,6 +65,18 @@ fun CalendarRoute(
     viewModel: CalendarViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    var backPressedTime by remember { mutableStateOf(0L) }
+
+    BackHandler {
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - backPressedTime < 2000) {
+            (context as? Activity)?.finish()
+        } else {
+            backPressedTime = currentTime
+            Toast.makeText(context, "Ấn lần nữa để thoát", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     LaunchedEffect(createdLogDate) {
         if (createdLogDate != null) {
@@ -679,3 +696,4 @@ private fun DailyLog.musicDisplayRecord(): String? {
         else -> legacyRecord
     }
 }
+

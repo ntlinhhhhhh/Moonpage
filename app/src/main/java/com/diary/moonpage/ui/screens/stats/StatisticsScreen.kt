@@ -118,10 +118,10 @@ fun StatisticsScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
     val viewContext = androidx.compose.ui.platform.LocalView.current
 
-    val stats = uiState.stats
-    val frequentlyRecorded = uiState.frequentlyRecorded
-    val bestActivities = uiState.bestActivities
-    val worstActivities = uiState.worstActivities
+    val stats = uiState.currentData.stats
+    val frequentlyRecorded = uiState.currentData.frequentlyRecorded
+    val bestActivities = uiState.currentData.bestActivities
+    val worstActivities = uiState.currentData.worstActivities
 
     Scaffold(
         topBar = {
@@ -338,7 +338,7 @@ fun StatisticsScreen(
                 }
 
                 // Show a small loader overlay if needed
-                if (uiState.isLoading && uiState.stats == null) {
+                if (uiState.isLoading && uiState.currentData.stats == null) {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center),
                         color = MaterialTheme.colorScheme.primary
@@ -360,3 +360,4 @@ fun StatisticsScreen(
         )
     }
 }
+

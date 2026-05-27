@@ -1,5 +1,7 @@
 package com.diary.moonpage.ui.screens.stats
 
+import androidx.compose.material.icons.rounded.ArrowUpward
+import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -46,7 +48,26 @@ fun StatsMusicDetailScreen(
     uiState: StatisticsUiState,
     onNavigateBack: () -> Unit
 ) {
-    val musicSummary = uiState.stats?.musicSummary ?: emptyList()
+    val musicSummary = uiState.currentData.stats?.musicSummary ?: emptyList()
+    var sortDescending by remember { mutableStateOf(true) }
+    var visibleCount by remember { mutableIntStateOf(6) }
+
+    val aggregatedMusic = remember(musicSummary, sortDescending) {
+        val grouped = musicSummary.groupBy { it.songTitle + "||" + it.artistName }
+            .map { entry ->
+                val first = entry.value.first()
+                first.copy(occurrence = entry.value.sumOf { it.occurrence })
+            }
+        
+        if (sortDescending) {
+            grouped.sortedByDescending { it.occurrence }
+        } else {
+            grouped.sortedBy { it.occurrence }
+        }
+    }
+
+    val displayedMusic = aggregatedMusic.take(visibleCount)
+
     val scrollState = rememberScrollState()
     val backText = stringResource(R.string.back)
 
@@ -59,6 +80,11 @@ fun StatsMusicDetailScreen(
                         Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = backText)
                     }
                 },
+                actions = {
+                    IconButton(onClick = { sortDescending = !sortDescending }) {
+                        Icon(if (sortDescending) Icons.Rounded.ArrowDownward else Icons.Rounded.ArrowUpward, contentDescription = "Sort", tint = MaterialTheme.colorScheme.onBackground)
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         },
@@ -68,7 +94,7 @@ fun StatsMusicDetailScreen(
             Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
-        } else if (musicSummary.isEmpty()) {
+        } else if (aggregatedMusic.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(
@@ -93,7 +119,7 @@ fun StatsMusicDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Summary header
-                val topSong = musicSummary.first()
+                val topSong = aggregatedMusic.first()
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(32.dp),
@@ -137,15 +163,32 @@ fun StatsMusicDetailScreen(
 
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    stringResource(R.string.stats_all_songs_count, musicSummary.size),
+                    stringResource(R.string.stats_all_songs_count, aggregatedMusic.size),
                     fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                     modifier = Modifier.padding(horizontal = 4.dp)
                 )
 
                 // Full list
-                musicSummary.forEachIndexed { index, item ->
+                displayedMusic.forEachIndexed { index, item ->
                     MusicDetailRow(rank = index + 1, item = item)
+                }
+
+                // View More / Show Less buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    if (visibleCount < aggregatedMusic.size) {
+                        TextButton(onClick = { visibleCount += 6 }) {
+                            Text(stringResource(R.string.view_more), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                    if (visibleCount > 6) {
+                        TextButton(onClick = { visibleCount = 6 }) {
+                            Text("Show Less", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -197,3 +240,8 @@ private fun MusicDetailRow(rank: Int, item: MusicSummaryDto) {
         }
     }
 }
+
+
+
+
+
