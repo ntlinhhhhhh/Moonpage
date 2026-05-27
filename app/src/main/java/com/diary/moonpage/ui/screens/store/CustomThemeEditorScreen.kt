@@ -1126,14 +1126,12 @@ fun GradientNodeSelector(
             label = "Start",
             color = startColor,
             isActive = activeNode == GradientNode.Start,
-            nodeMarker = "①",
             onClick = { onNodeSelected(GradientNode.Start) }
         )
         GradientNodeTab(
             label = "End",
             color = endColor,
             isActive = activeNode == GradientNode.End,
-            nodeMarker = "②",
             onClick = { onNodeSelected(GradientNode.End) }
         )
     }
@@ -1144,7 +1142,6 @@ private fun GradientNodeTab(
     label: String,
     color: Long,
     isActive: Boolean,
-    nodeMarker: String,
     onClick: () -> Unit
 ) {
     val bgAlpha by animateFloatAsState(
@@ -1172,7 +1169,7 @@ private fun GradientNodeTab(
         )
         Spacer(Modifier.width(6.dp))
         Text(
-            text = "$nodeMarker $label",
+            text = label,
             color = Color.White,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal

@@ -246,8 +246,13 @@ class StoreViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true, showConfirmFreezePurchaseDialog = false) }
             userRepository.buyStreakFreeze().onSuccess {
                 refreshStreakRelatedData()
-                _uiState.update { it.copy(isLoading = false, freezePurchaseSuccess = true) }
-                _uiEffect.emit(StoreUiEffect.PurchaseSuccess)
+                _uiState.update { it.copy(isLoading = false) }
+                _uiEffect.emit(
+                    StoreUiEffect.ShowSnackBar(
+                        UiText.StringResource(R.string.streak_freeze_purchase_success),
+                        SnackbarType.SUCCESS
+                    )
+                )
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false) }
                 _uiEffect.emit(

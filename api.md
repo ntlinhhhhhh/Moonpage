@@ -1195,6 +1195,14 @@ GET /api/statistics/summary
   "bestActivities": [
     { "activityId": "act_1", "activityName": "Reading", "iconUrl": "https://...", "averageMoodScore": 4.8, "occurrence": 5 }
   ],
+
+  "worstActivities": [
+    { "activityId": "act_2", "activityName": "Work Stress", "iconUrl": "https://...", "averageMoodScore": 1.2, "occurrence": 3 }
+  ],
+  "performedActivities": [
+    { "activityId": "act_1", "activityName": "Reading", "iconUrl": "https://...", "averageMoodScore": 4.8, "occurrence": 5 },
+    { "activityId": "act_3", "activityName": "Walking", "iconUrl": "https://...", "averageMoodScore": 4.0, "occurrence": 10 }
+  ],
   "averageSleepHours": 7.5,
   "averageSleepStartTime": "23:00",
   "averageWakeupTime": "06:30",

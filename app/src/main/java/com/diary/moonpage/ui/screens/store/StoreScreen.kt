@@ -200,6 +200,7 @@ fun StoreScreen(
                 )
 
                 StoreTabs(
+                    pagerState = pagerState,
                     selectedIndex = uiState.selectedTabIndex,
                     onTabSelected = { index -> 
                         scope.launch { pagerState.animateScrollToPage(index) }
@@ -214,6 +215,7 @@ fun StoreScreen(
                 ) { page ->
                     when (page) {
                         0 -> HomeTabContent(
+                            isActive = pagerState.currentPage == 0,
                             themes = uiState.themes,
                             selectedCategory = uiState.selectedCategory,
                             onCategoryClick = onCategorySelected,
@@ -221,6 +223,7 @@ fun StoreScreen(
                             onViewAllClick = onViewAllClick
                         )
                         1 -> MyThemeTabContent(
+                            isActive = pagerState.currentPage == 1,
                             ownedThemes = uiState.ownedThemes,
                             customThemes = uiState.customThemes,
                             temporarySelectedId = uiState.temporarySelectedThemeId,
@@ -230,12 +233,14 @@ fun StoreScreen(
                             onExploreMore = { scope.launch { pagerState.animateScrollToPage(0) } }
                         )
                         2 -> CustomThemeTabContent(
+                            isActive = pagerState.currentPage == 2,
                             customThemes = uiState.customThemes,
                             onActivateCustomTheme = onActivateCustomTheme,
                             onRenameCustomTheme = onRenameCustomTheme,
                             onCreateClick = onCreateCustomThemeClick
                         )
                         3 -> CollectionsTabContent(
+                            isActive = pagerState.currentPage == 3,
                             themes = uiState.themes,
                             onThemeClick = onThemeClick
                         )
@@ -653,6 +658,7 @@ fun FreezePurchaseItem(
 
 @Composable
 fun StoreTabs(
+    pagerState: androidx.compose.foundation.pager.PagerState,
     selectedIndex: Int,
     onTabSelected: (Int) -> Unit
 ) {
@@ -664,55 +670,76 @@ fun StoreTabs(
         divider = {},
         indicator = { tabPositions ->
             if (selectedIndex < tabPositions.size) {
-                TabRowDefaults.SecondaryIndicator(
-                    Modifier.tabIndicatorOffset(tabPositions[selectedIndex]),
-                    color = MaterialTheme.colorScheme.onBackground
+                val fraction = pagerState.currentPageOffsetFraction
+                val currentPage = pagerState.currentPage
+                val targetPage = if (fraction < 0f) {
+                    (currentPage - 1).coerceAtLeast(0)
+                } else {
+                    (currentPage + 1).coerceAtMost(tabPositions.lastIndex)
+                }
+                val absFraction = kotlin.math.abs(fraction)
+                
+                val interpolatedOffset = androidx.compose.ui.unit.lerp(
+                    tabPositions[currentPage].left,
+                    tabPositions[targetPage].left,
+                    absFraction
+                )
+                val interpolatedWidth = androidx.compose.ui.unit.lerp(
+                    tabPositions[currentPage].width,
+                    tabPositions[targetPage].width,
+                    absFraction
+                )
+                
+                Box(
+                    Modifier
+                        .wrapContentSize(Alignment.BottomStart)
+                        .offset(x = interpolatedOffset)
+                        .width(interpolatedWidth)
+                        .height(3.dp)
+                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(1.5.dp))
                 )
             }
         }
     ) {
-        Tab(
-            selected = selectedIndex == 0,
-            onClick = { onTabSelected(0) },
-            text = { Text(stringResource(R.string.home)) }
+        val titles = listOf(
+            R.string.home,
+            R.string.my_theme,
+            R.string.custom_theme,
+            R.string.collections,
+            R.string.streak_freeze
         )
-        Tab(
-            selected = selectedIndex == 1,
-            onClick = { onTabSelected(1) },
-            text = { Text(stringResource(R.string.my_theme)) }
-        )
-        Tab(
-            selected = selectedIndex == 2,
-            onClick = { onTabSelected(2) },
-            text = { Text(stringResource(R.string.custom_theme)) }
-        )
-        Tab(
-            selected = selectedIndex == 3,
-            onClick = { onTabSelected(3) },
-            text = { Text(stringResource(R.string.collections)) }
-        )
-        Tab(
-            selected = selectedIndex == 4,
-            onClick = { onTabSelected(4) },
-            text = { Text(stringResource(R.string.streak_freeze)) }
-        )
+        titles.forEachIndexed { index, titleRes ->
+            Tab(
+                selected = selectedIndex == index,
+                onClick = { onTabSelected(index) },
+                text = { Text(stringResource(titleRes)) },
+                selectedContentColor = MaterialTheme.colorScheme.primary,
+                unselectedContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+        }
     }
 }
 
 @Composable
 fun CustomThemeTabContent(
+    isActive: Boolean,
     customThemes: List<Theme>,
     onActivateCustomTheme: (String) -> Unit,
     onRenameCustomTheme: (Theme) -> Unit,
     onCreateClick: () -> Unit
 ) {
     var isExpanded by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(isActive) {
+        if (!isActive) isExpanded = false
+    }
+
     val totalItems = customThemes.size + 1 // +1 for CreateCustomThemeCard
     val displayedThemes = if (isExpanded) customThemes else customThemes.take(5)
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().animateContentSize(),
         contentPadding = PaddingValues(16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -1141,6 +1168,7 @@ fun ViewMoreButton(text: String, onClick: () -> Unit) {
 
 @Composable
 fun HomeTabContent(
+    isActive: Boolean,
     themes: List<Theme>,
     selectedCategory: String,
     onCategoryClick: (String) -> Unit,
@@ -1149,6 +1177,10 @@ fun HomeTabContent(
 ) {
     var isExpanded by remember(selectedCategory) { mutableStateOf(false) }
     
+    LaunchedEffect(isActive) {
+        if (!isActive) isExpanded = false
+    }
+
     val allThemesInCategory = remember(themes, selectedCategory) {
         when (selectedCategory) {
             "ALL" -> themes.filter { it.type == ThemeType.THEME }
@@ -1161,7 +1193,7 @@ fun HomeTabContent(
     val iconPacks = themes.filter { it.type == ThemeType.ICON_PACK }
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().animateContentSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -1271,6 +1303,7 @@ fun HomeTabContent(
 
 @Composable
 fun MyThemeTabContent(
+    isActive: Boolean,
     ownedThemes: List<Theme>,
     customThemes: List<Theme>,
     temporarySelectedId: String?,
@@ -1281,6 +1314,13 @@ fun MyThemeTabContent(
 ) {
     var otherThemesVisibleCount by remember { mutableIntStateOf(3) }
     var customThemesVisibleCount by remember { mutableIntStateOf(4) }
+    
+    LaunchedEffect(isActive) {
+        if (!isActive) {
+            otherThemesVisibleCount = 3
+            customThemesVisibleCount = 4
+        }
+    }
 
     val currentTheme = ownedThemes.find { it.isActive }
     val otherThemes = ownedThemes.filter { !it.isActive && !it.id.startsWith("custom_") }
@@ -1403,11 +1443,28 @@ private fun parseThemePreviewColor(value: String?): Color? {
 
 @Composable
 fun CollectionsTabContent(
+    isActive: Boolean,
     themes: List<Theme>,
     onThemeClick: (Theme) -> Unit
 ) {
+    val purchasedThemes = remember(themes) { themes.filter { it.isOwned } }
+    val unpurchasedThemes = remember(themes) { themes.filter { !it.isOwned } }
+    
+    var isPurchasedExpanded by remember { mutableStateOf(false) }
+    var isUnpurchasedExpanded by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(isActive) {
+        if (!isActive) {
+            isPurchasedExpanded = false
+            isUnpurchasedExpanded = false
+        }
+    }
+
+    val displayedPurchased = if (isPurchasedExpanded) purchasedThemes else purchasedThemes.take(3)
+    val displayedUnpurchased = if (isUnpurchasedExpanded) unpurchasedThemes else unpurchasedThemes.take(3)
+
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().animateContentSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -1420,12 +1477,54 @@ fun CollectionsTabContent(
             )
         }
 
-        items(
-            items = themes,
-            key = { it.id },
-            contentType = { "theme" }
-        ) { theme ->
-            ThemeCard(theme = theme, onClick = { onThemeClick(theme) })
+        if (purchasedThemes.isNotEmpty()) {
+            item {
+                Text(
+                    text = stringResource(R.string.store_purchased),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+            items(
+                items = displayedPurchased,
+                key = { it.id },
+                contentType = { "theme" }
+            ) { theme ->
+                ThemeCard(theme = theme, onClick = { onThemeClick(theme) })
+            }
+            if (purchasedThemes.size > 3) {
+                item {
+                    ViewMoreButton(
+                        text = if (isPurchasedExpanded) stringResource(R.string.view_less) else stringResource(R.string.view_more),
+                        onClick = { isPurchasedExpanded = !isPurchasedExpanded }
+                    )
+                }
+            }
+        }
+        
+        if (unpurchasedThemes.isNotEmpty()) {
+            item {
+                Text(
+                    text = stringResource(R.string.store_unpurchased),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+            items(
+                items = displayedUnpurchased,
+                key = { it.id },
+                contentType = { "theme" }
+            ) { theme ->
+                ThemeCard(theme = theme, onClick = { onThemeClick(theme) })
+            }
+            if (unpurchasedThemes.size > 3) {
+                item {
+                    ViewMoreButton(
+                        text = if (isUnpurchasedExpanded) stringResource(R.string.view_less) else stringResource(R.string.view_more),
+                        onClick = { isUnpurchasedExpanded = !isUnpurchasedExpanded }
+                    )
+                }
+            }
         }
     }
 }

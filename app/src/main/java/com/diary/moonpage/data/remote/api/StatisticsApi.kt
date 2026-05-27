@@ -9,8 +9,7 @@ interface StatisticsApi {
     @GET("api/statistics/summary")
     suspend fun getStatisticsSummary(
         @Query("year") year: Int,
-        @Query("month") month: Int?,
-        @Query("isMonthly") isMonthly: Boolean
+        @Query("month") month: Int?
     ): Response<StatisticsResponse>
 
     @GET("api/statistics/summary")

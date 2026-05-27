@@ -177,6 +177,8 @@
     <string name="home">Trang chủ</string>
     <string name="my_theme">Của tôi</string>
     <string name="collections">Bộ sưu tập</string>
+    <string name="store_purchased">Đã mua</string>
+    <string name="store_unpurchased">Chưa mua</string>
     <string name="all_themes">Tất cả</string>
     <string name="light_mode">Chế độ sáng</string>
     <string name="dark_mode">Chế độ tối</string>
@@ -557,7 +559,8 @@
     <string name="theme_calendar_this_theme">giao diện này</string>
     <string name="store_streak_recovered_success">Chuỗi của bạn đã được nối lại.</string>
     <string name="store_get_streak_freeze">Nhận Đóng băng chuỗi</string>
-    <string name="store_streak_freeze_purchase_desc">Đóng băng chuỗi bảo vệ tiến trình hằng ngày của bạn. Nếu bạn quên ghi nhật ký, một lượt đóng băng sẽ được dùng tự động để giữ chuỗi của bạn.</string>
+    <string name="store_streak_freeze_purchase_desc">Dùng băng chuỗi bảo vệ tiến trình hằng ngày của bạn. Nếu bạn quên ghi nhật ký, một lượt dùng băng sẽ được dùng tự động để giữ chuỗi của bạn.</string>
+    <string name="streak_freeze_purchase_success">Mua Băng chuỗi thành công! 🧊</string>
     <string name="store_buy_for_200">Mua với 200</string>
     <string name="store_freeze_count">Bạn có %1$d lượt đóng băng</string>
     <string name="store_freeze_count_desc">Dùng chúng để bảo vệ hoặc khôi phục chuỗi của bạn</string>

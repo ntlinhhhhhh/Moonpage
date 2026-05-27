@@ -11,6 +11,8 @@ data class StatisticsResponse(
     @SerializedName(value = "moodDistribution", alternate = ["mood_distribution", "MoodDistribution"]) val moodDistribution: List<MoodDistributionDto>,
     @SerializedName(value = "moodFlow", alternate = ["mood_flow", "MoodFlow"]) val moodFlow: List<MoodFlowDto>,
     @SerializedName(value = "bestActivities", alternate = ["best_activities", "BestActivities", "influenceActivities", "influence_activities"]) val bestActivities: List<BestActivityDto>,
+    @SerializedName(value = "worstActivities", alternate = ["worst_activities", "WorstActivities"]) val worstActivities: List<BestActivityDto>? = null,
+    @SerializedName(value = "performedActivities", alternate = ["performed_activities", "PerformedActivities"]) val performedActivities: List<BestActivityDto>? = null,
     @SerializedName(value = "totalSteps", alternate = ["total_steps", "TotalSteps"]) val totalSteps: Int? = 0,
     @SerializedName(value = "averageSteps", alternate = ["average_steps", "AverageSteps"]) val averageSteps: Double? = 0.0,
     @SerializedName(value = "totalCalories", alternate = ["total_calories", "TotalCalories"]) val totalCalories: Int? = 0,

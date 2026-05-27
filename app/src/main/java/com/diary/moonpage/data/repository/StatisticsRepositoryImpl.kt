@@ -30,7 +30,7 @@ class StatisticsRepositoryImpl @Inject constructor(
         val m = month ?: 0
 
         return try {
-            val response = statisticsApi.getStatisticsSummary(year, month, isMonthly)
+            val response = statisticsApi.getStatisticsSummary(year, month)
             if (response.isSuccessful && response.body() != null) {
                 statisticsDao.insertStatistics(
                     StatisticsEntity(userId, year, m, isMonthly, response.body()!!)

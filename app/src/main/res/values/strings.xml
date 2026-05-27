@@ -195,6 +195,8 @@
     <string name="home">Home</string>
     <string name="my_theme">My Theme</string>
     <string name="collections">Collections</string>
+    <string name="store_purchased">Purchased</string>
+    <string name="store_unpurchased">Available</string>
     <string name="all_themes">All Themes</string>
     <string name="light_mode">Light Mode</string>
     <string name="dark_mode">Dark Mode</string>
@@ -578,6 +580,7 @@
     <string name="store_streak_recovered_success">Your streak is back on track.</string>
     <string name="store_get_streak_freeze">Get Streak Freeze</string>
     <string name="store_streak_freeze_purchase_desc">A Streak Freeze protects your daily progress. If you forget to log your day, a freeze will be used automatically to keep your streak alive!</string>
+    <string name="streak_freeze_purchase_success">Streak Freeze purchased successfully! 🧊</string>
     <string name="store_buy_for_200">Buy for 200</string>
     <string name="store_freeze_count">You have %1$d Freezes</string>
     <string name="store_freeze_count_desc">Use them to protect or recover your streak</string>

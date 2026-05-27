@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.data.remote.dto.stats.BestActivityDto
+import com.diary.moonpage.data.remote.dto.stats.StatisticsResponse
 import com.diary.moonpage.domain.repository.ActivityRepository
 import com.diary.moonpage.domain.repository.StatisticsRepository
 import com.diary.moonpage.domain.repository.DailyLogRepository
@@ -133,28 +134,25 @@ class StatisticsViewModel @Inject constructor(
 
         if (response.isSuccessful && response.body() != null) {
             val stats = response.body()!!
-            val activityCategoriesById = buildActivityCategoriesById(stats.bestActivities)
-            val availableActivityCategories = stats.bestActivities
+            val performedActivities = stats.performedActivityList()
+            val deepDiveActivities = stats.deepDiveActivityList()
+            val activityCategoriesById = buildActivityCategoriesById(performedActivities)
+            val availableActivityCategories = performedActivities
                 .mapNotNull { activityCategoriesById[it.activityId] }
                 .toCollection(linkedSetOf())
 
-            val freq = stats.bestActivities.sortedByDescending { it.occurrence }.take(3)
-            val (bestCorr, worstCorr) = ActivityInsightsEngine.computeBestWorst(periodLogs, stats.bestActivities)
+            val freq = performedActivities.sortedByDescending { it.occurrence }.take(3)
             
-            val targetIconId = _uiState.value.selectedIconId ?: stats.bestActivities.firstOrNull()?.activityId
-            val deepDive = ActivityInsightsEngine.computeIconDeepDive(targetIconId, periodLogs, stats.bestActivities)
+            val targetIconId = _uiState.value.selectedIconId ?: deepDiveActivities.firstOrNull()?.activityId
+            val deepDive = ActivityInsightsEngine.computeIconDeepDive(targetIconId, periodLogs, deepDiveActivities)
 
             val baseFilter = if (isMonthly) _uiState.value.monthlyData.activityFilter else _uiState.value.annualData.activityFilter
             val filtered = filterAndSortActivities(
-                stats.bestActivities,
+                performedActivities,
                 baseFilter.ifEmpty { availableActivityCategories },
                 _uiState.value.sortOrder,
                 activityCategoriesById
             )
-
-            val relevantActivities = stats.bestActivities.filter { it.occurrence >= 1 }
-            val bestLegacy = relevantActivities.sortedByDescending { it.averageMoodScore }.take(3)
-            val worstLegacy = relevantActivities.sortedBy { it.averageMoodScore }.take(3)
 
             val avgWakeUpTime = stats.averageWakeupTime ?: if (stats.averageSleepStartTime != null && stats.averageSleepHours != null) {
                 try {
@@ -175,10 +173,10 @@ class StatisticsViewModel @Inject constructor(
                 activityFilter = availableActivityCategories,
                 availableActivityCategories = availableActivityCategories,
                 activityCategoriesById = activityCategoriesById,
-                bestActivities = bestLegacy,
-                worstActivities = worstLegacy,
-                bestCorrelations = bestCorr,
-                worstCorrelations = worstCorr,
+                bestActivities = stats.bestActivities,
+                worstActivities = stats.worstActivities.orEmpty(),
+                bestCorrelations = emptyList(),
+                worstCorrelations = emptyList(),
                 iconDeepDive = deepDive,
                 averageWakeUpTime = avgWakeUpTime
             )
@@ -202,14 +200,14 @@ class StatisticsViewModel @Inject constructor(
             }
             
             val newMonthlyFiltered = filterAndSortActivities(
-                currentState.monthlyData.stats?.bestActivities ?: emptyList(), 
+                currentState.monthlyData.stats?.performedActivityList() ?: emptyList(), 
                 newFilterMonthly.ifEmpty { currentState.monthlyData.availableActivityCategories }, 
                 currentState.sortOrder, 
                 currentState.monthlyData.activityCategoriesById
             )
             
             val newAnnualFiltered = filterAndSortActivities(
-                currentState.annualData.stats?.bestActivities ?: emptyList(), 
+                currentState.annualData.stats?.performedActivityList() ?: emptyList(), 
                 newFilterAnnual.ifEmpty { currentState.annualData.availableActivityCategories }, 
                 currentState.sortOrder, 
                 currentState.annualData.activityCategoriesById
@@ -231,13 +229,13 @@ class StatisticsViewModel @Inject constructor(
             }
             
             val newMonthlyFiltered = filterAndSortActivities(
-                currentState.monthlyData.stats?.bestActivities ?: emptyList(), 
+                currentState.monthlyData.stats?.performedActivityList() ?: emptyList(), 
                 currentState.monthlyData.activityFilter.ifEmpty { currentState.monthlyData.availableActivityCategories }, 
                 newSortOrder, 
                 currentState.monthlyData.activityCategoriesById
             )
             val newAnnualFiltered = filterAndSortActivities(
-                currentState.annualData.stats?.bestActivities ?: emptyList(), 
+                currentState.annualData.stats?.performedActivityList() ?: emptyList(), 
                 currentState.annualData.activityFilter.ifEmpty { currentState.annualData.availableActivityCategories }, 
                 newSortOrder, 
                 currentState.annualData.activityCategoriesById
@@ -309,8 +307,8 @@ class StatisticsViewModel @Inject constructor(
             val monthlyLogs = ActivityInsightsEngine.filterLogsByPeriod(allLogs, year, month, true)
             val annualLogs = ActivityInsightsEngine.filterLogsByPeriod(allLogs, year, null, false)
 
-            val monthlyDeepDive = ActivityInsightsEngine.computeIconDeepDive(id, monthlyLogs, _uiState.value.monthlyData.stats?.bestActivities ?: emptyList())
-            val annualDeepDive = ActivityInsightsEngine.computeIconDeepDive(id, annualLogs, _uiState.value.annualData.stats?.bestActivities ?: emptyList())
+            val monthlyDeepDive = ActivityInsightsEngine.computeIconDeepDive(id, monthlyLogs, _uiState.value.monthlyData.stats?.deepDiveActivityList() ?: emptyList())
+            val annualDeepDive = ActivityInsightsEngine.computeIconDeepDive(id, annualLogs, _uiState.value.annualData.stats?.deepDiveActivityList() ?: emptyList())
 
             _uiState.update { 
                 it.copy(
@@ -374,5 +372,18 @@ class StatisticsViewModel @Inject constructor(
 
     fun clearCaptureError() {
         _uiState.update { it.copy(captureError = null) }
+    }
+
+    private fun StatisticsResponse.performedActivityList(): List<BestActivityDto> {
+        return performedActivities.orEmpty()
+    }
+
+    private fun StatisticsResponse.deepDiveActivityList(): List<BestActivityDto> {
+        val performed = performedActivityList()
+        return if (performed.isNotEmpty()) {
+            performed
+        } else {
+            (bestActivities + worstActivities.orEmpty()).distinctBy { it.activityId }
+        }
     }
 }

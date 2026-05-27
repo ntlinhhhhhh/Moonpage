@@ -41,6 +41,10 @@ fun StatsInsightsDetailScreen(
 ) {
     val scrollState = rememberScrollState()
     val backText = stringResource(R.string.back)
+    val deepDiveActivities = uiState.currentData.stats?.performedActivities.orEmpty().ifEmpty {
+        (uiState.currentData.bestActivities + uiState.currentData.worstActivities)
+            .distinctBy { it.activityId }
+    }
 
     Scaffold(
         topBar = {
@@ -72,9 +76,6 @@ fun StatsInsightsDetailScreen(
                 // Best & Worst section — now uses correlation-based data
                 StatsCard(title = stringResource(R.string.best_worst)) {
                     BestAndWorstView(
-                        bestCorrelations = uiState.currentData.bestCorrelations,
-                        worstCorrelations = uiState.currentData.worstCorrelations,
-                        // Fallback to legacy averageMoodScore list if correlations unavailable
                         bestLegacy = uiState.currentData.bestActivities,
                         worstLegacy = uiState.currentData.worstActivities
                     )
@@ -84,7 +85,7 @@ fun StatsInsightsDetailScreen(
                 StatsCard(title = stringResource(R.string.icon_deep_dive)) {
                     IconDeepDiveView(
                         deepDive = uiState.currentData.iconDeepDive,
-                        allActivities = uiState.currentData.stats?.bestActivities ?: emptyList(),
+                        allActivities = deepDiveActivities,
                         selectedIconId = uiState.selectedIconId,
                         themeType = uiState.themeType,
                         onIconClick = onIconClick
