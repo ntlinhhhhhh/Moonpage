@@ -236,23 +236,31 @@ fun CustomThemeEditorRoot(
 
     val startColorPicking: () -> Unit = {
         coroutineScope.launch(Dispatchers.Main) {
-            // Dùng drawingCache thay vì draw() trực tiếp để tránh crash hardware acceleration
-            try {
-                view.isDrawingCacheEnabled = true
-                view.buildDrawingCache()
-                val cache = view.drawingCache
-                if (cache != null) {
-                    cachedBitmap = android.graphics.Bitmap.createBitmap(cache)
+            val window = (view.context as? Activity)?.window
+            if (window != null && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                val bitmap = android.graphics.Bitmap.createBitmap(view.width, view.height, android.graphics.Bitmap.Config.ARGB_8888)
+                android.view.PixelCopy.request(window, bitmap, { result ->
+                    if (result == android.view.PixelCopy.SUCCESS) {
+                        cachedBitmap = bitmap
+                        isPickingColor = true
+                    } else {
+                        // Xử lý lỗi nếu cần
+                    }
+                }, android.os.Handler(android.os.Looper.getMainLooper()))
+            } else {
+                try {
+                    view.isDrawingCacheEnabled = true
+                    view.buildDrawingCache()
+                    val cache = view.drawingCache
+                    if (cache != null) {
+                        cachedBitmap = android.graphics.Bitmap.createBitmap(cache)
+                        isPickingColor = true
+                    }
+                    view.isDrawingCacheEnabled = false
+                } catch (e: Throwable) {
+                    // Fallback
                 }
-                view.isDrawingCacheEnabled = false
-            } catch (e: Throwable) {
-                // Fallback: tạo bitmap rỗng nếu không lấy được
-                cachedBitmap = android.graphics.Bitmap.createBitmap(
-                    view.width.coerceAtLeast(1), view.height.coerceAtLeast(1),
-                    android.graphics.Bitmap.Config.ARGB_8888
-                )
             }
-            isPickingColor = true
         }
     }
 
@@ -2348,7 +2356,7 @@ private fun ColorPickerBottomSheet(
                 modifier = Modifier.fillMaxWidth().height(48.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Áp dụng (Apply)", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.apply), fontWeight = FontWeight.Bold)
             }
         }
     }
