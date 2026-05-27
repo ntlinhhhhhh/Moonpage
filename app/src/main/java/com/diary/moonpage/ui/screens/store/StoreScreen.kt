@@ -8,8 +8,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -51,6 +55,7 @@ import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.core.util.UiText
 import com.diary.moonpage.ui.components.refresh.MoonPullToRefreshBox
+import com.diary.moonpage.ui.components.layout.drawVerticalScrollbar
 import com.diary.moonpage.ui.screens.store.components.*
 import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
 import com.diary.moonpage.ui.screens.tutorial.TutorialStep
@@ -729,6 +734,7 @@ fun CustomThemeTabContent(
     onCreateClick: () -> Unit
 ) {
     var isExpanded by remember { mutableStateOf(false) }
+    val gridState = rememberLazyGridState()
 
     LaunchedEffect(isActive) {
         if (!isActive) isExpanded = false
@@ -738,8 +744,12 @@ fun CustomThemeTabContent(
     val displayedThemes = if (isExpanded) customThemes else customThemes.take(5)
 
     LazyVerticalGrid(
+        state = gridState,
         columns = GridCells.Fixed(2),
-        modifier = Modifier.fillMaxSize().animateContentSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .drawVerticalScrollbar(gridState)
+            .animateContentSize(),
         contentPadding = PaddingValues(16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -970,9 +980,13 @@ fun StreakFreezeTabContent(
     onRecoverClick: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
+    val listState = rememberLazyListState()
     
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        state = listState,
+        modifier = Modifier
+            .fillMaxSize()
+            .drawVerticalScrollbar(listState),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
@@ -1176,6 +1190,7 @@ fun HomeTabContent(
     onViewAllClick: () -> Unit
 ) {
     var isExpanded by remember(selectedCategory) { mutableStateOf(false) }
+    val listState = rememberLazyListState()
     
     LaunchedEffect(isActive) {
         if (!isActive) isExpanded = false
@@ -1193,7 +1208,11 @@ fun HomeTabContent(
     val iconPacks = themes.filter { it.type == ThemeType.ICON_PACK }
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize().animateContentSize(),
+        state = listState,
+        modifier = Modifier
+            .fillMaxSize()
+            .drawVerticalScrollbar(listState)
+            .animateContentSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -1314,6 +1333,7 @@ fun MyThemeTabContent(
 ) {
     var otherThemesVisibleCount by remember { mutableIntStateOf(3) }
     var customThemesVisibleCount by remember { mutableIntStateOf(4) }
+    val listState = rememberLazyListState()
 
     LaunchedEffect(isActive) {
         if (!isActive) {
@@ -1329,7 +1349,11 @@ fun MyThemeTabContent(
     val displayedCustomThemes = customThemes.take(customThemesVisibleCount)
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize().animateContentSize(animationSpec = tween(400)),
+        state = listState,
+        modifier = Modifier
+            .fillMaxSize()
+            .drawVerticalScrollbar(listState)
+            .animateContentSize(animationSpec = tween(400)),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -1449,9 +1473,9 @@ fun CollectionsTabContent(
 ) {
     val purchasedThemes = remember(themes) { themes.filter { it.isOwned } }
     val unpurchasedThemes = remember(themes) { themes.filter { !it.isOwned } }
-
     var isPurchasedExpanded by remember { mutableStateOf(false) }
     var isUnpurchasedExpanded by remember { mutableStateOf(false) }
+    val listState = rememberLazyListState()
 
     LaunchedEffect(isActive) {
         if (!isActive) {
@@ -1464,7 +1488,11 @@ fun CollectionsTabContent(
     val displayedUnpurchased = if (isUnpurchasedExpanded) unpurchasedThemes else unpurchasedThemes.take(3)
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize().animateContentSize(),
+        state = listState,
+        modifier = Modifier
+            .fillMaxSize()
+            .drawVerticalScrollbar(listState)
+            .animateContentSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
