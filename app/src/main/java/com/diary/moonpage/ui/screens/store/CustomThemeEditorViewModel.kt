@@ -430,6 +430,8 @@ class CustomThemeEditorViewModel @Inject constructor(
                                     thumbnailUrl = thumbnailPath,
                                     backgroundUrl = backgroundPath,
                                     primaryColor = state.lightAppearance.primaryColor.toColorHex(),
+                                    primaryLightColor = state.lightAppearance.primaryColor.toColorHex(),
+                                    primaryDarkColor = state.darkAppearance.primaryColor.toColorHex(),
                                     backgroundColor = null,
                                     backgroundLightColor = if (hasImageBackground) null else state.lightAppearance.themeBackgroundPayload(),
                                     backgroundDarkColor = if (hasImageBackground) null else state.darkAppearance.themeBackgroundPayload(),

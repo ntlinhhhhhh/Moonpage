@@ -16,6 +16,8 @@ data class CreateThemePayload(
     val thumbnailUrl: String?,
     val backgroundUrl: String?,
     val primaryColor: String? = null,
+    val primaryLightColor: String? = null,
+    val primaryDarkColor: String? = null,
     val backgroundColor: String? = null,
     val backgroundDarkColor: String? = null,
     val backgroundLightColor: String? = null,

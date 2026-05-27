@@ -18,6 +18,8 @@ data class CreateThemeRequest(
     @SerializedName("thumbnailUrl") val thumbnailUrl: String? = null,
     @SerializedName("backgroundUrl") val backgroundUrl: String? = null,
     @SerializedName("primaryColor") val primaryColor: String? = null,
+    @SerializedName("primaryLightColor") val primaryLightColor: String? = null,
+    @SerializedName("primaryDarkColor") val primaryDarkColor: String? = null,
     @SerializedName("backgroundDarkColor") val backgroundDarkColor: String? = null,
     @SerializedName("backgroundLightColor") val backgroundLightColor: String? = null,
     @SerializedName("description") val description: String? = null,

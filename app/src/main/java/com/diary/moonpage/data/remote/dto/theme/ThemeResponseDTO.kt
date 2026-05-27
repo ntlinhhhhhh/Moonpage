@@ -12,6 +12,8 @@ data class ThemeResponseDTO(
     @SerializedName(value = "thumbnailUrl", alternate = ["ThumbnailUrl"]) val thumbnailUrl: String?,
     @SerializedName(value = "backgroundUrl", alternate = ["BackgroundUrl"]) val backgroundUrl: String?,
     @SerializedName(value = "primaryColor", alternate = ["PrimaryColor"]) val primaryColor: String? = null,
+    @SerializedName(value = "primaryLightColor", alternate = ["PrimaryLightColor"]) val primaryLightColor: String? = null,
+    @SerializedName(value = "primaryDarkColor", alternate = ["PrimaryDarkColor"]) val primaryDarkColor: String? = null,
     @SerializedName(value = "backgroundDarkColor", alternate = ["BackgroundDarkColor"]) val backgroundDarkColor: String? = null,
     @SerializedName(value = "backgroundLightColor", alternate = ["BackgroundLightColor"]) val backgroundLightColor: String? = null,
     @SerializedName(value = "description", alternate = ["Description"]) val description: String? = null,
@@ -41,6 +43,8 @@ data class ThemeResponseDTO(
             type = ThemeType.THEME,
             icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
             primaryColor = primaryColor ?: thumbnailUrl,
+            primaryLightColor = primaryLightColor,
+            primaryDarkColor = primaryDarkColor,
             decoration = if (isOfficialTheme) decorationName else "CUSTOM",
             category = category ?: "LIGHT"
         )

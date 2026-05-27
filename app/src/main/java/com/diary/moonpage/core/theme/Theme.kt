@@ -565,7 +565,10 @@ private fun Theme.isCustomTheme(): Boolean {
 
 private fun Theme.customPrimaryColor(darkTheme: Boolean): Color? {
     val mode = if (darkTheme) "dark" else "light"
-    return description.appearanceColor(mode, "primaryColor") ?: primaryColor.toThemeColorOrNull()
+    val preferredColor = if (darkTheme) primaryDarkColor else primaryLightColor
+    return preferredColor?.toThemeColorOrNull()
+        ?: description.appearanceColor(mode, "primaryColor") 
+        ?: primaryColor.toThemeColorOrNull()
 }
 
 private fun Theme.customBackgroundColor(darkTheme: Boolean): Color? {
