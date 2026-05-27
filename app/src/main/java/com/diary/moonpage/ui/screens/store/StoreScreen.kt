@@ -1,6 +1,8 @@
 package com.diary.moonpage.ui.screens.store
 
 import androidx.compose.animation.*
+import androidx.compose.ui.graphics.lerp
+import kotlin.math.abs
 import kotlinx.coroutines.launch
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -206,12 +208,10 @@ fun StoreScreen(
 
                 StoreTabs(
                     pagerState = pagerState,
-                    selectedIndex = uiState.selectedTabIndex,
-                    onTabSelected = { index -> 
+                    onTabSelected = { index ->
                         scope.launch { pagerState.animateScrollToPage(index) }
                     }
                 )
-
                 HorizontalPager(
                     state = pagerState,
                     modifier = Modifier.fillMaxSize(),
@@ -664,9 +664,11 @@ fun FreezePurchaseItem(
 @Composable
 fun StoreTabs(
     pagerState: androidx.compose.foundation.pager.PagerState,
-    selectedIndex: Int,
     onTabSelected: (Int) -> Unit
 ) {
+    val selectedIndex = pagerState.currentPage
+    val scrollPosition = pagerState.currentPage + pagerState.currentPageOffsetFraction
+    
     ScrollableTabRow(
         selectedTabIndex = selectedIndex,
         containerColor = Color.Transparent,
@@ -713,13 +715,25 @@ fun StoreTabs(
             R.string.collections,
             R.string.streak_freeze
         )
+        
+        val activeColor = MaterialTheme.colorScheme.primary
+        val inactiveColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+
         titles.forEachIndexed { index, titleRes ->
+            // Calculate how "active" this tab is (0.0 to 1.0)
+            val alpha = (1f - kotlin.math.abs(scrollPosition - index)).coerceIn(0f, 1f)
+            val textColor = androidx.compose.ui.graphics.lerp(inactiveColor, activeColor, alpha)
+
             Tab(
                 selected = selectedIndex == index,
                 onClick = { onTabSelected(index) },
-                text = { Text(stringResource(titleRes)) },
-                selectedContentColor = MaterialTheme.colorScheme.primary,
-                unselectedContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                text = { 
+                    Text(
+                        text = stringResource(titleRes),
+                        color = textColor,
+                        fontWeight = if (alpha > 0.5f) FontWeight.Bold else FontWeight.Normal
+                    ) 
+                }
             )
         }
     }
