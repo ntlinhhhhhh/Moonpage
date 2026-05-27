@@ -124,7 +124,7 @@ fun StoreRoute(
         onRenameCustomTheme = viewModel::showRenameCustomThemeDialog,
         onConfirmRenameCustomTheme = viewModel::renameCustomTheme,
         onDismissRenameCustomTheme = viewModel::dismissRenameCustomThemeDialog,
-        onRefresh = { viewModel.onEvent(StoreUiEvent.LoadData) }
+        onRefresh = { viewModel.onEvent(StoreUiEvent.LoadData(isManualRefresh = true)) }
     )
 }
 
@@ -1256,22 +1256,22 @@ fun MyThemeTabContent(
     onRenameCustomTheme: (Theme) -> Unit,
     onExploreMore: () -> Unit
 ) {
-    var isOtherThemesExpanded by remember { mutableStateOf(false) }
-    var isCustomThemesExpanded by remember { mutableStateOf(false) }
+    var otherThemesVisibleCount by remember { mutableIntStateOf(3) }
+    var customThemesVisibleCount by remember { mutableIntStateOf(4) }
 
     val currentTheme = ownedThemes.find { it.isActive }
     val otherThemes = ownedThemes.filter { !it.isActive && !it.id.startsWith("custom_") }
     
-    val displayedOtherThemes = if (isOtherThemesExpanded) otherThemes else otherThemes.take(3)
-    val displayedCustomThemes = if (isCustomThemesExpanded) customThemes else customThemes.take(4)
+    val displayedOtherThemes = otherThemes.take(otherThemesVisibleCount)
+    val displayedCustomThemes = customThemes.take(customThemesVisibleCount)
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().animateContentSize(animationSpec = tween(400)),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         if (currentTheme != null) {
-            item {
+            item(key = "current_theme_header") {
                 Text(
                     text = stringResource(R.string.current_theme),
                     style = MaterialTheme.typography.labelLarge,
@@ -1279,34 +1279,43 @@ fun MyThemeTabContent(
                     fontSize = 10.sp,
                     letterSpacing = 1.sp
                 )
+                Spacer(modifier = Modifier.height(8.dp))
                 CurrentThemeCard(currentTheme)
             }
         }
 
-        items(
-            items = displayedOtherThemes,
-            key = { it.id },
-            contentType = { "theme" }
-        ) { theme ->
-            ThemeCard(
-                theme = theme,
-                isSelected = theme.id == temporarySelectedId,
-                showSelectionIndicator = false,
-                onClick = { onThemeClick(theme) }
-            )
-        }
-        
-        if (otherThemes.size > 3) {
-            item {
-                ViewMoreButton(
-                    text = if (isOtherThemesExpanded) stringResource(R.string.view_less) else stringResource(R.string.view_more),
-                    onClick = { isOtherThemesExpanded = !isOtherThemesExpanded }
+        if (otherThemes.isNotEmpty()) {
+            items(
+                items = displayedOtherThemes,
+                key = { it.id },
+                contentType = { "theme" }
+            ) { theme ->
+                ThemeCard(
+                    theme = theme,
+                    isSelected = theme.id == temporarySelectedId,
+                    showSelectionIndicator = false,
+                    onClick = { onThemeClick(theme) }
                 )
+            }
+            
+            if (otherThemes.size > 3) {
+                item(key = "other_themes_view_more") {
+                    ViewMoreButton(
+                        text = if (otherThemesVisibleCount >= otherThemes.size) stringResource(R.string.view_less) else stringResource(R.string.view_more),
+                        onClick = {
+                            if (otherThemesVisibleCount >= otherThemes.size) {
+                                otherThemesVisibleCount = 3
+                            } else {
+                                otherThemesVisibleCount = (otherThemesVisibleCount + 3).coerceAtMost(otherThemes.size)
+                            }
+                        }
+                    )
+                }
             }
         }
 
         if (customThemes.isNotEmpty()) {
-            item {
+            item(key = "custom_theme_header") {
                 Text(
                     text = stringResource(R.string.custom_theme),
                     style = MaterialTheme.typography.labelLarge,
@@ -1317,7 +1326,7 @@ fun MyThemeTabContent(
             }
             items(
                 items = displayedCustomThemes.chunked(2),
-                key = { row -> row.joinToString { it.id } }
+                key = { row -> "custom_row_" + row.joinToString { it.id } }
             ) { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                     row.forEach { theme ->
@@ -1334,10 +1343,16 @@ fun MyThemeTabContent(
             }
             
             if (customThemes.size > 4) {
-                item {
+                item(key = "custom_themes_view_more") {
                     ViewMoreButton(
-                        text = if (isCustomThemesExpanded) stringResource(R.string.view_less) else stringResource(R.string.view_more),
-                        onClick = { isCustomThemesExpanded = !isCustomThemesExpanded }
+                        text = if (customThemesVisibleCount >= customThemes.size) stringResource(R.string.view_less) else stringResource(R.string.view_more),
+                        onClick = {
+                            if (customThemesVisibleCount >= customThemes.size) {
+                                customThemesVisibleCount = 4
+                            } else {
+                                customThemesVisibleCount = (customThemesVisibleCount + 4).coerceAtMost(customThemes.size)
+                            }
+                        }
                     )
                 }
             }

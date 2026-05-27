@@ -1005,4 +1005,5 @@
 
     <string name="stats_recorded_prefix">You recorded</string>
     <string name="stats_recorded_suffix">the most.</string>
+    <string name="custom_theme_transform_guide">2 fingers to zoom/rotate • 1 finger to pan</string>
 </resources>

@@ -998,4 +998,5 @@
 
     <string name="stats_recorded_prefix">Bạn đã ghi lại</string>
     <string name="stats_recorded_suffix">nhiều nhất.</string>
+    <string name="custom_theme_transform_guide">2 ngón tay để zoom/xoay • 1 ngón để di chuyển</string>
 </resources>

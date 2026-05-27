@@ -144,7 +144,7 @@ class StoreViewModel @Inject constructor(
 
     fun onEvent(event: StoreUiEvent) {
         when (event) {
-            StoreUiEvent.LoadData -> loadData()
+            is StoreUiEvent.LoadData -> loadData(event.isManualRefresh)
             is StoreUiEvent.OnTabSelected -> {
                 _uiState.update { it.copy(selectedTabIndex = event.index) }
             }
@@ -270,10 +270,10 @@ class StoreViewModel @Inject constructor(
         statisticsRepository.triggerRefresh()
     }
 
-    private fun loadData() {
+    private fun loadData(isManualRefresh: Boolean = false) {
         viewModelScope.launch {
-            // Only show loading if we have no themes yet
-            if (_uiState.value.themes.isEmpty()) {
+            // Only show loading if manual refresh
+            if (isManualRefresh) {
                 _uiState.update { it.copy(isLoading = true) }
             }
             

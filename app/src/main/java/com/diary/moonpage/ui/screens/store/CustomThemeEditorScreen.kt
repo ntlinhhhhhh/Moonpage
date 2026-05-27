@@ -240,7 +240,7 @@ fun CustomThemeEditorRoot(
                     cachedBitmap = android.graphics.Bitmap.createBitmap(cache)
                 }
                 view.isDrawingCacheEnabled = false
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 // Fallback: tạo bitmap rỗng nếu không lấy được
                 cachedBitmap = android.graphics.Bitmap.createBitmap(
                     view.width.coerceAtLeast(1), view.height.coerceAtLeast(1),
@@ -426,10 +426,12 @@ fun CustomThemeEditorRoot(
                 .pointerInput(Unit) {
                     detectDragGestures(
                         onDragStart = { offset ->
-                            pickOffset = offset
-                            val x = offset.x.toInt().coerceIn(0, cachedBitmap!!.width - 1)
-                            val y = offset.y.toInt().coerceIn(0, cachedBitmap!!.height - 1)
-                            pickedColor = Color(cachedBitmap!!.getPixel(x, y))
+                            if (cachedBitmap != null && cachedBitmap!!.width > 0 && cachedBitmap!!.height > 0) {
+                                pickOffset = offset
+                                val x = offset.x.toInt().coerceIn(0, cachedBitmap!!.width - 1)
+                                val y = offset.y.toInt().coerceIn(0, cachedBitmap!!.height - 1)
+                                pickedColor = Color(cachedBitmap!!.getPixel(x, y))
+                            }
                         },
                         onDragEnd = {
                             isPickingColor = false
@@ -461,13 +463,34 @@ fun CustomThemeEditorRoot(
                             isPickingColor = false
                         }
                     ) { change, _ ->
-                        pickOffset = change.position
-                        val x = pickOffset.x.toInt().coerceIn(0, cachedBitmap!!.width - 1)
-                        val y = pickOffset.y.toInt().coerceIn(0, cachedBitmap!!.height - 1)
-                        pickedColor = Color(cachedBitmap!!.getPixel(x, y))
+                        if (cachedBitmap != null && cachedBitmap!!.width > 0 && cachedBitmap!!.height > 0) {
+                            pickOffset = change.position
+                            val x = pickOffset.x.toInt().coerceIn(0, cachedBitmap!!.width - 1)
+                            val y = pickOffset.y.toInt().coerceIn(0, cachedBitmap!!.height - 1)
+                            pickedColor = Color(cachedBitmap!!.getPixel(x, y))
+                        }
                     }
                 }
         ) {
+            // UI Hint
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 100.dp),
+                contentAlignment = Alignment.TopCenter
+            ) {
+                Surface(
+                    color = Color.Black.copy(alpha = 0.6f),
+                    shape = RoundedCornerShape(20.dp)
+                ) {
+                    Text(
+                        text = "Drag finger on screen to pick color",
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                }
+            }
             // Loupe cursor
             val cursorSize = 60.dp
             val pxSize = with(androidx.compose.ui.platform.LocalDensity.current) { cursorSize.toPx() }
@@ -852,22 +875,19 @@ private fun EditComponentsBottomBar(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Preview button
-        Button(
+        // Preview button (Redesigned to a sleek icon)
+        IconButton(
             onClick = onPreviewClick,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White.copy(alpha = 0.15f),
-                contentColor = Color.White
-            ),
-            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+            modifier = Modifier
+                .size(40.dp)
+                .background(Color.White.copy(alpha = 0.15f), CircleShape)
         ) {
             Icon(
                 Icons.Rounded.Visibility,
-                contentDescription = null,
-                modifier = Modifier.size(16.dp)
+                contentDescription = "Preview",
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
             )
-            Spacer(Modifier.width(4.dp))
-            Text("Preview", style = MaterialTheme.typography.labelMedium)
         }
 
         // Tên theme (chỉ đọc) + icon Edit
@@ -1273,7 +1293,6 @@ fun ColorScrollablePickerBar(
             onColorSelected = { color ->
                 pendingCustomColor = color
                 onColorSelected(color)
-                showColorSheet = false
             },
             allowGradient = false,
             mode = BackgroundFillMode.Solid,
@@ -1625,11 +1644,11 @@ private fun ThemePreviewCapture(
             )
         } else {
 
-            // Palette mode: mood icons + bottom bar
-            if (uiState.activeEditMode == EditMode.Palette) {
+            // Preview mock UI elements: show on Home and Palette mode
+            if (uiState.activeEditMode == EditMode.Palette || uiState.currentScreen == EditorScreenState.Home) {
                 PreviewMoodIconRow(
                     colors = uiState.iconColors,
-                    selectedIndex = if (uiState.colorFocusTarget == ColorFocusTarget.Icon) uiState.selectedIconIndex else -1,
+                    selectedIndex = if (uiState.activeEditMode == EditMode.Palette && uiState.colorFocusTarget == ColorFocusTarget.Icon) uiState.selectedIconIndex else -1,
                     onSelected = onIconSelected,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
@@ -1698,18 +1717,17 @@ private fun ThemeCalendarMockScreen(
             modifier = Modifier
                 .align(Alignment.Center)
                 .fillMaxWidth()
-                .fillMaxHeight(0.78f) // Thu nhỏ chiều cao xuống 78%
+                .fillMaxHeight(0.65f) // Thu nhỏ chiều cao xuống 65%
                 .padding(start = 20.dp, end = 20.dp)
         ) {
             Column(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Header: chỉ hiển thị tên tháng (không có icon <)
-                Row(
+                // Header: chỉ hiển thị tên tháng và căn giữa
+                Box(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = stringResource(R.string.custom_theme_mock_month),
@@ -1717,23 +1735,6 @@ private fun ThemeCalendarMockScreen(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    // 2 icon mode (hiện trong calendar preview, không hiển trong Final Preview)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        MiniModeIcon(
-                            selected = !isDarkMode,
-                            icon = Icons.Rounded.LightMode,
-                            tint = primary,
-                            panelColor = panelColor,
-                            onClick = onLightModeSelected
-                        )
-                        MiniModeIcon(
-                            selected = isDarkMode,
-                            icon = Icons.Rounded.DarkMode,
-                            tint = primary,
-                            panelColor = panelColor,
-                            onClick = onDarkModeSelected
-                        )
-                    }
                 }
 
                 Surface(
@@ -2589,7 +2590,7 @@ private fun BackgroundTransformDialog(
                                     offsetY += pan.y
                                 }
                             },
-                        contentScale = ContentScale.Fit
+                        contentScale = ContentScale.Crop
                     )
                 }
 
@@ -2597,7 +2598,7 @@ private fun BackgroundTransformDialog(
 
                 // Hướng dẫn sử dụng
                 Text(
-                    text = "2 ngón tay để zoom & xoay tự do • 1 ngón để di chuyển",
+                    text = stringResource(R.string.custom_theme_transform_guide),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
                     textAlign = TextAlign.Center,

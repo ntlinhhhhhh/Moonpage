@@ -8,7 +8,7 @@ import com.diary.moonpage.ui.components.feedback.SnackbarType
  * Events: UI -> VM
  */
 sealed class StoreUiEvent {
-    object LoadData : StoreUiEvent()
+    data class LoadData(val isManualRefresh: Boolean = false) : StoreUiEvent()
     data class OnTabSelected(val index: Int) : StoreUiEvent()
     data class SelectTheme(val theme: Theme) : StoreUiEvent()
     data class InitiatePurchase(val theme: Theme) : StoreUiEvent()
