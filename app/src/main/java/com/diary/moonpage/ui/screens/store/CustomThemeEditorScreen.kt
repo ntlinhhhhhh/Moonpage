@@ -61,6 +61,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.painterResource
@@ -229,6 +230,10 @@ fun CustomThemeEditorRoot(
     var pickedColor by remember { mutableStateOf(Color.White) }
     val coroutineScope = rememberCoroutineScope()
 
+    LaunchedEffect(uiState.currentScreen, uiState.activeEditMode) {
+        isPickingColor = false
+    }
+
     val startColorPicking: () -> Unit = {
         coroutineScope.launch(Dispatchers.Main) {
             // Dùng drawingCache thay vì draw() trực tiếp để tránh crash hardware acceleration
@@ -312,8 +317,8 @@ fun CustomThemeEditorRoot(
                         onApply = { onSetScreen(EditorScreenState.EditComponents) },
                         onColorSelected = { color ->
                             onSolidBackgroundSelected(color)
-                            onAddRecentColor(color)
                         },
+                        onAddRecentColor = onAddRecentColor,
                         onEyedropperClick = startColorPicking
                     )
 
@@ -328,8 +333,8 @@ fun CustomThemeEditorRoot(
                             } else {
                                 onGradientEndSelected(color)
                             }
-                            onAddRecentColor(color)
                         },
+                        onAddRecentColor = onAddRecentColor,
                         onEyedropperClick = startColorPicking
                     )
 
@@ -343,8 +348,8 @@ fun CustomThemeEditorRoot(
                         onSaveClick = onSave,
                         onBrushColorSelected = { color ->
                             onBrushColorSelected(color)
-                            onAddRecentColor(color)
                         },
+                        onAddRecentColor = onAddRecentColor,
                         onBrushSizeChange = onBrushSizeChange,
                         onBrushTypeSelected = onBrushTypeSelected,
                         onEraserChanged = onEraserChanged,
@@ -352,7 +357,6 @@ fun CustomThemeEditorRoot(
                         onClearStrokes = onClearStrokes,
                         onFocusedColorSelected = { color ->
                             onFocusedColorSelected(color)
-                            onAddRecentColor(color)
                         },
                         isDarkMode = uiState.editingMode == EditorAppearanceMode.Dark,
                         onToggleAppearance = onToggleEditingMode,
@@ -379,7 +383,8 @@ fun CustomThemeEditorRoot(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.55f)),
+                    .background(Color.Black.copy(alpha = 0.55f))
+                    .pointerInput(Unit) { detectTapGestures { } }, // Chặn thao tác nhấn khi đang lưu
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
@@ -418,18 +423,23 @@ fun CustomThemeEditorRoot(
         )
     }
 
+    var boxSize by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
+
     // Lớp phủ Eyedropper (Color Picker từ màn hình)
     if (isPickingColor && cachedBitmap != null) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .onGloballyPositioned { boxSize = it.size }
                 .pointerInput(Unit) {
                     detectDragGestures(
                         onDragStart = { offset ->
-                            if (cachedBitmap != null && cachedBitmap!!.width > 0 && cachedBitmap!!.height > 0) {
+                            if (cachedBitmap != null && boxSize.width > 0 && boxSize.height > 0) {
                                 pickOffset = offset
-                                val x = offset.x.toInt().coerceIn(0, cachedBitmap!!.width - 1)
-                                val y = offset.y.toInt().coerceIn(0, cachedBitmap!!.height - 1)
+                                val scaleX = cachedBitmap!!.width.toFloat() / boxSize.width
+                                val scaleY = cachedBitmap!!.height.toFloat() / boxSize.height
+                                val x = (offset.x * scaleX).toInt().coerceIn(0, cachedBitmap!!.width - 1)
+                                val y = (offset.y * scaleY).toInt().coerceIn(0, cachedBitmap!!.height - 1)
                                 pickedColor = Color(cachedBitmap!!.getPixel(x, y))
                             }
                         },
@@ -463,10 +473,12 @@ fun CustomThemeEditorRoot(
                             isPickingColor = false
                         }
                     ) { change, _ ->
-                        if (cachedBitmap != null && cachedBitmap!!.width > 0 && cachedBitmap!!.height > 0) {
+                        if (cachedBitmap != null && boxSize.width > 0 && boxSize.height > 0) {
                             pickOffset = change.position
-                            val x = pickOffset.x.toInt().coerceIn(0, cachedBitmap!!.width - 1)
-                            val y = pickOffset.y.toInt().coerceIn(0, cachedBitmap!!.height - 1)
+                            val scaleX = cachedBitmap!!.width.toFloat() / boxSize.width
+                            val scaleY = cachedBitmap!!.height.toFloat() / boxSize.height
+                            val x = (pickOffset.x * scaleX).toInt().coerceIn(0, cachedBitmap!!.width - 1)
+                            val y = (pickOffset.y * scaleY).toInt().coerceIn(0, cachedBitmap!!.height - 1)
                             pickedColor = Color(cachedBitmap!!.getPixel(x, y))
                         }
                     }
@@ -643,6 +655,7 @@ fun BoxScope.SolidBgOverlay(
     onBack: () -> Unit,
     onApply: () -> Unit,
     onColorSelected: (Long) -> Unit,
+    onAddRecentColor: (Long) -> Unit,
     onEyedropperClick: () -> Unit
 ) {
     val statusBarTopPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
@@ -654,6 +667,7 @@ fun BoxScope.SolidBgOverlay(
     ColorScrollablePickerBar(
         recentColors = uiState.recentColors,
         onColorSelected = onColorSelected,
+        onAddRecentColor = onAddRecentColor,
         onEyedropperClick = onEyedropperClick,
         modifier = Modifier.align(Alignment.BottomCenter),
         showEyedropper = false
@@ -671,6 +685,7 @@ fun BoxScope.GradientBgOverlay(
     onApply: () -> Unit,
     onNodeSelected: (GradientNode) -> Unit,
     onColorSelected: (Long) -> Unit,
+    onAddRecentColor: (Long) -> Unit,
     onEyedropperClick: () -> Unit
 ) {
     TopEditorBar(onBack = onBack, onApply = onApply)
@@ -694,6 +709,7 @@ fun BoxScope.GradientBgOverlay(
         ColorScrollablePickerBar(
             recentColors = uiState.recentColors,
             onColorSelected = onColorSelected,
+            onAddRecentColor = onAddRecentColor,
             onEyedropperClick = onEyedropperClick,
             showEyedropper = false
         )
@@ -713,6 +729,7 @@ fun BoxScope.EditComponentsOverlay(
     onPreviewClick: () -> Unit,
     onSaveClick: () -> Unit,
     onBrushColorSelected: (Long) -> Unit,
+    onAddRecentColor: (Long) -> Unit,
     onBrushSizeChange: (Float) -> Unit,
     onBrushTypeSelected: (BrushType) -> Unit,
     onEraserChanged: (Boolean) -> Unit,
@@ -810,6 +827,7 @@ fun BoxScope.EditComponentsOverlay(
             ColorScrollablePickerBar(
                 recentColors = uiState.recentColors,
                 onColorSelected = onBrushColorSelected,
+                onAddRecentColor = onAddRecentColor,
                 onEyedropperClick = onEyedropperClick,
                 modifier = Modifier.align(Alignment.BottomCenter)
             )
@@ -834,6 +852,7 @@ fun BoxScope.EditComponentsOverlay(
             ColorScrollablePickerBar(
                 recentColors = uiState.recentColors,
                 onColorSelected = onFocusedColorSelected,
+                onAddRecentColor = onAddRecentColor,
                 onEyedropperClick = onEyedropperClick,
                 modifier = Modifier.align(Alignment.BottomCenter)
             )
@@ -1059,6 +1078,7 @@ private fun BoxScope.FinalPreviewOverlay(
         Spacer(Modifier.width(16.dp))
         Button(
             onClick = onSave,
+            enabled = !uiState.isSaving,
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
@@ -1215,6 +1235,7 @@ private fun List<Long>.chunkedToPages(): List<List<Long>> =
 fun ColorScrollablePickerBar(
     recentColors: List<Long>,
     onColorSelected: (Long) -> Unit,
+    onAddRecentColor: (Long) -> Unit,
     onEyedropperClick: () -> Unit,
     modifier: Modifier = Modifier,
     showEyedropper: Boolean = true
@@ -1235,13 +1256,13 @@ fun ColorScrollablePickerBar(
             .padding(top = 8.dp, bottom = 10.dp)
             .height(62.dp)
     ) {
-        // LazyRow các màu — bắt đầu bằng padding trái 104.dp để tránh 2 icon cố định
+        // LazyRow các màu — điều chỉnh padding trái để tránh 2 icon hoặc 1 icon cố định
         LazyRow(
             modifier = Modifier
                 .fillMaxSize(),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically,
-            contentPadding = PaddingValues(start = 108.dp, end = 16.dp)
+            contentPadding = PaddingValues(start = if (showEyedropper) 108.dp else 60.dp, end = 16.dp)
         ) {
             items(allColors) { color ->
                 ColorSwatchCircle(
@@ -1290,6 +1311,9 @@ fun ColorScrollablePickerBar(
             onColorSelected = { color ->
                 pendingCustomColor = color
                 onColorSelected(color)
+            },
+            onApply = { color ->
+                onAddRecentColor(color)
             },
             allowGradient = false,
             mode = BackgroundFillMode.Solid,
@@ -1363,81 +1387,121 @@ fun DrawToolbar(
     onDone: () -> Unit, // ✓ Check icon để done
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically
+    Column(
+        modifier = modifier.padding(horizontal = 12.dp, vertical = 8.dp).fillMaxWidth()
     ) {
-        // Undo — bọc trong vòng tròn như brush icons
-        Box(
-            modifier = Modifier
-                .size(42.dp)
-                .background(
-                    if (uiState.strokes.isNotEmpty()) Color.Black.copy(alpha = 0.5f) else Color.Black.copy(alpha = 0.25f),
-                    CircleShape
-                )
-                .border(2.dp, Color.White.copy(alpha = if (uiState.strokes.isNotEmpty()) 0.8f else 0.25f), CircleShape)
-                .clickable(enabled = uiState.strokes.isNotEmpty(), onClick = onUndo),
-            contentAlignment = Alignment.Center
+        // Hàng 1: Undo (Back) và Done (Tick)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                Icons.AutoMirrored.Rounded.Undo,
-                contentDescription = "Undo",
-                tint = if (uiState.strokes.isNotEmpty()) Color.White else Color.White.copy(alpha = 0.3f),
-                modifier = Modifier.size(20.dp)
-            )
+            // Nhóm bên trái: Undo và Clear
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Undo (Back)
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .background(
+                            if (uiState.strokes.isNotEmpty()) Color.Black.copy(alpha = 0.5f) else Color.Black.copy(alpha = 0.25f),
+                            CircleShape
+                        )
+                        .border(2.dp, Color.White.copy(alpha = if (uiState.strokes.isNotEmpty()) 0.8f else 0.25f), CircleShape)
+                        .clickable(enabled = uiState.strokes.isNotEmpty(), onClick = onUndo),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Rounded.Undo,
+                        contentDescription = "Undo",
+                        tint = if (uiState.strokes.isNotEmpty()) Color.White else Color.White.copy(alpha = 0.3f),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                // Clear All (Xóa toàn bộ)
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .background(
+                            if (uiState.strokes.isNotEmpty()) Color.Black.copy(alpha = 0.5f) else Color.Black.copy(alpha = 0.25f),
+                            CircleShape
+                        )
+                        .border(2.dp, Color.White.copy(alpha = if (uiState.strokes.isNotEmpty()) 0.8f else 0.25f), CircleShape)
+                        .clickable(enabled = uiState.strokes.isNotEmpty(), onClick = onClearStrokes),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Rounded.DeleteOutline,
+                        contentDescription = "Clear All",
+                        tint = if (uiState.strokes.isNotEmpty()) Color.White else Color.White.copy(alpha = 0.3f),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+
+            // Done (Tick)
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
+                    .background(Color.White, CircleShape)
+                    .border(2.dp, Color.White, CircleShape)
+                    .clickable(onClick = onDone),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Rounded.Check,
+                    contentDescription = "Done",
+                    tint = Color.Black,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
 
-        // 1. Cọ nét mảnh (Pen)
-        DrawToolIconButton(
-            selected = uiState.brushType == BrushType.Fine && !uiState.isEraser,
-            onClick = { onBrushTypeSelected(BrushType.Fine) },
-            icon = Icons.Rounded.Edit,
-            label = "Pen"
-        )
-        // 2. Cọ dạ quang (Highlighter)
-        DrawToolIconButton(
-            selected = uiState.brushType == BrushType.Bold && !uiState.isEraser,
-            onClick = { onBrushTypeSelected(BrushType.Bold) },
-            icon = Icons.Rounded.KeyboardArrowUp,
-            label = "Highlighter"
-        )
-        // 3. Cọ viền Neon (Glow)
-        DrawToolIconButton(
-            selected = uiState.brushType == BrushType.Pencil && !uiState.isEraser,
-            onClick = { onBrushTypeSelected(BrushType.Pencil) },
-            icon = Icons.Rounded.AutoAwesome,
-            label = "Neon"
-        )
-        // 4. Tẩy (Eraser)
-        DrawToolIconButton(
-            selected = uiState.isEraser,
-            onClick = { onEraserChanged(true) },
-            icon = Icons.Rounded.CleaningServices,
-            label = "Eraser"
-        )
-        // 5. Cọ họa tiết (Heart/Sparkle)
-        DrawToolIconButton(
-            selected = uiState.brushType == BrushType.Spray && !uiState.isEraser,
-            onClick = { onBrushTypeSelected(BrushType.Spray) },
-            icon = Icons.Rounded.Favorite,
-            label = "Sparkle"
-        )
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Done (Check) — bọc trong vòng tròn trắng
-        Box(
-            modifier = Modifier
-                .size(42.dp)
-                .background(Color.White, CircleShape)
-                .border(2.dp, Color.White, CircleShape)
-                .clickable(onClick = onDone),
-            contentAlignment = Alignment.Center
+        // Hàng 2: 5 công cụ vẽ
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                Icons.Rounded.Check,
-                contentDescription = "Done",
-                tint = Color.Black,
-                modifier = Modifier.size(22.dp)
+            // 1. Cọ nét mảnh (Pen)
+            DrawToolIconButton(
+                selected = uiState.brushType == BrushType.Fine && !uiState.isEraser,
+                onClick = { onBrushTypeSelected(BrushType.Fine) },
+                icon = Icons.Rounded.Edit,
+                label = "Pen"
+            )
+            // 2. Cọ dạ quang (Highlighter)
+            DrawToolIconButton(
+                selected = uiState.brushType == BrushType.Bold && !uiState.isEraser,
+                onClick = { onBrushTypeSelected(BrushType.Bold) },
+                icon = Icons.Rounded.KeyboardArrowUp,
+                label = "Highlighter"
+            )
+            // 3. Cọ viền Neon (Glow)
+            DrawToolIconButton(
+                selected = uiState.brushType == BrushType.Pencil && !uiState.isEraser,
+                onClick = { onBrushTypeSelected(BrushType.Pencil) },
+                icon = Icons.Rounded.AutoAwesome,
+                label = "Neon"
+            )
+            // 4. Tẩy (Eraser)
+            DrawToolIconButton(
+                selected = uiState.isEraser,
+                onClick = { onEraserChanged(true) },
+                icon = Icons.Rounded.CleaningServices,
+                label = "Eraser"
+            )
+            // 5. Cọ họa tiết (Heart/Sparkle)
+            DrawToolIconButton(
+                selected = uiState.brushType == BrushType.Spray && !uiState.isEraser,
+                onClick = { onBrushTypeSelected(BrushType.Spray) },
+                icon = Icons.Rounded.Favorite,
+                label = "Sparkle"
             )
         }
     }
@@ -1641,8 +1705,8 @@ private fun ThemePreviewCapture(
             )
         } else {
 
-            // Preview mock UI elements: show only on EditComponents Palette mode
-            if (uiState.currentScreen == EditorScreenState.EditComponents && uiState.activeEditMode == EditMode.Palette) {
+            // Preview mock UI elements: show on EditComponents mode (Palette or None, hide on Draw so it doesn't obstruct drawing)
+            if (uiState.currentScreen == EditorScreenState.EditComponents && uiState.activeEditMode != EditMode.Draw) {
                 PreviewMoodIconRow(
                     colors = uiState.iconColors,
                     selectedIndex = if (uiState.activeEditMode == EditMode.Palette && uiState.colorFocusTarget == ColorFocusTarget.Icon) uiState.selectedIconIndex else -1,
@@ -1956,7 +2020,7 @@ private fun MockAppBottomNavBar(
                     Icons.Rounded.CameraAlt,
                     contentDescription = null,
                     tint = primary,
-                    modifier = Modifier.size(if (emphasizeIcons) 26.dp else 24.dp)
+                    modifier = Modifier.size(24.dp)
                 )
             }
             MockNavIcon(Icons.Rounded.Storefront, tint = primary, emphasized = emphasizeIcons)
@@ -1971,14 +2035,14 @@ private fun MockNavIcon(
     tint: Color,
     emphasized: Boolean = false
 ) {
-    // Chỉ icon thay đổi kích thước, không nhảy Box container
+    // Chỉ đổi màu khi emphasize (nếu cần), không thay đổi kích thước size
     Icon(
         imageVector = icon,
         contentDescription = null,
         tint = tint,
         modifier = Modifier
             .padding(4.dp)
-            .size(if (emphasized) 32.dp else 26.dp)
+            .size(26.dp)
     )
 }
 
@@ -2089,6 +2153,7 @@ private fun MoodFaceIcon(index: Int, color: Color, modifier: Modifier = Modifier
 private fun ColorPickerBottomSheet(
     selectedColor: Long,
     onColorSelected: (Long) -> Unit,
+    onApply: (Long) -> Unit,
     onDismiss: () -> Unit,
     allowGradient: Boolean = false,
     mode: BackgroundFillMode = BackgroundFillMode.Solid,
@@ -2272,6 +2337,18 @@ private fun ColorPickerBottomSheet(
                         )
                     }
                 }
+            }
+
+            // Nút Apply
+            Button(
+                onClick = {
+                    onApply(editingColor)
+                    onDismiss()
+                },
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("Áp dụng (Apply)", fontWeight = FontWeight.Bold)
             }
         }
     }
