@@ -837,7 +837,7 @@
     <string name="daily_summary_title">Tóm tắt hằng ngày</string>
     <string name="unknown">Không xác định</string>
     <string name="unknown_artist">Nghệ sĩ không xác định</string>
-    <string name="user_fallback">Người dùng</string>
+    <string name="user_fallback">Thông tin người dùng</string>
     <string name="auth_provider_password">Mật khẩu</string>
     <string name="notification_default_body">Bạn có một thông điệp mới!</string>
     <string name="location_error">Lỗi vị trí</string>

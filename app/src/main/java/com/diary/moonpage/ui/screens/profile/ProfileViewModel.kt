@@ -56,7 +56,7 @@ class ProfileViewModel @Inject constructor(
             }
         }
 
-        loadProfile(forceRefresh = false)
+        loadProfile()
         loadMyThemes()
         loadStatistics()
     }
@@ -97,12 +97,8 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun loadProfile(forceRefresh: Boolean = false) {
+    fun loadProfile() {
         viewModelScope.launch {
-            if (forceRefresh) {
-                userRepository.clearCache()
-            }
-
             // Only show loading if we don't have cached user
             _uiState.update { it.copy(isLoading = it.user == null) }
 
@@ -127,7 +123,7 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun refreshProfile() {
-        loadProfile(forceRefresh = true)
+        loadProfile()
         loadMyThemes()
         loadStatistics()
     }

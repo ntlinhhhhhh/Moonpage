@@ -113,15 +113,20 @@ fun StatisticsScreen(
 
     val monthlyScrollState = rememberScrollState()
     val annualScrollState = rememberScrollState()
+
+    // Reset scroll position when page changes (either by tab click or swipe)
+    LaunchedEffect(pagerState.targetPage) {
+        if (pagerState.targetPage == 0) {
+            monthlyScrollState.scrollTo(0)
+        } else {
+            annualScrollState.scrollTo(0)
+        }
+    }
+
     var showDatePicker by remember { mutableStateOf(false) }
 
     val context = androidx.compose.ui.platform.LocalContext.current
     val viewContext = androidx.compose.ui.platform.LocalView.current
-
-    val stats = uiState.currentData.stats
-    val frequentlyRecorded = uiState.currentData.frequentlyRecorded
-    val bestActivities = uiState.currentData.bestActivities
-    val worstActivities = uiState.currentData.worstActivities
 
     Scaffold(
         topBar = {
@@ -147,10 +152,14 @@ fun StatisticsScreen(
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
                         TabItem(stringResource(R.string.monthly), uiState.isMonthly, onClick = {
-                            scope.launch { pagerState.animateScrollToPage(0) }
+                            scope.launch { 
+                                pagerState.animateScrollToPage(0)
+                            }
                         })
                         TabItem(stringResource(R.string.annual), !uiState.isMonthly, onClick = {
-                            scope.launch { pagerState.animateScrollToPage(1) }
+                            scope.launch { 
+                                pagerState.animateScrollToPage(1)
+                            }
                         })
                     }
 
@@ -197,6 +206,12 @@ fun StatisticsScreen(
                     verticalAlignment = Alignment.Top,
                     beyondViewportPageCount = 1
                 ) { page ->
+                    val pageData = if (page == 0) uiState.monthlyData else uiState.annualData
+                    val stats = pageData.stats
+                    val frequentlyRecorded = pageData.frequentlyRecorded
+                    val bestActivities = pageData.bestActivities
+                    val worstActivities = pageData.worstActivities
+
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -338,7 +353,7 @@ fun StatisticsScreen(
                 }
 
                 // Show a small loader overlay if needed
-                if (uiState.isLoading && uiState.currentData.stats == null) {
+                if (uiState.isLoading && uiState.monthlyData.stats == null && uiState.annualData.stats == null) {
                     CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center),
                         color = MaterialTheme.colorScheme.primary

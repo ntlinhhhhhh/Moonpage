@@ -678,7 +678,7 @@ fun StoreTabs(
                     (currentPage + 1).coerceAtMost(tabPositions.lastIndex)
                 }
                 val absFraction = kotlin.math.abs(fraction)
-                
+
                 val interpolatedOffset = androidx.compose.ui.unit.lerp(
                     tabPositions[currentPage].left,
                     tabPositions[targetPage].left,
@@ -689,7 +689,7 @@ fun StoreTabs(
                     tabPositions[targetPage].width,
                     absFraction
                 )
-                
+
                 Box(
                     Modifier
                         .wrapContentSize(Alignment.BottomStart)
@@ -729,7 +729,7 @@ fun CustomThemeTabContent(
     onCreateClick: () -> Unit
 ) {
     var isExpanded by remember { mutableStateOf(false) }
-    
+
     LaunchedEffect(isActive) {
         if (!isActive) isExpanded = false
     }
@@ -1314,7 +1314,7 @@ fun MyThemeTabContent(
 ) {
     var otherThemesVisibleCount by remember { mutableIntStateOf(3) }
     var customThemesVisibleCount by remember { mutableIntStateOf(4) }
-    
+
     LaunchedEffect(isActive) {
         if (!isActive) {
             otherThemesVisibleCount = 3
@@ -1449,10 +1449,10 @@ fun CollectionsTabContent(
 ) {
     val purchasedThemes = remember(themes) { themes.filter { it.isOwned } }
     val unpurchasedThemes = remember(themes) { themes.filter { !it.isOwned } }
-    
+
     var isPurchasedExpanded by remember { mutableStateOf(false) }
     var isUnpurchasedExpanded by remember { mutableStateOf(false) }
-    
+
     LaunchedEffect(isActive) {
         if (!isActive) {
             isPurchasedExpanded = false
@@ -1501,7 +1501,7 @@ fun CollectionsTabContent(
                 }
             }
         }
-        
+
         if (unpurchasedThemes.isNotEmpty()) {
             item {
                 Text(
