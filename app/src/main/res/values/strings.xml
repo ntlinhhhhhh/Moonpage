@@ -854,7 +854,7 @@
     <string name="daily_summary_title">Daily Summary</string>
     <string name="unknown">Unknown</string>
     <string name="unknown_artist">Unknown Artist</string>
-    <string name="user_fallback">User</string>
+    <string name="user_fallback">User Information</string>
     <string name="auth_provider_password">Password</string>
     <string name="notification_default_body">You have a new message!</string>
     <string name="location_error">Location error</string>
