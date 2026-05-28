@@ -211,7 +211,10 @@ class CustomThemeEditorViewModel @Inject constructor(
     }
 
     fun cancelPendingBackground() {
-        _uiState.update { it.copy(pendingBackgroundUri = null) }
+        _uiState.update { it.copy(
+            pendingBackgroundUri = null,
+            currentScreen = EditorScreenState.Home
+        ) }
     }
 
     fun setSolidBackgroundColor(color: Long) {
@@ -334,8 +337,12 @@ class CustomThemeEditorViewModel @Inject constructor(
 
     fun addColorToRecent(color: Long) {
         _uiState.update { state ->
-            val updated = listOf(color) + state.recentColors.filter { it != color }
-            state.copy(recentColors = updated.take(10))
+            if (state.recentColors.contains(color)) {
+                state // Bỏ qua, không lưu trùng lặp và không đẩy lên đầu
+            } else {
+                val updated = listOf(color) + state.recentColors
+                state.copy(recentColors = updated.take(10))
+            }
         }
     }
 
