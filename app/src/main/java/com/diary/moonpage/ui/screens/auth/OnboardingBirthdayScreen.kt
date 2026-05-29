@@ -12,6 +12,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBackIosNew
+import androidx.compose.material.icons.rounded.Cake
+import androidx.compose.material.icons.rounded.Celebration
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -100,7 +102,7 @@ fun OnboardingBirthdayScreen(
     val haptic = LocalHapticFeedback.current
 
     val progressAnim by animateFloatAsState(
-        targetValue = 0.5f,
+        targetValue = 0.2f,
         animationSpec = tween(600),
         label = "progress"
     )
@@ -111,32 +113,10 @@ fun OnboardingBirthdayScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // ── Top bar ──────────────────────────────────────────────────────
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(
-                        Icons.Rounded.ArrowBackIosNew,
-                        contentDescription = stringResource(R.string.back),
-                        tint = colorScheme.onBackground
-                    )
-                }
-                LinearProgressIndicator(
-                    progress = { progressAnim },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(6.dp)
-                        .padding(horizontal = 8.dp),
-                    color = colorScheme.primary,
-                    trackColor = colorScheme.primary.copy(alpha = 0.15f),
-                    strokeCap = StrokeCap.Round
-                )
-                Spacer(modifier = Modifier.width(48.dp))
-            }
+            OnboardingTopBar(
+                currentStep = 1,
+                onNavigateBack = onNavigateBack
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -147,13 +127,34 @@ fun OnboardingBirthdayScreen(
                     .padding(horizontal = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Line 1: Text
                 Text(
-                    text = stringResource(R.string.happy_birthday),
+                    text = stringResource(R.string.onboarding_happy_birthday_line1),
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.ExtraBold,
                     color = colorScheme.onBackground,
                     textAlign = TextAlign.Center
                 )
+                // Line 2: Two icons
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Cake,
+                        contentDescription = null,
+                        tint = colorScheme.primary,
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Icon(
+                        imageVector = Icons.Rounded.Celebration,
+                        contentDescription = null,
+                        tint = colorScheme.primary,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = stringResource(R.string.when_born),
@@ -249,7 +250,7 @@ fun OnboardingBirthdayScreen(
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.continue_btn),
+                    text = stringResource(R.string.next),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )

@@ -44,6 +44,12 @@ class OnboardingViewModel @Inject constructor(
         }
     }
 
+    fun saveSpecialBlocks(music: Boolean, sleep: Boolean, steps: Boolean, menstruation: Boolean) {
+        viewModelScope.launch {
+            settingsPreferencesManager.setSpecialBlocksEnabled(music, sleep, steps, menstruation)
+        }
+    }
+
     suspend fun isReminderSet(): Boolean {
         return settingsPreferencesManager.isReminderEnabled.first()
     }

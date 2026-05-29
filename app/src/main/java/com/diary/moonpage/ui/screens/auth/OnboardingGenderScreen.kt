@@ -71,8 +71,9 @@ fun OnboardingGenderScreen(
 ) {
     val colorScheme = MaterialTheme.colorScheme
 
+    // Step 2 of 5 → 0.4f
     val progressAnim by animateFloatAsState(
-        targetValue = 1f,
+        targetValue = 0.4f,
         animationSpec = tween(600),
         label = "progress"
     )
@@ -83,32 +84,10 @@ fun OnboardingGenderScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // ── Top bar ──────────────────────────────────────────────────────
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(
-                        Icons.Rounded.ArrowBackIosNew,
-                        contentDescription = stringResource(R.string.back),
-                        tint = colorScheme.onBackground
-                    )
-                }
-                LinearProgressIndicator(
-                    progress = { progressAnim },
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(6.dp)
-                        .padding(horizontal = 8.dp),
-                    color = colorScheme.primary,
-                    trackColor = colorScheme.primary.copy(alpha = 0.2f),
-                    strokeCap = StrokeCap.Round
-                )
-                Spacer(modifier = Modifier.width(48.dp))
-            }
+            OnboardingTopBar(
+                currentStep = 2,
+                onNavigateBack = onNavigateBack
+            )
 
             // ── Content ──────────────────────────────────────────────────────
             Column(
@@ -135,7 +114,7 @@ fun OnboardingGenderScreen(
 
                 Spacer(modifier = Modifier.height(48.dp))
 
-                // Options
+                // Gender options
                 GENDER_OPTIONS.forEach { option ->
                     val isSelected = selectedGender == option.value
                     GenderCard(
@@ -148,7 +127,7 @@ fun OnboardingGenderScreen(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // Finish button
+                // Next button (Step 2 → Step 3)
                 Button(
                     onClick = onFinish,
                     enabled = selectedGender.isNotEmpty(),
@@ -166,7 +145,7 @@ fun OnboardingGenderScreen(
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
                 ) {
                     Text(
-                        text = stringResource(R.string.finish_onboarding),
+                        text = stringResource(R.string.next),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -183,7 +162,7 @@ private fun GenderCard(
     onClick: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()

@@ -5,6 +5,8 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -114,123 +117,137 @@ fun OnboardingReminderScreen(
     onNavigateBack: () -> Unit,
     onFinish: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // Back Button
-        Box(modifier = Modifier.fillMaxWidth()) {
-            IconButton(onClick = onNavigateBack, modifier = Modifier.align(Alignment.CenterStart)) {
-                Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = stringResource(R.string.back), modifier = Modifier.size(20.dp))
-            }
-        }
+    val colorScheme = MaterialTheme.colorScheme
 
-        Spacer(modifier = Modifier.height(40.dp))
+    // Step 5 of 5 → 1.0f
+    val progressAnim by animateFloatAsState(
+        targetValue = 1.0f,
+        animationSpec = tween(600),
+        label = "progress"
+    )
 
-        // Icon
-        Surface(
-            modifier = Modifier.size(100.dp),
-            shape = RoundedCornerShape(24.dp),
-            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = Icons.Rounded.Alarm,
-                    contentDescription = null,
-                    modifier = Modifier.size(48.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Header
-        Text(
-            text = stringResource(R.string.daily_reflection_title),
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        
-        Spacer(modifier = Modifier.height(12.dp))
-        
-        Text(
-            text = stringResource(R.string.reminder_question),
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-            lineHeight = 24.sp
-        )
-
-        Spacer(modifier = Modifier.height(48.dp))
-
-        // Time Display/Button
-        Surface(
+    Scaffold(containerColor = colorScheme.background) { padding ->
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(80.dp)
-                .padding(horizontal = 24.dp),
-            shape = RoundedCornerShape(20.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-            onClick = onTimeClick
+                .fillMaxSize()
+                .padding(padding),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(
-                    text = String.format("%02d:%02d", selectedHour, selectedMinute),
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
-                    letterSpacing = 4.sp
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        // Finish Button
-        Button(
-            onClick = onFinish,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ),
-            elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.get_started),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+            // ── Top bar ──────────────────────────────────────────
+            OnboardingTopBar(
+                currentStep = 5,
+                onNavigateBack = onNavigateBack
             )
-        }
 
-        if (showTimePicker) {
-            DatePickerDialog(
-                onDismissRequest = onTimePickerDismiss,
-                confirmButton = {
-                    TextButton(onClick = onTimePickerConfirm) {
-                        Text(stringResource(R.string.confirm))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = onTimePickerDismiss) {
-                        Text(stringResource(R.string.cancel))
-                    }
-                }
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Alarm icon
+            Surface(
+                modifier = Modifier.size(100.dp),
+                shape = RoundedCornerShape(24.dp),
+                color = colorScheme.primary.copy(alpha = 0.1f)
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 24.dp),
-                    contentAlignment = Alignment.Center
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Rounded.Alarm,
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp),
+                        tint = colorScheme.primary
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            // Header
+            Text(
+                text = stringResource(R.string.daily_reflection_title),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = colorScheme.onBackground
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = stringResource(R.string.reminder_question),
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+                color = colorScheme.onBackground.copy(alpha = 0.6f),
+                lineHeight = 24.sp,
+                modifier = Modifier.padding(horizontal = 32.dp)
+            )
+
+            Spacer(modifier = Modifier.height(48.dp))
+
+            // ── Time Display — LARGE & BOLD ───────────────────────────────────
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp)
+                    .padding(horizontal = 32.dp),
+                shape = RoundedCornerShape(24.dp),
+                color = colorScheme.primary.copy(alpha = 0.08f),
+                onClick = onTimeClick
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = String.format("%02d:%02d", selectedHour, selectedMinute),
+                        fontSize = 52.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = colorScheme.onBackground,
+                        letterSpacing = 2.sp,
+                        style = MaterialTheme.typography.displaySmall
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            // ── Done Button ───────────────────────────────────────────────────
+            Button(
+                onClick = onFinish,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 24.dp)
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colorScheme.primary,
+                    contentColor = colorScheme.onPrimary
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.done),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            // ── Time Picker Dialog ────────────────────────────────────────────
+            if (showTimePicker) {
+                DatePickerDialog(
+                    onDismissRequest = onTimePickerDismiss,
+                    confirmButton = {
+                        TextButton(onClick = onTimePickerConfirm) {
+                            Text(stringResource(R.string.confirm))
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = onTimePickerDismiss) {
+                            Text(stringResource(R.string.cancel))
+                        }
+                    }
                 ) {
-                    MoonTimePicker(state = timePickerState)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        MoonTimePicker(state = timePickerState)
+                    }
                 }
             }
         }

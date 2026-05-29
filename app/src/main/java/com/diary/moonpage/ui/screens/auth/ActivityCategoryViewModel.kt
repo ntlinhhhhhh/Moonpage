@@ -39,6 +39,15 @@ class ActivityCategoryViewModel @Inject constructor(
         }
     }
 
+    fun selectAll() {
+        val allKeys = com.diary.moonpage.ui.screens.auth.ALL_ACTIVITY_CATEGORIES.map { it.key }.toSet()
+        _uiState.update { it.copy(enabledCategories = allKeys) }
+    }
+
+    fun deselectAll() {
+        _uiState.update { it.copy(enabledCategories = emptySet()) }
+    }
+
     fun save(onDone: () -> Unit) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }

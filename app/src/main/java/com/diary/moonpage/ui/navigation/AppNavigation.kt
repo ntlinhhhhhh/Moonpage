@@ -243,13 +243,14 @@ fun AppNavigation(
                     ScreenWrapper(Screen.OnboardingGender.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         OnboardingGenderRoute(
                             viewModel = onboardingViewModel,
-                            onNavigateBack = { 
+                            onNavigateBack = {
                                 if (!navController.popBackStack()) {
                                     navController.navigate(Screen.OnboardingBirthday.route)
                                 }
                             },
                             onFinish = {
-                                navController.navigate(Screen.OnboardingReminder.route)
+                                // Step 2 → Step 3 (Activity Category)
+                                navController.navigate(Screen.ActivityCategorySelection.route)
                             }
                         )
                     }
@@ -259,20 +260,16 @@ fun AppNavigation(
                     ScreenWrapper(Screen.OnboardingReminder.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         OnboardingReminderRoute(
                             viewModel = onboardingViewModel,
-                            onNavigateBack = { 
+                            onNavigateBack = {
                                 if (!navController.popBackStack()) {
-                                    navController.navigate(Screen.OnboardingGender.route)
+                                    navController.navigate(Screen.OnboardingSpecialBlocks.route)
                                 }
                             },
                             onFinish = {
-                                scope.launch {
-                                    val onboardingDone = authViewModel.checkOnboardingForCurrentUser()
-                                    if (onboardingDone) {
-                                        navController.navigate(Screen.Calendar.route) {
-                                            popUpTo(0) { inclusive = true }
-                                        }
-                                    } else {
-                                        navController.navigate(Screen.ActivityCategorySelection.route)
+                                // Step 5 Done → Mark onboarding complete & go to Calendar
+                                onboardingViewModel.saveProfile {
+                                    navController.navigate(Screen.Calendar.route) {
+                                        popUpTo(0) { inclusive = true }
                                     }
                                 }
                             }
@@ -284,11 +281,34 @@ fun AppNavigation(
                     ScreenWrapper(Screen.ActivityCategorySelection.route, mainAppRoutes, totalBottomPadding, paddingValues) {
                         ActivityCategorySelectionRoute(
                             viewModel = activityCategoryViewModel,
+                            onNavigateBack = {
+                                if (!navController.popBackStack()) {
+                                    navController.navigate(Screen.OnboardingGender.route)
+                                }
+                            },
                             onNext = {
-                                navController.navigate(Screen.Calendar.route) { popUpTo(0) { inclusive = true } }
+                                // Step 3 → Step 4 (Special Blocks)
+                                navController.navigate(Screen.OnboardingSpecialBlocks.route)
                             },
                             onSkip = {
-                                navController.navigate(Screen.Calendar.route) { popUpTo(0) { inclusive = true } }
+                                // Skip with defaults → Step 4
+                                navController.navigate(Screen.OnboardingSpecialBlocks.route)
+                            }
+                        )
+                    }
+                }
+
+                composable(Screen.OnboardingSpecialBlocks.route) {
+                    ScreenWrapper(Screen.OnboardingSpecialBlocks.route, mainAppRoutes, totalBottomPadding, paddingValues) {
+                        OnboardingSpecialBlocksRoute(
+                            onNavigateBack = {
+                                if (!navController.popBackStack()) {
+                                    navController.navigate(Screen.ActivityCategorySelection.route)
+                                }
+                            },
+                            onNext = {
+                                // Step 4 → Step 5 (Daily Reminder)
+                                navController.navigate(Screen.OnboardingReminder.route)
                             }
                         )
                     }

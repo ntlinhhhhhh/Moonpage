@@ -710,50 +710,56 @@ private fun DailyLogMainContent(
         }
 
         // 6. Music Section
-        item {
-            DailyMusicSection(
-                musicTitle = uiState.musicTitle,
-                artistName = uiState.artistName,
-                albumArtUrl = uiState.albumArtUrl,
-                isLinked = uiState.isSpotifyLinked,
-                recentTracks = uiState.recentTracks,
-                onMusicClick = onNavigateToMusic,
-                onLinkAccount = onLinkMusicAccount,
-                onTrackSelected = { track ->
-                    onEvent(DailyLogUiEvent.OnMusicSelected(
-                        title = track.name,
-                        artist = track.artists.firstOrNull()?.name ?: unknownArtist,
-                        imageUrl = track.album.images.firstOrNull()?.url ?: ""
-                    ))
-                }
-            )
+        if (uiState.isMusicSectionEnabled) {
+            item {
+                DailyMusicSection(
+                    musicTitle = uiState.musicTitle,
+                    artistName = uiState.artistName,
+                    albumArtUrl = uiState.albumArtUrl,
+                    isLinked = uiState.isSpotifyLinked,
+                    recentTracks = uiState.recentTracks,
+                    onMusicClick = onNavigateToMusic,
+                    onLinkAccount = onLinkMusicAccount,
+                    onTrackSelected = { track ->
+                        onEvent(DailyLogUiEvent.OnMusicSelected(
+                            title = track.name,
+                            artist = track.artists.firstOrNull()?.name ?: unknownArtist,
+                            imageUrl = track.album.images.firstOrNull()?.url ?: ""
+                        ))
+                    }
+                )
+            }
         }
 
         // 7. Sleep Section
-        item {
-            DailySleepSection(
-                sleepHours = uiState.sleepHours,
-                bedTime = uiState.sleepBedTime,
-                wakeTime = uiState.sleepWakeTime,
-                isImporting = uiState.isImportingHealth,
-                onSleepClick = { onEvent(DailyLogUiEvent.OnSleepRecordClick) },
-                onImportClick = onImportSteps
-            )
+        if (uiState.isSleepSectionEnabled) {
+            item {
+                DailySleepSection(
+                    sleepHours = uiState.sleepHours,
+                    bedTime = uiState.sleepBedTime,
+                    wakeTime = uiState.sleepWakeTime,
+                    isImporting = uiState.isImportingHealth,
+                    onSleepClick = { onEvent(DailyLogUiEvent.OnSleepRecordClick) },
+                    onImportClick = onImportSteps
+                )
+            }
         }
 
         // 8. Health/Steps Section
-        item {
-            DailyHealthSection(
-                steps = uiState.steps,
-                calories = uiState.calories,
-                distance = uiState.distance,
-                isImporting = uiState.isImportingHealth,
-                onImportClick = onImportSteps
-            )
+        if (uiState.isStepsSectionEnabled) {
+            item {
+                DailyHealthSection(
+                    steps = uiState.steps,
+                    calories = uiState.calories,
+                    distance = uiState.distance,
+                    isImporting = uiState.isImportingHealth,
+                    onImportClick = onImportSteps
+                )
+            }
         }
 
         val isMale = uiState.gender == "Male" || uiState.gender == "Nam"
-        if (!isMale) {
+        if (!isMale && uiState.isMenstruationSectionEnabled) {
             item {
                 DailyMenstruationSection(
                     isMenstruation = uiState.isMenstruation,
@@ -907,11 +913,12 @@ private fun DailyMoodSection(
 }
 
 @Composable
-private fun DailyMusicSection(
+fun DailyMusicSection(
     musicTitle: String?, 
     artistName: String?,
-    albumArtUrl: String?,
+    albumArtUrl: Any?,
     isLinked: Boolean,
+    showActionLink: Boolean = true,
     recentTracks: List<com.diary.moonpage.data.remote.api.SpotifyTrack> = emptyList(),
     onMusicClick: () -> Unit, 
     onLinkAccount: () -> Unit,
@@ -923,21 +930,23 @@ private fun DailyMusicSection(
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.daily_log_music_title), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 16.sp)
-                if (!isLinked) {
-                    Text(
-                        stringResource(R.string.daily_log_link_account),
-                        fontSize = 11.sp, 
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) { onLinkAccount() }
-                    )
-                } else {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Rounded.CheckCircle, null, tint = MoonTheme.customColors.successColor, modifier = Modifier.size(14.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(stringResource(R.string.daily_log_spotify_linked), fontSize = 11.sp, color = MoonTheme.customColors.successColor)
+                if (showActionLink) {
+                    if (!isLinked) {
+                        Text(
+                            stringResource(R.string.daily_log_link_account),
+                            fontSize = 11.sp, 
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) { onLinkAccount() }
+                        )
+                    } else {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Rounded.CheckCircle, null, tint = MoonTheme.customColors.successColor, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(stringResource(R.string.daily_log_spotify_linked), fontSize = 11.sp, color = MoonTheme.customColors.successColor)
+                        }
                     }
                 }
             }
@@ -1167,23 +1176,25 @@ fun DailyLogGrid(
 }
 
 @Composable
-private fun DailyHealthSection(steps: Int, calories: Int, distance: Double, isImporting: Boolean, onImportClick: () -> Unit) {
+fun DailyHealthSection(steps: Int, calories: Int, distance: Double, isImporting: Boolean, showActionLink: Boolean = true, onImportClick: () -> Unit) {
     Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg), modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.daily_log_health_steps), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg, fontSize = 16.sp)
-                if (isImporting) {
-                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                } else {
-                    Text(
-                        stringResource(R.string.daily_log_import),
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) { onImportClick() }
-                    )
+                if (showActionLink) {
+                    if (isImporting) {
+                        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text(
+                            stringResource(R.string.daily_log_import),
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) { onImportClick() }
+                        )
+                    }
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
@@ -1216,11 +1227,12 @@ private fun DailyHealthSection(steps: Int, calories: Int, distance: Double, isIm
 }
 
 @Composable
-private fun DailySleepSection(
+fun DailySleepSection(
     sleepHours: Float,
     bedTime: LocalTime,
     wakeTime: LocalTime,
     isImporting: Boolean,
+    showActionLink: Boolean = true,
     onSleepClick: () -> Unit,
     onImportClick: () -> Unit
 ) {
@@ -1236,18 +1248,20 @@ private fun DailySleepSection(
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.sleep_label), fontWeight = FontWeight.Bold, color = MoonTheme.customColors.logCardOnBg)
-                if (isImporting) {
-                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                } else {
-                    Text(
-                        stringResource(R.string.daily_log_import),
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) { onImportClick() }
-                    )
+                if (showActionLink) {
+                    if (isImporting) {
+                        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text(
+                            stringResource(R.string.daily_log_import),
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) { onImportClick() }
+                        )
+                    }
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
@@ -1339,7 +1353,7 @@ fun HealthStatItem(modifier: Modifier, label: String, value: String, icon: andro
 }
 
 @Composable
-private fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean) -> Unit, onMenstrualClick: () -> Unit) {
+fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean) -> Unit, onMenstrualClick: () -> Unit) {
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MoonTheme.customColors.logCardBg),

@@ -1,5 +1,7 @@
 package com.diary.moonpage.ui.screens.auth
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,12 +11,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -63,6 +69,7 @@ val ALL_ACTIVITY_CATEGORIES = listOf(
 @Composable
 fun ActivityCategorySelectionRoute(
     viewModel: ActivityCategoryViewModel = hiltViewModel(),
+    onNavigateBack: () -> Unit,
     onNext: () -> Unit,
     onSkip: () -> Unit
 ) {
@@ -71,8 +78,17 @@ fun ActivityCategorySelectionRoute(
     ActivityCategorySelectionScreen(
         uiState = uiState,
         onToggleCategory = viewModel::toggle,
-        onSave = { viewModel.save(onDone = onNext) },
-        onSaveDefaults = { viewModel.saveDefaults(onDone = onSkip) }
+        onSelectAll = { viewModel.selectAll() },
+        onDeselectAll = { viewModel.deselectAll() },
+        // If nothing selected, automatically save defaults (don't leave empty)
+        onSave = {
+            if (uiState.enabledCategories.isEmpty()) {
+                viewModel.saveDefaults(onDone = onNext)
+            } else {
+                viewModel.save(onDone = onNext)
+            }
+        },
+        onNavigateBack = onNavigateBack
     )
 }
 
@@ -83,10 +99,21 @@ fun ActivityCategorySelectionRoute(
 fun ActivityCategorySelectionScreen(
     uiState: ActivityCategoryUiState,
     onToggleCategory: (String) -> Unit,
+    onSelectAll: () -> Unit,
+    onDeselectAll: () -> Unit,
     onSave: () -> Unit,
-    onSaveDefaults: () -> Unit
+    onNavigateBack: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
+    val allKeys = ALL_ACTIVITY_CATEGORIES.map { it.key }.toSet()
+    val isAllSelected = uiState.enabledCategories.containsAll(allKeys)
+
+    // Step 3 of 5 → 0.6f
+    val progressAnim by animateFloatAsState(
+        targetValue = 0.6f,
+        animationSpec = tween(600),
+        label = "progress"
+    )
 
     Scaffold(
         containerColor = colorScheme.background,
@@ -121,31 +148,30 @@ fun ActivityCategorySelectionScreen(
                         Text(stringResource(R.string.next), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                     }
                 }
-
-                Spacer(modifier = Modifier.height(4.dp))
-                TextButton(
-                    onClick = onSaveDefaults,
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !uiState.isLoading
-                ) {
-                    Text(stringResource(R.string.skip_for_now), color = colorScheme.onBackground.copy(alpha = 0.45f), style = MaterialTheme.typography.bodySmall)
-                }
             }
         }
     ) { padding ->
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+                .padding(padding)
         ) {
-            // Header
+            OnboardingTopBar(
+                currentStep = 3,
+                onNavigateBack = onNavigateBack
+            )
+
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+            // Header & Select All
             item {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 16.dp),
+                        .padding(vertical = 0.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
@@ -161,13 +187,37 @@ fun ActivityCategorySelectionScreen(
                         color = colorScheme.onBackground.copy(alpha = 0.55f)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    TextButton(onClick = {}) {
-                        Text(
-                            text = stringResource(R.string.what_am_i_choosing),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = colorScheme.onBackground.copy(alpha = 0.55f),
-                            fontSize = 13.sp
-                        )
+                    
+                    // "What am I choosing" and "Select All" closer together
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextButton(
+                            onClick = {},
+                            contentPadding = PaddingValues(horizontal = 8.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.what_am_i_choosing),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = colorScheme.onBackground.copy(alpha = 0.55f),
+                                fontSize = 13.sp
+                            )
+                        }
+                        
+                        TextButton(
+                            onClick = { if (isAllSelected) onDeselectAll() else onSelectAll() },
+                            enabled = !uiState.isLoading,
+                            contentPadding = PaddingValues(horizontal = 8.dp)
+                        ) {
+                            Text(
+                                text = if (isAllSelected) stringResource(R.string.deselect_all) else stringResource(R.string.select_all),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = if (isAllSelected) colorScheme.primary else colorScheme.onBackground.copy(alpha = 0.6f),
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
                 }
             }
@@ -185,6 +235,7 @@ fun ActivityCategorySelectionScreen(
             item { Spacer(modifier = Modifier.height(8.dp)) }
         }
     }
+}
 }
 
 // ── Category Card ─────────────────────────────────────────────────────────────
@@ -214,18 +265,18 @@ private fun ActivityCategoryCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+                .padding(horizontal = 16.dp, vertical = 18.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Checkbox circle
             Box(
-                modifier = Modifier.size(28.dp),
+                modifier = Modifier.size(22.dp),
                 contentAlignment = Alignment.Center
             ) {
                 if (isSelected) {
                     Box(
                         modifier = Modifier
-                            .size(28.dp)
+                            .size(22.dp)
                             .background(colorScheme.primary, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
@@ -233,13 +284,13 @@ private fun ActivityCategoryCard(
                             Icons.Rounded.Check,
                             contentDescription = null,
                             tint = colorScheme.onPrimary,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(12.dp)
                         )
                     }
                 } else {
                     Box(
                         modifier = Modifier
-                            .size(28.dp)
+                            .size(22.dp)
                             .border(2.dp, colorScheme.onBackground.copy(alpha = 0.25f), CircleShape)
                     )
                 }

@@ -24,6 +24,12 @@ class SettingsPreferencesManager @Inject constructor(
         private val REMINDER_TIME_KEY = stringPreferencesKey("reminder_time")
         private val IS_REMINDER_ENABLED_KEY = booleanPreferencesKey("is_reminder_enabled")
         private val IS_TUTORIAL_COMPLETED_KEY = booleanPreferencesKey("is_tutorial_completed")
+        
+        // Special blocks
+        private val IS_MUSIC_ENABLED_KEY = booleanPreferencesKey("is_music_enabled")
+        private val IS_SLEEP_ENABLED_KEY = booleanPreferencesKey("is_sleep_enabled")
+        private val IS_STEPS_ENABLED_KEY = booleanPreferencesKey("is_steps_enabled")
+        private val IS_MENSTRUATION_ENABLED_KEY = booleanPreferencesKey("is_menstruation_enabled")
     }
 
     val language: Flow<String> = context.settingsDataStore.data.map { preferences ->
@@ -52,6 +58,22 @@ class SettingsPreferencesManager @Inject constructor(
 
     val isBiometricEnabled: Flow<Boolean> = context.settingsDataStore.data.map { preferences ->
         preferences[IS_BIOMETRIC_ENABLED_KEY] ?: false
+    }
+
+    val isMusicEnabled: Flow<Boolean> = context.settingsDataStore.data.map { preferences ->
+        preferences[IS_MUSIC_ENABLED_KEY] ?: true // Default true
+    }
+
+    val isSleepEnabled: Flow<Boolean> = context.settingsDataStore.data.map { preferences ->
+        preferences[IS_SLEEP_ENABLED_KEY] ?: true // Default true
+    }
+
+    val isStepsEnabled: Flow<Boolean> = context.settingsDataStore.data.map { preferences ->
+        preferences[IS_STEPS_ENABLED_KEY] ?: true // Default true
+    }
+
+    val isMenstruationEnabled: Flow<Boolean> = context.settingsDataStore.data.map { preferences ->
+        preferences[IS_MENSTRUATION_ENABLED_KEY] ?: true // Default true
     }
 
     suspend fun setReminderTime(time: String) {
@@ -104,6 +126,15 @@ class SettingsPreferencesManager @Inject constructor(
     suspend fun setTutorialCompleted(completed: Boolean) {
         context.settingsDataStore.edit { preferences ->
             preferences[IS_TUTORIAL_COMPLETED_KEY] = completed
+        }
+    }
+
+    suspend fun setSpecialBlocksEnabled(music: Boolean, sleep: Boolean, steps: Boolean, menstruation: Boolean) {
+        context.settingsDataStore.edit { preferences ->
+            preferences[IS_MUSIC_ENABLED_KEY] = music
+            preferences[IS_SLEEP_ENABLED_KEY] = sleep
+            preferences[IS_STEPS_ENABLED_KEY] = steps
+            preferences[IS_MENSTRUATION_ENABLED_KEY] = menstruation
         }
     }
 

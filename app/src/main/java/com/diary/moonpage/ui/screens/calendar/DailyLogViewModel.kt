@@ -66,7 +66,8 @@ class DailyLogViewModel @Inject constructor(
     val healthConnectManager: HealthConnectManager,
     @ApplicationContext private val context: Context,
     private val speechToTextManager: SpeechToTextManager,
-    private val languagePreferencesManager: LanguagePreferencesManager
+    private val languagePreferencesManager: LanguagePreferencesManager,
+    private val settingsPreferencesManager: com.diary.moonpage.core.util.SettingsPreferencesManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DailyLogUiState())
@@ -108,6 +109,26 @@ class DailyLogViewModel @Inject constructor(
         viewModelScope.launch {
             userRepository.currentUser.collect { user ->
                 _uiState.update { it.copy(gender = user?.gender) }
+            }
+        }
+        viewModelScope.launch {
+            settingsPreferencesManager.isMusicEnabled.collect { isEnabled ->
+                _uiState.update { it.copy(isMusicSectionEnabled = isEnabled) }
+            }
+        }
+        viewModelScope.launch {
+            settingsPreferencesManager.isSleepEnabled.collect { isEnabled ->
+                _uiState.update { it.copy(isSleepSectionEnabled = isEnabled) }
+            }
+        }
+        viewModelScope.launch {
+            settingsPreferencesManager.isStepsEnabled.collect { isEnabled ->
+                _uiState.update { it.copy(isStepsSectionEnabled = isEnabled) }
+            }
+        }
+        viewModelScope.launch {
+            settingsPreferencesManager.isMenstruationEnabled.collect { isEnabled ->
+                _uiState.update { it.copy(isMenstruationSectionEnabled = isEnabled) }
             }
         }
         observeData()
