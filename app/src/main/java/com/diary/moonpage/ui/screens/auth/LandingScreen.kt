@@ -50,6 +50,7 @@ fun LandingScreen(
         easing = FastOutSlowInEasing
     )
     val settledPage by remember { derivedStateOf { pagerState.settledPage } }
+    val introPage by remember { derivedStateOf { pagerState.targetPage.coerceIn(0, 3) } }
     val isVietnamese = androidx.appcompat.app.AppCompatDelegate.getApplicationLocales()
         .toLanguageTags()
         .startsWith("vi")
@@ -66,9 +67,9 @@ fun LandingScreen(
     LaunchedEffect(settledPage) {
         val duration = when (settledPage) {
             0 -> 8000L // Slide 1: Mood Logging (complex animation)
-            1 -> 4000L // Slide 2: Beautiful Logging (single screen)
-            2 -> 10000L // Slide 3: Monthly Themes (5 themes)
-            3 -> 8000L // Slide 4: Advanced Stats (2 frames)
+            1 -> 3600L // Slide 2: Beautiful Logging (single screen)
+            2 -> 9200L // Slide 3: Monthly Themes (5 themes)
+            3 -> 7600L // Slide 4: Advanced Stats (2 frames)
             else -> 6000L
         }
         delay(duration)
@@ -109,7 +110,7 @@ fun LandingScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         LandingSlideIntro(
-            currentPage = settledPage,
+            currentPage = introPage,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
@@ -279,27 +280,11 @@ private fun LandingSlideIntro(
         stringResource(R.string.onboarding_learn_about_you_title) to stringResource(R.string.onboarding_learn_about_you_desc)
     )
 
-    AnimatedContent(
+    Crossfade(
         targetState = currentPage.coerceIn(slideTexts.indices),
-        transitionSpec = {
-            fadeIn(
-                animationSpec = tween(
-                    durationMillis = 480,
-                    delayMillis = 180,
-                    easing = FastOutSlowInEasing
-                )
-            ).togetherWith(
-                fadeOut(
-                    animationSpec = tween(
-                        durationMillis = 180,
-                        easing = FastOutSlowInEasing
-                    )
-                )
-            ).using(SizeTransform(clip = false))
-        },
-        contentAlignment = Alignment.Center,
+        animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
         label = "landing_slide_intro",
-        modifier = modifier.heightIn(min = 92.dp)
+        modifier = modifier.height(92.dp)
     ) { page ->
         val (title, description) = slideTexts[page]
         Column(

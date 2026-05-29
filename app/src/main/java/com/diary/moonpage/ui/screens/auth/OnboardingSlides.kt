@@ -395,7 +395,7 @@ fun OnboardingDailyLogCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         shape = RoundedCornerShape(28.dp)
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
@@ -560,6 +560,8 @@ fun AnnualLookBackSlide(
     showHeader: Boolean = true
 ) {
     var activeThemeIdx by remember { mutableStateOf(0) }
+    val previewCardHeight = 320.dp
+    val themeFrameDuration = 1800L
     val themes = listOf(
         ThemeData(
             stringResource(R.string.onboarding_default_theme),
@@ -600,18 +602,13 @@ fun AnnualLookBackSlide(
 
     LaunchedEffect(isVisible) {
         if (isVisible) {
-            while (true) {
-                activeThemeIdx = 0
-                delay(2000)
-                activeThemeIdx = 1
-                delay(2000)
-                activeThemeIdx = 2
-                delay(2000)
-                activeThemeIdx = 3
-                delay(2000)
-                activeThemeIdx = 4
-                delay(2000)
+            activeThemeIdx = 0
+            for (idx in 1 until themes.size) {
+                delay(themeFrameDuration)
+                activeThemeIdx = idx
             }
+        } else {
+            activeThemeIdx = 0
         }
     }
 
@@ -645,14 +642,17 @@ fun AnnualLookBackSlide(
                 val theme = themes[idx]
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
                     Card(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp)
+                            .height(previewCardHeight),
                         colors = CardDefaults.cardColors(containerColor = Color.White),
                         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                         shape = RoundedCornerShape(24.dp)
                     ) {
                         Column(
                             modifier = Modifier
-                                .fillMaxWidth()
+                                .fillMaxSize()
                                 .background(theme.bgColor)
                                 .padding(vertical = 12.dp, horizontal = 8.dp)
                         ) {
@@ -730,16 +730,6 @@ fun AnnualLookBackSlide(
                                     }
                                 }
                             }
-                            
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Text(
-                                text = theme.name,
-                                modifier = Modifier.fillMaxWidth(),
-                                textAlign = TextAlign.Center,
-                                style = MaterialTheme.typography.labelLarge,
-                                color = theme.accentColor,
-                                fontWeight = FontWeight.Bold
-                            )
                         }
                     }
                 }
@@ -763,15 +753,15 @@ fun AdvancedStatsSlide(
     showHeader: Boolean = true
 ) {
     var activeFrame by remember { mutableStateOf(0) }
+    val previewCardHeight = 320.dp
     
     LaunchedEffect(isVisible) {
         if (isVisible) {
-            while (true) {
-                activeFrame = 0
-                delay(4000)
-                activeFrame = 1
-                delay(4000)
-            }
+            activeFrame = 0
+            delay(3800)
+            activeFrame = 1
+        } else {
+            activeFrame = 0
         }
     }
 
@@ -802,7 +792,10 @@ fun AdvancedStatsSlide(
                 label = "stats_slide"
             ) { frameIdx ->
                 Card(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp)
+                        .height(previewCardHeight),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                     shape = RoundedCornerShape(24.dp)
@@ -829,9 +822,9 @@ fun MoodFlowFrame(isVisible: Boolean) {
         }
     }
 
-    Column(modifier = Modifier.padding(24.dp)) {
+    Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
         Text(stringResource(R.string.mood_flow), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
         
         Box(modifier = Modifier.fillMaxWidth().height(200.dp)) {
             Canvas(modifier = Modifier.fillMaxSize()) {
@@ -951,9 +944,9 @@ fun MoodDistributionFrame(isVisible: Boolean) {
         }
     }
 
-    Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(modifier = Modifier.fillMaxSize().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(stringResource(R.string.mood_bar), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         
         val items = listOf(
             Triple(5, "13%", MoonIcons.Moods.getMoodColor(5, MoonThemeType.DEFAULT)), // Very Happy
@@ -983,7 +976,7 @@ fun MoodDistributionFrame(isVisible: Boolean) {
             }
         }
         
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(30.dp))
         
         // Horizontal Stacked Bar
         Canvas(modifier = Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(22.dp))) {
