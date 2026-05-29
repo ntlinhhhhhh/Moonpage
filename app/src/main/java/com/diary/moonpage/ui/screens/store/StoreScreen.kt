@@ -731,7 +731,7 @@ fun StoreTabs(
                     Text(
                         text = stringResource(titleRes),
                         color = textColor,
-                        fontWeight = if (alpha > 0.5f) FontWeight.Bold else FontWeight.Normal
+                        fontWeight = FontWeight.Bold
                     ) 
                 }
             )

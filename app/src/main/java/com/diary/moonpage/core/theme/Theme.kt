@@ -614,12 +614,16 @@ private fun String?.appearanceObject(mode: String): JSONObject? {
 private fun String?.toThemeColorOrNull(): Color? {
     if (isNullOrBlank()) return null
     return runCatching {
-        val normalized = when {
-            startsWith("0x", ignoreCase = true) -> "#${drop(2)}"
-            startsWith("#") -> this
-            else -> "#$this"
+        var hex = this.trim()
+        if (hex.startsWith("0x", ignoreCase = true)) hex = hex.drop(2)
+        if (hex.startsWith("#")) hex = hex.drop(1)
+        
+        val longColor = hex.toLongOrNull(16) ?: return@runCatching null
+        if (hex.length == 6) {
+            Color(longColor or 0xFF000000)
+        } else {
+            Color(longColor)
         }
-        Color(android.graphics.Color.parseColor(normalized))
     }.getOrNull()
 }
 

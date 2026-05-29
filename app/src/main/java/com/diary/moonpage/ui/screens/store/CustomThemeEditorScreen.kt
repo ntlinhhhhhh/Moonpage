@@ -2017,6 +2017,7 @@ private fun MockAppBottomNavBar(
             MockNavIcon(Icons.Rounded.CalendarMonth, tint = primary, emphasized = emphasizeIcons)
             MockNavIcon(Icons.Rounded.BarChart, tint = primary, emphasized = emphasizeIcons)
             // Icon Camera thay cho dấu +
+            val camSize by animateDpAsState(targetValue = if (emphasizeIcons) 26.dp else 24.dp, label = "camSize")
             Box(
                 modifier = Modifier
                     .size(52.dp)
@@ -2028,7 +2029,7 @@ private fun MockAppBottomNavBar(
                     Icons.Rounded.CameraAlt,
                     contentDescription = null,
                     tint = primary,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(camSize)
                 )
             }
             MockNavIcon(Icons.Rounded.Storefront, tint = primary, emphasized = emphasizeIcons)
@@ -2043,14 +2044,17 @@ private fun MockNavIcon(
     tint: Color,
     emphasized: Boolean = false
 ) {
-    // Chỉ đổi màu khi emphasize (nếu cần), không thay đổi kích thước size
+    val size by animateDpAsState(
+        targetValue = if (emphasized) 32.dp else 26.dp, 
+        label = "iconSize"
+    )
     Icon(
         imageVector = icon,
         contentDescription = null,
         tint = tint,
         modifier = Modifier
             .padding(4.dp)
-            .size(26.dp)
+            .size(size)
     )
 }
 

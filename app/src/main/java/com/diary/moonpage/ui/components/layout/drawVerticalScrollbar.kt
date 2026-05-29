@@ -1,5 +1,5 @@
-package com.diary.moonpage.ui.components.layout
-
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.lazy.LazyListState
@@ -39,11 +39,15 @@ fun Modifier.drawVerticalScrollbar(
             val firstVisibleItemIndex = visibleItemsInfo.first().index
             val scrollbarOffsetY = (firstVisibleItemIndex.toFloat() / totalItemsCount) * this.size.height
 
-            drawRect(
+            val padding = 2.dp.toPx() // padding from edge
+            val adjustedHeight = scrollbarHeight.coerceAtLeast(width.toPx() * 4) // minimum height
+
+            drawRoundRect(
                 color = color,
-                topLeft = Offset(this.size.width - width.toPx(), scrollbarOffsetY),
-                size = Size(width.toPx(), scrollbarHeight),
-                alpha = alpha
+                topLeft = Offset(this.size.width - width.toPx() - padding, scrollbarOffsetY),
+                size = Size(width.toPx(), adjustedHeight),
+                alpha = alpha,
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(width.toPx() / 2f)
             )
         }
     }
@@ -74,11 +78,15 @@ fun Modifier.drawVerticalScrollbar(
             val firstVisibleItemIndex = visibleItemsInfo.first().index
             val scrollbarOffsetY = (firstVisibleItemIndex.toFloat() / totalItemsCount) * this.size.height
 
-            drawRect(
+            val padding = 2.dp.toPx() // padding from edge
+            val adjustedHeight = scrollbarHeight.coerceAtLeast(width.toPx() * 4) // minimum height
+
+            drawRoundRect(
                 color = color,
-                topLeft = Offset(this.size.width - width.toPx(), scrollbarOffsetY),
-                size = Size(width.toPx(), scrollbarHeight),
-                alpha = alpha
+                topLeft = Offset(this.size.width - width.toPx() - padding, scrollbarOffsetY),
+                size = Size(width.toPx(), adjustedHeight),
+                alpha = alpha,
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(width.toPx() / 2f)
             )
         }
     }
