@@ -207,8 +207,17 @@ fun CalendarScreen(
                                 verticalAlignment = Alignment.Top,
                                 beyondViewportPageCount = 1
                             ) { page ->
+                            val scrollState = rememberScrollState()
                             val offset = page - initialPage
                             val pageYearMonth = baseYearMonth.plusMonths(offset.toLong())
+                            
+                            LaunchedEffect(uiState.selectedDate) {
+                                if (uiState.selectedDate != null && java.time.YearMonth.from(uiState.selectedDate) == pageYearMonth && uiState.dailyLogs[uiState.selectedDate] != null) {
+                                    kotlinx.coroutines.delay(600)
+                                    scrollState.animateScrollTo(scrollState.maxValue)
+                                }
+                            }
+                            
                             val currentLanguage = com.diary.moonpage.core.theme.LocalLocale.current
                             val currentMonthName = if (currentLanguage == "vi") {
                                 "Tháng ${pageYearMonth.monthValue} ${pageYearMonth.year}"
@@ -219,7 +228,7 @@ fun CalendarScreen(
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .verticalScroll(rememberScrollState())
+                                    .verticalScroll(scrollState)
                             ) {
                                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -264,6 +273,7 @@ fun CalendarScreen(
                                     exit = fadeOut() + shrinkVertically()
                                 ) {
                                     CalendarSelectedLogDetail(
+                                        modifier = Modifier,
                                         selectedDate = uiState.selectedDate,
                                         dailyLogs = uiState.dailyLogs,
                                         menstruationDays = uiState.menstruationDays,
@@ -429,7 +439,8 @@ fun CalendarSelectedLogDetail(
     onEditLog: (LocalDate) -> Unit,
     onDeleteLog: (LocalDate) -> Unit,
     onShareClick: () -> Unit,
-    onPhotoClick: (String) -> Unit = {}
+    onPhotoClick: (String) -> Unit = {},
+    modifier: Modifier = Modifier
 ) {
     val date = selectedDate ?: return
     val selectedLog = dailyLogs[date] ?: return
@@ -443,7 +454,7 @@ fun CalendarSelectedLogDetail(
         }
     } ?: emptyList()
 
-    Column {
+    Column(modifier = modifier) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
