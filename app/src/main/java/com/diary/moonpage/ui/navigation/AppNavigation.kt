@@ -590,7 +590,14 @@ fun AppNavigation(
                             initialMomentId = momentId,
                             onNavigateToGallery = { navController.navigate(Screen.Gallery.route) },
                             onNavigateToHistory = { navController.navigate(Screen.Gallery.route) },
-                            onNavigateToAccount = { navController.navigate(Screen.Account.route) }
+                            onNavigateToAccount = { navController.navigate(Screen.Account.route) },
+                            onNavigateToCalendar = { dateStr ->
+                                val calendarEntry = runCatching { navController.getBackStackEntry(Screen.Calendar.route) }.getOrNull()
+                                calendarEntry?.savedStateHandle?.set("created_log_date", dateStr)
+                                navController.navigate(Screen.Calendar.route) {
+                                    popUpTo(Screen.Calendar.route) { inclusive = false }
+                                }
+                            }
                         )
                     }
                 }

@@ -64,7 +64,8 @@ fun MomentCameraRoute(
     initialMomentId: String? = null,
     onNavigateToGallery: () -> Unit,
     onNavigateToHistory: () -> Unit,
-    onNavigateToAccount: () -> Unit
+    onNavigateToAccount: () -> Unit,
+    onNavigateToCalendar: (String) -> Unit
 ) {
     if (androidx.compose.ui.platform.LocalInspectionMode.current) {
         // Preview placeholder to avoid Hilt crash
@@ -80,6 +81,7 @@ fun MomentCameraRoute(
         onNavigateToGallery = onNavigateToGallery,
         onNavigateToHistory = onNavigateToHistory,
         onNavigateToAccount = onNavigateToAccount,
+        onNavigateToCalendar = onNavigateToCalendar,
         viewModel = viewModel,
         profileViewModel = profileViewModel
     )
@@ -92,6 +94,7 @@ fun MomentCameraScreen(
     onNavigateToGallery: () -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToAccount: () -> Unit,
+    onNavigateToCalendar: (String) -> Unit,
     viewModel: MomentViewModel,
     profileViewModel: com.diary.moonpage.ui.screens.profile.ProfileViewModel
 ) {
@@ -163,6 +166,7 @@ fun MomentCameraScreen(
             onNavigateToGallery = onNavigateToGallery,
             onNavigateToHistory = onNavigateToHistory,
             onNavigateToAccount = onNavigateToAccount,
+            onNavigateToCalendar = onNavigateToCalendar,
             initialMomentId = initialMomentId,
             snackbarHostState = snackbarHostState,
             avatarUrl = profileState.user?.avatarUrl,
@@ -214,6 +218,7 @@ fun MomentCameraScreenContent(
     onNavigateToGallery: () -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToAccount: () -> Unit,
+    onNavigateToCalendar: (String) -> Unit,
     initialMomentId: String? = null,
     snackbarHostState: SnackbarHostState,
     avatarUrl: String? = null,
@@ -345,6 +350,7 @@ fun MomentCameraScreenContent(
                             onNavigateToGallery = onNavigateToGallery,
                             onBackToCamera = { scope.launch { verticalPagerState.animateScrollToPage(0) } },
                             onNavigateToAccount = onNavigateToAccount,
+                            onNavigateToCalendar = onNavigateToCalendar,
                             initialMomentId = initialMomentId,
                             onShare = { moment -> onEvent(MomentUiEvent.ShareMoment(moment.imageUrl)) },
                             onDownload = { moment -> onEvent(MomentUiEvent.DownloadMoment(moment.imageUrl)) },
