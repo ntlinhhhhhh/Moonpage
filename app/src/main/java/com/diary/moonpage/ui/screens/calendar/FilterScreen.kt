@@ -221,7 +221,7 @@ fun FilterScreen(
                 ) {
                     items(categories) { category ->
                         val isSelected = expandedCategories.contains(category)
-                        val label = if (category == "SelfCare") "Self-Care" else category
+                        val label = com.diary.moonpage.core.util.getTranslatedActivityCategoryName(category)
                         FilterChip(
                             selected = isSelected,
                             onClick = { 

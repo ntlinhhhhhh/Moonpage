@@ -631,6 +631,8 @@
     <string name="pref_show_dates_desc">Hiển thị ngày bên dưới mỗi ngày trong tuần.</string>
     <string name="pref_show_grid">Hiển thị lưới</string>
     <string name="pref_show_grid_desc">Hiển thị lưới tâm trạng tháng đầy đủ.</string>
+    <string name="select_all">Chọn tất cả</string>
+    <string name="deselect_all">Bỏ chọn tất cả</string>
     <!-- Hardcoded UI cleanup -->
     <string name="share_moment">Chia sẻ khoảnh khắc</string>
     <string name="share_photo">Chia sẻ ảnh</string>

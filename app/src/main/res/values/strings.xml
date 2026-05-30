@@ -371,8 +371,6 @@
     <string name="daily_reflection_title">Daily Reflection</string>
     <string name="reminder_question">What time should we remind you\nto write down your day?</string>
     <string name="finish_onboarding">Finish Onboarding</string>
-    <string name="select_all">Select All</string>
-    <string name="deselect_all">Deselect All</string>
     <string name="add_special_blocks_title">Add special blocks?</string>
     <string name="add_special_blocks_subtitle">Easily sync and log your daily life.</string>
     <string name="special_block_weather">Weather</string>
@@ -1058,4 +1056,6 @@
     <string name="customize_blocks">Customize Blocks</string>
     <string name="customize_blocks_desc">Hide or show activity categories in your daily log</string>
     <string name="customize_blocks_hint">Choose which categories appear when you record your day. You can change this at any time.</string>
+    <string name="select_all">Select All</string>
+    <string name="deselect_all">Deselect All</string>
 </resources>
