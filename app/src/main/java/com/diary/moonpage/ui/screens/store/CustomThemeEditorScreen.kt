@@ -214,10 +214,9 @@ fun CustomThemeEditorRoot(
             }
         }
 
-        val darkTheme = isSystemInDarkTheme()
         SideEffect {
             window.statusBarColor = android.graphics.Color.TRANSPARENT
-            insetsController.isAppearanceLightStatusBars = !darkTheme
+            insetsController.isAppearanceLightStatusBars = false
         }
     }
 
@@ -264,8 +263,8 @@ fun CustomThemeEditorRoot(
     // Status bar height — dùng để offset preview bên dưới system bar
     val statusBarTopPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
-    // ── ROOT: Nền phù hợp với chế độ sáng tối của hệ thống ─────────────
-    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).drawWithContent {
+    // ── ROOT: Nền đen cố định (không phân biệt light/dark mode) ─────────────
+    Box(modifier = Modifier.fillMaxSize().background(Color.Black).drawWithContent {
         graphicsLayer.record {
             this@drawWithContent.drawContent()
         }
