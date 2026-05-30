@@ -2,6 +2,7 @@ package com.diary.moonpage.widget.glance
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,7 +40,6 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import kotlinx.coroutines.flow.first
 
 private val MutedCircleColor = Color(0xFFE0DDD8)
 private val MutedCircleColorDark = Color(0xFF3A3A3A)
@@ -53,8 +53,6 @@ class MonthlyMoodWidget : GlanceAppWidget() {
         val monthDays = dataSource.loadMonthSnapshot()
         val isNight = dataSource.isNightMode()
         val preferences = dataSource.getWidgetPreferences()
-        val showGrid = preferences.showMonthlyMoodGrid.first()
-        val _trigger = preferences.lastUpdateTrigger.first() // Force dependency
 
         val bg = if (isNight) snapshot.palette.nightSurface else snapshot.palette.daySurface
         val textColor = if (isNight) snapshot.palette.nightOnSurface else snapshot.palette.dayOnSurface
@@ -85,6 +83,7 @@ class MonthlyMoodWidget : GlanceAppWidget() {
         )
 
         provideContent {
+            val showGrid = preferences.showMonthlyMoodGrid.collectAsState(initial = true).value
             Box(
                 modifier = GlanceModifier
                     .fillMaxSize()

@@ -2,6 +2,7 @@ package com.diary.moonpage.widget.glance
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,7 +40,6 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import kotlinx.coroutines.flow.first
 
 class QuickMoodWidget : GlanceAppWidget() {
     override val sizeMode = SizeMode.Single
@@ -49,8 +49,6 @@ class QuickMoodWidget : GlanceAppWidget() {
         val snapshot = dataSource.loadTodaySnapshot()
         val isNight = dataSource.isNightMode()
         val preferences = dataSource.getWidgetPreferences()
-        val showLabels = preferences.showQuickMoodLabels.first()
-        val _trigger = preferences.lastUpdateTrigger.first() // Force dependency
 
         val bg = if (isNight) snapshot.palette.nightSurface else snapshot.palette.daySurface
         val textColor = if (isNight) snapshot.palette.nightOnSurface else snapshot.palette.dayOnSurface
@@ -67,9 +65,6 @@ class QuickMoodWidget : GlanceAppWidget() {
             2 to "Low",
             1 to "Bad"
         )
-        val moodCircleSize = if (showLabels) 32.dp else 36.dp
-        val moodCircleRadius = if (showLabels) 16.dp else 18.dp
-        val moodImageSize = if (showLabels) 26.dp else 30.dp
 
         val openAppAction = actionStartActivity(
             Intent(context, MainActivity::class.java).apply {
@@ -78,6 +73,10 @@ class QuickMoodWidget : GlanceAppWidget() {
         )
 
         provideContent {
+            val showLabels = preferences.showQuickMoodLabels.collectAsState(initial = true).value
+            val moodCircleSize = if (showLabels) 32.dp else 36.dp
+            val moodCircleRadius = if (showLabels) 16.dp else 18.dp
+            val moodImageSize = if (showLabels) 26.dp else 30.dp
             Box(
                 modifier = GlanceModifier
                     .fillMaxSize()

@@ -2,6 +2,7 @@ package com.diary.moonpage.widget.glance
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,7 +40,6 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import kotlinx.coroutines.flow.first
 
 class WeeklyMoodWidget : GlanceAppWidget() {
     override val sizeMode = SizeMode.Single
@@ -50,8 +50,6 @@ class WeeklyMoodWidget : GlanceAppWidget() {
         val weekDays = dataSource.loadWeekSnapshot()
         val isNight = dataSource.isNightMode()
         val preferences = dataSource.getWidgetPreferences()
-        val showDates = preferences.showWeeklyMoodDates.first()
-        val _trigger = preferences.lastUpdateTrigger.first() // Force dependency
 
         val bg = if (isNight) snapshot.palette.nightSurface else snapshot.palette.daySurface
         val textColor = if (isNight) snapshot.palette.nightOnSurface else snapshot.palette.dayOnSurface
@@ -61,9 +59,6 @@ class WeeklyMoodWidget : GlanceAppWidget() {
             snapshot.palette.dayOnSurface.copy(alpha = 0.6f)
         }
         val placeholderColor = if (isNight) snapshot.palette.nightSurfaceVariant else snapshot.palette.daySurfaceVariant
-        val moodCircleSize = if (showDates) 30.dp else 34.dp
-        val moodCircleRadius = if (showDates) 15.dp else 17.dp
-        val moodImageSize = if (showDates) 24.dp else 28.dp
         val monthLabel = LocalDate.now().format(DateTimeFormatter.ofPattern("MMM yyyy", Locale.ENGLISH))
 
         val openAppAction = actionStartActivity(
@@ -73,6 +68,10 @@ class WeeklyMoodWidget : GlanceAppWidget() {
         )
 
         provideContent {
+            val showDates = preferences.showWeeklyMoodDates.collectAsState(initial = true).value
+            val moodCircleSize = if (showDates) 30.dp else 34.dp
+            val moodCircleRadius = if (showDates) 15.dp else 17.dp
+            val moodImageSize = if (showDates) 24.dp else 28.dp
             Box(
                 modifier = GlanceModifier
                     .fillMaxSize()
