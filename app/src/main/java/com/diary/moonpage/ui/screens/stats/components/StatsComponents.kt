@@ -1614,7 +1614,7 @@ fun BestAndWorstView(
             } else if (bestLegacy.isNotEmpty()) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     bestLegacy.take(3).forEachIndexed { idx, act ->
-                        ActivityScoreCard(rank = idx + 1, name = getTranslatedActivityName(act.activityName), score = act.averageMoodScore, color = successColor, modifier = Modifier.weight(1f))
+                        ActivityScoreCard(rank = idx + 1, englishName = act.activityName, translatedName = getTranslatedActivityName(act.activityName), score = act.averageMoodScore, color = successColor, modifier = Modifier.weight(1f))
                     }
                     repeat(3 - bestLegacy.size.coerceAtMost(3)) { Spacer(modifier = Modifier.weight(1f)) }
                 }
@@ -1647,7 +1647,7 @@ fun BestAndWorstView(
             } else if (worstLegacy.isNotEmpty()) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     worstLegacy.take(3).forEachIndexed { idx, act ->
-                        ActivityScoreCard(rank = idx + 1, name = getTranslatedActivityName(act.activityName), score = act.averageMoodScore, color = errorColor, modifier = Modifier.weight(1f))
+                        ActivityScoreCard(rank = idx + 1, englishName = act.activityName, translatedName = getTranslatedActivityName(act.activityName), score = act.averageMoodScore, color = errorColor, modifier = Modifier.weight(1f))
                     }
                     repeat(3 - worstLegacy.size.coerceAtMost(3)) { Spacer(modifier = Modifier.weight(1f)) }
                 }
@@ -1682,7 +1682,7 @@ private fun CorrelationActivityRow(rank: Int, correlation: ActivityCorrelation, 
             ) { MoonActivityIcon(icon = icon, size = 24.dp) }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(correlation.activityName, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = onSurface, maxLines = 1)
+                Text(getTranslatedActivityName(correlation.activityName), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = onSurface, maxLines = 1)
                 Text(stringResource(R.string.times_recorded, correlation.occurrence), fontSize = 11.sp, color = onSurfaceVariant.copy(alpha = 0.55f))
                 Spacer(modifier = Modifier.height(6.dp))
                 // Percentage bar
@@ -1697,8 +1697,8 @@ private fun CorrelationActivityRow(rank: Int, correlation: ActivityCorrelation, 
 }
 
 @Composable
-fun ActivityScoreCard(rank: Int, name: String, score: Double, color: Color, modifier: Modifier = Modifier) {
-    val icon = MoonIcons.getIconForActivity(name)
+fun ActivityScoreCard(rank: Int, englishName: String, translatedName: String, score: Double, color: Color, modifier: Modifier = Modifier) {
+    val icon = MoonIcons.getIconForActivity(englishName)
     
     Surface(
         modifier = modifier.height(150.dp),
@@ -1730,7 +1730,7 @@ fun ActivityScoreCard(rank: Int, name: String, score: Double, color: Color, modi
             }
             
             Text(
-                text = name, 
+                text = translatedName, 
                 fontWeight = FontWeight.SemiBold, 
                 fontSize = 13.sp, 
                 maxLines = 1, 
