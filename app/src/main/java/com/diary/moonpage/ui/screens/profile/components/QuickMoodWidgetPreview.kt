@@ -10,15 +10,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -50,6 +45,7 @@ private val ThemeDefaultMoodCircles = listOf(
 
 @Composable
 fun QuickMoodWidgetPreview(
+    showStreak: Boolean,
     showLabels: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -80,27 +76,13 @@ fun QuickMoodWidgetPreview(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Refresh,
-                        contentDescription = null,
-                        tint = ThemeDefaultPreviewSubText,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = stringResource(R.string.widget_how_was_your_day),
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth(),
                         style = MaterialTheme.typography.labelMedium,
                         color = ThemeDefaultPreviewText,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Icon(
-                        imageVector = Icons.Rounded.Settings,
-                        contentDescription = null,
-                        tint = ThemeDefaultPreviewSubText,
-                        modifier = Modifier.size(14.dp)
                     )
                 }
 
@@ -155,18 +137,20 @@ fun QuickMoodWidgetPreview(
                 }
             }
 
-            Surface(
-                modifier = Modifier.align(Alignment.TopEnd),
-                shape = RoundedCornerShape(50),
-                color = Color(0xCC000000)
-            ) {
-                Text(
-                    text = "\uD83D\uDD25 12",
-                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
-                    color = Color.White,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold
-                )
+            if (showStreak) {
+                Surface(
+                    modifier = Modifier.align(Alignment.TopEnd),
+                    shape = RoundedCornerShape(50),
+                    color = Color(0xCC000000)
+                ) {
+                    Text(
+                        text = "\uD83D\uDD25 12",
+                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }

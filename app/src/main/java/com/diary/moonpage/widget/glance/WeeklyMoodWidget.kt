@@ -68,6 +68,7 @@ class WeeklyMoodWidget : GlanceAppWidget() {
         )
 
         provideContent {
+            val showStreak = preferences.showWeeklyMoodStreak.collectAsState(initial = true).value
             val showDates = preferences.showWeeklyMoodDates.collectAsState(initial = true).value
             val moodCircleSize = if (showDates) 30.dp else 34.dp
             val moodCircleRadius = if (showDates) 15.dp else 17.dp
@@ -88,18 +89,6 @@ class WeeklyMoodWidget : GlanceAppWidget() {
                         modifier = GlanceModifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Box(
-                            modifier = GlanceModifier.fillMaxWidth(),
-                            contentAlignment = Alignment.CenterStart
-                        ) {
-                            Text(
-                                text = "\u21BB",
-                                style = TextStyle(
-                                    color = ColorProvider(subColor),
-                                    fontSize = 14.sp
-                                )
-                            )
-                        }
                         Text(
                             text = monthLabel,
                             style = TextStyle(
@@ -108,18 +97,6 @@ class WeeklyMoodWidget : GlanceAppWidget() {
                                 fontWeight = FontWeight.Bold
                             )
                         )
-                        Box(
-                            modifier = GlanceModifier.fillMaxWidth(),
-                            contentAlignment = Alignment.CenterEnd
-                        ) {
-                            Text(
-                                text = "\u2699",
-                                style = TextStyle(
-                                    color = ColorProvider(subColor),
-                                    fontSize = 14.sp
-                                )
-                            )
-                        }
                     }
 
                     Spacer(modifier = GlanceModifier.size(4.dp))
@@ -241,22 +218,24 @@ class WeeklyMoodWidget : GlanceAppWidget() {
                     }
                 }
 
-                Box(
-                    modifier = GlanceModifier.fillMaxSize(),
-                    contentAlignment = Alignment.TopEnd
-                ) {
-                    Text(
-                        text = "\uD83D\uDD25 ${snapshot.streakCount}",
-                        modifier = GlanceModifier
-                            .cornerRadius(50.dp)
-                            .background(ColorProvider(Color(0xCC000000)))
-                            .padding(horizontal = 7.dp, vertical = 3.dp),
-                        style = TextStyle(
-                            color = ColorProvider(Color.White),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
+                if (showStreak) {
+                    Box(
+                        modifier = GlanceModifier.fillMaxSize(),
+                        contentAlignment = Alignment.TopEnd
+                    ) {
+                        Text(
+                            text = "\uD83D\uDD25 ${snapshot.streakCount}",
+                            modifier = GlanceModifier
+                                .cornerRadius(50.dp)
+                                .background(ColorProvider(Color(0xCC000000)))
+                                .padding(horizontal = 7.dp, vertical = 3.dp),
+                            style = TextStyle(
+                                color = ColorProvider(Color.White),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         )
-                    )
+                    }
                 }
             }
         }

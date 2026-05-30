@@ -83,6 +83,7 @@ class MonthlyMoodWidget : GlanceAppWidget() {
         )
 
         provideContent {
+            val showStreak = preferences.showMonthlyMoodStreak.collectAsState(initial = true).value
             val showGrid = preferences.showMonthlyMoodGrid.collectAsState(initial = true).value
             Box(
                 modifier = GlanceModifier
@@ -97,18 +98,6 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                         modifier = GlanceModifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Box(
-                            modifier = GlanceModifier.fillMaxWidth(),
-                            contentAlignment = Alignment.CenterStart
-                        ) {
-                            Text(
-                                text = "\u21BB",
-                                style = TextStyle(
-                                    color = ColorProvider(subColor),
-                                    fontSize = 13.sp
-                                )
-                            )
-                        }
                         Text(
                             text = monthLabel,
                             style = TextStyle(
@@ -117,18 +106,6 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                                 fontWeight = FontWeight.Bold
                             )
                         )
-                        Box(
-                            modifier = GlanceModifier.fillMaxWidth(),
-                            contentAlignment = Alignment.CenterEnd
-                        ) {
-                            Text(
-                                text = "\u2699",
-                                style = TextStyle(
-                                    color = ColorProvider(subColor),
-                                    fontSize = 13.sp
-                                )
-                            )
-                        }
                     }
 
                     Spacer(modifier = GlanceModifier.size(4.dp))
@@ -313,24 +290,26 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                     }
                 }
 
-                Box(
-                    modifier = GlanceModifier
-                        .fillMaxSize()
-                        .padding(end = 4.dp),
-                    contentAlignment = Alignment.TopEnd
-                ) {
-                    Text(
-                        text = "\uD83D\uDD25 ${snapshot.streakCount}",
+                if (showStreak) {
+                    Box(
                         modifier = GlanceModifier
-                            .cornerRadius(50.dp)
-                            .background(ColorProvider(Color(0xCC000000)))
-                            .padding(horizontal = 6.dp, vertical = 2.dp),
-                        style = TextStyle(
-                            color = ColorProvider(Color.White),
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.Bold
+                            .fillMaxSize()
+                            .padding(end = 4.dp),
+                        contentAlignment = Alignment.TopEnd
+                    ) {
+                        Text(
+                            text = "\uD83D\uDD25 ${snapshot.streakCount}",
+                            modifier = GlanceModifier
+                                .cornerRadius(50.dp)
+                                .background(ColorProvider(Color(0xCC000000)))
+                                .padding(horizontal = 6.dp, vertical = 2.dp),
+                            style = TextStyle(
+                                color = ColorProvider(Color.White),
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         )
-                    )
+                    }
                 }
             }
         }

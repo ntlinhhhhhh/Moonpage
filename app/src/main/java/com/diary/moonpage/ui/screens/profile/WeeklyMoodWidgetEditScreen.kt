@@ -17,13 +17,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.R
 import com.diary.moonpage.core.util.WidgetPreferencesManager
-import com.diary.moonpage.ui.screens.profile.components.SwitchSettingItem
 import com.diary.moonpage.ui.screens.profile.components.WeeklyMoodWidgetPreview
 import com.diary.moonpage.widget.glance.MoonpageWidgets
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -33,13 +32,22 @@ class WeeklyMoodWidgetEditViewModel @Inject constructor(
     private val widgetPreferencesManager: WidgetPreferencesManager
 ) : ViewModel() {
 
-    val uiState: StateFlow<WeeklyMoodWidgetEditUiState> = widgetPreferencesManager.showWeeklyMoodDates
-        .map { WeeklyMoodWidgetEditUiState(showDates = it) }
-        .stateIn(
+    val uiState: StateFlow<WeeklyMoodWidgetEditUiState> = combine(
+        widgetPreferencesManager.showWeeklyMoodStreak,
+        widgetPreferencesManager.showWeeklyMoodDates
+    ) { streak, dates ->
+        WeeklyMoodWidgetEditUiState(showStreak = streak, showDates = dates)
+    }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = WeeklyMoodWidgetEditUiState()
         )
+
+    fun setShowStreak(show: Boolean) {
+        viewModelScope.launch {
+            widgetPreferencesManager.setShowWeeklyMoodStreak(show)
+        }
+    }
 
     fun setShowDates(show: Boolean) {
         viewModelScope.launch {
@@ -49,6 +57,7 @@ class WeeklyMoodWidgetEditViewModel @Inject constructor(
 }
 
 data class WeeklyMoodWidgetEditUiState(
+    val showStreak: Boolean = true,
     val showDates: Boolean = true
 )
 
@@ -95,10 +104,32 @@ fun WeeklyMoodWidgetEditScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(20.dp)
         ) {
-            WeeklyMoodWidgetPreview(showDates = uiState.showDates)
-            Spacer(modifier = Modifier.height(20.dp))
-            SwitchSettingItem(
+            WeeklyMoodWidgetPreview(
+                showStreak = uiState.showStreak,
+                showDates = uiState.showDates,
+                modifier = Modifier.padding(bottom = 24.dp)
+            )
+            Text(
+                text = stringResource(R.string.preferences),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = colorScheme.primary,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            EditToggleItem(
+                title = "Show streak badge",
+                description = "Show your current streak on the widget.",
+                icon = Icons.Rounded.Whatshot,
+                checked = uiState.showStreak,
+                onCheckedChange = { viewModel.setShowStreak(it) }
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = colorScheme.outlineVariant)
+
+            EditToggleItem(
                 title = "Show dates",
+                description = "Show date numbers under each day of the week.",
                 icon = Icons.Rounded.DateRange,
                 checked = uiState.showDates,
                 onCheckedChange = { viewModel.setShowDates(it) }
