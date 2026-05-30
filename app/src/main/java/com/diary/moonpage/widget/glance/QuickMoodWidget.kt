@@ -2,6 +2,7 @@ package com.diary.moonpage.widget.glance
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,7 +32,6 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.diary.moonpage.R
-import com.diary.moonpage.ui.MainActivity
 import androidx.glance.appwidget.updateAll
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +39,6 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import kotlinx.coroutines.flow.first
 
 class QuickMoodWidget : GlanceAppWidget() {
     override val sizeMode = SizeMode.Single
@@ -49,8 +48,6 @@ class QuickMoodWidget : GlanceAppWidget() {
         val snapshot = dataSource.loadTodaySnapshot()
         val isNight = dataSource.isNightMode()
         val preferences = dataSource.getWidgetPreferences()
-        val showLabels = preferences.showQuickMoodLabels.first()
-        val _trigger = preferences.lastUpdateTrigger.first() // Force dependency
 
         val bg = if (isNight) snapshot.palette.nightSurface else snapshot.palette.daySurface
         val textColor = if (isNight) snapshot.palette.nightOnSurface else snapshot.palette.dayOnSurface
@@ -67,17 +64,17 @@ class QuickMoodWidget : GlanceAppWidget() {
             2 to "Low",
             1 to "Bad"
         )
-        val moodCircleSize = if (showLabels) 32.dp else 36.dp
-        val moodCircleRadius = if (showLabels) 16.dp else 18.dp
-        val moodImageSize = if (showLabels) 26.dp else 30.dp
 
         val openAppAction = actionStartActivity(
-            Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            }
+            MoonpageWidgets.openAppIntent(context, MoonpageWidgets.todayLogRoute())
         )
 
         provideContent {
+            val showStreak = preferences.showQuickMoodStreak.collectAsState(initial = true).value
+            val showLabels = preferences.showQuickMoodLabels.collectAsState(initial = true).value
+            val moodCircleSize = if (showLabels) 32.dp else 36.dp
+            val moodCircleRadius = if (showLabels) 16.dp else 18.dp
+            val moodImageSize = if (showLabels) 26.dp else 30.dp
             Box(
                 modifier = GlanceModifier
                     .fillMaxSize()
@@ -94,18 +91,6 @@ class QuickMoodWidget : GlanceAppWidget() {
                         modifier = GlanceModifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Box(
-                            modifier = GlanceModifier.fillMaxWidth(),
-                            contentAlignment = Alignment.CenterStart
-                        ) {
-                            Text(
-                                text = "\u21BB",
-                                style = TextStyle(
-                                    color = ColorProvider(subColor),
-                                    fontSize = 14.sp
-                                )
-                            )
-                        }
                         Text(
                             text = context.getString(R.string.widget_how_was_your_day),
                             style = TextStyle(
@@ -114,18 +99,6 @@ class QuickMoodWidget : GlanceAppWidget() {
                                 fontWeight = FontWeight.Bold
                             )
                         )
-                        Box(
-                            modifier = GlanceModifier.fillMaxWidth(),
-                            contentAlignment = Alignment.CenterEnd
-                        ) {
-                            Text(
-                                text = "\u2699",
-                                style = TextStyle(
-                                    color = ColorProvider(subColor),
-                                    fontSize = 14.sp
-                                )
-                            )
-                        }
                     }
 
                     Spacer(modifier = GlanceModifier.size(6.dp))
@@ -186,22 +159,24 @@ class QuickMoodWidget : GlanceAppWidget() {
                     }
                 }
 
-                Box(
-                    modifier = GlanceModifier.fillMaxSize(),
-                    contentAlignment = Alignment.TopEnd
-                ) {
-                    Text(
-                        text = "\uD83D\uDD25 ${snapshot.streakCount}",
-                        modifier = GlanceModifier
-                            .cornerRadius(50.dp)
-                            .background(ColorProvider(Color(0xCC000000)))
-                            .padding(horizontal = 7.dp, vertical = 3.dp),
-                        style = TextStyle(
-                            color = ColorProvider(Color.White),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
+                if (showStreak) {
+                    Box(
+                        modifier = GlanceModifier.fillMaxSize(),
+                        contentAlignment = Alignment.TopEnd
+                    ) {
+                        Text(
+                            text = "\uD83D\uDD25 ${snapshot.streakCount}",
+                            modifier = GlanceModifier
+                                .cornerRadius(50.dp)
+                                .background(ColorProvider(Color(0xCC000000)))
+                                .padding(horizontal = 7.dp, vertical = 3.dp),
+                            style = TextStyle(
+                                color = ColorProvider(Color.White),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         )
-                    )
+                    }
                 }
             }
         }

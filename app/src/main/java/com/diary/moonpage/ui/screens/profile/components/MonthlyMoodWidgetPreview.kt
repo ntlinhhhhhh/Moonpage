@@ -11,12 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -57,6 +53,7 @@ private data class PreviewMonthDay(
 
 @Composable
 fun MonthlyMoodWidgetPreview(
+    showStreak: Boolean,
     showGrid: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -91,25 +88,13 @@ fun MonthlyMoodWidgetPreview(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Refresh,
-                        contentDescription = null,
-                        tint = ThemeDefaultPreviewSubText,
-                        modifier = Modifier.size(13.dp)
-                    )
                     Text(
                         text = monthLabel,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth(),
                         style = MaterialTheme.typography.labelMedium,
                         color = ThemeDefaultPreviewText,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
-                    )
-                    Icon(
-                        imageVector = Icons.Rounded.Settings,
-                        contentDescription = null,
-                        tint = ThemeDefaultPreviewSubText,
-                        modifier = Modifier.size(13.dp)
                     )
                 }
 
@@ -271,18 +256,20 @@ fun MonthlyMoodWidgetPreview(
                 }
             }
 
-            Surface(
-                modifier = Modifier.align(Alignment.TopEnd),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
-                color = Color(0xCC000000)
-            ) {
-                Text(
-                    text = "\uD83D\uDD25 12",
-                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                    color = Color.White,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold
-                )
+            if (showStreak) {
+                Surface(
+                    modifier = Modifier.align(Alignment.TopEnd),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
+                    color = Color(0xCC000000)
+                ) {
+                    Text(
+                        text = "\uD83D\uDD25 12",
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }

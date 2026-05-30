@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
@@ -33,10 +34,8 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.diary.moonpage.R
-import com.diary.moonpage.ui.MainActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 private const val PHOTO_ROTATE_INTERVAL_MS = 30_000L
@@ -64,17 +63,14 @@ class PhotoMomentWidget : GlanceAppWidget() {
         val isNight = dataSource.isNightMode()
         val palette = snapshot.palette
         val preferences = dataSource.getWidgetPreferences()
-        val showStreak = preferences.showPhotoStreak.first()
-        val displayMode = preferences.photoDisplayMode.first()
-        val _trigger = preferences.lastUpdateTrigger.first() // Force dependency
 
         val openAppAction = actionStartActivity(
-            Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            }
+            MoonpageWidgets.openAppIntent(context, MoonpageWidgets.ROUTE_CAMERA)
         )
 
         provideContent {
+            val showStreak = preferences.showPhotoStreak.collectAsState(initial = true).value
+            val displayMode = preferences.photoDisplayMode.collectAsState(initial = "CROP").value
             Box(
                 modifier = GlanceModifier
                     .fillMaxSize()

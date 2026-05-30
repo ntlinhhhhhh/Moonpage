@@ -2,6 +2,7 @@ package com.diary.moonpage.widget.glance
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,7 +32,6 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.diary.moonpage.R
-import com.diary.moonpage.ui.MainActivity
 import androidx.glance.appwidget.updateAll
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +39,6 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import kotlinx.coroutines.flow.first
 
 private val MutedCircleColor = Color(0xFFE0DDD8)
 private val MutedCircleColorDark = Color(0xFF3A3A3A)
@@ -53,8 +52,6 @@ class MonthlyMoodWidget : GlanceAppWidget() {
         val monthDays = dataSource.loadMonthSnapshot()
         val isNight = dataSource.isNightMode()
         val preferences = dataSource.getWidgetPreferences()
-        val showGrid = preferences.showMonthlyMoodGrid.first()
-        val _trigger = preferences.lastUpdateTrigger.first() // Force dependency
 
         val bg = if (isNight) snapshot.palette.nightSurface else snapshot.palette.daySurface
         val textColor = if (isNight) snapshot.palette.nightOnSurface else snapshot.palette.dayOnSurface
@@ -79,12 +76,12 @@ class MonthlyMoodWidget : GlanceAppWidget() {
             }
 
         val openAppAction = actionStartActivity(
-            Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            }
+            MoonpageWidgets.openAppIntent(context, MoonpageWidgets.ROUTE_CALENDAR)
         )
 
         provideContent {
+            val showStreak = preferences.showMonthlyMoodStreak.collectAsState(initial = true).value
+            val showGrid = preferences.showMonthlyMoodGrid.collectAsState(initial = true).value
             Box(
                 modifier = GlanceModifier
                     .fillMaxSize()
@@ -98,18 +95,6 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                         modifier = GlanceModifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Box(
-                            modifier = GlanceModifier.fillMaxWidth(),
-                            contentAlignment = Alignment.CenterStart
-                        ) {
-                            Text(
-                                text = "\u21BB",
-                                style = TextStyle(
-                                    color = ColorProvider(subColor),
-                                    fontSize = 13.sp
-                                )
-                            )
-                        }
                         Text(
                             text = monthLabel,
                             style = TextStyle(
@@ -118,18 +103,6 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                                 fontWeight = FontWeight.Bold
                             )
                         )
-                        Box(
-                            modifier = GlanceModifier.fillMaxWidth(),
-                            contentAlignment = Alignment.CenterEnd
-                        ) {
-                            Text(
-                                text = "\u2699",
-                                style = TextStyle(
-                                    color = ColorProvider(subColor),
-                                    fontSize = 13.sp
-                                )
-                            )
-                        }
                     }
 
                     Spacer(modifier = GlanceModifier.size(4.dp))
@@ -314,24 +287,26 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                     }
                 }
 
-                Box(
-                    modifier = GlanceModifier
-                        .fillMaxSize()
-                        .padding(end = 4.dp),
-                    contentAlignment = Alignment.TopEnd
-                ) {
-                    Text(
-                        text = "\uD83D\uDD25 ${snapshot.streakCount}",
+                if (showStreak) {
+                    Box(
                         modifier = GlanceModifier
-                            .cornerRadius(50.dp)
-                            .background(ColorProvider(Color(0xCC000000)))
-                            .padding(horizontal = 6.dp, vertical = 2.dp),
-                        style = TextStyle(
-                            color = ColorProvider(Color.White),
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.Bold
+                            .fillMaxSize()
+                            .padding(end = 4.dp),
+                        contentAlignment = Alignment.TopEnd
+                    ) {
+                        Text(
+                            text = "\uD83D\uDD25 ${snapshot.streakCount}",
+                            modifier = GlanceModifier
+                                .cornerRadius(50.dp)
+                                .background(ColorProvider(Color(0xCC000000)))
+                                .padding(horizontal = 6.dp, vertical = 2.dp),
+                            style = TextStyle(
+                                color = ColorProvider(Color.White),
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         )
-                    )
+                    }
                 }
             }
         }
