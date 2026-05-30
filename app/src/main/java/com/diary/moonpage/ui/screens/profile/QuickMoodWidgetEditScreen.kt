@@ -118,8 +118,8 @@ fun QuickMoodWidgetEditScreen(
             )
 
             EditToggleItem(
-                title = "Show streak badge",
-                description = "Show your current streak on the widget.",
+                title = stringResource(R.string.pref_show_streak_badge),
+                description = stringResource(R.string.pref_show_streak_badge_desc),
                 icon = Icons.Rounded.Whatshot,
                 checked = uiState.showStreak,
                 onCheckedChange = { viewModel.setShowStreak(it) }
@@ -128,8 +128,8 @@ fun QuickMoodWidgetEditScreen(
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = colorScheme.outlineVariant)
 
             EditToggleItem(
-                title = "Show labels",
-                description = "Show mood labels below each mood option.",
+                title = stringResource(R.string.pref_show_labels),
+                description = stringResource(R.string.pref_show_labels_desc),
                 icon = Icons.Rounded.Label,
                 checked = uiState.showLabels,
                 onCheckedChange = { viewModel.setShowLabels(it) }

@@ -118,8 +118,8 @@ fun MonthlyMoodWidgetEditScreen(
             )
 
             EditToggleItem(
-                title = "Show streak badge",
-                description = "Show your current streak on the widget.",
+                title = stringResource(R.string.pref_show_streak_badge),
+                description = stringResource(R.string.pref_show_streak_badge_desc),
                 icon = Icons.Rounded.Whatshot,
                 checked = uiState.showStreak,
                 onCheckedChange = { viewModel.setShowStreak(it) }
@@ -128,8 +128,8 @@ fun MonthlyMoodWidgetEditScreen(
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = colorScheme.outlineVariant)
 
             EditToggleItem(
-                title = "Show grid",
-                description = "Show the full monthly mood grid.",
+                title = stringResource(R.string.pref_show_grid),
+                description = stringResource(R.string.pref_show_grid_desc),
                 icon = Icons.Rounded.CalendarMonth,
                 checked = uiState.showGrid,
                 onCheckedChange = { viewModel.setShowGrid(it) }

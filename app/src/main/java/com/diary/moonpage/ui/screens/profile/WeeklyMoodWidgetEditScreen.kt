@@ -118,8 +118,8 @@ fun WeeklyMoodWidgetEditScreen(
             )
 
             EditToggleItem(
-                title = "Show streak badge",
-                description = "Show your current streak on the widget.",
+                title = stringResource(R.string.pref_show_streak_badge),
+                description = stringResource(R.string.pref_show_streak_badge_desc),
                 icon = Icons.Rounded.Whatshot,
                 checked = uiState.showStreak,
                 onCheckedChange = { viewModel.setShowStreak(it) }
@@ -128,8 +128,8 @@ fun WeeklyMoodWidgetEditScreen(
             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = colorScheme.outlineVariant)
 
             EditToggleItem(
-                title = "Show dates",
-                description = "Show date numbers under each day of the week.",
+                title = stringResource(R.string.pref_show_dates),
+                description = stringResource(R.string.pref_show_dates_desc),
                 icon = Icons.Rounded.DateRange,
                 checked = uiState.showDates,
                 onCheckedChange = { viewModel.setShowDates(it) }

@@ -659,6 +659,15 @@
     <string name="tutorial_profile_settings">Manage your account info. Tap here to open account settings.</string>
     <string name="tutorial_account_info">Here is where you can change your avatar and username.</string>
     <string name="tutorial_account_back">Tap here to complete the tutorial.</string>
+    <!-- Widget Preference Edit Strings -->
+    <string name="pref_show_streak_badge">Show streak badge</string>
+    <string name="pref_show_streak_badge_desc">Show your current streak on the widget.</string>
+    <string name="pref_show_labels">Show labels</string>
+    <string name="pref_show_labels_desc">Show mood labels below each mood option.</string>
+    <string name="pref_show_dates">Show dates</string>
+    <string name="pref_show_dates_desc">Show date numbers under each day of the week.</string>
+    <string name="pref_show_grid">Show grid</string>
+    <string name="pref_show_grid_desc">Show the full monthly mood grid.</string>
     <!-- Hardcoded UI cleanup -->
     <string name="share_moment">Share Moment</string>
     <string name="share_photo">Share Photo</string>

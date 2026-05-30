@@ -622,6 +622,15 @@
     <string name="tutorial_profile_settings">Quản lý thông tin tài khoản. Nhấn vào đây để mở cài đặt tài khoản.</string>
     <string name="tutorial_account_info">Đây là nơi bạn có thể thay đổi ảnh đại diện và tên người dùng.</string>
     <string name="tutorial_account_back">Nhấn vào đây để hoàn thành hướng dẫn.</string>
+    <!-- Widget Preference Edit Strings -->
+    <string name="pref_show_streak_badge">Hiển thị huy hiệu chuỗi</string>
+    <string name="pref_show_streak_badge_desc">Hiển thị chuỗi hiện tại của bạn trên tiện ích.</string>
+    <string name="pref_show_labels">Hiển thị nhãn</string>
+    <string name="pref_show_labels_desc">Hiển thị nhãn tâm trạng bên dưới mỗi lựa chọn tâm trạng.</string>
+    <string name="pref_show_dates">Hiển thị ngày</string>
+    <string name="pref_show_dates_desc">Hiển thị ngày bên dưới mỗi ngày trong tuần.</string>
+    <string name="pref_show_grid">Hiển thị lưới</string>
+    <string name="pref_show_grid_desc">Hiển thị lưới tâm trạng tháng đầy đủ.</string>
     <!-- Hardcoded UI cleanup -->
     <string name="share_moment">Chia sẻ khoảnh khắc</string>
     <string name="share_photo">Chia sẻ ảnh</string>
