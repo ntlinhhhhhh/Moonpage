@@ -359,7 +359,18 @@ fun AppNavigation(
                             },
                             onNavigateToCreatePasscode = {
                                 navController.navigate(Screen.CreatePasscode.route)
+                            },
+                            onNavigateToManageActivityCategories = {
+                                navController.navigate(Screen.ManageActivityCategories.route)
                             }
+                        )
+                    }
+                }
+
+                composable(Screen.ManageActivityCategories.route) {
+                    ScreenWrapper(Screen.ManageActivityCategories.route, mainAppRoutes, totalBottomPadding, paddingValues) {
+                        ManageActivityCategoriesRoute(
+                            onNavigateBack = { navController.popBackStack() }
                         )
                     }
                 }

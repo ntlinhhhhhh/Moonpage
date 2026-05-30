@@ -1026,4 +1026,7 @@
     <string name="stats_recorded_prefix">You recorded</string>
     <string name="stats_recorded_suffix">the most.</string>
     <string name="custom_theme_transform_guide">2 fingers to zoom/rotate • 1 finger to pan</string>
+    <string name="customize_blocks">Customize Blocks</string>
+    <string name="customize_blocks_desc">Hide or show activity categories in your daily log</string>
+    <string name="customize_blocks_hint">Choose which categories appear when you record your day. You can change this at any time.</string>
 </resources>
