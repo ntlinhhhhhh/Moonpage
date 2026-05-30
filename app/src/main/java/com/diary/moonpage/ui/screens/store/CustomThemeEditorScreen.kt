@@ -55,6 +55,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
@@ -448,31 +449,33 @@ fun CustomThemeEditorRoot(
                                 val scaleY = cachedBitmap!!.height.toFloat() / boxSize.height
                                 val x = (offset.x * scaleX).toInt().coerceIn(0, cachedBitmap!!.width - 1)
                                 val y = (offset.y * scaleY).toInt().coerceIn(0, cachedBitmap!!.height - 1)
-                                pickedColor = Color(cachedBitmap!!.getPixel(x, y))
+                                val pixel = cachedBitmap!!.getPixel(x, y)
+                                pickedColor = Color(pixel or 0xFF000000.toInt())
                             }
                         },
                         onDragEnd = {
                             isPickingColor = false
+                            val pickedColorLong = pickedColor.toArgb().toLong()
                             when {
                                 uiState.currentScreen == EditorScreenState.SolidBg -> {
-                                    onSolidBackgroundSelected(pickedColor.value.toLong())
-                                    onAddRecentColor(pickedColor.value.toLong())
+                                    onSolidBackgroundSelected(pickedColorLong)
+                                    onAddRecentColor(pickedColorLong)
                                 }
                                 uiState.currentScreen == EditorScreenState.GradientBg -> {
                                     if (uiState.activeGradientNode == GradientNode.Start) {
-                                        onGradientStartSelected(pickedColor.value.toLong())
+                                        onGradientStartSelected(pickedColorLong)
                                     } else {
-                                        onGradientEndSelected(pickedColor.value.toLong())
+                                        onGradientEndSelected(pickedColorLong)
                                     }
-                                    onAddRecentColor(pickedColor.value.toLong())
+                                    onAddRecentColor(pickedColorLong)
                                 }
                                 uiState.currentScreen == EditorScreenState.EditComponents -> {
                                     if (uiState.activeEditMode == EditMode.Draw) {
-                                        onBrushColorSelected(pickedColor.value.toLong())
-                                        onAddRecentColor(pickedColor.value.toLong())
+                                        onBrushColorSelected(pickedColorLong)
+                                        onAddRecentColor(pickedColorLong)
                                     } else if (uiState.activeEditMode == EditMode.Palette) {
-                                        onFocusedColorSelected(pickedColor.value.toLong())
-                                        onAddRecentColor(pickedColor.value.toLong())
+                                        onFocusedColorSelected(pickedColorLong)
+                                        onAddRecentColor(pickedColorLong)
                                     }
                                 }
                             }
@@ -487,7 +490,8 @@ fun CustomThemeEditorRoot(
                             val scaleY = cachedBitmap!!.height.toFloat() / boxSize.height
                             val x = (pickOffset.x * scaleX).toInt().coerceIn(0, cachedBitmap!!.width - 1)
                             val y = (pickOffset.y * scaleY).toInt().coerceIn(0, cachedBitmap!!.height - 1)
-                            pickedColor = Color(cachedBitmap!!.getPixel(x, y))
+                            val pixel = cachedBitmap!!.getPixel(x, y)
+                            pickedColor = Color(pixel or 0xFF000000.toInt())
                         }
                     }
                 }
@@ -2725,7 +2729,7 @@ private fun colorFromHsv(hue: Float, saturation: Float, value: Float): Long {
             saturation.coerceIn(0f, 1f),
             value.coerceIn(0f, 1f)
         )
-    ).toLong() and 0xFFFFFFFFL
+    ).toLong()
 }
 
 private fun colorToHex(color: Long): String = String.format("#%06X", color.toInt() and 0x00FFFFFF)
