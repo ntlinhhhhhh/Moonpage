@@ -44,7 +44,11 @@ private const val AppSnackbarDisplayMillis = 2000L
  * Stateful Component
  */
 @Composable
-fun MoonPageApp(viewModel: MainViewModel) {
+fun MoonPageApp(
+    viewModel: MainViewModel,
+    widgetTargetRoute: String? = null,
+    onWidgetTargetRouteConsumed: () -> Unit = {}
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isDark = uiState.isDarkMode ?: isSystemInDarkTheme()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -82,7 +86,9 @@ fun MoonPageApp(viewModel: MainViewModel) {
     MoonPageAppContent(
         uiState = uiState,
         isDark = isDark,
-        snackbarHostState = snackbarHostState
+        snackbarHostState = snackbarHostState,
+        widgetTargetRoute = widgetTargetRoute,
+        onWidgetTargetRouteConsumed = onWidgetTargetRouteConsumed
     )
 }
 
@@ -93,7 +99,9 @@ fun MoonPageApp(viewModel: MainViewModel) {
 fun MoonPageAppContent(
     uiState: MainUiState,
     isDark: Boolean,
-    snackbarHostState: SnackbarHostState
+    snackbarHostState: SnackbarHostState,
+    widgetTargetRoute: String? = null,
+    onWidgetTargetRouteConsumed: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -160,7 +168,10 @@ fun MoonPageAppContent(
                 ) {
                     Box(modifier = Modifier.fillMaxSize()) {
                         if (uiState.isReady) {
-                            AppNavigation()
+                            AppNavigation(
+                                widgetTargetRoute = widgetTargetRoute,
+                                onWidgetTargetRouteConsumed = onWidgetTargetRouteConsumed
+                            )
                         }
 
                         MoonSnackbarHost(
