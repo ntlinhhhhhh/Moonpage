@@ -229,7 +229,6 @@
     <string name="avg_period">Average Period: %1$d days</string>
     <string name="avg_sleep">Avg Sleep: %1$.1fh</string>
     <string name="sleep_quality">Sleep Quality: %1$s</string>
-    <string name="good">Good</string>
     <string name="fair">Fair</string>
     <string name="poor">Poor</string>
 
@@ -391,19 +390,19 @@
     <string name="activity_category_emotions">Emotions</string>
     <string name="activity_category_emotions_subtitle">happy, proud, anxious, ...</string>
     <string name="activity_category_meals">Meals</string>
-    <string name="activity_category_meals_subtitle">breakfast, lunch, dinner, ...</string>
+    <string name="activity_category_meals_subtitle">bữa sáng, trưa, tối, ...</string>
     <string name="activity_category_self_care">Self-Care</string>
-    <string name="activity_category_self_care_subtitle">shower, brush teeth, ...</string>
+    <string name="activity_category_self_care_subtitle">tắm, đánh răng, ...</string>
     <string name="activity_category_chores">Chores</string>
-    <string name="activity_category_chores_subtitle">cleaning, laundry, dishes, ...</string>
+    <string name="activity_category_chores_subtitle">dọn dẹp, giặt đồ, rửa bát, ...</string>
     <string name="activity_category_events">Events</string>
-    <string name="activity_category_events_subtitle">stay home, cafe, travel, ...</string>
+    <string name="activity_category_events_subtitle">ở nhà, đi cafe, du lịch, ...</string>
     <string name="activity_category_people">People</string>
-    <string name="activity_category_people_subtitle">friends, family, partner, ...</string>
+    <string name="activity_category_people_subtitle">bạn bè, gia đình, người yêu, ...</string>
     <string name="activity_category_beauty">Beauty</string>
-    <string name="activity_category_beauty_subtitle">hair, nails, skincare, ...</string>
+    <string name="activity_category_beauty_subtitle">làm tóc, làm móng, chăm sóc da, ...</string>
     <string name="activity_category_weather">Weather</string>
-    <string name="activity_category_weather_subtitle">sunny, cloudy, rainy, ...</string>
+    <string name="activity_category_weather_subtitle">nắng, mây, mưa, ...</string>
     <string name="activity_category_health">Health</string>
     <string name="activity_category_health_subtitle">sick, hospital, medicine, ...</string>
     <string name="activity_category_work">Work</string>
@@ -657,6 +656,14 @@
     <string name="tutorial_profile_settings">Manage your account info. Tap here to open account settings.</string>
     <string name="tutorial_account_info">Here is where you can change your avatar and username.</string>
     <string name="tutorial_account_back">Tap here to complete the tutorial.</string>
+    <string name="stats_mood_pos">Positive influence ✨</string>
+    <string name="stats_mood_neutral">Neutral influence 😌</string>
+    <string name="stats_mood_neg">Negative influence 💙</string>
+    <string name="rad">Rad</string>
+    <string name="good">Good</string>
+    <string name="okay">Okay</string>
+    <string name="bad">Bad</string>
+    <string name="awful">Awful</string>
     <!-- Widget Preference Edit Strings -->
     <string name="pref_show_streak_badge">Show streak badge</string>
     <string name="pref_show_streak_badge_desc">Show your current streak on the widget.</string>
@@ -666,6 +673,8 @@
     <string name="pref_show_dates_desc">Show date numbers under each day of the week.</string>
     <string name="pref_show_grid">Show grid</string>
     <string name="pref_show_grid_desc">Show the full monthly mood grid.</string>
+    <string name="stats_correlation_banner_analysis">Correlation analysis shows which habits spark joy or weigh you down.</string>
+    <string name="stats_correlation_banner_based">Based on % of days each activity appeared with best/worst moods.</string>
     <!-- Hardcoded UI cleanup -->
     <string name="share_moment">Share Moment</string>
     <string name="share_photo">Share Photo</string>
@@ -1056,6 +1065,7 @@
     <string name="customize_blocks">Customize Blocks</string>
     <string name="customize_blocks_desc">Hide or show activity categories in your daily log</string>
     <string name="customize_blocks_hint">Choose which categories appear when you record your day. You can change this at any time.</string>
+    <string name="uncategorized">Uncategorized</string>
     <string name="select_all">Select All</string>
     <string name="deselect_all">Deselect All</string>
 </resources>

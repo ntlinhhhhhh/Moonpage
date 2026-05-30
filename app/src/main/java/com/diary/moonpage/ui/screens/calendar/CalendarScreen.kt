@@ -639,11 +639,16 @@ fun TimelineItem(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val dayOfWeek = date.format(java.time.format.DateTimeFormatter.ofPattern("EEE", Locale.ENGLISH))
-            val dateStr = date.format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.ENGLISH))
+            val currentLanguage = com.diary.moonpage.core.theme.LocalLocale.current
+            val formatter = if (currentLanguage == "vi") {
+                java.time.format.DateTimeFormatter.ofPattern("EEE, dd MMM yyyy", Locale("vi"))
+            } else {
+                java.time.format.DateTimeFormatter.ofPattern("EEE, dd MMM yyyy", Locale.ENGLISH)
+            }
+            val dateStr = date.format(formatter)
             
             Text(
-                text = "$dayOfWeek, $dateStr",
+                text = dateStr,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 color = cs.onSurface.copy(alpha = 0.5f),

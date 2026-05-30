@@ -212,7 +212,6 @@
     <string name="on_day_x">Ngày thứ %1$d</string>
     <string name="avg_sleep">Ngủ trung bình: %1$.1fh</string>
     <string name="sleep_quality">Chất lượng giấc ngủ: %1$s</string>
-    <string name="good">Tốt</string>
     <string name="fair">Bình thường</string>
     <string name="poor">Kém</string>
 
@@ -1036,4 +1035,15 @@
     <string name="customize_blocks">Tùy chỉnh các khối</string>
     <string name="customize_blocks_desc">Ẩn hoặc hiện các danh mục hoạt động trong nhật ký hàng ngày</string>
     <string name="customize_blocks_hint">Chọn danh mục sẽ xuất hiện khi bạn ghi lại ngày của mình. Bạn có thể thay đổi bất cứ lúc nào.</string>
+    <string name="stats_mood_pos">Ảnh hưởng tích cực ✨</string>
+    <string name="stats_mood_neutral">Ảnh hưởng trung tính 😌</string>
+    <string name="stats_mood_neg">Ảnh hưởng tiêu cực 💙</string>
+    <string name="rad">Tuyệt</string>
+    <string name="good">Tốt</string>
+    <string name="okay">Ổn</string>
+    <string name="bad">Tệ</string>
+    <string name="awful">Rất tệ</string>
+    <string name="uncategorized">Chưa phân loại</string>
+    <string name="stats_correlation_banner_analysis">Phân tích tương quan cho thấy thói quen nào mang lại niềm vui hoặc khiến bạn chùng xuống.</string>
+    <string name="stats_correlation_banner_based">Dựa trên % số ngày mỗi hoạt động xuất hiện cùng tâm trạng tốt nhất/tệ nhất.</string>
 </resources>
