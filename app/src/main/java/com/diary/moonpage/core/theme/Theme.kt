@@ -623,7 +623,7 @@ private fun String?.appearanceObject(mode: String): JSONObject? {
 private fun String?.toThemeColorOrNull(): Color? {
     if (isNullOrBlank()) return null
     return runCatching {
-        var hex = this.trim()
+        var hex = this.trim().replace("[", "").replace("]", "").replace("\"", "").replace("'", "").trim()
         if (hex.startsWith("0x", ignoreCase = true)) hex = hex.drop(2)
         if (hex.startsWith("#")) hex = hex.drop(1)
         

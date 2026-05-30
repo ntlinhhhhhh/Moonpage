@@ -1,4 +1,4 @@
-package com.diary.moonpage.di
+package com.diary.moonpage.core.di
 
 import com.diary.moonpage.data.repository.*
 import com.diary.moonpage.domain.repository.*

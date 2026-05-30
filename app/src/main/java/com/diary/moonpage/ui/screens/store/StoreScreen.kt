@@ -863,11 +863,23 @@ fun CustomThemeCard(
     onActivateClick: () -> Unit = {},
     onRenameClick: () -> Unit = {}
 ) {
-    val gradientColors = remember(theme.backgroundUrl, theme.thumbnailUrl) {
-        val raw = theme.backgroundUrl ?: theme.thumbnailUrl
-        if (raw != null && raw.contains(",")) {
-            raw.split(",").mapNotNull { parseThemePreviewColor(it) }
-        } else null
+    val gradientColors = remember(theme.backgroundUrl, theme.thumbnailUrl, theme.description) {
+        val descriptionGradient = runCatching {
+            val descriptionJson = theme.description?.let { org.json.JSONObject(it) }
+            val modeJson = descriptionJson?.optJSONObject("light")
+            if (modeJson?.optString("backgroundFillMode")?.equals("Gradient", ignoreCase = true) == true) {
+                val start = modeJson.optString("gradientStartColor")
+                val end = modeJson.optString("gradientEndColor")
+                listOfNotNull(parseThemePreviewColor(start), parseThemePreviewColor(end))
+            } else null
+        }.getOrNull()
+
+        descriptionGradient ?: run {
+            val raw = theme.backgroundUrl ?: theme.thumbnailUrl
+            if (raw != null && raw.contains(",")) {
+                raw.split(",").mapNotNull { parseThemePreviewColor(it) }
+            } else null
+        }
     }
 
     val previewColor = remember(theme.primaryColor, theme.thumbnailUrl, theme.backgroundUrl) {
@@ -964,7 +976,7 @@ fun CustomThemeCard(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
             )
             Spacer(modifier = Modifier.height(10.dp))
-            FilledTonalButton(
+            Button(
                 onClick = onActivateClick,
                 enabled = !theme.isActive,
                 modifier = Modifier.fillMaxWidth(),

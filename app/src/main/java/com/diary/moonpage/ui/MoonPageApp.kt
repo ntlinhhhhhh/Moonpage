@@ -250,10 +250,11 @@ private fun String?.isThemeAssetPath(): Boolean {
 private fun String?.toThemeColorOrNull(): Color? {
     if (isNullOrBlank()) return null
     return runCatching {
+        val cleaned = this.trim().replace("[", "").replace("]", "").replace("\"", "").replace("'", "").trim()
         val normalized = when {
-            startsWith("0x", ignoreCase = true) -> "#${drop(2)}"
-            startsWith("#") -> this
-            else -> "#$this"
+            cleaned.startsWith("0x", ignoreCase = true) -> "#${cleaned.drop(2)}"
+            cleaned.startsWith("#") -> cleaned
+            else -> "#$cleaned"
         }
         Color(android.graphics.Color.parseColor(normalized))
     }.getOrNull()

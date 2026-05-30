@@ -19,7 +19,6 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        // Keep packaged locale resources constrained to Moonpage's supported languages.
         resourceConfigurations.addAll(listOf("en", "vi"))
     }
 
@@ -54,10 +53,10 @@ dependencies {
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.process)
     implementation(libs.androidx.activity.compose)
-//    implementation("com.lokalise.android:sdk:2.12.0")
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
@@ -74,18 +73,15 @@ dependencies {
     implementation(libs.retrofit.gson)
 
     implementation(libs.hilt.android)
-    implementation(libs.androidx.compose.foundation)
-    implementation(libs.androidx.compose.ui.geometry)
-    implementation(libs.ui)
-    implementation(libs.firebase.crashlytics.buildtools)
-    implementation(libs.androidx.compose.remote.creation.core)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.ui.graphics)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
 
-    implementation(libs.places)
+    implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.foundation.layout)
+    implementation(libs.androidx.compose.ui.geometry)
+    implementation(libs.androidx.appcompat)
+    
+    implementation(libs.places)
     implementation("androidx.glance:glance-appwidget:1.1.1")
     implementation("androidx.glance:glance-material3:1.1.1")
 
@@ -102,15 +98,11 @@ dependencies {
 
     implementation(libs.coil.compose)
     implementation(libs.androidx.datastore.preferences)
-    implementation(libs.accompanist.permissions)
     implementation(libs.androidx.exifinterface)
     implementation(libs.androidx.health.connect.client)
     implementation(libs.play.services.location)
-    
-    // Coroutines Play Services for Task.await()
     implementation(libs.kotlinx.coroutines.play.services)
 
-    // Room
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)

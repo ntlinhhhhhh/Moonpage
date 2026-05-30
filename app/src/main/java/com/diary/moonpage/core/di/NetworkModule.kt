@@ -1,4 +1,4 @@
-package com.diary.moonpage.di
+package com.diary.moonpage.core.di
 
 import android.content.Context
 import com.diary.moonpage.core.network.AuthInterceptor

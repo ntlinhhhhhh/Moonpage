@@ -1,6 +1,5 @@
 package com.diary.moonpage.ui.screens.auth
 
-import androidx.compose.remote.creation.first
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.data.remote.dto.auth.UpdateProfileRequestDto

@@ -102,6 +102,6 @@ private fun String.toBackgroundColorStops(): List<String> {
         .removePrefix("gradient:")
         .removePrefix("Gradient:")
         .split(',', '|', ';')
-        .map { it.trim() }
+        .map { it.trim().replace("[", "").replace("]", "").replace("\"", "").replace("'", "").trim() }
         .filter { it.isNotEmpty() }
 }

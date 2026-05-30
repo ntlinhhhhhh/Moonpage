@@ -507,10 +507,7 @@ class CustomThemeEditorViewModel @Inject constructor(
     private fun ThemeAppearanceState.themeBackgroundPayload(): String {
         return when (backgroundFillMode) {
             BackgroundFillMode.Gradient -> {
-                val array = JSONArray()
-                array.put(gradientStartColor.toColorHex())
-                array.put(gradientEndColor.toColorHex())
-                array.toString()
+                "${gradientStartColor.toColorHex()},${gradientEndColor.toColorHex()}"
             }
             BackgroundFillMode.Solid -> solidBackgroundColor.toColorHex()
         }

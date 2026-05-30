@@ -168,11 +168,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFE8D5C4",
     "primaryLightColor": "0xFF8C7E6A",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#FFF2C2", "customName": "Very Sad" },
-      { "baseMoodId": 2, "iconColor": "#FFE18A", "customName": "Sad" },
-      { "baseMoodId": 3, "iconColor": "#FFC547", "customName": "Neutral" },
-      { "baseMoodId": 4, "iconColor": "#DB9D1F", "customName": "Happy" },
-      { "baseMoodId": 5, "iconColor": "#A8730D", "customName": "Very Happy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#A8730D",
+        "customName": "Very Sad"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#DB9D1F",
+        "customName": "Sad"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#FFC547",
+        "customName": "Neutral"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#FFE18A",
+        "customName": "Happy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#FFF2C2",
+        "customName": "Very Happy"
+      }
     ]
   },
   {
@@ -187,11 +207,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFECA79D",
     "primaryLightColor": "0xFFD2847A",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#FFC3BB", "customName": "Very Sad" },
-      { "baseMoodId": 2, "iconColor": "#FF9F98", "customName": "Sad" },
-      { "baseMoodId": 3, "iconColor": "#F07063", "customName": "Neutral" },
-      { "baseMoodId": 4, "iconColor": "#C24B42", "customName": "Happy" },
-      { "baseMoodId": 5, "iconColor": "#A03F38", "customName": "Very Happy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#A03F38",
+        "customName": "Very Sad"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#C24B42",
+        "customName": "Sad"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#F07063",
+        "customName": "Neutral"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#FF9F98",
+        "customName": "Happy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#FFC3BB",
+        "customName": "Very Happy"
+      }
     ]
   },
   {
@@ -206,11 +246,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFB7C2FF",
     "primaryLightColor": "0xFF8A9AFF",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#D6DFFF", "customName": "Very Sad" },
-      { "baseMoodId": 2, "iconColor": "#B3C2FF", "customName": "Sad" },
-      { "baseMoodId": 3, "iconColor": "#7A93FF", "customName": "Neutral" },
-      { "baseMoodId": 4, "iconColor": "#536FE6", "customName": "Happy" },
-      { "baseMoodId": 5, "iconColor": "#3B54BF", "customName": "Very Happy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#3B54BF",
+        "customName": "Very Sad"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#536FE6",
+        "customName": "Sad"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#7A93FF",
+        "customName": "Neutral"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#B3C2FF",
+        "customName": "Happy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#D6DFFF",
+        "customName": "Very Happy"
+      }
     ]
   },
   {
@@ -225,11 +285,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFB6E388",
     "primaryLightColor": "0xFF66BB6A",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#D4F0D6", "customName": "Very Sad" },
-      { "baseMoodId": 2, "iconColor": "#AAE0AF", "customName": "Sad" },
-      { "baseMoodId": 3, "iconColor": "#6EC276", "customName": "Neutral" },
-      { "baseMoodId": 4, "iconColor": "#489E50", "customName": "Happy" },
-      { "baseMoodId": 5, "iconColor": "#307A37", "customName": "Very Happy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#307A37",
+        "customName": "Very Sad"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#489E50",
+        "customName": "Sad"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#6EC276",
+        "customName": "Neutral"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#AAE0AF",
+        "customName": "Happy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#D4F0D6",
+        "customName": "Very Happy"
+      }
     ]
   },
   {
@@ -244,11 +324,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFF0E68C",
     "primaryLightColor": "0xFF1A1B26",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#FFF7D1", "customName": "Very Sad" },
-      { "baseMoodId": 2, "iconColor": "#F5E69A", "customName": "Sad" },
-      { "baseMoodId": 3, "iconColor": "#D4C059", "customName": "Neutral" },
-      { "baseMoodId": 4, "iconColor": "#A89532", "customName": "Happy" },
-      { "baseMoodId": 5, "iconColor": "#806F18", "customName": "Very Happy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#806F18",
+        "customName": "Very Sad"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#A89532",
+        "customName": "Sad"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#D4C059",
+        "customName": "Neutral"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#F5E69A",
+        "customName": "Happy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#FFF7D1",
+        "customName": "Very Happy"
+      }
     ]
   },
   {
@@ -263,11 +363,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFFFD54F",
     "primaryLightColor": "0xFFFFB300",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#FFE6C2", "customName": "Very Sad" },
-      { "baseMoodId": 2, "iconColor": "#FFCD8F", "customName": "Sad" },
-      { "baseMoodId": 3, "iconColor": "#FAAA4B", "customName": "Neutral" },
-      { "baseMoodId": 4, "iconColor": "#D68322", "customName": "Happy" },
-      { "baseMoodId": 5, "iconColor": "#A86010", "customName": "Very Happy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#A86010",
+        "customName": "Very Sad"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#D68322",
+        "customName": "Sad"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#FAAA4B",
+        "customName": "Neutral"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#FFCD8F",
+        "customName": "Happy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#FFE6C2",
+        "customName": "Very Happy"
+      }
     ]
   },
   {
@@ -282,11 +402,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFF81D4FA",
     "primaryLightColor": "0xFF29B6F6",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#D1F2FF", "customName": "Very Sad" },
-      { "baseMoodId": 2, "iconColor": "#A3E5FF", "customName": "Sad" },
-      { "baseMoodId": 3, "iconColor": "#5CCBFA", "customName": "Neutral" },
-      { "baseMoodId": 4, "iconColor": "#34A6D6", "customName": "Happy" },
-      { "baseMoodId": 5, "iconColor": "#1E82AB", "customName": "Very Happy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#1E82AB",
+        "customName": "Very Sad"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#34A6D6",
+        "customName": "Sad"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#5CCBFA",
+        "customName": "Neutral"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#A3E5FF",
+        "customName": "Happy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#D1F2FF",
+        "customName": "Very Happy"
+      }
     ]
   },
   {
@@ -301,11 +441,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFF80CBC4",
     "primaryLightColor": "0xFF26A69A",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#D1EBE8", "customName": "Very Sad" },
-      { "baseMoodId": 2, "iconColor": "#A8D9D4", "customName": "Sad" },
-      { "baseMoodId": 3, "iconColor": "#6BB5AE", "customName": "Neutral" },
-      { "baseMoodId": 4, "iconColor": "#44948D", "customName": "Happy" },
-      { "baseMoodId": 5, "iconColor": "#2B736D", "customName": "Very Happy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#2B736D",
+        "customName": "Very Sad"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#44948D",
+        "customName": "Sad"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#6BB5AE",
+        "customName": "Neutral"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#A8D9D4",
+        "customName": "Happy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#D1EBE8",
+        "customName": "Very Happy"
+      }
     ]
   },
   {
@@ -320,11 +480,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFD7CCC8",
     "primaryLightColor": "0xFF8D6E63",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#EBE2DD", "customName": "Very Sad" },
-      { "baseMoodId": 2, "iconColor": "#D6C6BC", "customName": "Sad" },
-      { "baseMoodId": 3, "iconColor": "#A68D81", "customName": "Neutral" },
-      { "baseMoodId": 4, "iconColor": "#826659", "customName": "Happy" },
-      { "baseMoodId": 5, "iconColor": "#61483D", "customName": "Very Happy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#61483D",
+        "customName": "Very Sad"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#826659",
+        "customName": "Sad"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#A68D81",
+        "customName": "Neutral"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#D6C6BC",
+        "customName": "Happy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#EBE2DD",
+        "customName": "Very Happy"
+      }
     ]
   },
   {
@@ -339,11 +519,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFD4E157",
     "primaryLightColor": "0xFFCDDC39",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#F4FAD2", "customName": "Very Sad" },
-      { "baseMoodId": 2, "iconColor": "#E8F2A0", "customName": "Sad" },
-      { "baseMoodId": 3, "iconColor": "#C8D65A", "customName": "Neutral" },
-      { "baseMoodId": 4, "iconColor": "#A1AF35", "customName": "Happy" },
-      { "baseMoodId": 5, "iconColor": "#7B8721", "customName": "Very Happy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#7B8721",
+        "customName": "Very Sad"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#A1AF35",
+        "customName": "Sad"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#C8D65A",
+        "customName": "Neutral"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#E8F2A0",
+        "customName": "Happy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#F4FAD2",
+        "customName": "Very Happy"
+      }
     ]
   },
   {
@@ -358,11 +558,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFEF9A9A",
     "primaryLightColor": "0xFFEF5350",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#FFD4D9", "customName": "Very Sad" },
-      { "baseMoodId": 2, "iconColor": "#FFA3AC", "customName": "Sad" },
-      { "baseMoodId": 3, "iconColor": "#EB606E", "customName": "Neutral" },
-      { "baseMoodId": 4, "iconColor": "#C43543", "customName": "Happy" },
-      { "baseMoodId": 5, "iconColor": "#991D29", "customName": "Very Happy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#991D29",
+        "customName": "Very Sad"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#C43543",
+        "customName": "Sad"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#EB606E",
+        "customName": "Neutral"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#FFA3AC",
+        "customName": "Happy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#FFD4D9",
+        "customName": "Very Happy"
+      }
     ]
   },
   {
@@ -377,11 +597,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFCE93D8",
     "primaryLightColor": "0xFFAB47BC",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#F2DFFF", "customName": "Very Sad" },
-      { "baseMoodId": 2, "iconColor": "#E0B8FF", "customName": "Sad" },
-      { "baseMoodId": 3, "iconColor": "#B570EB", "customName": "Neutral" },
-      { "baseMoodId": 4, "iconColor": "#9147C9", "customName": "Happy" },
-      { "baseMoodId": 5, "iconColor": "#702C9E", "customName": "Very Happy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#702C9E",
+        "customName": "Very Sad"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#9147C9",
+        "customName": "Sad"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#B570EB",
+        "customName": "Neutral"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#E0B8FF",
+        "customName": "Happy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#F2DFFF",
+        "customName": "Very Happy"
+      }
     ]
   },
   {
@@ -396,11 +636,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFF90CAF9",
     "primaryLightColor": "0xFF42A5F5",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#D6EBFF", "customName": "Very Sad" },
-      { "baseMoodId": 2, "iconColor": "#A8D3FF", "customName": "Sad" },
-      { "baseMoodId": 3, "iconColor": "#66AAEB", "customName": "Neutral" },
-      { "baseMoodId": 4, "iconColor": "#4083C4", "customName": "Happy" },
-      { "baseMoodId": 5, "iconColor": "#26629E", "customName": "Very Happy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#26629E",
+        "customName": "Very Sad"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#4083C4",
+        "customName": "Sad"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#66AAEB",
+        "customName": "Neutral"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#A8D3FF",
+        "customName": "Happy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#D6EBFF",
+        "customName": "Very Happy"
+      }
     ]
   },
   {
@@ -415,11 +675,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFBA68C8",
     "primaryLightColor": "0xFF9C27B0",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#F3E5F5", "customName": "Very Sad" },
-      { "baseMoodId": 2, "iconColor": "#E1BEE7", "customName": "Sad" },
-      { "baseMoodId": 3, "iconColor": "#BA68C8", "customName": "Neutral" },
-      { "baseMoodId": 4, "iconColor": "#9C27B0", "customName": "Happy" },
-      { "baseMoodId": 5, "iconColor": "#7B1FA2", "customName": "Very Happy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#7B1FA2",
+        "customName": "Very Sad"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#9C27B0",
+        "customName": "Sad"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#BA68C8",
+        "customName": "Neutral"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#E1BEE7",
+        "customName": "Happy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#F3E5F5",
+        "customName": "Very Happy"
+      }
     ]
   },
   {
@@ -434,11 +714,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFF81C784",
     "primaryLightColor": "0xFF4CAF50",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#E8F5E9", "customName": "Very Sad" },
-      { "baseMoodId": 2, "iconColor": "#C8E6C9", "customName": "Sad" },
-      { "baseMoodId": 3, "iconColor": "#A5D6A7", "customName": "Neutral" },
-      { "baseMoodId": 4, "iconColor": "#81C784", "customName": "Happy" },
-      { "baseMoodId": 5, "iconColor": "#66BB6A", "customName": "Very Happy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#66BB6A",
+        "customName": "Very Sad"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#81C784",
+        "customName": "Sad"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#A5D6A7",
+        "customName": "Neutral"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#C8E6C9",
+        "customName": "Happy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#E8F5E9",
+        "customName": "Very Happy"
+      }
     ]
   },
   {
@@ -453,11 +753,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFFFB74D",
     "primaryLightColor": "0xFFFF9800",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#FFF3E0", "customName": "Very Sad" },
-      { "baseMoodId": 2, "iconColor": "#FFE0B2", "customName": "Sad" },
-      { "baseMoodId": 3, "iconColor": "#FFB74D", "customName": "Neutral" },
-      { "baseMoodId": 4, "iconColor": "#FFA726", "customName": "Happy" },
-      { "baseMoodId": 5, "iconColor": "#FF9800", "customName": "Very Happy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#FF9800",
+        "customName": "Very Sad"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#FFA726",
+        "customName": "Sad"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#FFB74D",
+        "customName": "Neutral"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#FFE0B2",
+        "customName": "Happy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#FFF3E0",
+        "customName": "Very Happy"
+      }
     ]
   },
   {
@@ -472,11 +792,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFF7986CB",
     "primaryLightColor": "0xFF3F51B5",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#E8EAF6", "customName": "Very Sad" },
-      { "baseMoodId": 2, "iconColor": "#C5CAE9", "customName": "Sad" },
-      { "baseMoodId": 3, "iconColor": "#9FA8DA", "customName": "Neutral" },
-      { "baseMoodId": 4, "iconColor": "#7986CB", "customName": "Happy" },
-      { "baseMoodId": 5, "iconColor": "#5C6BC0", "customName": "Very Happy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#5C6BC0",
+        "customName": "Very Sad"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#7986CB",
+        "customName": "Sad"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#9FA8DA",
+        "customName": "Neutral"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#C5CAE9",
+        "customName": "Happy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#E8EAF6",
+        "customName": "Very Happy"
+      }
     ]
   },
   {
@@ -491,11 +831,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFFF8A65",
     "primaryLightColor": "0xFFD84315",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#FBE9E7", "customName": "Very Sad" },
-      { "baseMoodId": 2, "iconColor": "#FFCCBC", "customName": "Sad" },
-      { "baseMoodId": 3, "iconColor": "#FFAB91", "customName": "Neutral" },
-      { "baseMoodId": 4, "iconColor": "#FF7043", "customName": "Happy" },
-      { "baseMoodId": 5, "iconColor": "#D84315", "customName": "Very Happy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#D84315",
+        "customName": "Very Sad"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#FF7043",
+        "customName": "Sad"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#FFAB91",
+        "customName": "Neutral"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#FFCCBC",
+        "customName": "Happy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#FBE9E7",
+        "customName": "Very Happy"
+      }
     ]
   },
   {
@@ -510,11 +870,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFF8D6E63",
     "primaryLightColor": "0xFF6D4C41",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#EFEBE9", "customName": "Very Sad" },
-      { "baseMoodId": 2, "iconColor": "#D7CCC8", "customName": "Sad" },
-      { "baseMoodId": 3, "iconColor": "#BCAAA4", "customName": "Neutral" },
-      { "baseMoodId": 4, "iconColor": "#8D6E63", "customName": "Happy" },
-      { "baseMoodId": 5, "iconColor": "#5D4037", "customName": "Very Happy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#5D4037",
+        "customName": "Very Sad"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#8D6E63",
+        "customName": "Sad"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#BCAAA4",
+        "customName": "Neutral"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#D7CCC8",
+        "customName": "Happy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#EFEBE9",
+        "customName": "Very Happy"
+      }
     ]
   },
   {
@@ -529,11 +909,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFFFA000",
     "primaryLightColor": "0xFF8D6E63",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#FFF8E1", "customName": "Very Sad" },
-      { "baseMoodId": 2, "iconColor": "#FFECB3", "customName": "Sad" },
-      { "baseMoodId": 3, "iconColor": "#FFD54F", "customName": "Neutral" },
-      { "baseMoodId": 4, "iconColor": "#FFA000", "customName": "Happy" },
-      { "baseMoodId": 5, "iconColor": "#8D6E63", "customName": "Very Happy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#8D6E63",
+        "customName": "Very Sad"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#FFA000",
+        "customName": "Sad"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#FFD54F",
+        "customName": "Neutral"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#FFECB3",
+        "customName": "Happy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#FFF8E1",
+        "customName": "Very Happy"
+      }
     ]
   },
   {
@@ -548,11 +948,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFE91E63",
     "primaryLightColor": "0xFFC2185B",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#FCE4EC", "customName": "Very Sad" },
-      { "baseMoodId": 2, "iconColor": "#F8BBD0", "customName": "Sad" },
-      { "baseMoodId": 3, "iconColor": "#F06292", "customName": "Neutral" },
-      { "baseMoodId": 4, "iconColor": "#E91E63", "customName": "Happy" },
-      { "baseMoodId": 5, "iconColor": "#AD1457", "customName": "Very Happy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#AD1457",
+        "customName": "Very Sad"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#E91E63",
+        "customName": "Sad"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#F06292",
+        "customName": "Neutral"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#F8BBD0",
+        "customName": "Happy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#FCE4EC",
+        "customName": "Very Happy"
+      }
     ]
   },
   {
@@ -567,11 +987,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFF607D8B",
     "primaryLightColor": "0xFF455A64",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#ECEFF1", "customName": "Very Sad" },
-      { "baseMoodId": 2, "iconColor": "#CFD8DC", "customName": "Sad" },
-      { "baseMoodId": 3, "iconColor": "#90A4AE", "customName": "Neutral" },
-      { "baseMoodId": 4, "iconColor": "#607D8B", "customName": "Happy" },
-      { "baseMoodId": 5, "iconColor": "#455A64", "customName": "Very Happy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#455A64",
+        "customName": "Very Sad"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#607D8B",
+        "customName": "Sad"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#90A4AE",
+        "customName": "Neutral"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#CFD8DC",
+        "customName": "Happy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#ECEFF1",
+        "customName": "Very Happy"
+      }
     ]
   },
   {
@@ -586,11 +1026,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFF18FFFF",
     "primaryLightColor": "0xFF006064",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#E0F7FA", "customName": "Glitched" },
-      { "baseMoodId": 2, "iconColor": "#84FFFF", "customName": "Laggy" },
-      { "baseMoodId": 3, "iconColor": "#18FFFF", "customName": "Online" },
-      { "baseMoodId": 4, "iconColor": "#00E5FF", "customName": "Hacked" },
-      { "baseMoodId": 5, "iconColor": "#00B8D4", "customName": "Overdrive" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#00B8D4",
+        "customName": "Glitched"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#00E5FF",
+        "customName": "Laggy"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#18FFFF",
+        "customName": "Online"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#84FFFF",
+        "customName": "Hacked"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#E0F7FA",
+        "customName": "Overdrive"
+      }
     ]
   },
   {
@@ -605,11 +1065,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFF48FB1",
     "primaryLightColor": "0xFF880E4F",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#FCE4EC", "customName": "Dull" },
-      { "baseMoodId": 2, "iconColor": "#F8BBD0", "customName": "Tarnished" },
-      { "baseMoodId": 3, "iconColor": "#F48FB1", "customName": "Polished" },
-      { "baseMoodId": 4, "iconColor": "#F06292", "customName": "Shining" },
-      { "baseMoodId": 5, "iconColor": "#C2185B", "customName": "Radiant" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#C2185B",
+        "customName": "Dull"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#F06292",
+        "customName": "Tarnished"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#F48FB1",
+        "customName": "Polished"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#F8BBD0",
+        "customName": "Shining"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#FCE4EC",
+        "customName": "Radiant"
+      }
     ]
   },
   {
@@ -624,11 +1104,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFF84FFFF",
     "primaryLightColor": "0xFF0097A7",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#E0F7FA", "customName": "Freezing" },
-      { "baseMoodId": 2, "iconColor": "#B2EBF2", "customName": "Cold" },
-      { "baseMoodId": 3, "iconColor": "#80DEEA", "customName": "Crisp" },
-      { "baseMoodId": 4, "iconColor": "#26C6DA", "customName": "Snowy" },
-      { "baseMoodId": 5, "iconColor": "#0097A7", "customName": "Aurora" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#0097A7",
+        "customName": "Freezing"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#26C6DA",
+        "customName": "Cold"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#80DEEA",
+        "customName": "Crisp"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#B2EBF2",
+        "customName": "Snowy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#E0F7FA",
+        "customName": "Aurora"
+      }
     ]
   },
   {
@@ -643,11 +1143,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFFFCC80",
     "primaryLightColor": "0xFFE65100",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#FFF3E0", "customName": "Parched" },
-      { "baseMoodId": 2, "iconColor": "#FFE0B2", "customName": "Dusty" },
-      { "baseMoodId": 3, "iconColor": "#FFCC80", "customName": "Warm" },
-      { "baseMoodId": 4, "iconColor": "#FFA726", "customName": "Golden" },
-      { "baseMoodId": 5, "iconColor": "#E65100", "customName": "Oasis" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#E65100",
+        "customName": "Parched"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#FFA726",
+        "customName": "Dusty"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#FFCC80",
+        "customName": "Warm"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#FFE0B2",
+        "customName": "Golden"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#FFF3E0",
+        "customName": "Oasis"
+      }
     ]
   },
   {
@@ -662,11 +1182,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFF80CBC4",
     "primaryLightColor": "0xFF00695C",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#E0F2F1", "customName": "Stale" },
-      { "baseMoodId": 2, "iconColor": "#B2DFDB", "customName": "Mild" },
-      { "baseMoodId": 3, "iconColor": "#80CBC4", "customName": "Cool" },
-      { "baseMoodId": 4, "iconColor": "#26A69A", "customName": "Refreshing" },
-      { "baseMoodId": 5, "iconColor": "#00897B", "customName": "Breezy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#00897B",
+        "customName": "Stale"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#26A69A",
+        "customName": "Mild"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#80CBC4",
+        "customName": "Cool"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#B2DFDB",
+        "customName": "Refreshing"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#E0F2F1",
+        "customName": "Breezy"
+      }
     ]
   },
   {
@@ -681,11 +1221,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFD1C4E9",
     "primaryLightColor": "0xFF4527A0",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#EDE7F6", "customName": "Faded" },
-      { "baseMoodId": 2, "iconColor": "#D1C4E9", "customName": "Subtle" },
-      { "baseMoodId": 3, "iconColor": "#B39DDB", "customName": "Elegant" },
-      { "baseMoodId": 4, "iconColor": "#7E57C2", "customName": "Majestic" },
-      { "baseMoodId": 5, "iconColor": "#4527A0", "customName": "Royal" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#4527A0",
+        "customName": "Faded"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#7E57C2",
+        "customName": "Subtle"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#B39DDB",
+        "customName": "Elegant"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#D1C4E9",
+        "customName": "Majestic"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#EDE7F6",
+        "customName": "Royal"
+      }
     ]
   },
   {
@@ -700,11 +1260,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFC5E1A5",
     "primaryLightColor": "0xFF689F38",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#F1F8E9", "customName": "Spilled" },
-      { "baseMoodId": 2, "iconColor": "#DCEDC8", "customName": "Bitter" },
-      { "baseMoodId": 3, "iconColor": "#C5E1A5", "customName": "Steamed" },
-      { "baseMoodId": 4, "iconColor": "#9CCC65", "customName": "Sweet" },
-      { "baseMoodId": 5, "iconColor": "#689F38", "customName": "Delicious" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#689F38",
+        "customName": "Spilled"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#9CCC65",
+        "customName": "Bitter"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#C5E1A5",
+        "customName": "Steamed"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#DCEDC8",
+        "customName": "Sweet"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#F1F8E9",
+        "customName": "Delicious"
+      }
     ]
   },
   {
@@ -719,11 +1299,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFFFAB91",
     "primaryLightColor": "0xFFD84315",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#FBE9E7", "customName": "Rusted" },
-      { "baseMoodId": 2, "iconColor": "#FFCCBC", "customName": "Weathered" },
-      { "baseMoodId": 3, "iconColor": "#FFAB91", "customName": "Solid" },
-      { "baseMoodId": 4, "iconColor": "#FF7043", "customName": "Polished" },
-      { "baseMoodId": 5, "iconColor": "#D84315", "customName": "Shining" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#D84315",
+        "customName": "Rusted"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#FF7043",
+        "customName": "Weathered"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#FFAB91",
+        "customName": "Solid"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#FFCCBC",
+        "customName": "Polished"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#FBE9E7",
+        "customName": "Shining"
+      }
     ]
   },
   {
@@ -738,11 +1338,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFF9FA8DA",
     "primaryLightColor": "0xFF283593",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#E8EAF6", "customName": "Dim" },
-      { "baseMoodId": 2, "iconColor": "#C5CAE9", "customName": "Faint" },
-      { "baseMoodId": 3, "iconColor": "#9FA8DA", "customName": "Twinkling" },
-      { "baseMoodId": 4, "iconColor": "#5C6BC0", "customName": "Glowing" },
-      { "baseMoodId": 5, "iconColor": "#283593", "customName": "Supernova" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#283593",
+        "customName": "Dim"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#5C6BC0",
+        "customName": "Faint"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#9FA8DA",
+        "customName": "Twinkling"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#C5CAE9",
+        "customName": "Glowing"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#E8EAF6",
+        "customName": "Supernova"
+      }
     ]
   },
   {
@@ -757,11 +1377,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFFFAB91",
     "primaryLightColor": "0xFFE64A19",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#FBE9E7", "customName": "Sour" },
-      { "baseMoodId": 2, "iconColor": "#FFCCBC", "customName": "Bland" },
-      { "baseMoodId": 3, "iconColor": "#FFAB91", "customName": "Sweet" },
-      { "baseMoodId": 4, "iconColor": "#FF7043", "customName": "Juicy" },
-      { "baseMoodId": 5, "iconColor": "#E64A19", "customName": "Perfect" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#E64A19",
+        "customName": "Sour"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#FF7043",
+        "customName": "Bland"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#FFAB91",
+        "customName": "Sweet"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#FFCCBC",
+        "customName": "Juicy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#FBE9E7",
+        "customName": "Perfect"
+      }
     ]
   },
   {
@@ -776,11 +1416,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFF90CAF9",
     "primaryLightColor": "0xFF1565C0",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#E3F2FD", "customName": "Murky" },
-      { "baseMoodId": 2, "iconColor": "#BBDEFB", "customName": "Shallow" },
-      { "baseMoodId": 3, "iconColor": "#90CAF9", "customName": "Deep" },
-      { "baseMoodId": 4, "iconColor": "#42A5F5", "customName": "Crystal" },
-      { "baseMoodId": 5, "iconColor": "#1565C0", "customName": "Abyssal" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#1565C0",
+        "customName": "Murky"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#42A5F5",
+        "customName": "Shallow"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#90CAF9",
+        "customName": "Deep"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#BBDEFB",
+        "customName": "Crystal"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#E3F2FD",
+        "customName": "Abyssal"
+      }
     ]
   },
   {
@@ -795,11 +1455,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFFFF59D",
     "primaryLightColor": "0xFFF57F17",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#FFFDE7", "customName": "Watery" },
-      { "baseMoodId": 2, "iconColor": "#FFF59D", "customName": "Tart" },
-      { "baseMoodId": 3, "iconColor": "#FFF176", "customName": "Sweet" },
-      { "baseMoodId": 4, "iconColor": "#FFEB3B", "customName": "Zesty" },
-      { "baseMoodId": 5, "iconColor": "#FBC02D", "customName": "Refreshing" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#FBC02D",
+        "customName": "Watery"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#FFEB3B",
+        "customName": "Tart"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#FFF176",
+        "customName": "Sweet"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#FFF59D",
+        "customName": "Zesty"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#FFFDE7",
+        "customName": "Refreshing"
+      }
     ]
   },
   {
@@ -814,11 +1494,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFFF8A80",
     "primaryLightColor": "0xFFD50000",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#FFEBEE", "customName": "Low Tide" },
-      { "baseMoodId": 2, "iconColor": "#FFCDD2", "customName": "Ebbing" },
-      { "baseMoodId": 3, "iconColor": "#FF8A80", "customName": "Flowing" },
-      { "baseMoodId": 4, "iconColor": "#FF5252", "customName": "Surging" },
-      { "baseMoodId": 5, "iconColor": "#D50000", "customName": "High Tide" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#D50000",
+        "customName": "Low Tide"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#FF5252",
+        "customName": "Ebbing"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#FF8A80",
+        "customName": "Flowing"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#FFCDD2",
+        "customName": "Surging"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#FFEBEE",
+        "customName": "High Tide"
+      }
     ]
   },
   {
@@ -833,11 +1533,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFD7CCC8",
     "primaryLightColor": "0xFF4E342E",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#EFEBE9", "customName": "Burnout" },
-      { "baseMoodId": 2, "iconColor": "#D7CCC8", "customName": "Distracted" },
-      { "baseMoodId": 3, "iconColor": "#BCAAA4", "customName": "Chilling" },
-      { "baseMoodId": 4, "iconColor": "#8D6E63", "customName": "Focused" },
-      { "baseMoodId": 5, "iconColor": "#4E342E", "customName": "Flow State" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#4E342E",
+        "customName": "Burnout"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#8D6E63",
+        "customName": "Distracted"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#BCAAA4",
+        "customName": "Chilling"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#D7CCC8",
+        "customName": "Focused"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#EFEBE9",
+        "customName": "Flow State"
+      }
     ]
   },
   {
@@ -852,11 +1572,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFF69F0AE",
     "primaryLightColor": "0xFF00C853",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#E8F5E9", "customName": "Foggy" },
-      { "baseMoodId": 2, "iconColor": "#B9F6CA", "customName": "Overcast" },
-      { "baseMoodId": 3, "iconColor": "#69F0AE", "customName": "Clear" },
-      { "baseMoodId": 4, "iconColor": "#00E676", "customName": "Bright" },
-      { "baseMoodId": 5, "iconColor": "#00C853", "customName": "Dazzling" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#00C853",
+        "customName": "Foggy"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#00E676",
+        "customName": "Overcast"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#69F0AE",
+        "customName": "Clear"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#B9F6CA",
+        "customName": "Bright"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#E8F5E9",
+        "customName": "Dazzling"
+      }
     ]
   },
   {
@@ -871,11 +1611,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFFFCC80",
     "primaryLightColor": "0xFFE65100",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#FFF8E1", "customName": "Dim" },
-      { "baseMoodId": 2, "iconColor": "#FFECB3", "customName": "Flickering" },
-      { "baseMoodId": 3, "iconColor": "#FFE082", "customName": "Warm" },
-      { "baseMoodId": 4, "iconColor": "#FFB300", "customName": "Radiant" },
-      { "baseMoodId": 5, "iconColor": "#FF8F00", "customName": "Blazing" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#FF8F00",
+        "customName": "Dim"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#FFB300",
+        "customName": "Flickering"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#FFE082",
+        "customName": "Warm"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#FFECB3",
+        "customName": "Radiant"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#FFF8E1",
+        "customName": "Blazing"
+      }
     ]
   },
   {
@@ -890,11 +1650,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFEA80FC",
     "primaryLightColor": "0xFFAA00FF",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#F3E5F5", "customName": "Drooping" },
-      { "baseMoodId": 2, "iconColor": "#E1BEE7", "customName": "Budding" },
-      { "baseMoodId": 3, "iconColor": "#D500F9", "customName": "Blooming" },
-      { "baseMoodId": 4, "iconColor": "#AA00FF", "customName": "Vibrant" },
-      { "baseMoodId": 5, "iconColor": "#6A1B9A", "customName": "Flawless" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#6A1B9A",
+        "customName": "Drooping"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#AA00FF",
+        "customName": "Budding"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#D500F9",
+        "customName": "Blooming"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#E1BEE7",
+        "customName": "Vibrant"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#F3E5F5",
+        "customName": "Flawless"
+      }
     ]
   },
   {
@@ -909,11 +1689,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFB0BEC5",
     "primaryLightColor": "0xFF455A64",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#ECEFF1", "customName": "Bare" },
-      { "baseMoodId": 2, "iconColor": "#CFD8DC", "customName": "Frosty" },
-      { "baseMoodId": 3, "iconColor": "#B0BEC5", "customName": "Quiet" },
-      { "baseMoodId": 4, "iconColor": "#78909C", "customName": "Snowy" },
-      { "baseMoodId": 5, "iconColor": "#455A64", "customName": "Magical" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#455A64",
+        "customName": "Bare"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#78909C",
+        "customName": "Frosty"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#B0BEC5",
+        "customName": "Quiet"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#CFD8DC",
+        "customName": "Snowy"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#ECEFF1",
+        "customName": "Magical"
+      }
     ]
   },
   {
@@ -928,11 +1728,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFF80CBC4",
     "primaryLightColor": "0xFF00695C",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#E0F2F1", "customName": "Overcast" },
-      { "baseMoodId": 2, "iconColor": "#B2DFDB", "customName": "Humid" },
-      { "baseMoodId": 3, "iconColor": "#80CBC4", "customName": "Breezy" },
-      { "baseMoodId": 4, "iconColor": "#26A69A", "customName": "Sunny" },
-      { "baseMoodId": 5, "iconColor": "#00796B", "customName": "Paradise" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#00796B",
+        "customName": "Overcast"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#26A69A",
+        "customName": "Humid"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#80CBC4",
+        "customName": "Breezy"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#B2DFDB",
+        "customName": "Sunny"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#E0F2F1",
+        "customName": "Paradise"
+      }
     ]
   },
   {
@@ -947,11 +1767,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFFFF59D",
     "primaryLightColor": "0xFFF57F17",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#FFFDE7", "customName": "Bland" },
-      { "baseMoodId": 2, "iconColor": "#FFF9C4", "customName": "Subtle" },
-      { "baseMoodId": 3, "iconColor": "#FFF59D", "customName": "Sweet" },
-      { "baseMoodId": 4, "iconColor": "#FBC02D", "customName": "Rich" },
-      { "baseMoodId": 5, "iconColor": "#F57F17", "customName": "Decadent" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#F57F17",
+        "customName": "Bland"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#FBC02D",
+        "customName": "Subtle"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#FFF59D",
+        "customName": "Sweet"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#FFF9C4",
+        "customName": "Rich"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#FFFDE7",
+        "customName": "Decadent"
+      }
     ]
   },
   {
@@ -966,11 +1806,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFF90A4AE",
     "primaryLightColor": "0xFF37474F",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#ECEFF1", "customName": "Smoggy" },
-      { "baseMoodId": 2, "iconColor": "#CFD8DC", "customName": "Dull" },
-      { "baseMoodId": 3, "iconColor": "#90A4AE", "customName": "Bustling" },
-      { "baseMoodId": 4, "iconColor": "#607D8B", "customName": "Vibrant" },
-      { "baseMoodId": 5, "iconColor": "#37474F", "customName": "Electric" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#37474F",
+        "customName": "Smoggy"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#607D8B",
+        "customName": "Dull"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#90A4AE",
+        "customName": "Bustling"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#CFD8DC",
+        "customName": "Vibrant"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#ECEFF1",
+        "customName": "Electric"
+      }
     ]
   },
   {
@@ -985,11 +1845,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFCE93D8",
     "primaryLightColor": "0xFF6A1B9A",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#F3E5F5", "customName": "Watery" },
-      { "baseMoodId": 2, "iconColor": "#E1BEE7", "customName": "Tart" },
-      { "baseMoodId": 3, "iconColor": "#CE93D8", "customName": "Sweet" },
-      { "baseMoodId": 4, "iconColor": "#AB47BC", "customName": "Fruity" },
-      { "baseMoodId": 5, "iconColor": "#7B1FA2", "customName": "Delicious" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#7B1FA2",
+        "customName": "Watery"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#AB47BC",
+        "customName": "Tart"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#CE93D8",
+        "customName": "Sweet"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#E1BEE7",
+        "customName": "Fruity"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#F3E5F5",
+        "customName": "Delicious"
+      }
     ]
   },
   {
@@ -1004,11 +1884,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFC5E1A5",
     "primaryLightColor": "0xFF558B2F",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#F1F8E9", "customName": "Dry" },
-      { "baseMoodId": 2, "iconColor": "#DCEDC8", "customName": "Earthy" },
-      { "baseMoodId": 3, "iconColor": "#C5E1A5", "customName": "Fresh" },
-      { "baseMoodId": 4, "iconColor": "#9CCC65", "customName": "Lush" },
-      { "baseMoodId": 5, "iconColor": "#558B2F", "customName": "Bountiful" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#558B2F",
+        "customName": "Dry"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#9CCC65",
+        "customName": "Earthy"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#C5E1A5",
+        "customName": "Fresh"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#DCEDC8",
+        "customName": "Lush"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#F1F8E9",
+        "customName": "Bountiful"
+      }
     ]
   },
   {
@@ -1023,11 +1923,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFEF9A9A",
     "primaryLightColor": "0xFFB71C1C",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#FFEBEE", "customName": "Faded" },
-      { "baseMoodId": 2, "iconColor": "#FFCDD2", "customName": "Uncut" },
-      { "baseMoodId": 3, "iconColor": "#EF9A9A", "customName": "Polished" },
-      { "baseMoodId": 4, "iconColor": "#E53935", "customName": "Gleaming" },
-      { "baseMoodId": 5, "iconColor": "#C62828", "customName": "Flawless" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#C62828",
+        "customName": "Faded"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#E53935",
+        "customName": "Uncut"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#EF9A9A",
+        "customName": "Polished"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#FFCDD2",
+        "customName": "Gleaming"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#FFEBEE",
+        "customName": "Flawless"
+      }
     ]
   },
   {
@@ -1042,11 +1962,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFCFD8DC",
     "primaryLightColor": "0xFF78909C",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#ECEFF1", "customName": "Clouded" },
-      { "baseMoodId": 2, "iconColor": "#CFD8DC", "customName": "Opaque" },
-      { "baseMoodId": 3, "iconColor": "#B0BEC5", "customName": "Smooth" },
-      { "baseMoodId": 4, "iconColor": "#90A4AE", "customName": "Lustrous" },
-      { "baseMoodId": 5, "iconColor": "#607D8B", "customName": "Iridescent" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#607D8B",
+        "customName": "Clouded"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#90A4AE",
+        "customName": "Opaque"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#B0BEC5",
+        "customName": "Smooth"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#CFD8DC",
+        "customName": "Lustrous"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#ECEFF1",
+        "customName": "Iridescent"
+      }
     ]
   },
   {
@@ -1061,11 +2001,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFFFCC80",
     "primaryLightColor": "0xFFEF6C00",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#FFF3E0", "customName": "Empty" },
-      { "baseMoodId": 2, "iconColor": "#FFE0B2", "customName": "Sticky" },
-      { "baseMoodId": 3, "iconColor": "#FFCC80", "customName": "Sweet" },
-      { "baseMoodId": 4, "iconColor": "#FFA726", "customName": "Golden" },
-      { "baseMoodId": 5, "iconColor": "#E65100", "customName": "Nectar" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#E65100",
+        "customName": "Empty"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#FFA726",
+        "customName": "Sticky"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#FFCC80",
+        "customName": "Sweet"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#FFE0B2",
+        "customName": "Golden"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#FFF3E0",
+        "customName": "Nectar"
+      }
     ]
   },
   {
@@ -1080,11 +2040,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFF9FA8DA",
     "primaryLightColor": "0xFF3949AB",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#E8EAF6", "customName": "Muted" },
-      { "baseMoodId": 2, "iconColor": "#C5CAE9", "customName": "Faded" },
-      { "baseMoodId": 3, "iconColor": "#9FA8DA", "customName": "Calm" },
-      { "baseMoodId": 4, "iconColor": "#5C6BC0", "customName": "Clear" },
-      { "baseMoodId": 5, "iconColor": "#303F9F", "customName": "Vivid" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#303F9F",
+        "customName": "Muted"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#5C6BC0",
+        "customName": "Faded"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#9FA8DA",
+        "customName": "Calm"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#C5CAE9",
+        "customName": "Clear"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#E8EAF6",
+        "customName": "Vivid"
+      }
     ]
   },
   {
@@ -1099,11 +2079,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFFFF59D",
     "primaryLightColor": "0xFFF57F17",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#FFFDE7", "customName": "Drooping" },
-      { "baseMoodId": 2, "iconColor": "#FFF59D", "customName": "Shaded" },
-      { "baseMoodId": 3, "iconColor": "#FFEB3B", "customName": "Upright" },
-      { "baseMoodId": 4, "iconColor": "#FBC02D", "customName": "Sun-kissed" },
-      { "baseMoodId": 5, "iconColor": "#F57F17", "customName": "Blazing" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#F57F17",
+        "customName": "Drooping"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#FBC02D",
+        "customName": "Shaded"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#FFEB3B",
+        "customName": "Upright"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#FFF59D",
+        "customName": "Sun-kissed"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#FFFDE7",
+        "customName": "Blazing"
+      }
     ]
   },
   {
@@ -1118,11 +2118,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFF9E9E9E",
     "primaryLightColor": "0xFF212121",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#F5F5F5", "customName": "Dusty" },
-      { "baseMoodId": 2, "iconColor": "#E0E0E0", "customName": "Dull" },
-      { "baseMoodId": 3, "iconColor": "#9E9E9E", "customName": "Solid" },
-      { "baseMoodId": 4, "iconColor": "#616161", "customName": "Sharp" },
-      { "baseMoodId": 5, "iconColor": "#212121", "customName": "Glassy" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#212121",
+        "customName": "Dusty"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#616161",
+        "customName": "Dull"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#9E9E9E",
+        "customName": "Solid"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#E0E0E0",
+        "customName": "Sharp"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#F5F5F5",
+        "customName": "Glassy"
+      }
     ]
   },
   {
@@ -1137,11 +2157,31 @@ private val RAW_THEMES_JSON = """
     "primaryDarkColor": "0xFFEEFF41",
     "primaryLightColor": "0xFFAEEA00",
     "moods": [
-      { "baseMoodId": 1, "iconColor": "#F9FBE7", "customName": "Chilly" },
-      { "baseMoodId": 2, "iconColor": "#F4FF81", "customName": "Dewy" },
-      { "baseMoodId": 3, "iconColor": "#EEFF41", "customName": "Fresh" },
-      { "baseMoodId": 4, "iconColor": "#C6FF00", "customName": "Sunny" },
-      { "baseMoodId": 5, "iconColor": "#AEEA00", "customName": "Vibrant" }
+      {
+        "baseMoodId": 1,
+        "iconColor": "#AEEA00",
+        "customName": "Chilly"
+      },
+      {
+        "baseMoodId": 2,
+        "iconColor": "#C6FF00",
+        "customName": "Dewy"
+      },
+      {
+        "baseMoodId": 3,
+        "iconColor": "#EEFF41",
+        "customName": "Fresh"
+      },
+      {
+        "baseMoodId": 4,
+        "iconColor": "#F4FF81",
+        "customName": "Sunny"
+      },
+      {
+        "baseMoodId": 5,
+        "iconColor": "#F9FBE7",
+        "customName": "Vibrant"
+      }
     ]
   }
 ]

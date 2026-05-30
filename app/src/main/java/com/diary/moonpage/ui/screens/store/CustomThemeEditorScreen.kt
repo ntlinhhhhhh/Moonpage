@@ -23,6 +23,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -197,6 +198,7 @@ fun CustomThemeEditorRoot(
     var editorZoom by remember { mutableFloatStateOf(1f) }
     var editorPan by remember { mutableStateOf(Offset.Zero) }
 
+    val darkTheme = isSystemInDarkTheme()
     val view = LocalView.current
     if (!view.isInEditMode) {
         val window = (view.context as Activity).window
@@ -214,7 +216,7 @@ fun CustomThemeEditorRoot(
 
         SideEffect {
             window.statusBarColor = android.graphics.Color.TRANSPARENT
-            insetsController.isAppearanceLightStatusBars = false
+            insetsController.isAppearanceLightStatusBars = !darkTheme
         }
     }
 
@@ -261,8 +263,8 @@ fun CustomThemeEditorRoot(
     // Status bar height — dùng để offset preview bên dưới system bar
     val statusBarTopPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
-    // ── ROOT: Nền đen cố định (không phân biệt light/dark mode) ─────────────
-    Box(modifier = Modifier.fillMaxSize().background(Color.Black).drawWithContent {
+    // ── ROOT: Nền phù hợp với chế độ sáng tối của hệ thống ─────────────
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).drawWithContent {
         graphicsLayer.record {
             this@drawWithContent.drawContent()
         }
@@ -887,18 +889,30 @@ fun BoxScope.EditComponentsOverlay(
         }
 
         EditMode.Palette -> {
-            // ── Done button (top-right, bọc trong vòng tròn giống brush icons) ──────
-            Box(
+            // ── Toolbar icons (top-right): Theme Mode toggle & Done ──────
+            Row(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(top = statusBarTopPadding + 16.dp, end = 16.dp)
-                    .size(42.dp)
-                    .background(Color.White, CircleShape)
-                    .border(2.dp, Color.White, CircleShape)
-                    .clickable { onSetEditMode(EditMode.None) },
-                contentAlignment = Alignment.Center
+                    .padding(top = statusBarTopPadding + 16.dp, end = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Rounded.Check, contentDescription = stringResource(R.string.content_desc_done), tint = Color.Black, modifier = Modifier.size(22.dp))
+                EditorIconButton(
+                    icon = if (isDarkMode) Icons.Rounded.LightMode else Icons.Rounded.DarkMode,
+                    label = "Theme Mode",
+                    onClick = onToggleAppearance
+                )
+
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .background(Color.White, CircleShape)
+                        .border(2.dp, Color.White, CircleShape)
+                        .clickable { onSetEditMode(EditMode.None) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Rounded.Check, contentDescription = stringResource(R.string.content_desc_done), tint = Color.Black, modifier = Modifier.size(22.dp))
+                }
             }
 
             // ── Color picker bar (bottom) ──────────────────────────────────
@@ -1431,7 +1445,7 @@ private fun ColorSwatchCircle(
             .size(42.dp)
             .clip(CircleShape)
             .background(Color(color))
-            .border(1.5.dp, Color.White.copy(alpha = 0.55f), CircleShape)
+            .border(1.5.dp, if (isSystemInDarkTheme()) Color.White.copy(alpha = 0.55f) else Color.Black.copy(alpha = 0.2f), CircleShape)
             .clickable(onClick = onClick)
     )
 }

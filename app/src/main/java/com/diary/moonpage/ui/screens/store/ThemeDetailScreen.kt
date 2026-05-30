@@ -241,25 +241,26 @@ fun ThemeDetailScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                val themePrimaryColor = remember(theme) {
-                    getThemeShades(theme).lastOrNull() ?: backgroundColor
-                }
-
                 val buttonText = if (theme.isOwned) stringResource(R.string.activate) else stringResource(R.string.buy_for, theme.price)
-                MoonPrimaryButton(
-                    text = buttonText,
-                    onClick = {
-                        if (theme.isOwned) {
-                            onActivateClick()
-                        } else {
-                            onBuyClick()
-                        }
-                    },
-                    containerColor = themePrimaryColor,
-                    modifier = Modifier
-                        .padding(horizontal = 12.dp)
-                        .tutorialTarget(TutorialStep.HighlightThemeDetailApply)
-                )
+                
+                com.diary.moonpage.core.theme.MoonPageTheme(
+                    themeType = theme.toMoonThemeType(),
+                    activeTheme = theme
+                ) {
+                    MoonPrimaryButton(
+                        text = buttonText,
+                        onClick = {
+                            if (theme.isOwned) {
+                                onActivateClick()
+                            } else {
+                                onBuyClick()
+                            }
+                        },
+                        modifier = Modifier
+                            .padding(horizontal = 12.dp)
+                            .tutorialTarget(TutorialStep.HighlightThemeDetailApply)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -274,23 +275,30 @@ fun ThemeDetailScreen(
                 Spacer(modifier = Modifier.height(32.dp))
             }
             if (uiState.showConfirmPurchaseDialog && uiState.themeToPurchase != null) {
-                ConfirmPurchaseDialog(
-                    theme = uiState.themeToPurchase!!,
-                    onConfirm = onConfirmPurchase,
-                    onCancel = onCancelPurchase
-                )
+                com.diary.moonpage.core.theme.MoonPageTheme(
+                    themeType = uiState.themeToPurchase!!.toMoonThemeType(),
+                    activeTheme = uiState.themeToPurchase
+                ) {
+                    ConfirmPurchaseDialog(
+                        theme = uiState.themeToPurchase!!,
+                        onConfirm = onConfirmPurchase,
+                        onCancel = onCancelPurchase
+                    )
+                }
             }
 
             if (uiState.showConfirmActivationDialog && uiState.selectedThemeDetail != null) {
-                val currentThemePrimaryColor = remember(uiState.selectedThemeDetail) {
-                    uiState.selectedThemeDetail?.let { getThemeShades(it).lastOrNull() }
+                com.diary.moonpage.core.theme.MoonPageTheme(
+                    themeType = uiState.selectedThemeDetail!!.toMoonThemeType(),
+                    activeTheme = uiState.selectedThemeDetail
+                ) {
+                    ConfirmActivationDialog(
+                        themeName = uiState.selectedThemeDetail?.name ?: "",
+                        onConfirm = onConfirmActivation,
+                        onCancel = onCancelActivation,
+                        primaryColor = MaterialTheme.colorScheme.primary
+                    )
                 }
-                ConfirmActivationDialog(
-                    themeName = uiState.selectedThemeDetail?.name ?: "",
-                    onConfirm = onConfirmActivation,
-                    onCancel = onCancelActivation,
-                    primaryColor = currentThemePrimaryColor
-                )
             }
 
             if (uiState.showPurchaseSuccessDialog && uiState.purchasedTheme != null) {
