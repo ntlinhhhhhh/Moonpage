@@ -26,6 +26,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
 import com.diary.moonpage.core.theme.MoonPageTheme
+import com.diary.moonpage.core.util.resolveLogDate
 import com.diary.moonpage.domain.model.Moment
 import com.diary.moonpage.R
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -51,6 +52,7 @@ fun MomentHistoryRoute(
     onNavigateToGallery: () -> Unit,
     onNavigateToDetail: (String) -> Unit,
     onNavigateToAccount: () -> Unit,
+    onNavigateToCalendar: (String) -> Unit,
     viewModel: MomentViewModel = hiltViewModel(),
     profileViewModel: com.diary.moonpage.ui.screens.profile.ProfileViewModel = hiltViewModel()
 ) {
@@ -101,6 +103,7 @@ fun MomentHistoryRoute(
         onNavigateToGallery = onNavigateToGallery,
         onBackToCamera = onBackToCamera,
         onNavigateToAccount = onNavigateToAccount,
+        onNavigateToCalendar = onNavigateToCalendar,
         onShare = { moment -> viewModel.onEvent(MomentUiEvent.ShareMoment(moment.imageUrl)) },
         onDownload = { moment -> viewModel.onEvent(MomentUiEvent.DownloadMoment(moment.imageUrl)) },
         onDelete = { moment -> viewModel.onEvent(MomentUiEvent.DeleteMoment(moment.id)) },
@@ -135,6 +138,7 @@ fun MomentHistoryScreen(
     onNavigateToGallery: () -> Unit,
     onBackToCamera: () -> Unit,
     onNavigateToAccount: () -> Unit,
+    onNavigateToCalendar: (String) -> Unit,
     initialMomentId: String? = null,
     onShare: (Moment) -> Unit = {},
     onDownload: (Moment) -> Unit = {},
@@ -265,6 +269,29 @@ fun MomentHistoryScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
+                }
+
+                if (sortedMoments.isNotEmpty()) {
+                    val currentMoment = sortedMoments[feedPagerState.currentPage]
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(onBgColor.copy(alpha = 0.15f))
+                            .align(Alignment.CenterEnd)
+                            .clickable {
+                                currentMoment.resolveLogDate()?.let { date ->
+                                    onNavigateToCalendar(date.toString())
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.CalendarToday,
+                            contentDescription = null,
+                            tint = onBgColor
+                        )
+                    }
                 }
             }
 

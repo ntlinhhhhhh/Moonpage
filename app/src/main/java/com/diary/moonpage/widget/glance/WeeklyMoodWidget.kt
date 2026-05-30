@@ -2,6 +2,7 @@ package com.diary.moonpage.widget.glance
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,7 +32,6 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.diary.moonpage.R
-import com.diary.moonpage.ui.MainActivity
 import androidx.glance.appwidget.updateAll
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +39,6 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import kotlinx.coroutines.flow.first
 
 class WeeklyMoodWidget : GlanceAppWidget() {
     override val sizeMode = SizeMode.Single
@@ -50,8 +49,6 @@ class WeeklyMoodWidget : GlanceAppWidget() {
         val weekDays = dataSource.loadWeekSnapshot()
         val isNight = dataSource.isNightMode()
         val preferences = dataSource.getWidgetPreferences()
-        val showDates = preferences.showWeeklyMoodDates.first()
-        val _trigger = preferences.lastUpdateTrigger.first() // Force dependency
 
         val bg = if (isNight) snapshot.palette.nightSurface else snapshot.palette.daySurface
         val textColor = if (isNight) snapshot.palette.nightOnSurface else snapshot.palette.dayOnSurface
@@ -61,18 +58,18 @@ class WeeklyMoodWidget : GlanceAppWidget() {
             snapshot.palette.dayOnSurface.copy(alpha = 0.6f)
         }
         val placeholderColor = if (isNight) snapshot.palette.nightSurfaceVariant else snapshot.palette.daySurfaceVariant
-        val moodCircleSize = if (showDates) 30.dp else 34.dp
-        val moodCircleRadius = if (showDates) 15.dp else 17.dp
-        val moodImageSize = if (showDates) 24.dp else 28.dp
         val monthLabel = LocalDate.now().format(DateTimeFormatter.ofPattern("MMM yyyy", Locale.ENGLISH))
 
         val openAppAction = actionStartActivity(
-            Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            }
+            MoonpageWidgets.openAppIntent(context, MoonpageWidgets.ROUTE_CALENDAR)
         )
 
         provideContent {
+            val showStreak = preferences.showWeeklyMoodStreak.collectAsState(initial = true).value
+            val showDates = preferences.showWeeklyMoodDates.collectAsState(initial = true).value
+            val moodCircleSize = if (showDates) 30.dp else 34.dp
+            val moodCircleRadius = if (showDates) 15.dp else 17.dp
+            val moodImageSize = if (showDates) 24.dp else 28.dp
             Box(
                 modifier = GlanceModifier
                     .fillMaxSize()
@@ -89,18 +86,6 @@ class WeeklyMoodWidget : GlanceAppWidget() {
                         modifier = GlanceModifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Box(
-                            modifier = GlanceModifier.fillMaxWidth(),
-                            contentAlignment = Alignment.CenterStart
-                        ) {
-                            Text(
-                                text = "\u21BB",
-                                style = TextStyle(
-                                    color = ColorProvider(subColor),
-                                    fontSize = 14.sp
-                                )
-                            )
-                        }
                         Text(
                             text = monthLabel,
                             style = TextStyle(
@@ -109,18 +94,6 @@ class WeeklyMoodWidget : GlanceAppWidget() {
                                 fontWeight = FontWeight.Bold
                             )
                         )
-                        Box(
-                            modifier = GlanceModifier.fillMaxWidth(),
-                            contentAlignment = Alignment.CenterEnd
-                        ) {
-                            Text(
-                                text = "\u2699",
-                                style = TextStyle(
-                                    color = ColorProvider(subColor),
-                                    fontSize = 14.sp
-                                )
-                            )
-                        }
                     }
 
                     Spacer(modifier = GlanceModifier.size(4.dp))
@@ -242,22 +215,24 @@ class WeeklyMoodWidget : GlanceAppWidget() {
                     }
                 }
 
-                Box(
-                    modifier = GlanceModifier.fillMaxSize(),
-                    contentAlignment = Alignment.TopEnd
-                ) {
-                    Text(
-                        text = "\uD83D\uDD25 ${snapshot.streakCount}",
-                        modifier = GlanceModifier
-                            .cornerRadius(50.dp)
-                            .background(ColorProvider(Color(0xCC000000)))
-                            .padding(horizontal = 7.dp, vertical = 3.dp),
-                        style = TextStyle(
-                            color = ColorProvider(Color.White),
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
+                if (showStreak) {
+                    Box(
+                        modifier = GlanceModifier.fillMaxSize(),
+                        contentAlignment = Alignment.TopEnd
+                    ) {
+                        Text(
+                            text = "\uD83D\uDD25 ${snapshot.streakCount}",
+                            modifier = GlanceModifier
+                                .cornerRadius(50.dp)
+                                .background(ColorProvider(Color(0xCC000000)))
+                                .padding(horizontal = 7.dp, vertical = 3.dp),
+                            style = TextStyle(
+                                color = ColorProvider(Color.White),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         )
-                    )
+                    }
                 }
             }
         }

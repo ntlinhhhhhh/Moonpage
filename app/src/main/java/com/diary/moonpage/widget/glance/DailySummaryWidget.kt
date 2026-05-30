@@ -2,6 +2,7 @@ package com.diary.moonpage.widget.glance
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,13 +33,11 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.diary.moonpage.R
-import com.diary.moonpage.ui.MainActivity
 import androidx.glance.appwidget.updateAll
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Locale
-import kotlinx.coroutines.flow.first
 
 private val ThemeDefaultIconColor = Color(0xFFDB9D1F)
 
@@ -51,18 +50,15 @@ class DailySummaryWidget : GlanceAppWidget() {
         val isNight = dataSource.isNightMode()
         val palette = snapshot.palette
         val preferences = dataSource.getWidgetPreferences()
-        val showStreak = preferences.showDailyStreak.first()
-        val showNote = preferences.showDailyNote.first()
-        val showStats = preferences.showDailyStats.first()
-        val _trigger = preferences.lastUpdateTrigger.first() // Force dependency
 
         val openAppAction = actionStartActivity(
-            Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            }
+            MoonpageWidgets.openAppIntent(context, MoonpageWidgets.todayLogRoute())
         )
 
         provideContent {
+            val showStreak = preferences.showDailyStreak.collectAsState(initial = true).value
+            val showNote = preferences.showDailyNote.collectAsState(initial = true).value
+            val showStats = preferences.showDailyStats.collectAsState(initial = true).value
             val bg = if (isNight) palette.nightSurface else palette.daySurface
             val textColor = if (isNight) palette.nightOnSurface else palette.dayOnSurface
             val subColor = if (isNight) {

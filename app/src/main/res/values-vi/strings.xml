@@ -1022,4 +1022,7 @@
     <string name="content_desc_sort">Sắp xếp</string>
     <string name="stats_rank_format">#%1$d</string>
     <string name="stats_rank_format_dot">%1$d.</string>
+    <string name="customize_blocks">Tùy chỉnh các khối</string>
+    <string name="customize_blocks_desc">Ẩn hoặc hiện các danh mục hoạt động trong nhật ký hàng ngày</string>
+    <string name="customize_blocks_hint">Chọn danh mục sẽ xuất hiện khi bạn ghi lại ngày của mình. Bạn có thể thay đổi bất cứ lúc nào.</string>
 </resources>

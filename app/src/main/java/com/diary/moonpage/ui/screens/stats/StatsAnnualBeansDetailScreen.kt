@@ -2,7 +2,8 @@ package com.diary.moonpage.ui.screens.stats
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -66,7 +67,19 @@ fun StatsAnnualBeansDetailScreen(
 
     var showRecapDetail by remember { mutableStateOf(false) }
     // Tab state inside detail view: 0 = Entire year, 1 = By month
-    var selectedTab by remember { mutableStateOf(0) }
+    val pagerState = rememberPagerState(pageCount = { 2 })
+
+    val scrollStateEntire = rememberScrollState()
+    val scrollStateMonth = rememberScrollState()
+
+    // Reset scroll position to top when page changes
+    LaunchedEffect(pagerState.currentPage) {
+        if (pagerState.currentPage == 0) {
+            scrollStateEntire.scrollTo(0)
+        } else {
+            scrollStateMonth.scrollTo(0)
+        }
+    }
 
     val graphicsLayerEntire = rememberGraphicsLayer()
     val graphicsLayerMonth = rememberGraphicsLayer()
@@ -103,7 +116,7 @@ fun StatsAnnualBeansDetailScreen(
                             onClick = {
                                 scope.launch {
                                     try {
-                                        val layer = if (selectedTab == 0) graphicsLayerEntire else graphicsLayerMonth
+                                        val layer = if (pagerState.currentPage == 0) graphicsLayerEntire else graphicsLayerMonth
                                         val bitmap = layer.toImageBitmap().asAndroidBitmap()
                                         ImageUtils.saveBitmapToGallery(context, bitmap)
                                     } catch (e: Exception) {
@@ -133,7 +146,7 @@ fun StatsAnnualBeansDetailScreen(
                             scope.launch {
                                 try {
                                     withFrameNanos { }
-                                    val layer = if (selectedTab == 0) graphicsLayerEntire else graphicsLayerMonth
+                                    val layer = if (pagerState.currentPage == 0) graphicsLayerEntire else graphicsLayerMonth
                                     val bitmap = layer.toImageBitmap().asAndroidBitmap()
                                     val roundedBitmap = ImageUtils.applyRoundedCorners(bitmap, 32.dp.value * context.resources.displayMetrics.density)
                                     ImageUtils.shareImage(context, roundedBitmap, context.getString(com.diary.moonpage.R.string.my_yearly_recap))
@@ -184,26 +197,38 @@ fun StatsAnnualBeansDetailScreen(
             ) {
                 // ── Tab Row ──
                 RecapTabRow(
-                    selectedTab = selectedTab,
-                    onTabSelected = { selectedTab = it }
+                    selectedTab = pagerState.currentPage,
+                    onTabSelected = { index ->
+                        scope.launch {
+                            pagerState.animateScrollToPage(index)
+                        }
+                    }
                 )
 
-                // ── Content per tab ──
-                when (selectedTab) {
-                    0 -> EntireYearContent(
-                        year = uiState.selectedYear,
-                        moodData = moodData,
-                        themeType = uiState.themeType,
-                        customMoods = uiState.customMoods,
-                        graphicsLayer = graphicsLayerEntire
-                    )
-                    1 -> ByMonthContent(
-                        year = uiState.selectedYear,
-                        moodData = moodData,
-                        themeType = uiState.themeType,
-                        customMoods = uiState.customMoods,
-                        graphicsLayer = graphicsLayerMonth
-                    )
+                // ── Content per tab with Pager ──
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize(),
+                    verticalAlignment = Alignment.Top
+                ) { page ->
+                    when (page) {
+                        0 -> EntireYearContent(
+                            year = uiState.selectedYear,
+                            moodData = moodData,
+                            themeType = uiState.themeType,
+                            customMoods = uiState.customMoods,
+                            graphicsLayer = graphicsLayerEntire,
+                            scrollState = scrollStateEntire
+                        )
+                        1 -> ByMonthContent(
+                            year = uiState.selectedYear,
+                            moodData = moodData,
+                            themeType = uiState.themeType,
+                            customMoods = uiState.customMoods,
+                            graphicsLayer = graphicsLayerMonth,
+                            scrollState = scrollStateMonth
+                        )
+                    }
                 }
             }
         }
@@ -273,14 +298,15 @@ private fun EntireYearContent(
     moodData: List<MoodFlowDto>,
     themeType: MoonThemeType,
     customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null,
-    graphicsLayer: androidx.compose.ui.graphics.layer.GraphicsLayer
+    graphicsLayer: androidx.compose.ui.graphics.layer.GraphicsLayer,
+    scrollState: ScrollState = rememberScrollState()
 ) {
     val moodMap = remember(moodData) { moodData.associateBy { it.date } }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         // ... (Header code) ...
@@ -437,14 +463,15 @@ private fun ByMonthContent(
     moodData: List<MoodFlowDto>,
     themeType: MoonThemeType,
     customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null,
-    graphicsLayer: androidx.compose.ui.graphics.layer.GraphicsLayer
+    graphicsLayer: androidx.compose.ui.graphics.layer.GraphicsLayer,
+    scrollState: ScrollState = rememberScrollState()
 ) {
     val moodMap = remember(moodData) { moodData.associateBy { it.date } }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
             .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
         // ... (Header code) ...

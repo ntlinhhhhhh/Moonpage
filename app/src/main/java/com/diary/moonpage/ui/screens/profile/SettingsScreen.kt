@@ -38,7 +38,8 @@ fun SettingsRoute(
     viewModel: SettingsViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
     onNavigateToLogin: () -> Unit,
-    onNavigateToCreatePasscode: () -> Unit
+    onNavigateToCreatePasscode: () -> Unit,
+    onNavigateToManageActivityCategories: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -65,7 +66,8 @@ fun SettingsRoute(
         onBatteryOptimizationClick = { showBatteryDialog = true },
         onExactAlarmClick = { showExactAlarmDialog = true },
         onChangePasswordClick = { showChangePasswordDialog = true },
-        onDeleteAccountClick = { viewModel.showDeleteAccountDialog() }
+        onDeleteAccountClick = { viewModel.showDeleteAccountDialog() },
+        onCustomizeBlocksClick = onNavigateToManageActivityCategories
     )
 
     if (showLanguageDialog) {
@@ -201,7 +203,8 @@ fun SettingsScreen(
     onBatteryOptimizationClick: () -> Unit,
     onExactAlarmClick: () -> Unit,
     onChangePasswordClick: () -> Unit,
-    onDeleteAccountClick: () -> Unit
+    onDeleteAccountClick: () -> Unit,
+    onCustomizeBlocksClick: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val context = LocalContext.current
@@ -260,6 +263,12 @@ fun SettingsScreen(
             ThemeSettingItem(
                 currentSelection = uiState.isDarkMode,
                 onSelectionChange = onThemeToggle
+            )
+
+            SettingsMenuItem(
+                title = stringResource(R.string.customize_blocks),
+                icon = Icons.Rounded.Dashboard,
+                onClick = onCustomizeBlocksClick
             )
 
             SectionTitle(stringResource(R.string.notifications))

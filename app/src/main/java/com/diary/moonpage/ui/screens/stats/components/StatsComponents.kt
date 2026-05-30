@@ -1366,6 +1366,17 @@ fun ActivityListItem(rank: Int, activity: BestActivityDto, modifier: Modifier = 
             modifier = Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
         ) {
+            // Rank number in top-left
+            Text(
+                text = "$rank",
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(top = 4.dp, start = 8.dp)
+            )
+
             MoonActivityIcon(icon = icon, size = 24.dp)
         }
         Spacer(modifier = Modifier.width(16.dp))
@@ -1509,7 +1520,7 @@ fun ActivityRankCard(rank: Int, name: String, count: Int, modifier: Modifier = M
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = stringResource(R.string.stats_rank_format, rank), 
+                text = "#$rank", 
                 modifier = Modifier.align(Alignment.Start), 
                 color = primaryColor.copy(alpha = 0.7f), 
                 fontSize = 11.sp,
@@ -1661,7 +1672,7 @@ private fun CorrelationActivityRow(rank: Int, correlation: ActivityCorrelation, 
             modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(stringResource(R.string.stats_rank_format, rank), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = accentColor.copy(alpha = 0.7f), modifier = Modifier.width(22.dp))
+            Text("#$rank", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = accentColor.copy(alpha = 0.7f), modifier = Modifier.width(22.dp))
             Box(
                 modifier = Modifier.size(40.dp).clip(CircleShape).background(MoonTheme.customColors.logItemBg),
                 contentAlignment = Alignment.Center
@@ -1698,7 +1709,7 @@ fun ActivityScoreCard(rank: Int, name: String, score: Double, color: Color, modi
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = stringResource(R.string.stats_rank_format, rank), 
+                text = "#$rank", 
                 modifier = Modifier.align(Alignment.Start), 
                 color = color.copy(alpha = 0.7f), 
                 fontSize = 11.sp,
@@ -2446,15 +2457,7 @@ private fun FrequentlyRecordedMiniCard(rank: Int, activity: BestActivityDto, mod
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Rank number
-        Text(
-            text = "$rank",
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
-            color = onSurfaceVariant.copy(alpha = 0.5f),
-            modifier = Modifier.align(Alignment.Start)
-        )
-        // Icon container
+        // Icon container with rank inside
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -2463,25 +2466,41 @@ private fun FrequentlyRecordedMiniCard(rank: Int, activity: BestActivityDto, mod
                 .background(MoonTheme.customColors.logItemBg.copy(alpha = 0.6f)),
             contentAlignment = Alignment.Center
         ) {
+            // Rank badge at top left
+            Text(
+                text = "$rank",
+                fontSize = 11.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = onSurfaceVariant.copy(alpha = 0.45f),
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(8.dp)
+            )
+
             MoonActivityIcon(icon = icon, size = 36.dp)
         }
-        // Activity name
-        Text(
-            text = activity.activityName,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-            color = onSurface,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            modifier = Modifier.fillMaxWidth()
-        )
-        // Occurrence count
-        Text(
-            text = "x${activity.occurrence}",
-            fontSize = 11.sp,
-            color = onSurfaceVariant.copy(alpha = 0.55f),
-            textAlign = TextAlign.Center
-        )
+        // Activity name and Occurrence count in one line
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = activity.activityName,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+                color = onSurface,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false)
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = "x${activity.occurrence}",
+                fontSize = 11.sp,
+                color = onSurfaceVariant.copy(alpha = 0.55f)
+            )
+        }
     }
 }
 

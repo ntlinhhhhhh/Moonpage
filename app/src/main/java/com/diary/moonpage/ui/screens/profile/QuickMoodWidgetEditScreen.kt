@@ -7,7 +7,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -19,12 +18,11 @@ import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.R
 import com.diary.moonpage.core.util.WidgetPreferencesManager
 import com.diary.moonpage.ui.screens.profile.components.QuickMoodWidgetPreview
-import com.diary.moonpage.ui.screens.profile.components.SwitchSettingItem
 import com.diary.moonpage.widget.glance.MoonpageWidgets
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -34,13 +32,22 @@ class QuickMoodWidgetEditViewModel @Inject constructor(
     private val widgetPreferencesManager: WidgetPreferencesManager
 ) : ViewModel() {
 
-    val uiState: StateFlow<QuickMoodWidgetEditUiState> = widgetPreferencesManager.showQuickMoodLabels
-        .map { QuickMoodWidgetEditUiState(showLabels = it) }
-        .stateIn(
+    val uiState: StateFlow<QuickMoodWidgetEditUiState> = combine(
+        widgetPreferencesManager.showQuickMoodStreak,
+        widgetPreferencesManager.showQuickMoodLabels
+    ) { streak, labels ->
+        QuickMoodWidgetEditUiState(showStreak = streak, showLabels = labels)
+    }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = QuickMoodWidgetEditUiState()
         )
+
+    fun setShowStreak(show: Boolean) {
+        viewModelScope.launch {
+            widgetPreferencesManager.setShowQuickMoodStreak(show)
+        }
+    }
 
     fun setShowLabels(show: Boolean) {
         viewModelScope.launch {
@@ -50,6 +57,7 @@ class QuickMoodWidgetEditViewModel @Inject constructor(
 }
 
 data class QuickMoodWidgetEditUiState(
+    val showStreak: Boolean = true,
     val showLabels: Boolean = true
 )
 
@@ -96,10 +104,32 @@ fun QuickMoodWidgetEditScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(20.dp)
         ) {
-            QuickMoodWidgetPreview(showLabels = uiState.showLabels)
-            Spacer(modifier = Modifier.height(20.dp))
-            SwitchSettingItem(
+            QuickMoodWidgetPreview(
+                showStreak = uiState.showStreak,
+                showLabels = uiState.showLabels,
+                modifier = Modifier.padding(bottom = 24.dp)
+            )
+            Text(
+                text = stringResource(R.string.preferences),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = colorScheme.primary,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            EditToggleItem(
+                title = "Show streak badge",
+                description = "Show your current streak on the widget.",
+                icon = Icons.Rounded.Whatshot,
+                checked = uiState.showStreak,
+                onCheckedChange = { viewModel.setShowStreak(it) }
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = colorScheme.outlineVariant)
+
+            EditToggleItem(
                 title = "Show labels",
+                description = "Show mood labels below each mood option.",
                 icon = Icons.Rounded.Label,
                 checked = uiState.showLabels,
                 onCheckedChange = { viewModel.setShowLabels(it) }

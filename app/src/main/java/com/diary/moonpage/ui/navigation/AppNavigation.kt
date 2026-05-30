@@ -54,11 +54,14 @@ import com.diary.moonpage.ui.screens.tutorial.TutorialController
 import com.diary.moonpage.ui.screens.tutorial.TutorialOverlay
 import com.diary.moonpage.ui.screens.tutorial.TutorialViewModel
 import com.diary.moonpage.ui.screens.tutorial.TutorialStep
+import com.diary.moonpage.widget.glance.MoonpageWidgets
 import kotlinx.coroutines.launch
 
 @Composable
 fun AppNavigation(
-    mainViewModel: MainViewModel = hiltViewModel()
+    mainViewModel: MainViewModel = hiltViewModel(),
+    widgetTargetRoute: String? = null,
+    onWidgetTargetRouteConsumed: () -> Unit = {}
 ) {
     val navController = rememberNavController()
     val scope = rememberCoroutineScope()
@@ -85,6 +88,30 @@ fun AppNavigation(
         )
     }
     val showBottomBar = currentRoute != null && mainAppRoutes.any { currentRoute.startsWith(it) } && !isAppLocked
+    val isMainAppRoute = currentRoute != null && (
+        mainAppRoutes.any { currentRoute.startsWith(it) } ||
+            currentRoute.startsWith("daily_log_screen") ||
+            currentRoute.startsWith("stats_")
+    )
+
+    fun navigateToWidgetTarget(route: String) {
+        if (route == MoonpageWidgets.ROUTE_STATS_MOOD) {
+            navController.navigate(Screen.Stats.route) {
+                launchSingleTop = true
+            }
+        }
+        navController.navigate(route) {
+            launchSingleTop = true
+        }
+        onWidgetTargetRouteConsumed()
+    }
+
+    LaunchedEffect(widgetTargetRoute, currentRoute, isAppLocked) {
+        val route = widgetTargetRoute ?: return@LaunchedEffect
+        if (!isAppLocked && isMainAppRoute && currentRoute != route) {
+            navigateToWidgetTarget(route)
+        }
+    }
 
     Scaffold(
         // We keep BottomBar outside AnimatedVisibility for main routes to prevent jitter
@@ -176,14 +203,20 @@ fun AppNavigation(
                                 
                                 scope.launch {
                                     val isReminderSet = onboardingViewModel.isReminderSet()
+                                    val targetRoute = widgetTargetRoute
                                     val nextDestination = when {
                                         !isLoggedIn      -> Screen.Landing.route
                                         needsOnboarding  -> Screen.OnboardingBirthday.route
                                         !isReminderSet   -> Screen.OnboardingReminder.route
+                                        targetRoute == MoonpageWidgets.ROUTE_STATS_MOOD -> Screen.Stats.route
+                                        targetRoute != null -> targetRoute
                                         else             -> Screen.Calendar.route
                                     }
                                     navController.navigate(nextDestination) {
                                         popUpTo(Screen.Loading.route) { inclusive = true }
+                                    }
+                                    if (targetRoute != null && targetRoute != MoonpageWidgets.ROUTE_STATS_MOOD && nextDestination == targetRoute) {
+                                        onWidgetTargetRouteConsumed()
                                     }
                                 }
                             }
@@ -326,7 +359,18 @@ fun AppNavigation(
                             },
                             onNavigateToCreatePasscode = {
                                 navController.navigate(Screen.CreatePasscode.route)
+                            },
+                            onNavigateToManageActivityCategories = {
+                                navController.navigate(Screen.ManageActivityCategories.route)
                             }
+                        )
+                    }
+                }
+
+                composable(Screen.ManageActivityCategories.route) {
+                    ScreenWrapper(Screen.ManageActivityCategories.route, mainAppRoutes, totalBottomPadding, paddingValues) {
+                        ManageActivityCategoriesRoute(
+                            onNavigateBack = { navController.popBackStack() }
                         )
                     }
                 }
@@ -546,7 +590,14 @@ fun AppNavigation(
                             initialMomentId = momentId,
                             onNavigateToGallery = { navController.navigate(Screen.Gallery.route) },
                             onNavigateToHistory = { navController.navigate(Screen.Gallery.route) },
-                            onNavigateToAccount = { navController.navigate(Screen.Account.route) }
+                            onNavigateToAccount = { navController.navigate(Screen.Account.route) },
+                            onNavigateToCalendar = { dateStr ->
+                                val calendarEntry = runCatching { navController.getBackStackEntry(Screen.Calendar.route) }.getOrNull()
+                                calendarEntry?.savedStateHandle?.set("created_log_date", dateStr)
+                                navController.navigate(Screen.Calendar.route) {
+                                    popUpTo(Screen.Calendar.route) { inclusive = false }
+                                }
+                            }
                         )
                     }
                 }

@@ -29,7 +29,14 @@ fun NavGraphBuilder.momentScreen(
             MomentCameraRoute(
                 onNavigateToGallery = { navController.navigate(Screen.Gallery.route) },
                 onNavigateToHistory = { navController.navigateToMomentHistory() },
-                onNavigateToAccount = { navController.navigateToAccount() }
+                onNavigateToAccount = { navController.navigateToAccount() },
+                onNavigateToCalendar = { dateStr ->
+                    val calendarEntry = runCatching { navController.getBackStackEntry(Screen.Calendar.route) }.getOrNull()
+                    calendarEntry?.savedStateHandle?.set("created_log_date", dateStr)
+                    navController.navigate(Screen.Calendar.route) {
+                        popUpTo(Screen.Calendar.route) { inclusive = false }
+                    }
+                }
             )
         }
     }
@@ -40,7 +47,14 @@ fun NavGraphBuilder.momentScreen(
                 onBackToCamera = { navController.popBackStack() },
                 onNavigateToGallery = { navController.navigate(Screen.Gallery.route) },
                 onNavigateToDetail = { id -> navController.navigateToMomentDetail(id) },
-                onNavigateToAccount = { navController.navigateToAccount() }
+                onNavigateToAccount = { navController.navigateToAccount() },
+                onNavigateToCalendar = { dateStr ->
+                    val calendarEntry = runCatching { navController.getBackStackEntry(Screen.Calendar.route) }.getOrNull()
+                    calendarEntry?.savedStateHandle?.set("created_log_date", dateStr)
+                    navController.navigate(Screen.Calendar.route) {
+                        popUpTo(Screen.Calendar.route) { inclusive = false }
+                    }
+                }
             )
         }
     }
