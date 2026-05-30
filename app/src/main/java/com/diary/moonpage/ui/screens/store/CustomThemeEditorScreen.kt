@@ -252,7 +252,8 @@ fun CustomThemeEditorRoot(
         coroutineScope.launch {
             try {
                 val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
-                cachedBitmap = bitmap
+                // Must copy to a software bitmap because getPixel() is not supported on HARDWARE bitmaps
+                cachedBitmap = bitmap.copy(android.graphics.Bitmap.Config.ARGB_8888, false)
                 isPickingColor = true
             } catch (e: Exception) {
                 // Fallback or handle error silently
