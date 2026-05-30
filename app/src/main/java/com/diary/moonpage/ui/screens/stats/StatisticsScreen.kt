@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -147,20 +148,63 @@ fun StatisticsScreen(
                         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.Transparent)
                     )
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                    TabRow(
+                        selectedTabIndex = pagerState.currentPage,
+                        containerColor = Color.Transparent,
+                        contentColor = MaterialTheme.colorScheme.primary,
+                        divider = {},
+                        indicator = { tabPositions ->
+                            if (pagerState.currentPage < tabPositions.size) {
+                                Box(
+                                    modifier = Modifier
+                                        .tabIndicatorOffset(tabPositions[pagerState.currentPage])
+                                        .fillMaxWidth()
+                                        .wrapContentSize(Alignment.BottomCenter)
+                                        .width(60.dp)
+                                        .height(3.dp)
+                                        .background(
+                                            color = MaterialTheme.colorScheme.primary,
+                                            shape = RoundedCornerShape(1.5.dp)
+                                        )
+                                )
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
                     ) {
-                        TabItem(stringResource(R.string.monthly), uiState.isMonthly, onClick = {
-                            scope.launch { 
-                                pagerState.animateScrollToPage(0)
-                            }
-                        })
-                        TabItem(stringResource(R.string.annual), !uiState.isMonthly, onClick = {
-                            scope.launch { 
-                                pagerState.animateScrollToPage(1)
-                            }
-                        })
+                        Tab(
+                            selected = pagerState.currentPage == 0,
+                            onClick = {
+                                scope.launch { 
+                                    pagerState.animateScrollToPage(0)
+                                }
+                            },
+                            text = {
+                                Text(
+                                    text = stringResource(R.string.monthly),
+                                    fontWeight = if (pagerState.currentPage == 0) FontWeight.Bold else FontWeight.Medium,
+                                    fontSize = 17.sp
+                                )
+                            },
+                            selectedContentColor = MaterialTheme.colorScheme.primary,
+                            unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Tab(
+                            selected = pagerState.currentPage == 1,
+                            onClick = {
+                                scope.launch { 
+                                    pagerState.animateScrollToPage(1)
+                                }
+                            },
+                            text = {
+                                Text(
+                                    text = stringResource(R.string.annual),
+                                    fontWeight = if (pagerState.currentPage == 1) FontWeight.Bold else FontWeight.Medium,
+                                    fontSize = 17.sp
+                                )
+                            },
+                            selectedContentColor = MaterialTheme.colorScheme.primary,
+                            unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
