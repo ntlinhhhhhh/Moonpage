@@ -181,12 +181,11 @@ private fun ManageCategoryCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Preview icons
-            Row(horizontalArrangement = Arrangement.spacedBy((-12).dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 category.previewIcons.take(3).forEach { moonIcon ->
                     Box(
                         modifier = Modifier
-                            .size(32.dp)
-                            .border(2.dp, colorScheme.surface, CircleShape)
+                            .size(34.dp)
                             .background(moonIcon.color.copy(alpha = 0.15f), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
@@ -194,14 +193,14 @@ private fun ManageCategoryCard(
                             androidx.compose.foundation.Image(
                                 painter = painterResource(id = moonIcon.drawableRes),
                                 contentDescription = null,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                         } else if (moonIcon.vector != null) {
                             Icon(
                                 imageVector = moonIcon.vector,
                                 contentDescription = null,
                                 tint = moonIcon.color,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(18.dp)
                             )
                         }
                     }

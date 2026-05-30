@@ -57,6 +57,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
@@ -198,7 +199,6 @@ fun CustomThemeEditorRoot(
     var editorZoom by remember { mutableFloatStateOf(1f) }
     var editorPan by remember { mutableStateOf(Offset.Zero) }
 
-    val darkTheme = isSystemInDarkTheme()
     val view = LocalView.current
     if (!view.isInEditMode) {
         val window = (view.context as Activity).window
@@ -214,6 +214,7 @@ fun CustomThemeEditorRoot(
             }
         }
 
+        val darkTheme = isSystemInDarkTheme()
         SideEffect {
             window.statusBarColor = android.graphics.Color.TRANSPARENT
             insetsController.isAppearanceLightStatusBars = !darkTheme
@@ -464,26 +465,27 @@ fun CustomThemeEditorRoot(
                         },
                         onDragEnd = {
                             isPickingColor = false
+                            val pickedColorLong = pickedColor.toArgb().toLong() and 0xFFFFFFFFL
                             when {
                                 uiState.currentScreen == EditorScreenState.SolidBg -> {
-                                    onSolidBackgroundSelected(pickedColor.value.toLong())
-                                    onAddRecentColor(pickedColor.value.toLong())
+                                    onSolidBackgroundSelected(pickedColorLong)
+                                    onAddRecentColor(pickedColorLong)
                                 }
                                 uiState.currentScreen == EditorScreenState.GradientBg -> {
                                     if (uiState.activeGradientNode == GradientNode.Start) {
-                                        onGradientStartSelected(pickedColor.value.toLong())
+                                        onGradientStartSelected(pickedColorLong)
                                     } else {
-                                        onGradientEndSelected(pickedColor.value.toLong())
+                                        onGradientEndSelected(pickedColorLong)
                                     }
-                                    onAddRecentColor(pickedColor.value.toLong())
+                                    onAddRecentColor(pickedColorLong)
                                 }
                                 uiState.currentScreen == EditorScreenState.EditComponents -> {
                                     if (uiState.activeEditMode == EditMode.Draw) {
-                                        onBrushColorSelected(pickedColor.value.toLong())
-                                        onAddRecentColor(pickedColor.value.toLong())
+                                        onBrushColorSelected(pickedColorLong)
+                                        onAddRecentColor(pickedColorLong)
                                     } else if (uiState.activeEditMode == EditMode.Palette) {
-                                        onFocusedColorSelected(pickedColor.value.toLong())
-                                        onAddRecentColor(pickedColor.value.toLong())
+                                        onFocusedColorSelected(pickedColorLong)
+                                        onAddRecentColor(pickedColorLong)
                                     }
                                 }
                             }
@@ -498,14 +500,8 @@ fun CustomThemeEditorRoot(
                             val scaleY = cachedBitmap!!.height.toFloat() / boxSize.height
                             val x = (pickOffset.x * scaleX).toInt().coerceIn(0, cachedBitmap!!.width - 1)
                             val y = (pickOffset.y * scaleY).toInt().coerceIn(0, cachedBitmap!!.height - 1)
-                            try {
-                                val pixelColor = cachedBitmap!!.getPixel(x, y)
-                                if (pixelColor != 0) {
-                                    pickedColor = Color(pixelColor)
-                                }
-                            } catch (e: Exception) {
-                                // Ignored
-                            }
+                            val pixel = cachedBitmap!!.getPixel(x, y)
+                            pickedColor = Color(pixel or 0xFF000000.toInt())
                         }
                     }
                 }
@@ -1594,7 +1590,7 @@ fun VerticalSizeSlider(
     modifier: Modifier = Modifier
 ) {
     val range = 2f..40f
-    
+
     Canvas(
         modifier = modifier
             .height(240.dp)
@@ -1620,7 +1616,7 @@ fun VerticalSizeSlider(
         val fraction = ((value - range.start) / (range.endInclusive - range.start)).coerceIn(0f, 1f)
         val trackWidth = 2.dp.toPx()
         val thumbRadius = 6.dp.toPx()
-        
+
         drawLine(
             color = Color.White.copy(alpha = 0.4f),
             start = Offset(size.width / 2, thumbRadius),
@@ -1628,9 +1624,9 @@ fun VerticalSizeSlider(
             strokeWidth = trackWidth,
             cap = androidx.compose.ui.graphics.StrokeCap.Round
         )
-        
+
         val thumbY = size.height - thumbRadius - fraction * (size.height - 2 * thumbRadius)
-        
+
         drawLine(
             color = Color.White,
             start = Offset(size.width / 2, size.height - thumbRadius),
@@ -1638,7 +1634,7 @@ fun VerticalSizeSlider(
             strokeWidth = trackWidth,
             cap = androidx.compose.ui.graphics.StrokeCap.Round
         )
-        
+
         drawCircle(
             color = Color.White,
             radius = thumbRadius,

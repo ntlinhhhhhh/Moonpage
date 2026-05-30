@@ -493,11 +493,11 @@ class CustomThemeEditorViewModel @Inject constructor(
         }
     }
 
-    private fun Long.toColorHex(): String = "#%08X".format(this)
+    private fun Long.toColorHex(): String = "#%08X".format(this and 0xFFFFFFFFL)
 
     private fun Long.toRgbColorHex(): String = "#%06X".format(this and 0x00FFFFFF)
 
-    private fun Long.toApiColorHex(): String = "0x%08X".format(this)
+    private fun Long.toApiColorHex(): String = "0x%08X".format(this and 0xFFFFFFFFL)
 
     private fun localizedString(@StringRes resId: Int): String {
         val localizedContext = LocaleUtils.applyLocale(context, LocaleUtils.getCurrentLanguage())

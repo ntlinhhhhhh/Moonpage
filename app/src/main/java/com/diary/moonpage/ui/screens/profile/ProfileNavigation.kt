@@ -78,11 +78,10 @@ fun NavGraphBuilder.profileScreen(
                 onNavigateToDetail = { id -> navController.navigate("moment_detail/$id") },
                 onNavigateToAccount = { navController.navigateToAccount() },
                 onNavigateToCalendar = { dateStr ->
-                    val calendarEntry = runCatching { navController.getBackStackEntry(Screen.Calendar.route) }.getOrNull()
-                    calendarEntry?.savedStateHandle?.set("created_log_date", dateStr)
                     navController.navigate(Screen.Calendar.route) {
                         popUpTo(Screen.Calendar.route) { inclusive = false }
                     }
+                    navController.getBackStackEntry(Screen.Calendar.route).savedStateHandle.set("created_log_date", dateStr)
                 }
             )
         }
