@@ -683,7 +683,7 @@ fun ConfirmActivationDialog(
 
                 // Main message
                 Text(
-                    text = "Do you want to set \"$themeName\" as your active theme?",
+                    text = stringResource(R.string.custom_theme_confirm_activation, themeName),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colorScheme.onSurface.copy(alpha = 0.8f),
                     textAlign = TextAlign.Center
@@ -737,7 +737,7 @@ fun ConfirmActivationDialog(
 }
 
 fun getThemeShades(theme: Theme): List<Color> {
-    val predefined = ThemeConstants.THEMES.find { it.id == theme.id }
+    val predefined = ThemeConstants.findTheme(theme.id)
     if (predefined != null) {
         return predefined.moods.map { mood ->
             MoonIcons.parseThemeColor(mood.iconUrl) ?: Color.LightGray

@@ -62,6 +62,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.core.util.MoonIcon
 import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.core.util.normalizeAppImageUrl
+import com.diary.moonpage.core.util.getTranslatedActivityCategoryName
 import com.diary.moonpage.ui.components.feedback.GlobalSnackbarManager
 import com.diary.moonpage.ui.components.feedback.MoonSnackbarHost
 import com.diary.moonpage.ui.components.feedback.MoonDeleteConfirmDialog
@@ -671,9 +672,8 @@ private fun DailyLogMainContent(
                 val categoryActivities = activitiesByCategory[category] ?: emptyList()
                 if (categoryActivities.isNotEmpty()) {
                     item(key = category) {
-                        val sectionTitle = if (category == "SelfCare") "Self-Care" else category
                         DailyActivitySection(
-                            title = sectionTitle,
+                            title = getTranslatedActivityCategoryName(category),
                             items = categoryActivities,
                             selectedIds = uiState.selectedActivities,
                             onItemClick = { onEvent(DailyLogUiEvent.OnActivityToggled(it)) },
@@ -785,7 +785,7 @@ private fun DailyCategoryBar(
     ) {
         items(categories) { category ->
             val isSelected = expandedCategories.contains(category)
-            val label = if (category == "SelfCare") "Self-Care" else category
+            val label = getTranslatedActivityCategoryName(category)
 
             FilterChip(
                 selected = isSelected,

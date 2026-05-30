@@ -352,7 +352,8 @@ private fun Theme.isCustomTheme(): Boolean {
 }
 
 private fun Theme.themePickerColor(): Color {
-    return ThemeConstants.THEMES.find { it.id == id }?.thumbnailUrl.toColorOrNull()
+    return ThemeConstants.findTheme(id)?.primaryLightColor.toColorOrNull()
+        ?: ThemeConstants.findTheme(id)?.thumbnailUrl.toColorOrNull()
         ?: description.appearanceColor("light", "primaryColor")
         ?: description.appearanceColor("dark", "primaryColor")
         ?: primaryColor.toColorOrNull()
@@ -369,8 +370,9 @@ private fun String?.appearanceColor(mode: String, key: String): Color? {
 }
 
 private fun String.toMoonThemeTypeOrNull(): MoonThemeType? {
-    if (this == ThemeConstants.DEFAULT_THEME_ID) return MoonThemeType.DEFAULT
-    val decoration = if (this.startsWith("theme_")) this.substringAfter("theme_") else this
+    if (ThemeConstants.isDefaultThemeId(this)) return MoonThemeType.DEFAULT
+    val normalizedThemeId = ThemeConstants.normalizeThemeId(this)
+    val decoration = if (normalizedThemeId.startsWith("theme_")) normalizedThemeId.substringAfter("theme_") else normalizedThemeId
     val enumName = when (decoration.uppercase()) {
         "MOON" -> "DEFAULT"
         "BROWN" -> "GRAY_BROWN"

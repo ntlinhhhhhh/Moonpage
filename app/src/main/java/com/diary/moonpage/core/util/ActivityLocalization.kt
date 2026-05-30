@@ -99,3 +99,25 @@ fun getTranslatedActivityName(name: String): String {
         else -> name
     }
 }
+
+@Composable
+@ReadOnlyComposable
+fun getTranslatedActivityCategoryName(category: String): String {
+    return when (category) {
+        ActivityCategoryKeys.HOBBIES -> stringResource(R.string.activity_category_hobbies)
+        ActivityCategoryKeys.EMOTIONS -> stringResource(R.string.activity_category_emotions)
+        ActivityCategoryKeys.MEALS -> stringResource(R.string.activity_category_meals)
+        ActivityCategoryKeys.SELF_CARE, "Self-Care" -> stringResource(R.string.activity_category_self_care)
+        ActivityCategoryKeys.CHORES -> stringResource(R.string.activity_category_chores)
+        ActivityCategoryKeys.EVENTS -> stringResource(R.string.activity_category_events)
+        ActivityCategoryKeys.PEOPLE -> stringResource(R.string.activity_category_people)
+        ActivityCategoryKeys.BEAUTY -> stringResource(R.string.activity_category_beauty)
+        ActivityCategoryKeys.WEATHER -> stringResource(R.string.activity_category_weather)
+        ActivityCategoryKeys.HEALTH -> stringResource(R.string.activity_category_health)
+        ActivityCategoryKeys.WORK -> stringResource(R.string.activity_category_work)
+        ActivityCategoryKeys.OTHER -> stringResource(R.string.activity_category_other)
+        ActivityCategoryKeys.SCHOOL -> stringResource(R.string.activity_category_school)
+        ActivityCategoryKeys.RELATIONSHIP -> stringResource(R.string.activity_category_relationship)
+        else -> category
+    }
+}

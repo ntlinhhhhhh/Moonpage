@@ -248,7 +248,11 @@ fun SettingsScreen(
 
             SettingsMenuItem(
                 title = stringResource(R.string.language),
-                value = if (uiState.language == "en") "English" else "Vietnamese",
+                value = if (uiState.language == "en") {
+                    stringResource(R.string.language_english)
+                } else {
+                    stringResource(R.string.language_vietnamese)
+                },
                 icon = Icons.Rounded.Language,
                 onClick = onLanguageClick
             )

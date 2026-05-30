@@ -502,15 +502,16 @@ private val CUSTOM_THEME_FILE_TIMESTAMP_REGEX = Regex("""custom_theme_(?:thumb|b
 
 // Extension to map Theme to MoonThemeType
 fun Theme.toMoonThemeType(): MoonThemeType {
-    if (this.id == ThemeConstants.DEFAULT_THEME_ID) return MoonThemeType.DEFAULT
+    if (ThemeConstants.isDefaultThemeId(this.id)) return MoonThemeType.DEFAULT
     return id.toMoonThemeTypeOrNull()
         ?: decoration.toMoonThemeTypeOrNull()
         ?: MoonThemeType.DEFAULT
 }
 
 private fun String.toMoonThemeTypeOrNull(): MoonThemeType? {
-    if (this == ThemeConstants.DEFAULT_THEME_ID) return MoonThemeType.DEFAULT
-    val normalized = if (startsWith("theme_")) substringAfter("theme_") else this
+    if (ThemeConstants.isDefaultThemeId(this)) return MoonThemeType.DEFAULT
+    val normalizedThemeId = ThemeConstants.normalizeThemeId(this)
+    val normalized = if (normalizedThemeId.startsWith("theme_")) normalizedThemeId.substringAfter("theme_") else normalizedThemeId
     val enumName = when (normalized.uppercase()) {
         "MOON" -> "DEFAULT"
         "BROWN" -> "GRAY_BROWN"

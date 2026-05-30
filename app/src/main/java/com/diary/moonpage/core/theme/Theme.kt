@@ -262,8 +262,9 @@ fun MoonPageTheme(
     content: @Composable () -> Unit
 ) {
     val customTheme = activeTheme?.takeIf { it.isCustomTheme() }
-    val customThemePrimary = customTheme?.customPrimaryColor(darkTheme)
-    val customThemeBackground = customTheme?.customBackgroundColor(darkTheme)
+    val appearanceTheme = activeTheme?.takeIf { it.hasThemeAppearance() } ?: customTheme
+    val customThemePrimary = appearanceTheme?.customPrimaryColor(darkTheme)
+    val customThemeBackground = appearanceTheme?.customBackgroundColor(darkTheme)
     val hasCustomBackgroundImage = customTheme.hasCustomBackgroundImage()
     val hasCustomGradientBackground = customTheme.hasCustomGradientBackground(darkTheme)
     val hasCustomVisualBackground = hasCustomBackgroundImage || hasCustomGradientBackground
@@ -301,7 +302,7 @@ fun MoonPageTheme(
         }
     }
 
-    val customThemeFallbackBackground = customTheme?.let {
+    val customThemeFallbackBackground = appearanceTheme?.let {
         if (darkTheme) {
             themePrimary.copy(alpha = 0.18f).compositeOver(MoonBgDark)
         } else {
@@ -323,7 +324,7 @@ fun MoonPageTheme(
         )
     } else {
         when {
-            customTheme != null -> {
+            appearanceTheme != null -> {
                 LightColorScheme.copy(
                     primary = themePrimary,
                     background = visualProtection?.background
@@ -561,6 +562,14 @@ private fun Theme.isCustomTheme(): Boolean {
     return id.startsWith("custom_") ||
         decoration.equals("CUSTOM", ignoreCase = true) ||
         collection.equals("Custom Theme", ignoreCase = true)
+}
+
+private fun Theme.hasThemeAppearance(): Boolean {
+    return primaryLightColor.toThemeColorOrNull() != null ||
+        primaryDarkColor.toThemeColorOrNull() != null ||
+        primaryColor.toThemeColorOrNull() != null ||
+        description.appearanceObject("light") != null ||
+        description.appearanceObject("dark") != null
 }
 
 private fun Theme.customPrimaryColor(darkTheme: Boolean): Color? {

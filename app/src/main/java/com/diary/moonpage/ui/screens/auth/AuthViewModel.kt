@@ -118,7 +118,11 @@ class AuthViewModel @Inject constructor (
                 
                 val jobs = listOf(
                     async { userRepository.getCurrentUser() },
-                    async { themeRepository.getMyThemes() },
+                    async {
+                        themeRepository.getAllThemes()
+                        themeRepository.getOwnedThemes()
+                        themeRepository.getMyThemes()
+                    },
                     async { activityRepository.syncActivities() }
                 )
 
@@ -200,6 +204,7 @@ class AuthViewModel @Inject constructor (
                     tokenManager.saveToken(user.token)
                     tokenManager.saveUserId(user.userId)
                     tokenManager.saveUserName(user.name)
+                    clearThemeCacheForNewSession()
                     val isOnboarded = onboardingPrefsManager.checkOnboardingCompleted(user.userId)
                     
                     _uiState.update { it.copy(isLoading = false) }
@@ -289,6 +294,7 @@ class AuthViewModel @Inject constructor (
                     tokenManager.saveToken(user.token)
                     tokenManager.saveUserId(user.userId)
                     tokenManager.saveUserName(user.name)
+                    clearThemeCacheForNewSession()
                     val isOnboarded = onboardingPrefsManager.checkOnboardingCompleted(user.userId)
                     
                     _uiState.update { it.copy(isLoading = false) }
@@ -301,6 +307,14 @@ class AuthViewModel @Inject constructor (
                 _uiState.update { it.copy(isLoading = false) }
                 _uiEvent.send(AuthUiEvent.ShowSnackBar(UiText.StringResource(R.string.error_connection)))
             }
+        }
+    }
+
+    private suspend fun clearThemeCacheForNewSession() {
+        runCatching {
+            themeRepository.clearCache()
+        }.onFailure { error ->
+            android.util.Log.e("AuthViewModel", "Failed to clear theme cache", error)
         }
     }
 

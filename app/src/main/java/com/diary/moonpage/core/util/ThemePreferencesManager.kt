@@ -23,6 +23,7 @@ class ThemePreferencesManager @Inject constructor(
         private val THEME_TYPE_KEY = stringPreferencesKey("theme_type")
         private val DARK_MODE_KEY = androidx.datastore.preferences.core.booleanPreferencesKey("dark_mode")
         private val LAST_WEATHER_NOTIFICATION_DATE_KEY = stringPreferencesKey("last_weather_noti_date")
+        private val ACTIVE_THEME_JSON_KEY = stringPreferencesKey("active_theme_json")
     }
 
     val lastWeatherNotificationDate: Flow<String?> = context.themeDataStore.data.map { prefs ->
@@ -60,6 +61,20 @@ class ThemePreferencesManager @Inject constructor(
                 prefs.remove(DARK_MODE_KEY)
             } else {
                 prefs[DARK_MODE_KEY] = isDark
+            }
+        }
+    }
+
+    val activeThemeJson: Flow<String?> = context.themeDataStore.data.map { prefs ->
+        prefs[ACTIVE_THEME_JSON_KEY]
+    }
+
+    suspend fun setActiveThemeJson(json: String?) {
+        context.themeDataStore.edit { prefs ->
+            if (json == null) {
+                prefs.remove(ACTIVE_THEME_JSON_KEY)
+            } else {
+                prefs[ACTIVE_THEME_JSON_KEY] = json
             }
         }
     }

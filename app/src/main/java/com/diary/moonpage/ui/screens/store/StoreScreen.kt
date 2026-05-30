@@ -887,14 +887,7 @@ fun CustomThemeCard(
             !candidate.isNullOrBlank() && parseThemePreviewColor(candidate) == null && !candidate.contains(",")
         }
     }
-    val savedPreviewFile = remember(previewPath) { previewPath?.let(::File) }
-    val previewModel = remember(previewPath, savedPreviewFile) {
-        when {
-            previewPath.isNullOrBlank() -> null
-            savedPreviewFile?.exists() == true -> savedPreviewFile
-            else -> previewPath
-        }
-    }
+    val previewModel = previewPath
 
     Card(
         modifier = Modifier.fillMaxWidth().height(190.dp),
@@ -1510,15 +1503,6 @@ fun CollectionsTabContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
-            Text(
-                text = stringResource(R.string.collections),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-        }
-
         if (purchasedThemes.isNotEmpty()) {
             item {
                 Text(

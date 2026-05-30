@@ -1357,7 +1357,7 @@ fun ActivityListItem(rank: Int, activity: BestActivityDto, modifier: Modifier = 
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "$rank.",
+            text = stringResource(R.string.stats_rank_format_dot, rank),
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.width(32.dp)
@@ -1509,7 +1509,7 @@ fun ActivityRankCard(rank: Int, name: String, count: Int, modifier: Modifier = M
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "#$rank", 
+                text = stringResource(R.string.stats_rank_format, rank), 
                 modifier = Modifier.align(Alignment.Start), 
                 color = primaryColor.copy(alpha = 0.7f), 
                 fontSize = 11.sp,
@@ -1661,7 +1661,7 @@ private fun CorrelationActivityRow(rank: Int, correlation: ActivityCorrelation, 
             modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("#$rank", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = accentColor.copy(alpha = 0.7f), modifier = Modifier.width(22.dp))
+            Text(stringResource(R.string.stats_rank_format, rank), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = accentColor.copy(alpha = 0.7f), modifier = Modifier.width(22.dp))
             Box(
                 modifier = Modifier.size(40.dp).clip(CircleShape).background(MoonTheme.customColors.logItemBg),
                 contentAlignment = Alignment.Center
@@ -1698,7 +1698,7 @@ fun ActivityScoreCard(rank: Int, name: String, score: Double, color: Color, modi
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "#$rank", 
+                text = stringResource(R.string.stats_rank_format, rank), 
                 modifier = Modifier.align(Alignment.Start), 
                 color = color.copy(alpha = 0.7f), 
                 fontSize = 11.sp,

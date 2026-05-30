@@ -5,6 +5,8 @@ import com.diary.moonpage.core.util.PredefinedTheme
 import com.diary.moonpage.core.util.ThemeConstants
 import com.diary.moonpage.core.util.TokenManager
 import com.diary.moonpage.core.util.UserManager
+import com.diary.moonpage.core.util.primaryPreviewColor
+import com.diary.moonpage.core.util.toAppearanceDescription
 import com.diary.moonpage.data.remote.api.ThemeApi
 import com.diary.moonpage.data.remote.api.UserApi
 import com.diary.moonpage.data.remote.dto.auth.UpdateProfileRequestDto
@@ -108,17 +110,19 @@ class UserRepositoryImpl @Inject constructor(
     }
 
     private suspend fun resolveOwnedTheme(themeId: String): Theme {
-        ThemeConstants.THEMES.find { it.id == themeId }?.let { return it.toOwnedTheme() }
+        val normalizedThemeId = ThemeConstants.normalizeThemeId(themeId)
+        ThemeConstants.findTheme(normalizedThemeId)?.let { return it.toOwnedTheme() }
+        if (normalizedThemeId.startsWith("custom_")) return normalizedThemeId.toFallbackOwnedTheme()
 
         return try {
-            val response = themeApi.getThemeDetail(themeId)
+            val response = themeApi.getThemeDetail(normalizedThemeId)
             if (response.isSuccessful && response.body() != null) {
                 response.body()!!.toDomain().copy(isOwned = true)
             } else {
-                themeId.toFallbackOwnedTheme()
+                normalizedThemeId.toFallbackOwnedTheme()
             }
         } catch (e: Exception) {
-            themeId.toFallbackOwnedTheme()
+            normalizedThemeId.toFallbackOwnedTheme()
         }
     }
 
@@ -288,9 +292,12 @@ private fun PredefinedTheme.toOwnedTheme(): Theme {
         backgroundUrl = backgroundUrl,
         isOwned = true,
         isActive = id == ThemeConstants.DEFAULT_THEME_ID,
+        description = toAppearanceDescription(),
         type = ThemeType.THEME,
         icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
-        primaryColor = thumbnailUrl,
+        primaryColor = primaryPreviewColor(),
+        primaryLightColor = primaryLightColor,
+        primaryDarkColor = primaryDarkColor,
         decoration = decoration
     )
 }

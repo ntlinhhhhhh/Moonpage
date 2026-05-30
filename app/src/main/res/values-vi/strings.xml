@@ -999,7 +999,27 @@
     <string name="stats_mood_year_heavy">Năm nay khá nặng nề. 🌙</string>
     <!-- Stats Recorded Summaries -->
 
-    <string name="stats_recorded_prefix">Bạn đã ghi lại</string>
+    <string name="stats_recorded_prefix">Bạn đã ghi chép</string>
     <string name="stats_recorded_suffix">nhiều nhất.</string>
-    <string name="custom_theme_transform_guide">2 ngón tay để zoom/xoay • 1 ngón để di chuyển</string>
+    <string name="custom_theme_transform_guide">2 ngón tay để thu phóng/xoay • 1 ngón tay để di chuyển</string>
+    <string name="custom_theme_drag_finger">Kéo ngón tay trên màn hình để chọn màu</string>
+    <string name="custom_theme_confirm_activation">Bạn có muốn kích hoạt "%1$s" làm giao diện chính?</string>
+    <string name="content_desc_close">Đóng</string>
+    <string name="content_desc_background">Hình nền</string>
+    <string name="content_desc_back">Trở về</string>
+    <string name="content_desc_done">Hoàn tất</string>
+    <string name="content_desc_preview">Xem trước</string>
+    <string name="content_desc_edit_name">Chỉnh sửa tên</string>
+    <string name="content_desc_apply">Áp dụng</string>
+    <string name="content_desc_pick_color">Chọn màu từ màn hình</string>
+    <string name="content_desc_add_color">Thêm màu</string>
+    <string name="content_desc_undo">Hoàn tác</string>
+    <string name="content_desc_clear_all">Xóa tất cả</string>
+    <string name="content_desc_rotate_90">Xoay 90°</string>
+    <string name="content_desc_flip_horizontal">Lật ngang</string>
+    <string name="content_desc_flip_vertical">Lật dọc</string>
+    <string name="content_desc_reset">Khôi phục gốc</string>
+    <string name="content_desc_sort">Sắp xếp</string>
+    <string name="stats_rank_format">#%1$d</string>
+    <string name="stats_rank_format_dot">%1$d.</string>
 </resources>

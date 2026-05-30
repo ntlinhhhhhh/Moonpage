@@ -82,7 +82,7 @@ fun StatsMusicDetailScreen(
                 },
                 actions = {
                     IconButton(onClick = { sortDescending = !sortDescending }) {
-                        Icon(if (sortDescending) Icons.Rounded.ArrowDownward else Icons.Rounded.ArrowUpward, contentDescription = "Sort", tint = MaterialTheme.colorScheme.onBackground)
+                        Icon(if (sortDescending) Icons.Rounded.ArrowDownward else Icons.Rounded.ArrowUpward, contentDescription = stringResource(R.string.content_desc_sort), tint = MaterialTheme.colorScheme.onBackground)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -186,7 +186,7 @@ fun StatsMusicDetailScreen(
                     }
                     if (visibleCount > 6) {
                         TextButton(onClick = { visibleCount = 6 }) {
-                            Text("Show Less", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            Text(stringResource(R.string.view_less), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }
