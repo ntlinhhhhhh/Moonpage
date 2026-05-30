@@ -197,7 +197,7 @@ private fun Theme?.customBackgroundModel(): Any? {
 
 private fun Theme?.customBackgroundBrush(isDark: Boolean): Brush? {
     val theme = this ?: return null
-    if (!theme.isCustomTheme() || theme.hasCustomImageBackground()) return null
+    if (!theme.isCustomTheme() || !theme.backgroundUrl.isNullOrBlank()) return null
     val mode = if (isDark) "dark" else "light"
     val appearance = theme.description.appearanceObject(mode) ?: return null
     if (!appearance.optString("backgroundFillMode").equals("Gradient", ignoreCase = true)) return null
@@ -209,9 +209,9 @@ private fun Theme?.customBackgroundBrush(isDark: Boolean): Brush? {
 private fun Theme?.hasCustomImageBackground(): Boolean {
     val theme = this ?: return false
     if (!theme.isCustomTheme()) return false
-    return theme.backgroundUrl.isThemeAssetPath() ||
-        theme.description.appearanceObject("light")?.optString("backgroundUri").isThemeAssetPath() ||
-        theme.description.appearanceObject("dark")?.optString("backgroundUri").isThemeAssetPath()
+    val lightUri = theme.description.appearanceObject("light")?.optString("backgroundUri")
+    val darkUri = theme.description.appearanceObject("dark")?.optString("backgroundUri")
+    return !lightUri.isNullOrBlank() || !darkUri.isNullOrBlank()
 }
 
 private fun Theme?.customImageScrim(isDark: Boolean): Color? {

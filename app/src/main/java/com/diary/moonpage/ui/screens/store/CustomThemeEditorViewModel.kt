@@ -401,14 +401,21 @@ class CustomThemeEditorViewModel @Inject constructor(
                         // Optimization: Decode background bitmap once and reuse
                         val sharedBackgroundBitmap = backgroundAppearance?.backgroundUri?.let { context.decodeThemeBitmap(it) }
                         
+                        val hasImage = !backgroundAppearance?.backgroundUri.isNullOrBlank()
+                        val hasStrokes = state.strokes.isNotEmpty()
+                        val shouldSaveBackground = hasImage || hasStrokes
+
                         val backgroundDeferred = async {
-                            backgroundAppearance?.backgroundUri?.takeIf { it.isNotBlank() }?.let {
+                            if (shouldSaveBackground) {
+                                val baseAppearance = backgroundAppearance ?: state.lightAppearance
                                 context.saveBitmapToInternalStorage(
-                                    state.createBackgroundBitmap(backgroundAppearance, sharedBackgroundBitmap),
+                                    state.createBackgroundBitmap(baseAppearance, sharedBackgroundBitmap),
                                     backgroundFileName,
                                     format = customThemeImageFormat(),
                                     quality = CUSTOM_THEME_IMAGE_QUALITY
                                 )
+                            } else {
+                                null
                             }
                         }
                         
