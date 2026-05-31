@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
-import com.diary.moonpage.widget.glance.MoonpageWidgets
+import com.diary.moonpage.widget.glance.MoonpageWidgetRefreshManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -74,6 +74,9 @@ class WidgetPreferencesManager(
             update(prefs)
             prefs[LAST_UPDATE_TRIGGER_KEY] = System.currentTimeMillis()
         }
-        MoonpageWidgets.refreshAll(context.applicationContext)
+        MoonpageWidgetRefreshManager.requestRefresh(
+            context = context.applicationContext,
+            reason = MoonpageWidgetRefreshManager.Reason.WIDGET_SETTINGS_CHANGED
+        )
     }
 }

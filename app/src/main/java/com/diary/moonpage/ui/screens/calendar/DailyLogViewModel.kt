@@ -12,7 +12,7 @@ import com.diary.moonpage.core.util.PkceUtil
 import com.diary.moonpage.core.util.MoonIcons
 import com.diary.moonpage.core.util.LocationTracker
 import com.diary.moonpage.domain.repository.WeatherRepository
-import com.diary.moonpage.widget.glance.MoonpageWidgets
+import com.diary.moonpage.widget.glance.MoonpageWidgetRefreshManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -909,7 +909,10 @@ class DailyLogViewModel @Inject constructor(
                     R.string.record_created_success
                 }
                 statisticsRepository.triggerRefresh()
-                MoonpageWidgets.refreshAll(context)
+                MoonpageWidgetRefreshManager.requestRefresh(
+                    context = context,
+                    reason = MoonpageWidgetRefreshManager.Reason.DATA_CHANGED
+                )
 
                 // Cleanup temporary retained files
                 existingPhotoFiles.forEach { it.delete() }

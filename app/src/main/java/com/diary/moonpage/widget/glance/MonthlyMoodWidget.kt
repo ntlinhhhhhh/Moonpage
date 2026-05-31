@@ -59,7 +59,15 @@ class MonthlyMoodWidget : GlanceAppWidget() {
         val mutedCircleColor = if (isNight) MutedCircleColorDark else MutedCircleColor
         val today = LocalDate.now()
         val monthLabel = today.format(DateTimeFormatter.ofPattern("MMM yyyy", Locale.getDefault()))
-        val dayHeaders = listOf("Su", "Mo", "Tu", "We", "Th", "Fr", "Sa")
+        val dayHeaders = listOf(
+            context.getString(R.string.widget_sun_short),
+            context.getString(R.string.widget_mon_short),
+            context.getString(R.string.widget_tue_short),
+            context.getString(R.string.widget_wed_short),
+            context.getString(R.string.widget_thu_short),
+            context.getString(R.string.widget_fri_short),
+            context.getString(R.string.widget_sat_short)
+        )
         val weeks = monthDays.chunked(7)
 
         val openAppAction = actionStartActivity(

@@ -33,13 +33,13 @@
             android:orientation="horizontal"
             android:weightSum="7">
 
-            <TextView style="@style/WidgetPreviewDayLabel" android:text="Su" />
-            <TextView style="@style/WidgetPreviewDayLabel" android:text="Mo" />
-            <TextView style="@style/WidgetPreviewDayLabel" android:text="Tu" />
-            <TextView style="@style/WidgetPreviewDayLabel" android:text="We" />
-            <TextView style="@style/WidgetPreviewDayLabel" android:text="Th" />
-            <TextView style="@style/WidgetPreviewDayLabel" android:text="Fr" />
-            <TextView style="@style/WidgetPreviewDayLabel" android:text="Sa" />
+            <TextView style="@style/WidgetPreviewDayLabel" android:text="@string/widget_sun_short" />
+            <TextView style="@style/WidgetPreviewDayLabel" android:text="@string/widget_mon_short" />
+            <TextView style="@style/WidgetPreviewDayLabel" android:text="@string/widget_tue_short" />
+            <TextView style="@style/WidgetPreviewDayLabel" android:text="@string/widget_wed_short" />
+            <TextView style="@style/WidgetPreviewDayLabel" android:text="@string/widget_thu_short" />
+            <TextView style="@style/WidgetPreviewDayLabel" android:text="@string/widget_fri_short" />
+            <TextView style="@style/WidgetPreviewDayLabel" android:text="@string/widget_sat_short" />
         </LinearLayout>
 
         <TextView

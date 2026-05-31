@@ -15,7 +15,6 @@ import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
-import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.action.actionStartActivity
@@ -34,10 +33,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.diary.moonpage.R
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 
 private const val PHOTO_ROTATE_INTERVAL_MS = 5 * 60_000L
 private const val PHOTO_ROTATE_WINDOW_MS = 60_000L
@@ -169,21 +165,10 @@ class PhotoMomentAutoRotateReceiver : BroadcastReceiver() {
         if (intent.action != PHOTO_ROTATE_ACTION) return
 
         PhotoMomentRotationScheduler.schedule(context)
-        val pendingResult = goAsync()
-        CoroutineScope(Dispatchers.Default).launch {
-            try {
-                val glanceManager = GlanceAppWidgetManager(context)
-                val widget = PhotoMomentWidget()
-                val glanceIds = glanceManager.getGlanceIds(PhotoMomentWidget::class.java)
-                glanceIds.forEach { id ->
-                    widget.update(context, id)
-                }
-            } catch (e: Exception) {
-                // Ignore update errors during rotation
-            } finally {
-                pendingResult.finish()
-            }
-        }
+        MoonpageWidgetRefreshManager.requestRefresh(
+            context = context,
+            reason = MoonpageWidgetRefreshManager.Reason.PHOTO_ROTATION
+        )
     }
 }
 

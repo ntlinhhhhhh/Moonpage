@@ -66,7 +66,15 @@ class WeeklyMoodWidget : GlanceAppWidget() {
         
         val streakText = context.getString(R.string.streak_badge, snapshot.streakCount)
 
-        val dayNames = listOf("Su", "Mo", "Tu", "We", "Th", "Fr", "Sa")
+        val dayNames = listOf(
+            context.getString(R.string.widget_sun_short),
+            context.getString(R.string.widget_mon_short),
+            context.getString(R.string.widget_tue_short),
+            context.getString(R.string.widget_wed_short),
+            context.getString(R.string.widget_thu_short),
+            context.getString(R.string.widget_fri_short),
+            context.getString(R.string.widget_sat_short)
+        )
 
         provideContent {
             Box(

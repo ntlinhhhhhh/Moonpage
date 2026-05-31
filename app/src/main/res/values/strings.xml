@@ -125,6 +125,13 @@
     <string name="thu_short">T</string>
     <string name="fri_short">F</string>
     <string name="sat_short">S</string>
+    <string name="widget_sun_short">Su</string>
+    <string name="widget_mon_short">Mo</string>
+    <string name="widget_tue_short">Tu</string>
+    <string name="widget_wed_short">We</string>
+    <string name="widget_thu_short">Th</string>
+    <string name="widget_fri_short">Fr</string>
+    <string name="widget_sat_short">Sa</string>
 
     <!-- Profile -->
     <string name="account">Account</string>
