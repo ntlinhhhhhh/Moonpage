@@ -513,7 +513,7 @@ private fun DailyLogTopBar(
                     ) { onDateClick() }
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
-                val formatter = DateTimeFormatter.ofPattern("EEEE, MMM d", Locale.ENGLISH)
+                val formatter = DateTimeFormatter.ofPattern("EEEE, MMM d", Locale.getDefault())
                 Text(
                     text = date.format(formatter),
                     style = MaterialTheme.typography.titleMedium,
@@ -833,14 +833,25 @@ private fun DailyMoodSection(
                 }
             } else if (suggestedWeather != null) {
                 val weatherIcon = when {
-                    suggestedWeather.condition.contains("Sunny") -> "☀️"
-                    suggestedWeather.condition.contains("Cloudy") -> "☁️"
-                    suggestedWeather.condition.contains("Rainy") -> "🌧️"
-                    suggestedWeather.condition.contains("Snowy") -> "❄️"
-                    suggestedWeather.condition.contains("Windy") -> "💨"
-                    suggestedWeather.condition.contains("Stormy") -> "⛈️"
+                    suggestedWeather.condition.contains("Sunny", ignoreCase = true) -> "☀️"
+                    suggestedWeather.condition.contains("Cloudy", ignoreCase = true) -> "☁️"
+                    suggestedWeather.condition.contains("Rainy", ignoreCase = true) -> "🌧️"
+                    suggestedWeather.condition.contains("Snowy", ignoreCase = true) -> "❄️"
+                    suggestedWeather.condition.contains("Windy", ignoreCase = true) -> "💨"
+                    suggestedWeather.condition.contains("Stormy", ignoreCase = true) -> "⛈️"
                     else -> "🌡️"
                 }
+
+                val weatherTextRes = when {
+                    suggestedWeather.condition.contains("Sunny", ignoreCase = true) -> R.string.activity_name_sunny
+                    suggestedWeather.condition.contains("Cloudy", ignoreCase = true) -> R.string.activity_name_cloudy
+                    suggestedWeather.condition.contains("Rainy", ignoreCase = true) -> R.string.activity_name_rainy
+                    suggestedWeather.condition.contains("Snowy", ignoreCase = true) -> R.string.activity_name_snowy
+                    suggestedWeather.condition.contains("Windy", ignoreCase = true) -> R.string.activity_name_windy
+                    suggestedWeather.condition.contains("Stormy", ignoreCase = true) -> R.string.activity_name_stormy
+                    else -> R.string.unknown
+                }
+                val weatherText = stringResource(weatherTextRes)
 
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
@@ -848,7 +859,7 @@ private fun DailyMoodSection(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "$weatherIcon ${suggestedWeather.condition} ${suggestedWeather.temp.toInt()}°C",
+                        text = "$weatherIcon $weatherText ${suggestedWeather.temp.toInt()}°C",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = MoonTheme.customColors.logCardOnBg.copy(alpha = 0.8f),

@@ -2522,8 +2522,9 @@ fun InsightsTeaserCard(bestActivities: List<BestActivityDto>, onClick: () -> Uni
                                     MoonActivityIcon(MoonIcons.getIconForActivity(a.activityName), 16.dp)
                                 }
                                 Spacer(modifier = Modifier.width(5.dp))
-                                Text(a.activityName, fontSize = 12.sp, color = MoonTheme.customColors.successColor, fontWeight = FontWeight.SemiBold, maxLines = 1)
-                            }
+                                Text(getTranslatedActivityName(a.activityName), fontSize = 12.sp, color = MoonTheme.customColors.successColor, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                                }
+
                         }
                     }
                 }

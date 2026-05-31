@@ -68,6 +68,13 @@ fun AccountRoute(
 
     val user = uiState.user
     val context = LocalContext.current
+    val genderValue = when (user?.gender?.lowercase()) {
+        "female" -> stringResource(R.string.gender_female)
+        "male" -> stringResource(R.string.gender_male)
+        "other" -> stringResource(R.string.gender_other)
+        "not specified" -> stringResource(R.string.not_specified)
+        else -> user?.gender ?: stringResource(R.string.not_specified)
+    }
 
     val avatarLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -124,7 +131,7 @@ fun AccountRoute(
     Box(modifier = Modifier.fillMaxSize()) {
         AccountScreen(
             username = user?.name ?: "",
-            gender = user?.gender ?: stringResource(R.string.not_specified),
+            gender = genderValue,
             birthday = user?.birthday ?: stringResource(R.string.not_specified),
             userIdFull = user?.userId ?: "",
             email = user?.email ?: "",
