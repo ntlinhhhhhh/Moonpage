@@ -50,6 +50,7 @@ fun SettingsRoute(
     var showBatteryDialog by remember { mutableStateOf(false) }
     var showExactAlarmDialog by remember { mutableStateOf(false) }
     val passwordChangedMessage = stringResource(R.string.password_changed_successfully)
+    val clearCacheSuccessMessage = stringResource(R.string.clear_cache_success)
 
     SettingsScreen(
         uiState = uiState,
@@ -67,7 +68,14 @@ fun SettingsRoute(
         onExactAlarmClick = { showExactAlarmDialog = true },
         onChangePasswordClick = { showChangePasswordDialog = true },
         onDeleteAccountClick = { viewModel.showDeleteAccountDialog() },
-        onCustomizeBlocksClick = onNavigateToManageActivityCategories
+        onCustomizeBlocksClick = onNavigateToManageActivityCategories,
+        onClearCacheClick = {
+            viewModel.clearThemeCache {
+                scope.launch {
+                    GlobalSnackbarManager.show(clearCacheSuccessMessage, SnackbarType.SUCCESS)
+                }
+            }
+        }
     )
 
     if (showLanguageDialog) {
@@ -204,7 +212,8 @@ fun SettingsScreen(
     onExactAlarmClick: () -> Unit,
     onChangePasswordClick: () -> Unit,
     onDeleteAccountClick: () -> Unit,
-    onCustomizeBlocksClick: () -> Unit
+    onCustomizeBlocksClick: () -> Unit,
+    onClearCacheClick: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val context = LocalContext.current
@@ -269,6 +278,12 @@ fun SettingsScreen(
                 title = stringResource(R.string.customize_blocks),
                 icon = Icons.Rounded.Dashboard,
                 onClick = onCustomizeBlocksClick
+            )
+
+            SettingsMenuItem(
+                title = stringResource(R.string.clear_cache),
+                icon = Icons.Rounded.Refresh,
+                onClick = onClearCacheClick
             )
 
             SectionTitle(stringResource(R.string.notifications))

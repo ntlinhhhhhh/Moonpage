@@ -1,6 +1,7 @@
 package com.diary.moonpage.ui.screens.notification
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -65,6 +67,7 @@ fun NotificationCenterScreen(
     onNotificationDelete: (String) -> Unit
 ) {
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text(stringResource(R.string.notification_center), fontWeight = FontWeight.Bold, fontSize = 20.sp) },
@@ -79,7 +82,10 @@ fun NotificationCenterScreen(
                             Text(stringResource(R.string.clear_all), color = MaterialTheme.colorScheme.primary)
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.Transparent
+                )
             )
         }
     ) { paddingValues ->
@@ -87,7 +93,7 @@ fun NotificationCenterScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.surface)
+
         ) {
             if (uiState.isLoading && uiState.notifications.isEmpty()) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -148,7 +154,12 @@ private fun NotificationItem(
 ) {
     val context = LocalContext.current
     val isRead = notification.isRead ?: false
-    val cardColor = if (isRead) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.primary.copy(alpha = 0.05f)
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val cardColor = if (isRead) {
+        if (isDark) Color(0xFF181818) else Color(0xFFD5D5D5)
+    } else {
+        if (isDark) Color(0xFF3A3A3A) else Color.White
+    }
     val icon = when (notification.type) {
         NotificationType.REMINDER -> Icons.Rounded.Alarm
         NotificationType.SYSTEM -> Icons.Rounded.Settings

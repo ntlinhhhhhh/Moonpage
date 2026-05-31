@@ -19,7 +19,10 @@ import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -216,7 +219,7 @@ fun CustomThemeEditorRoot(
 
         SideEffect {
             window.statusBarColor = android.graphics.Color.TRANSPARENT
-            insetsController.isAppearanceLightStatusBars = false
+            insetsController.isAppearanceLightStatusBars = uiState.editingMode == EditorAppearanceMode.Light
         }
     }
 
@@ -331,7 +334,8 @@ fun CustomThemeEditorRoot(
                             onSolidBackgroundSelected(color)
                         },
                         onAddRecentColor = onAddRecentColor,
-                        onEyedropperClick = startColorPicking
+                        onEyedropperClick = startColorPicking,
+                        onToggleAppearance = onToggleEditingMode
                     )
 
                     is EditorScreenState.GradientBg -> GradientBgOverlay(
@@ -347,7 +351,8 @@ fun CustomThemeEditorRoot(
                             }
                         },
                         onAddRecentColor = onAddRecentColor,
-                        onEyedropperClick = startColorPicking
+                        onEyedropperClick = startColorPicking,
+                        onToggleAppearance = onToggleEditingMode
                     )
 
                     is EditorScreenState.EditComponents -> EditComponentsOverlay(
@@ -696,12 +701,18 @@ fun BoxScope.SolidBgOverlay(
     onApply: () -> Unit,
     onColorSelected: (Long) -> Unit,
     onAddRecentColor: (Long) -> Unit,
-    onEyedropperClick: () -> Unit
+    onEyedropperClick: () -> Unit,
+    onToggleAppearance: () -> Unit
 ) {
     val statusBarTopPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
     // Top bar: ← và ✓
-    TopEditorBar(onBack = onBack, onApply = onApply)
+    TopEditorBar(
+        onBack = onBack,
+        onApply = onApply,
+        isDarkMode = uiState.editingMode == EditorAppearanceMode.Dark,
+        onToggleAppearance = onToggleAppearance
+    )
 
     // Bottom color picker (scrollable, không có eyedropper)
     ColorScrollablePickerBar(
@@ -727,9 +738,15 @@ fun BoxScope.GradientBgOverlay(
     onNodeSelected: (GradientNode) -> Unit,
     onColorSelected: (Long) -> Unit,
     onAddRecentColor: (Long) -> Unit,
-    onEyedropperClick: () -> Unit
+    onEyedropperClick: () -> Unit,
+    onToggleAppearance: () -> Unit
 ) {
-    TopEditorBar(onBack = onBack, onApply = onApply)
+    TopEditorBar(
+        onBack = onBack,
+        onApply = onApply,
+        isDarkMode = uiState.editingMode == EditorAppearanceMode.Dark,
+        onToggleAppearance = onToggleAppearance
+    )
 
     Column(
         modifier = Modifier
@@ -1161,14 +1178,20 @@ private fun BoxScope.FinalPreviewOverlay(
 // ==========================================
 
 @Composable
-fun BoxScope.TopEditorBar(onBack: () -> Unit, onApply: () -> Unit) {
+fun BoxScope.TopEditorBar(
+    onBack: () -> Unit,
+    onApply: () -> Unit,
+    isDarkMode: Boolean? = null,
+    onToggleAppearance: (() -> Unit)? = null
+) {
     val statusBarTopPadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .align(Alignment.TopCenter)
-            .padding(top = statusBarTopPadding + 16.dp, start = 4.dp, end = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+            .padding(top = statusBarTopPadding + 16.dp, start = 16.dp, end = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         // ← Quay lại
         IconButton(
@@ -1181,6 +1204,21 @@ fun BoxScope.TopEditorBar(onBack: () -> Unit, onApply: () -> Unit) {
                 tint = Color.White
             )
         }
+
+        // Toggle light/dark mode icon
+        if (isDarkMode != null && onToggleAppearance != null) {
+            IconButton(
+                onClick = onToggleAppearance,
+                modifier = Modifier.background(Color.Black.copy(alpha = 0.35f), CircleShape)
+            ) {
+                Icon(
+                    imageVector = if (isDarkMode) Icons.Rounded.LightMode else Icons.Rounded.DarkMode,
+                    contentDescription = "Toggle Appearance Mode",
+                    tint = Color.White
+                )
+            }
+        }
+
         // ✓ Áp dụng và sang màn tiếp
         IconButton(
             onClick = onApply,
@@ -2244,9 +2282,10 @@ private fun MoodFaceIcon(index: Int, color: Color, modifier: Modifier = Modifier
             .background(color),
         contentAlignment = Alignment.Center
     ) {
-        Image(
+        Icon(
             painter = painterResource(drawable),
             contentDescription = null,
+            tint = Color.Unspecified,
             modifier = Modifier.fillMaxSize(0.58f)
         )
     }
@@ -2882,6 +2921,7 @@ private fun CustomThemeEditorUiState.isPreviewBackgroundDark(fallbackDark: Boole
             val end = gradientEndColor.toComposeColor().perceivedBrightness()
             (start + end) / 2f
         }
+        BackgroundFillMode.Image -> return fallbackDark
     }
     return brightness < 0.5f
 }

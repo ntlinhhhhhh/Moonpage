@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -62,6 +63,10 @@ import com.diary.moonpage.ui.screens.store.components.*
 import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
 import com.diary.moonpage.ui.screens.tutorial.TutorialStep
 import coil.compose.AsyncImage
+import com.diary.moonpage.core.theme.parseThemeBrush
+import com.diary.moonpage.core.theme.previewBackgroundImagePath
+import com.diary.moonpage.core.theme.previewBackgroundBrush
+import com.diary.moonpage.core.util.normalizeAppImageUrl
 import java.io.File
 
 /**
@@ -863,43 +868,29 @@ fun CustomThemeCard(
     onActivateClick: () -> Unit = {},
     onRenameClick: () -> Unit = {}
 ) {
-    val gradientColors = remember(theme.backgroundUrl, theme.thumbnailUrl, theme.description) {
-        val descriptionGradient = runCatching {
-            val descriptionJson = theme.description?.let { org.json.JSONObject(it) }
-            val modeJson = descriptionJson?.optJSONObject("light")
-            if (modeJson?.optString("backgroundFillMode")?.equals("Gradient", ignoreCase = true) == true) {
-                val start = modeJson.optString("gradientStartColor")
-                val end = modeJson.optString("gradientEndColor")
-                listOfNotNull(parseThemePreviewColor(start), parseThemePreviewColor(end))
-            } else null
-        }.getOrNull()
+    val previewDarkMode = false
 
-        descriptionGradient ?: run {
-            val raw = theme.backgroundUrl ?: theme.thumbnailUrl
-            if (raw != null && raw.contains(",")) {
-                raw.split(",").mapNotNull { parseThemePreviewColor(it) }
-            } else null
-        }
+    val previewPath = remember(theme) {
+        theme.previewBackgroundImagePath(isDark = previewDarkMode)
     }
 
-    val previewColor = remember(theme.primaryColor, theme.thumbnailUrl, theme.backgroundUrl) {
-        parseThemePreviewColor(theme.primaryColor)
+    val previewBrush = remember(theme) {
+        theme.previewBackgroundBrush(isDark = previewDarkMode)
+    }
+
+    // [Task 1] Compute per-icon shades — each index maps to its own color from the theme palette
+    val iconShades = remember(theme.id, theme.description, theme.primaryColor, theme.thumbnailUrl, theme.backgroundUrl) {
+        getThemeShades(theme)
+    }
+
+    // Fallback preview color for icon fill when shades are insufficient
+    val previewColor = remember(theme.primaryColor, theme.thumbnailUrl, theme.backgroundUrl, previewBrush) {
+        val solidColor = (previewBrush as? SolidColor)?.value
+        solidColor
+            ?: parseThemePreviewColor(theme.primaryColor)
             ?: parseThemePreviewColor(theme.thumbnailUrl)
-            ?: parseThemePreviewColor(theme.backgroundUrl)
             ?: Color(0xFFE8E1DA)
     }
-
-    val iconColors = remember(theme.id, theme.primaryColor, theme.thumbnailUrl, theme.backgroundUrl, theme.description) {
-        val shades = getThemeShades(theme)
-        if (shades.size >= 5) shades.take(5) else List(5) { previewColor }
-    }
-    
-    val previewPath = remember(theme.backgroundUrl, theme.thumbnailUrl) {
-        listOf(theme.backgroundUrl, theme.thumbnailUrl).firstOrNull { candidate ->
-            !candidate.isNullOrBlank() && parseThemePreviewColor(candidate) == null && !candidate.contains(",")
-        }
-    }
-    val previewModel = previewPath
 
     Card(
         modifier = Modifier.fillMaxWidth().height(190.dp),
@@ -913,24 +904,32 @@ fun CustomThemeCard(
                     .weight(1f)
                     .clip(RoundedCornerShape(16.dp))
                     .then(
-                        if (gradientColors != null && gradientColors.size >= 2) {
-                            Modifier.background(Brush.linearGradient(gradientColors))
-                        } else {
-                            Modifier.background(previewColor.copy(alpha = 0.22f))
+                        when {
+                            previewPath != null -> {
+                                Modifier.background(Color(0xFFEEEBE6))
+                            }
+                            previewBrush != null -> {
+                                Modifier.background(previewBrush)
+                            }
+                            else -> {
+                                Modifier.background(Color(0xFFEEEBE6))
+                            }
                         }
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                if (previewModel != null) {
+                if (previewPath != null) {
+                    val normalizedModel = remember(previewPath) { normalizeAppImageUrl(previewPath) }
                     AsyncImage(
-                        model = previewModel,
+                        model = normalizedModel,
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
                 }
-                
-                // Mood icons overlay (Bug 2)
+                // Case 3: URL is "pending" or blank → background color already rendered above, no image
+
+                // [Task 1] Mood icons overlay — each icon gets its own color from iconShades[index]
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp),
                     horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
@@ -941,7 +940,8 @@ fun CustomThemeCard(
                             modifier = Modifier.size(20.dp),
                             emotion = mood,
                             decoration = "NONE",
-                            color = iconColors.getOrElse(index) { previewColor }
+                            // [Task 1] Map each icon index to its own shade — not a shared fallback
+                            color = iconShades.getOrElse(index) { previewColor }
                         )
                     }
                 }
@@ -976,11 +976,16 @@ fun CustomThemeCard(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
             )
             Spacer(modifier = Modifier.height(10.dp))
+            // Activate button uses the app-level primary color (same as bottom bar of the currently active theme)
             Button(
                 onClick = onActivateClick,
                 enabled = !theme.isActive,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp)
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
             ) {
                 Text(
                     text = if (theme.isActive) stringResource(R.string.custom_theme_active_now) else stringResource(R.string.custom_theme_activate),
@@ -1484,6 +1489,8 @@ private fun parseThemePreviewColor(value: String?): Color? {
     }.getOrNull()
 }
 
+
+
 @Composable
 fun CollectionsTabContent(
     isActive: Boolean,
@@ -1584,5 +1591,6 @@ fun MoonFilterChip(text: String, isSelected: Boolean, onClick: () -> Unit) {
         )
     }
 }
+
 
 

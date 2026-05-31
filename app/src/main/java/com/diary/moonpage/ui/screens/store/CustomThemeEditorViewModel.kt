@@ -73,7 +73,7 @@ enum class ColorFocusTarget {
 }
 
 enum class BackgroundFillMode {
-    Solid, Gradient
+    Solid, Gradient, Image
 }
 
 enum class EditorAppearanceMode {
@@ -91,7 +91,7 @@ data class ThemeAppearanceState(
     val gradientStartColor: Long = 0xFFFFF7EC,
     val gradientEndColor: Long = 0xFFE8F5E9,
     val primaryColor: Long = 0xFF8D6E63,
-    val iconColor: Long = 0xFFEF9A9A,
+    val iconColor: Long = 0xFFFFCA28,
     val iconColors: List<Long> = listOf(0xFFFFCA28, 0xFF81C784, 0xFF64B5F6, 0xFFBA68C8, 0xFF8D6E63)
 )
 
@@ -106,8 +106,8 @@ data class CustomThemeEditorUiState(
         gradientStartColor = 0xFF232323,
         gradientEndColor = 0xFF393939,
         primaryColor = 0xFFFFF9EF,
-        iconColor = 0xFFFFD54F,
-        iconColors = listOf(0xFFFFD54F, 0xFF81C784, 0xFF4FC3F7, 0xFF9575CD, 0xFFEF9A9A)
+        iconColor = 0xFFFFCA28,
+        iconColors = listOf(0xFFFFCA28, 0xFF81C784, 0xFF64B5F6, 0xFFBA68C8, 0xFF8D6E63)
     ),
     val selectedIconIndex: Int = 0,
     val colorFocusTarget: ColorFocusTarget = ColorFocusTarget.Primary,
@@ -195,14 +195,16 @@ class CustomThemeEditorViewModel @Inject constructor(
                     backgroundScale = scale,
                     backgroundRotation = rotation,
                     backgroundOffsetX = offsetX,
-                    backgroundOffsetY = offsetY
+                    backgroundOffsetY = offsetY,
+                    backgroundFillMode = BackgroundFillMode.Image
                 ),
                 darkAppearance = state.darkAppearance.copy(
                     backgroundUri = backgroundUri,
                     backgroundScale = scale,
                     backgroundRotation = rotation,
                     backgroundOffsetX = offsetX,
-                    backgroundOffsetY = offsetY
+                    backgroundOffsetY = offsetY,
+                    backgroundFillMode = BackgroundFillMode.Image
                 ),
                 pendingBackgroundUri = null,
                 hasUnsavedChanges = true
@@ -266,13 +268,26 @@ class CustomThemeEditorViewModel @Inject constructor(
     }
 
     fun setIconColor(color: Long) {
-        updateAppearance { appearance ->
-            val updated = appearance.iconColors.toMutableList().also { colors ->
-                colors[_uiState.value.selectedIconIndex] = color
+        _uiState.update { state ->
+            val updatedLightColors = state.lightAppearance.iconColors.toMutableList().also { colors ->
+                colors[state.selectedIconIndex] = color
             }
-            appearance.copy(iconColor = color, iconColors = updated)
+            val updatedDarkColors = state.darkAppearance.iconColors.toMutableList().also { colors ->
+                colors[state.selectedIconIndex] = color
+            }
+            state.copy(
+                lightAppearance = state.lightAppearance.copy(
+                    iconColor = color,
+                    iconColors = updatedLightColors
+                ),
+                darkAppearance = state.darkAppearance.copy(
+                    iconColor = color,
+                    iconColors = updatedDarkColors
+                ),
+                colorFocusTarget = ColorFocusTarget.Icon,
+                hasUnsavedChanges = true
+            )
         }
-        _uiState.update { it.copy(colorFocusTarget = ColorFocusTarget.Icon, hasUnsavedChanges = true) }
     }
 
     fun toggleEditingMode() {
@@ -443,10 +458,8 @@ class CustomThemeEditorViewModel @Inject constructor(
                                     price = CUSTOM_THEME_SLOT_PRICE,
                                     thumbnailUrl = thumbnailPath,
                                     backgroundUrl = backgroundPath,
-                                    primaryColor = state.lightAppearance.primaryColor.toColorHex(),
                                     primaryLightColor = state.lightAppearance.primaryColor.toColorHex(),
                                     primaryDarkColor = state.darkAppearance.primaryColor.toColorHex(),
-                                    backgroundColor = null,
                                     backgroundLightColor = if (hasImageBackground) null else state.lightAppearance.themeBackgroundPayload(),
                                     backgroundDarkColor = if (hasImageBackground) null else state.darkAppearance.themeBackgroundPayload(),
                                     description = state.toThemeConfigJson(backgroundPath),
@@ -494,7 +507,7 @@ class CustomThemeEditorViewModel @Inject constructor(
         return moodConfigs.mapIndexed { index, (moodId, customName) ->
             CreateThemeMoodPayload(
                 baseMoodId = moodId,
-                iconUrl = iconColors.getOrElse(index) { primaryColor }.toRgbColorHex(),
+                iconColor = iconColors.getOrElse(index) { primaryColor }.toRgbColorHex(),
                 customName = customName
             )
         }
@@ -516,6 +529,7 @@ class CustomThemeEditorViewModel @Inject constructor(
             BackgroundFillMode.Gradient -> {
                 "${gradientStartColor.toColorHex()},${gradientEndColor.toColorHex()}"
             }
+            BackgroundFillMode.Image -> solidBackgroundColor.toColorHex()
             BackgroundFillMode.Solid -> solidBackgroundColor.toColorHex()
         }
     }
@@ -533,13 +547,15 @@ class CustomThemeEditorViewModel @Inject constructor(
     }
 
     private fun ThemeAppearanceState.toJson(backgroundPath: String?): JSONObject {
+        val finalBackgroundUri = backgroundPath ?: backgroundUri
+        val finalFillMode = if (!finalBackgroundUri.isNullOrBlank()) "background" else backgroundFillMode.name
         return JSONObject()
-            .put("backgroundUri", backgroundPath ?: backgroundUri)
+            .put("backgroundUri", finalBackgroundUri)
             .put("backgroundScale", backgroundScale)
             .put("backgroundRotation", backgroundRotation)
             .put("backgroundOffsetX", backgroundOffsetX)
             .put("backgroundOffsetY", backgroundOffsetY)
-            .put("backgroundFillMode", backgroundFillMode.name)
+            .put("backgroundFillMode", finalFillMode)
             .put("solidBackgroundColor", solidBackgroundColor.toColorHex())
             .put("gradientStartColor", gradientStartColor.toColorHex())
             .put("gradientEndColor", gradientEndColor.toColorHex())

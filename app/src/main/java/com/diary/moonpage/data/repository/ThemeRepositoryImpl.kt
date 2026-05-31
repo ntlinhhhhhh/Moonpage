@@ -182,13 +182,25 @@ class ThemeRepositoryImpl @Inject constructor(
                             } else {
                                 null
                             }
+                            val hasNetworkImage = networkTheme.backgroundUrl?.let {
+                                it.isNotBlank() && it.lowercase() != "null" && it.lowercase() != "pending" && !it.isThemeColor() && !it.contains(",")
+                            } == true || run {
+                                val fillMode = runCatching { JSONObject(networkTheme.description).optJSONObject("light")?.optString("backgroundFillMode") }.getOrNull()
+                                    ?: runCatching { JSONObject(networkTheme.description).optJSONObject("dark")?.optString("backgroundFillMode") }.getOrNull()
+                                fillMode?.equals("Image", ignoreCase = true) == true
+                            }
+                            val resolvedBackgroundUrl = if (hasNetworkImage) {
+                                cachedTheme?.backgroundUrl.takeIfLocalThemeAsset()
+                                    ?: networkTheme.backgroundUrl
+                                    ?: cachedTheme?.backgroundUrl
+                            } else {
+                                networkTheme.backgroundUrl
+                            }
                             networkTheme.copy(
                                 thumbnailUrl = cachedTheme?.thumbnailUrl.takeIfLocalThemeAsset()
                                     ?: networkTheme.thumbnailUrl
                                     ?: cachedTheme?.thumbnailUrl,
-                                backgroundUrl = cachedTheme?.backgroundUrl.takeIfLocalThemeAsset()
-                                    ?: networkTheme.backgroundUrl
-                                    ?: cachedTheme?.backgroundUrl,
+                                backgroundUrl = resolvedBackgroundUrl,
                                 primaryColor = cachedPrimary ?: networkPrimary ?: moodPrimary,
                                 description = description,
                                 activatedAt = cachedTheme?.activatedAt
@@ -222,8 +234,8 @@ class ThemeRepositoryImpl @Inject constructor(
                 response.body()!!.map { dto ->
                     ThemeMoodEntity(
                         themeId = localThemeId,
-                        baseMoodId = dto.baseMoodId,
-                        iconUrl = dto.iconUrl,
+                        baseMoodId = dto.baseMoodId.toString(),
+                        iconUrl = dto.iconColor,
                         customName = dto.customName.orEmpty()
                     )
                 }
@@ -270,8 +282,8 @@ class ThemeRepositoryImpl @Inject constructor(
                 val moods = response.body()!!.map { dto ->
                     ThemeMoodEntity(
                         themeId = localThemeId,
-                        baseMoodId = dto.baseMoodId,
-                        iconUrl = dto.iconUrl,
+                        baseMoodId = dto.baseMoodId.toString(),
+                        iconUrl = dto.iconColor,
                         customName = dto.customName.orEmpty()
                     )
                 }
@@ -309,7 +321,6 @@ class ThemeRepositoryImpl @Inject constructor(
                                 price = theme.price.toString().toTextRequestBody(),
                                 thumbnail = theme.thumbnailUrl.toLocalFileOrNull()?.toImagePart("Thumbnail"),
                                 background = theme.backgroundUrl.toLocalFileOrNull()?.toImagePart("Background"),
-                                primaryColor = theme.primaryColor?.toTextRequestBody(),
                                 primaryLightColor = theme.primaryLightColor?.toTextRequestBody(),
                                 primaryDarkColor = theme.primaryDarkColor?.toTextRequestBody(),
                                 backgroundDarkColor = theme.backgroundDarkColor?.toTextRequestBody(),
@@ -344,11 +355,11 @@ class ThemeRepositoryImpl @Inject constructor(
                             description = theme.description,
                             type = ThemeType.THEME.name,
                             icons = "VERY_HAPPY,HAPPY,NEUTRAL,SAD,ANGRY",
-                            primaryColor = theme.primaryColor
+                            primaryColor = theme.primaryLightColor
+                                ?: theme.primaryDarkColor
                                 ?: theme.description.primaryColorForMode("light")
                                 ?: theme.description.primaryColorForMode("dark")
                                 ?: theme.thumbnailUrl.takeIfThemeColor()
-                                ?: theme.backgroundColor
                                 ?: theme.backgroundLightColor
                                 ?: theme.backgroundUrl.takeIfThemeColor(),
                             decoration = "CUSTOM",
@@ -360,8 +371,8 @@ class ThemeRepositoryImpl @Inject constructor(
                     theme.moods.map { mood ->
                         ThemeMoodEntity(
                             themeId = theme.id,
-                            baseMoodId = mood.baseMoodId.toThemeMoodName(),
-                            iconUrl = mood.iconUrl,
+                            baseMoodId = mood.baseMoodId.toString(),
+                            iconUrl = mood.iconColor,
                             customName = mood.customName
                         )
                     }
@@ -382,7 +393,6 @@ class ThemeRepositoryImpl @Inject constructor(
                 price = theme.price,
                 thumbnailUrl = theme.thumbnailUrl,
                 backgroundUrl = theme.backgroundUrl,
-                primaryColor = theme.primaryColor,
                 primaryLightColor = theme.primaryLightColor,
                 primaryDarkColor = theme.primaryDarkColor,
                 backgroundDarkColor = theme.backgroundDarkColor,
@@ -393,7 +403,7 @@ class ThemeRepositoryImpl @Inject constructor(
                 moods = theme.moods.map { mood ->
                     CreateThemeMoodRequest(
                         baseMoodId = mood.baseMoodId,
-                        iconUrl = mood.iconUrl,
+                        iconColor = mood.iconColor,
                         customName = mood.customName
                     )
                 }
@@ -432,7 +442,7 @@ class ThemeRepositoryImpl @Inject constructor(
                 put(
                     JSONObject()
                         .put("BaseMoodId", mood.baseMoodId)
-                        .put("IconColor", mood.iconUrl)
+                        .put("IconColor", mood.iconColor)
                         .put("CustomName", mood.customName)
                 )
             }
@@ -493,18 +503,31 @@ class ThemeRepositoryImpl @Inject constructor(
                 )
                 dao.insertThemes(listOf(updated))
                 
-                // Fetch moods
-                val moodsResponse = api.getThemeMoods(themeId)
-                if (moodsResponse.isSuccessful && moodsResponse.body() != null) {
-                    val moods = moodsResponse.body()!!.map { moodDto ->
+                // Fetch moods — prefer moods already included in detail response
+                val moodsFromDetail = dto.moods
+                if (!moodsFromDetail.isNullOrEmpty()) {
+                    val moods = moodsFromDetail.map { moodDto ->
                         ThemeMoodEntity(
                             themeId = themeId,
-                            baseMoodId = moodDto.baseMoodId,
-                            iconUrl = moodDto.iconUrl,
+                            baseMoodId = moodDto.baseMoodId.toString(),
+                            iconUrl = moodDto.iconColor,
                             customName = moodDto.customName.orEmpty()
                         )
                     }
                     dao.insertThemeMoods(moods)
+                } else {
+                    val moodsResponse = api.getThemeMoods(themeId)
+                    if (moodsResponse.isSuccessful && moodsResponse.body() != null) {
+                        val moods = moodsResponse.body()!!.map { moodDto ->
+                            ThemeMoodEntity(
+                                themeId = themeId,
+                                baseMoodId = moodDto.baseMoodId.toString(),
+                                iconUrl = moodDto.iconColor,
+                                customName = moodDto.customName.orEmpty()
+                            )
+                        }
+                        dao.insertThemeMoods(moods)
+                    }
                 }
             }
         } catch (e: Exception) { }
@@ -585,9 +608,8 @@ class ThemeRepositoryImpl @Inject constructor(
 
             val themeType = localThemeId.toMoonThemeTypeOrNull()
                 ?: cachedTheme?.decoration?.toMoonThemeTypeOrNull()
-            if (themeType != null) {
-                themePreferencesManager.setThemeType(themeType)
-            }
+                ?: com.diary.moonpage.core.theme.MoonThemeType.DEFAULT
+            themePreferencesManager.setThemeType(themeType)
             myThemesState.value = myThemesState.value.map { theme ->
                 theme.copy(isActive = ThemeConstants.normalizeThemeId(theme.id) == localThemeId)
             }
@@ -631,7 +653,7 @@ class ThemeRepositoryImpl @Inject constructor(
             return cachedMoods.mapIndexed { index, mood ->
                 CreateThemeMoodRequest(
                     baseMoodId = mood.baseMoodId.toThemeMoodIdOrNull() ?: DEFAULT_MOOD_IDS[index.coerceIn(DEFAULT_MOOD_IDS.indices)],
-                    iconUrl = mood.iconUrl,
+                    iconColor = mood.iconUrl,
                     customName = mood.customName.orEmpty()
                 )
             }
@@ -647,8 +669,8 @@ class ThemeRepositoryImpl @Inject constructor(
         if (remoteMoods.isNotEmpty()) {
             return remoteMoods.mapIndexed { index, mood ->
                 CreateThemeMoodRequest(
-                    baseMoodId = mood.baseMoodId.toThemeMoodIdOrNull() ?: DEFAULT_MOOD_IDS[index.coerceIn(DEFAULT_MOOD_IDS.indices)],
-                    iconUrl = mood.iconUrl,
+                    baseMoodId = mood.baseMoodId,
+                    iconColor = mood.iconColor,
                     customName = mood.customName.orEmpty()
                 )
             }
@@ -662,7 +684,7 @@ class ThemeRepositoryImpl @Inject constructor(
         return DEFAULT_MOOD_IDS.mapIndexed { index, moodId ->
             CreateThemeMoodRequest(
                 baseMoodId = moodId,
-                iconUrl = fallbackColor,
+                iconColor = fallbackColor,
                 customName = names[index]
             )
         }
@@ -698,8 +720,8 @@ class ThemeRepositoryImpl @Inject constructor(
                     val moods = response.body()!!.map { dto ->
                         ThemeMoodEntity(
                             themeId = localThemeId,
-                            baseMoodId = dto.baseMoodId,
-                            iconUrl = dto.iconUrl,
+                            baseMoodId = dto.baseMoodId.toString(),
+                            iconUrl = dto.iconColor,
                             customName = dto.customName.orEmpty()
                         )
                     }
@@ -772,14 +794,8 @@ private fun PredefinedTheme.toMoodEntities(): List<ThemeMoodEntity> {
     }
 }
 
-private fun Int.toThemeMoodName(): String = when (this) {
-    1 -> "Awful"
-    2 -> "Bad"
-    3 -> "Meh"
-    4 -> "Good"
-    5 -> "Rad"
-    else -> "Meh"
-}
+// baseMoodId is now stored as Int string ("1".."5") matching the API
+private fun Int.toThemeMoodName(): String = this.toString()
 
 private fun List<ThemeEntity>.findCachedCustomTheme(theme: Theme): ThemeEntity? {
     return firstOrNull { it.id == theme.id && it.isCustomThemeEntity() }

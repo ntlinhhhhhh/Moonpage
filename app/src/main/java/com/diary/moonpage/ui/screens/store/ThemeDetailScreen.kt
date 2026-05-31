@@ -40,6 +40,12 @@ import com.diary.moonpage.ui.screens.store.components.getThemeShades
 import kotlinx.coroutines.delay
 import com.diary.moonpage.ui.screens.tutorial.tutorialTarget
 import com.diary.moonpage.ui.screens.tutorial.TutorialStep
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
+import com.diary.moonpage.core.util.normalizeAppImageUrl
+import com.diary.moonpage.core.theme.previewBackgroundImagePath
+import com.diary.moonpage.core.theme.previewBackgroundBrush
 
 @Composable
 fun ThemeDetailRoute(
@@ -321,82 +327,117 @@ private fun String?.themeDetailText(): String? {
 @Composable
 fun ThemeCalendarPreview(theme: Theme) {
     val onSurface = MaterialTheme.colorScheme.onSurface
+    val isDark = isSystemInDarkTheme()
+    val previewPath = remember(theme) { theme.previewBackgroundImagePath(isDark) }
+    val previewBrush = remember(theme) { theme.previewBackgroundBrush(isDark) }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(32.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 8.dp, vertical = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Month Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "2025.04",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = onSurface
-            )
-            Icon(
-                imageVector = Icons.Default.ArrowDropDown,
+        if (previewPath != null) {
+            val normalizedModel = remember(previewPath) { normalizeAppImageUrl(previewPath) }
+            AsyncImage(
+                model = normalizedModel,
                 contentDescription = null,
-                tint = onSurface,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.matchParentSize(),
+                contentScale = ContentScale.Crop
+            )
+            // Visual protection scrim
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(if (isDark) Color.Black.copy(alpha = 0.58f) else Color.White.copy(alpha = 0.50f))
+            )
+        } else if (previewBrush != null) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(previewBrush)
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(MaterialTheme.colorScheme.surface)
             )
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Days of week
-        val days = listOf(
-        stringResource(R.string.sun),
-        stringResource(R.string.mon),
-        stringResource(R.string.tue),
-        stringResource(R.string.wed),
-        stringResource(R.string.thu),
-        stringResource(R.string.fri),
-        stringResource(R.string.sat)
-    )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            days.forEach { day ->
+            // Month Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    text = day,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = onSurface.copy(alpha = 0.4f),
-                    modifier = Modifier.width(44.dp),
-                    textAlign = TextAlign.Center
+                    text = "2025.04",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = onSurface
+                )
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = null,
+                    tint = onSurface,
+                    modifier = Modifier.size(20.dp)
                 )
             }
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-        // Shaded Color Range Logic
-        val actualShades = getThemeShades(theme)
+            // Days of week
+            val days = listOf(
+                stringResource(R.string.sun),
+                stringResource(R.string.mon),
+                stringResource(R.string.tue),
+                stringResource(R.string.wed),
+                stringResource(R.string.thu),
+                stringResource(R.string.fri),
+                stringResource(R.string.sat)
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                days.forEach { day ->
+                    Text(
+                        text = day,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = onSurface.copy(alpha = 0.4f),
+                        modifier = Modifier.width(44.dp),
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
 
-        Column(modifier = Modifier.fillMaxWidth()) {
-            repeat(4) { rowIndex ->
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    repeat(7) { colIndex ->
-                        val iconIndex = (rowIndex + colIndex) % 5
+            Spacer(modifier = Modifier.height(16.dp))
 
-                        CuteBeanIcon(
-                            modifier = Modifier.size(40.dp),
-                            emotion = theme.icons.getOrElse(iconIndex) { "NEUTRAL" },
-                            decoration = theme.decoration,
-                            color = actualShades.getOrElse(iconIndex) { Color.LightGray }
-                        )
+            // Shaded Color Range Logic
+            val actualShades = getThemeShades(theme)
+
+            Column(modifier = Modifier.fillMaxWidth()) {
+                repeat(4) { rowIndex ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        repeat(7) { colIndex ->
+                            val iconIndex = (rowIndex + colIndex) % 5
+
+                            CuteBeanIcon(
+                                modifier = Modifier.size(40.dp),
+                                emotion = theme.icons.getOrElse(iconIndex) { "NEUTRAL" },
+                                decoration = theme.decoration,
+                                color = actualShades.getOrElse(iconIndex) { Color.LightGray }
+                            )
+                        }
                     }
                 }
             }

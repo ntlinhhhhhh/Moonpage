@@ -25,6 +25,7 @@ class SettingsViewModel @Inject constructor(
     private val onboardingPrefsManager: com.diary.moonpage.core.util.OnboardingPrefsManager,
     private val activityPreferencesManager: com.diary.moonpage.core.util.ActivityPreferencesManager,
     private val database: com.diary.moonpage.data.local.MoonPageDatabase,
+    private val themeRepository: com.diary.moonpage.domain.repository.ThemeRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -274,6 +275,22 @@ class SettingsViewModel @Inject constructor(
                         errorResId = if (result.exceptionOrNull()?.message == null) R.string.delete_account_failed else null
                     ) 
                 }
+            }
+        }
+    }
+
+    fun clearThemeCache(onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            try {
+                themeRepository.clearCache()
+                themeRepository.getOwnedThemes()
+                themeRepository.getMyThemes()
+                themeRepository.setActiveTheme(com.diary.moonpage.core.util.ThemeConstants.DEFAULT_THEME_ID)
+                _uiState.update { it.copy(isLoading = false) }
+                onSuccess()
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, error = e.message) }
             }
         }
     }

@@ -931,11 +931,7 @@ private fun ScreenWrapper(
     content: @Composable () -> Unit
 ) {
     val isMainRoute = route in mainAppRoutes
-    // Screens that handle their own status bar padding for a more custom layout
-    val isEdgeToEdge = route == Screen.Store.route ||
-                       route == Screen.ThemeDetail.route ||
-                       route == Screen.CustomThemeEditor.route ||
-                       route.startsWith("daily_log_screen")
+    val isEdgeToEdge = true
 
     Box(
         modifier = Modifier

@@ -48,7 +48,7 @@ fun CuteBeanIcon(
         "HAPPY" -> R.drawable.happy
         "NEUTRAL" -> R.drawable.neutral
         "SAD" -> R.drawable.sad
-        "ANGRY" -> R.drawable.very_sad
+        "ANGRY", "VERY_SAD" -> R.drawable.very_sad
         else -> R.drawable.neutral
     }
 
@@ -747,6 +747,7 @@ fun getThemeShades(theme: Theme): List<Color> {
     theme.iconShadesFromDescription()?.let { return it }
 
     if (theme.isCustomThemeCard()) {
+        theme.iconShadesFromDescription()?.let { return it }
         val fallback = MoonIcons.parseThemeColor(theme.primaryColor)
             ?: MoonIcons.parseThemeColor(theme.thumbnailUrl)
             ?: MoonIcons.parseThemeColor(theme.backgroundUrl)

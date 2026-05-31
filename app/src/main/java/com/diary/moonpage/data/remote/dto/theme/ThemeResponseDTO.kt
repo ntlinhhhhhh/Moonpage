@@ -1,7 +1,9 @@
 package com.diary.moonpage.data.remote.dto.theme
 
 import com.diary.moonpage.domain.model.Theme
+import com.diary.moonpage.domain.model.ThemeMood
 import com.diary.moonpage.domain.model.ThemeType
+import com.google.gson.JsonElement
 import com.google.gson.annotations.SerializedName
 import org.json.JSONObject
 
@@ -11,20 +13,22 @@ data class ThemeResponseDTO(
     @SerializedName(value = "price", alternate = ["Price"]) val price: Int,
     @SerializedName(value = "thumbnailUrl", alternate = ["ThumbnailUrl"]) val thumbnailUrl: String?,
     @SerializedName(value = "backgroundUrl", alternate = ["BackgroundUrl"]) val backgroundUrl: String?,
-    @SerializedName(value = "primaryColor", alternate = ["PrimaryColor"]) val primaryColor: String? = null,
     @SerializedName(value = "primaryLightColor", alternate = ["PrimaryLightColor"]) val primaryLightColor: String? = null,
     @SerializedName(value = "primaryDarkColor", alternate = ["PrimaryDarkColor"]) val primaryDarkColor: String? = null,
     @SerializedName(value = "backgroundDarkColor", alternate = ["BackgroundDarkColor"]) val backgroundDarkColor: String? = null,
     @SerializedName(value = "backgroundLightColor", alternate = ["BackgroundLightColor"]) val backgroundLightColor: String? = null,
-    @SerializedName(value = "description", alternate = ["Description"]) val description: String? = null,
+    @SerializedName(value = "description", alternate = ["Description"]) val description: JsonElement? = null,
     @SerializedName(value = "authorId", alternate = ["AuthorId"]) val authorId: String? = null,
     @SerializedName(value = "isOfficial", alternate = ["IsOfficial"]) val isOfficial: Boolean? = null,
     @SerializedName(value = "category", alternate = ["Category"]) val category: String? = "LIGHT",
-    @SerializedName(value = "isActive", alternate = ["IsActive"]) val isActive: Boolean = false
+    @SerializedName(value = "isActive", alternate = ["IsActive"]) val isActive: Boolean = false,
+    @SerializedName(value = "moods", alternate = ["Moods"]) val moods: List<ThemeMoodResponseDTO>? = null
 ) {
     fun toDomain(): Theme {
         val decorationName = id.replace("theme_", "").uppercase()
         val isOfficialTheme = isOfficial != false
+        // Resolve primaryColor: prefer light, then dark
+        val resolvedPrimaryColor = primaryLightColor ?: primaryDarkColor
         return Theme(
             id = id,
             name = name,
@@ -36,26 +40,37 @@ data class ThemeResponseDTO(
             isOwned = false,
             isActive = isActive,
             description = buildAppearanceDescription(
-                description = description,
+                description = description?.let {
+                    if (it.isJsonPrimitive) it.asString else it.toString()
+                },
                 backgroundLightColor = backgroundLightColor,
                 backgroundDarkColor = backgroundDarkColor
             ),
             type = ThemeType.THEME,
-            icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
-            primaryColor = primaryColor ?: thumbnailUrl,
+            moods = moods?.map { it.toDomain() } ?: emptyList(),
+            primaryColor = resolvedPrimaryColor ?: thumbnailUrl,
             primaryLightColor = primaryLightColor,
             primaryDarkColor = primaryDarkColor,
             decoration = if (isOfficialTheme) decorationName else "CUSTOM",
-            category = category ?: "LIGHT"
+            category = category ?: "LIGHT",
+            backgroundLightColor = backgroundLightColor,
+            backgroundDarkColor = backgroundDarkColor,
+            isOfficial = isOfficialTheme
         )
     }
 }
 
 data class ThemeMoodResponseDTO(
-    @SerializedName(value = "baseMoodId", alternate = ["BaseMoodId"]) val baseMoodId: String,
-    @SerializedName(value = "iconColor", alternate = ["IconColor", "iconUrl", "IconUrl"]) val iconUrl: String,
+    @SerializedName(value = "baseMoodId", alternate = ["BaseMoodId"]) val baseMoodId: Int,
+    @SerializedName(value = "iconColor", alternate = ["IconColor", "iconUrl", "IconUrl"]) val iconColor: String,
     @SerializedName(value = "customName", alternate = ["CustomName"]) val customName: String? = null
-)
+) {
+    fun toDomain() = ThemeMood(
+        baseMoodId = baseMoodId.toLong(),
+        customName = customName ?: "",
+        iconColor = iconColor
+    )
+}
 
 private fun buildAppearanceDescription(
     description: String?,

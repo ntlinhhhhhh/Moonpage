@@ -12,7 +12,10 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -32,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalRippleConfiguration
 import com.diary.moonpage.domain.model.Theme
+import com.diary.moonpage.domain.model.toBackgroundBrush
 import org.json.JSONObject
 
 private object NoIndication : IndicationNodeFactory {
@@ -265,8 +269,8 @@ fun MoonPageTheme(
     val appearanceTheme = activeTheme?.takeIf { it.hasThemeAppearance() } ?: customTheme
     val customThemePrimary = appearanceTheme?.customPrimaryColor(darkTheme)
     val customThemeBackground = appearanceTheme?.customBackgroundColor(darkTheme)
-    val hasCustomBackgroundImage = customTheme.hasCustomBackgroundImage()
-    val hasCustomGradientBackground = customTheme.hasCustomGradientBackground(darkTheme)
+    val hasCustomBackgroundImage = activeTheme.hasCustomBackgroundImage()
+    val hasCustomGradientBackground = activeTheme.hasCustomGradientBackground(darkTheme)
     val hasCustomVisualBackground = hasCustomBackgroundImage || hasCustomGradientBackground
     val visualProtection = visualBackgroundProtection(darkTheme).takeIf { hasCustomVisualBackground }
 
@@ -538,8 +542,11 @@ fun MoonPageTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.background.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            window.statusBarColor = android.graphics.Color.TRANSPARENT
+            val statusBarBgColor = customThemeBackground
+                ?: if (darkTheme) MoonBgDark else MoonBgLight
+            val isBgDark = statusBarBgColor.luminance() < 0.5f
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isBgDark
         }
     }
 
@@ -637,7 +644,12 @@ private fun String?.toThemeColorOrNull(): Color? {
 }
 
 private fun String?.isThemeAssetPath(): Boolean {
-    return !isNullOrBlank() && toThemeColorOrNull() == null
+    if (this == null) return false
+    val trimmed = this.trim()
+    if (trimmed.isBlank() || trimmed.lowercase() == "null" || trimmed.lowercase() == "pending") {
+        return false
+    }
+    return !trimmed.contains(",") && toThemeColorOrNull() == null
 }
 
 @Composable
@@ -648,8 +660,124 @@ fun MoonPageTheme(
 ) {
     MoonPageTheme(
         themeType = MoonThemeType.DEFAULT,
+        activeTheme = null,
         darkTheme = darkTheme,
         dynamicColor = dynamicColor,
         content = content
     )
+}
+
+fun Theme.previewBackgroundImagePath(isDark: Boolean): String? {
+    if (isOfficial) return null
+
+    val config = parsedConfig
+    if (config != null) {
+        val modeConfig = if (isDark) config.dark ?: config.light else config.light ?: config.dark
+        if (modeConfig != null) {
+            val fillMode = modeConfig.backgroundFillMode ?: ""
+            val hasBgUri = !modeConfig.backgroundUri.isNullOrBlank()
+            val isImageMode = fillMode.equals("Image", ignoreCase = true) 
+                || fillMode.equals("background", ignoreCase = true)
+                || (fillMode.isBlank() && hasBgUri)
+            
+            if (isImageMode) {
+                val bgUrl = backgroundUrl
+                if (!bgUrl.isNullOrBlank() && 
+                    !bgUrl.equals("pending", ignoreCase = true) && 
+                    !bgUrl.contains(",") && 
+                    bgUrl.toThemeColorOrNull() == null
+                ) {
+                    return bgUrl
+                }
+                val path = modeConfig.backgroundUri
+                if (path != null && path.isThemeAssetPath()) {
+                    return path
+                }
+            } else if (fillMode.equals("Solid", ignoreCase = true) || fillMode.equals("Gradient", ignoreCase = true)) {
+                return null
+            }
+        }
+    }
+
+    if (backgroundUrl.equals("pending", ignoreCase = true)) return null
+
+    if (!backgroundUrl.isNullOrBlank() && 
+        backgroundUrl.lowercase() != "null" && 
+        !backgroundUrl.contains(",") && 
+        backgroundUrl.toThemeColorOrNull() == null
+    ) {
+        return backgroundUrl
+    }
+
+    val modeConfig = if (isDark) config?.dark ?: config?.light else config?.light ?: config?.dark
+    val path = modeConfig?.backgroundUri
+
+    return path?.takeIf { it.isThemeAssetPath() }
+}
+
+fun Theme.previewBackgroundBrush(isDark: Boolean): Brush? {
+    if (previewBackgroundImagePath(isDark) != null) return null
+
+    val config = parsedConfig
+    if (config != null) {
+        val modeConfig = if (isDark) config.dark ?: config.light else config.light ?: config.dark
+        if (modeConfig != null) {
+            val fillMode = modeConfig.backgroundFillMode ?: ""
+            val hasBgUri = !modeConfig.backgroundUri.isNullOrBlank()
+            val isImageMode = fillMode.equals("Image", ignoreCase = true) 
+                || fillMode.equals("background", ignoreCase = true)
+                || (fillMode.isBlank() && hasBgUri)
+            
+            if (isImageMode) {
+                return null
+            } else if (fillMode.equals("Solid", ignoreCase = true)) {
+                val color = modeConfig.solidBackgroundColor.toThemeColorOrNull()
+                if (color != null) return SolidColor(color)
+            } else if (fillMode.equals("Gradient", ignoreCase = true)) {
+                val startColor = modeConfig.gradientStartColor.toThemeColorOrNull()
+                val endColor = modeConfig.gradientEndColor.toThemeColorOrNull()
+                if (startColor != null && endColor != null) {
+                    return Brush.verticalGradient(listOf(startColor, endColor))
+                }
+            }
+        }
+    }
+
+    val bgUrl = backgroundUrl
+    if (!bgUrl.isNullOrBlank() && !bgUrl.equals("pending", ignoreCase = true)) {
+        if (bgUrl.contains(",")) {
+            val parts = bgUrl.split(",").mapNotNull { it.trim().toThemeColorOrNull() }
+            if (parts.size >= 2) return Brush.verticalGradient(parts)
+        } else {
+            val color = bgUrl.toThemeColorOrNull()
+            if (color != null) return SolidColor(color)
+        }
+    }
+
+    val preferred = if (isDark) resolvedBgDarkColor else resolvedBgLightColor
+    val fallback = if (isDark) resolvedBgLightColor else resolvedBgDarkColor
+    val colorStr = preferred ?: fallback
+    if (!colorStr.isNullOrBlank()) {
+        if (colorStr.contains(",")) {
+            val parts = colorStr.split(",").mapNotNull { it.trim().toThemeColorOrNull() }
+            if (parts.size >= 2) return Brush.verticalGradient(parts)
+        } else {
+            val color = colorStr.toThemeColorOrNull()
+            if (color != null) return SolidColor(color)
+        }
+    }
+
+    return null
+}
+
+fun parseThemeBrush(colorStr: String?): Brush? {
+    if (colorStr.isNullOrBlank()) return null
+    val parts = colorStr.split(",").mapNotNull { part ->
+        part.trim().toThemeColorOrNull()
+    }
+    return when {
+        parts.isEmpty() -> null
+        parts.size == 1 -> SolidColor(parts[0])
+        else -> Brush.verticalGradient(parts)
+    }
 }

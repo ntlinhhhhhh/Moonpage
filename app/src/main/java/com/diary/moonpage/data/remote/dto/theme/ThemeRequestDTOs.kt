@@ -17,12 +17,11 @@ data class CreateThemeRequest(
     @SerializedName("price") val price: Int,
     @SerializedName("thumbnailUrl") val thumbnailUrl: String? = null,
     @SerializedName("backgroundUrl") val backgroundUrl: String? = null,
-    @SerializedName("primaryColor") val primaryColor: String? = null,
     @SerializedName("primaryLightColor") val primaryLightColor: String? = null,
     @SerializedName("primaryDarkColor") val primaryDarkColor: String? = null,
     @SerializedName("backgroundDarkColor") val backgroundDarkColor: String? = null,
     @SerializedName("backgroundLightColor") val backgroundLightColor: String? = null,
-    @SerializedName("description") val description: String? = null,
+    @SerializedName("description") val description: Any? = null, // String or Object
     @SerializedName("isOfficial") val isOfficial: Boolean = false,
     @SerializedName("isActive") val isActive: Boolean = true,
     @SerializedName("moods") val moods: List<CreateThemeMoodRequest>
@@ -30,7 +29,7 @@ data class CreateThemeRequest(
 
 data class CreateThemeMoodRequest(
     @SerializedName("baseMoodId") val baseMoodId: Int,
-    @SerializedName(value = "iconColor", alternate = ["iconUrl"]) val iconUrl: String,
+    @SerializedName("iconColor") val iconColor: String,
     @SerializedName("customName") val customName: String
 )
 

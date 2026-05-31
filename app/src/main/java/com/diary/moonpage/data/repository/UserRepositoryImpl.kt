@@ -294,7 +294,7 @@ private fun PredefinedTheme.toOwnedTheme(): Theme {
         isActive = id == ThemeConstants.DEFAULT_THEME_ID,
         description = toAppearanceDescription(),
         type = ThemeType.THEME,
-        icons = listOf("VERY_HAPPY", "HAPPY", "NEUTRAL", "SAD", "ANGRY"),
+        moods = emptyList(),
         primaryColor = primaryPreviewColor(),
         primaryLightColor = primaryLightColor,
         primaryDarkColor = primaryDarkColor,
