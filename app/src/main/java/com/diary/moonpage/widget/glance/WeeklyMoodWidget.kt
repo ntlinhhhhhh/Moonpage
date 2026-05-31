@@ -78,9 +78,9 @@ class WeeklyMoodWidget : GlanceAppWidget() {
         )
 
         provideContent {
-            val moodCircleSize = if (showDates) 30.dp else 34.dp
-            val moodCircleRadius = if (showDates) 15.dp else 17.dp
-            val moodImageSize = if (showDates) 24.dp else 28.dp
+            val moodCircleSize = if (showDates) 36.dp else 40.dp
+            val moodCircleRadius = if (showDates) 18.dp else 20.dp
+            val moodImageSize = if (showDates) 30.dp else 34.dp
             Box(
                 modifier = GlanceModifier
                     .fillMaxSize()
@@ -101,13 +101,13 @@ class WeeklyMoodWidget : GlanceAppWidget() {
                             text = monthLabel,
                             style = TextStyle(
                                 color = ColorProvider(textColor),
-                                fontSize = 12.sp,
+                                fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         )
                     }
 
-                    Spacer(modifier = GlanceModifier.size(4.dp))
+                    Spacer(modifier = GlanceModifier.size(6.dp))
 
                     Row(modifier = GlanceModifier.fillMaxWidth()) {
                         dayNames.forEach { label ->
@@ -119,14 +119,14 @@ class WeeklyMoodWidget : GlanceAppWidget() {
                                     text = label,
                                     style = TextStyle(
                                         color = ColorProvider(subColor),
-                                        fontSize = 8.sp
+                                        fontSize = 10.sp
                                     )
                                 )
                             }
                         }
                     }
 
-                    Spacer(modifier = GlanceModifier.size(2.dp))
+                    Spacer(modifier = GlanceModifier.size(4.dp))
 
                     Row(
                         modifier = GlanceModifier.fillMaxWidth(),
@@ -163,8 +163,8 @@ class WeeklyMoodWidget : GlanceAppWidget() {
                                     showDates -> {
                                         Box(
                                             modifier = GlanceModifier
-                                                .size(18.dp)
-                                                .cornerRadius(9.dp)
+                                                .size(20.dp)
+                                                .cornerRadius(10.dp)
                                                 .background(ColorProvider(placeholderColor))
                                         ) {}
                                     }
@@ -179,7 +179,7 @@ class WeeklyMoodWidget : GlanceAppWidget() {
                                                 text = "${day.dayNumber}",
                                                 style = TextStyle(
                                                     color = ColorProvider(subColor),
-                                                    fontSize = 10.sp,
+                                                    fontSize = 12.sp,
                                                     fontWeight = FontWeight.Bold
                                                 )
                                             )
@@ -194,7 +194,7 @@ class WeeklyMoodWidget : GlanceAppWidget() {
                                                 text = "${day.dayNumber}",
                                                 style = TextStyle(
                                                     color = ColorProvider(subColor.copy(alpha = 0.5f)),
-                                                    fontSize = 10.sp
+                                                    fontSize = 12.sp
                                                 )
                                             )
                                         }
@@ -205,7 +205,7 @@ class WeeklyMoodWidget : GlanceAppWidget() {
                     }
 
                     if (showDates) {
-                        Spacer(modifier = GlanceModifier.size(3.dp))
+                        Spacer(modifier = GlanceModifier.size(4.dp))
                         Row(modifier = GlanceModifier.fillMaxWidth()) {
                             weekDays.forEach { day ->
                                 Box(
@@ -216,7 +216,7 @@ class WeeklyMoodWidget : GlanceAppWidget() {
                                         text = "${day.dayNumber}",
                                         style = TextStyle(
                                             color = ColorProvider(if (day.isToday) textColor else subColor),
-                                            fontSize = 8.sp,
+                                            fontSize = 10.sp,
                                             fontWeight = if (day.isToday) FontWeight.Bold else FontWeight.Medium
                                         )
                                     )
@@ -236,10 +236,10 @@ class WeeklyMoodWidget : GlanceAppWidget() {
                             modifier = GlanceModifier
                                 .cornerRadius(50.dp)
                                 .background(ColorProvider(Color(0xCC000000)))
-                                .padding(horizontal = 7.dp, vertical = 3.dp),
+                                .padding(horizontal = 9.dp, vertical = 4.dp),
                             style = TextStyle(
                                 color = ColorProvider(Color.White),
-                                fontSize = 10.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         )

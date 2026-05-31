@@ -109,13 +109,13 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                             text = monthLabel,
                             style = TextStyle(
                                 color = ColorProvider(textColor),
-                                fontSize = 11.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         )
                     }
 
-                    Spacer(modifier = GlanceModifier.size(4.dp))
+                    Spacer(modifier = GlanceModifier.size(6.dp))
 
                     if (showGrid) {
                         Row(modifier = GlanceModifier.fillMaxWidth()) {
@@ -128,7 +128,7 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                                         text = label,
                                         style = TextStyle(
                                             color = ColorProvider(subColor),
-                                            fontSize = 7.sp,
+                                            fontSize = 9.sp,
                                             fontWeight = FontWeight.Bold
                                         )
                                     )
@@ -136,7 +136,7 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                             }
                         }
 
-                        Spacer(modifier = GlanceModifier.size(3.dp))
+                        Spacer(modifier = GlanceModifier.size(4.dp))
 
                         weeks.forEach { week ->
                             Row(
@@ -155,27 +155,27 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                                     ) {
                                         when {
                                             day.isEmpty -> {
-                                                Spacer(modifier = GlanceModifier.size(24.dp))
+                                                Spacer(modifier = GlanceModifier.size(28.dp))
                                             }
                                             day.moodResId != null -> {
                                                 Box(
                                                     modifier = GlanceModifier
-                                                        .size(24.dp)
-                                                        .cornerRadius(12.dp)
+                                                        .size(28.dp)
+                                                        .cornerRadius(14.dp)
                                                         .background(ColorProvider(day.moodColor)),
                                                     contentAlignment = Alignment.Center
                                                 ) {
                                                     Image(
                                                         provider = ImageProvider(day.moodResId),
                                                         contentDescription = null,
-                                                        modifier = GlanceModifier.size(19.dp)
+                                                        modifier = GlanceModifier.size(22.dp)
                                                     )
                                                 }
                                             }
                                             day.isToday -> {
                                                 Box(
                                                     modifier = GlanceModifier
-                                                        .size(24.dp)
+                                                        .size(28.dp)
                                                         .background(ImageProvider(R.drawable.widget_day_today_border)),
                                                     contentAlignment = Alignment.Center
                                                 ) {
@@ -183,7 +183,7 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                                                         text = "${day.dayNumber}",
                                                         style = TextStyle(
                                                             color = ColorProvider(subColor),
-                                                            fontSize = 8.sp,
+                                                            fontSize = 10.sp,
                                                             fontWeight = FontWeight.Bold
                                                         )
                                                     )
@@ -194,15 +194,15 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                                                     text = "${day.dayNumber}",
                                                     style = TextStyle(
                                                         color = ColorProvider(subColor.copy(alpha = 0.5f)),
-                                                        fontSize = 8.sp
+                                                        fontSize = 10.sp
                                                     )
                                                 )
                                             }
                                             else -> {
                                                 Box(
                                                     modifier = GlanceModifier
-                                                        .size(24.dp)
-                                                        .cornerRadius(12.dp)
+                                                        .size(28.dp)
+                                                        .cornerRadius(14.dp)
                                                         .background(ColorProvider(mutedCircleColor))
                                                 ) {}
                                             }
@@ -216,12 +216,12 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                             text = recentDaysText,
                             style = TextStyle(
                                 color = ColorProvider(subColor),
-                                fontSize = 8.sp,
+                                fontSize = 10.sp,
                                 fontWeight = FontWeight.Medium
                             )
                         )
 
-                        Spacer(modifier = GlanceModifier.size(6.dp))
+                        Spacer(modifier = GlanceModifier.size(8.dp))
 
                         Row(
                             modifier = GlanceModifier.fillMaxWidth(),
@@ -234,35 +234,35 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                                 ) {
                                     when {
                                         day.isEmpty -> {
-                                            Spacer(modifier = GlanceModifier.size(24.dp))
+                                            Spacer(modifier = GlanceModifier.size(28.dp))
                                         }
                                         day.moodResId != null -> {
                                             Box(
                                                 modifier = GlanceModifier
-                                                    .size(24.dp)
-                                                    .cornerRadius(12.dp)
+                                                    .size(28.dp)
+                                                    .cornerRadius(14.dp)
                                                     .background(ColorProvider(day.moodColor)),
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 Image(
                                                     provider = ImageProvider(day.moodResId),
                                                     contentDescription = null,
-                                                    modifier = GlanceModifier.size(19.dp)
+                                                    modifier = GlanceModifier.size(22.dp)
                                                 )
                                             }
                                         }
                                         day.isToday -> {
                                             Box(
                                                 modifier = GlanceModifier
-                                                    .size(24.dp)
+                                                    .size(28.dp)
                                                     .background(ImageProvider(R.drawable.widget_day_today_border))
                                             ) {}
                                         }
                                         else -> {
                                             Box(
                                                 modifier = GlanceModifier
-                                                    .size(24.dp)
-                                                    .cornerRadius(12.dp)
+                                                    .size(28.dp)
+                                                    .cornerRadius(14.dp)
                                                     .background(ColorProvider(mutedCircleColor))
                                             ) {}
                                         }
@@ -271,7 +271,7 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                             }
                         }
 
-                        Spacer(modifier = GlanceModifier.size(4.dp))
+                        Spacer(modifier = GlanceModifier.size(6.dp))
 
                         Row(modifier = GlanceModifier.fillMaxWidth()) {
                             compactDays.forEach { day ->
@@ -280,13 +280,13 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                                     contentAlignment = Alignment.Center
                                 ) {
                                     if (day.isEmpty) {
-                                        Spacer(modifier = GlanceModifier.size(24.dp))
+                                        Spacer(modifier = GlanceModifier.size(28.dp))
                                     } else {
                                         Text(
                                             text = "${day.dayNumber}",
                                             style = TextStyle(
                                                 color = ColorProvider(if (day.isToday) textColor else subColor),
-                                                fontSize = 8.sp,
+                                                fontSize = 10.sp,
                                                 fontWeight = if (day.isToday) FontWeight.Bold else FontWeight.Medium
                                             )
                                         )
@@ -309,10 +309,10 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                             modifier = GlanceModifier
                                 .cornerRadius(50.dp)
                                 .background(ColorProvider(Color(0xCC000000)))
-                                .padding(horizontal = 6.dp, vertical = 2.dp),
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
                             style = TextStyle(
                                 color = ColorProvider(Color.White),
-                                fontSize = 8.sp,
+                                fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         )
