@@ -29,6 +29,8 @@ fun UserInfoCard(
     userId: String,
     userName: String,
     avatarUrl: String?,
+    localAvatarPath: String? = null,
+    tempAvatarPath: String? = null,
     onClick: () -> Unit
 ) {
     val cardBg = MaterialTheme.colorScheme.surface
@@ -58,9 +60,11 @@ fun UserInfoCard(
                     .background(outerCircleColor, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                if (avatarUrl != null) {
+                val displayImage = tempAvatarPath ?: localAvatarPath ?: avatarUrl
+
+                if (displayImage != null) {
                     AsyncImage(
-                        model = avatarUrl,
+                        model = displayImage,
                         contentDescription = stringResource(R.string.content_desc_avatar),
                         modifier = Modifier
                             .size(56.dp)
@@ -125,3 +129,5 @@ fun UserInfoCard(
         }
     }
 }
+
+

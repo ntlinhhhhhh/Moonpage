@@ -27,6 +27,7 @@ import com.diary.moonpage.R
 import com.diary.moonpage.ui.screens.profile.components.AvatarOption
 import com.diary.moonpage.ui.screens.profile.components.ProfileAvatarGroup
 import com.diary.moonpage.ui.screens.profile.components.ProfileAvatarItem
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.core.util.ComposeCaptureUtils
 import java.io.File
 import java.io.FileOutputStream
@@ -41,6 +42,7 @@ fun ChangeProfilePictureScreen(
     onApply: () -> Unit
 ) {
     var selectedId by remember { mutableStateOf<Int?>(null) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val view = LocalView.current
 
@@ -84,6 +86,9 @@ fun ChangeProfilePictureScreen(
     }
 
     ChangeProfilePictureContent(
+        avatarUrl = uiState.user?.avatarUrl,
+        localAvatarPath = uiState.localAvatarPath,
+        tempAvatarPath = uiState.tempAvatarPath,
         onNavigateBack = onNavigateBack,
         selectedId = selectedId,
         onSelect = { selectedId = it },
@@ -127,6 +132,9 @@ fun ChangeProfilePictureScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChangeProfilePictureContent(
+    avatarUrl: String? = null,
+    localAvatarPath: String? = null,
+    tempAvatarPath: String? = null,
     onNavigateBack: () -> Unit,
     selectedId: Int?,
     onSelect: (Int) -> Unit,
@@ -205,6 +213,19 @@ fun ChangeProfilePictureContent(
                 .padding(horizontal = 16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                com.diary.moonpage.ui.screens.profile.components.AccountAvatar(
+                    onEditClick = onPickFromGallery,
+                    avatarUrl = avatarUrl,
+                    localAvatarPath = localAvatarPath,
+                    tempAvatarPath = tempAvatarPath
+                )
+            }
+            Spacer(modifier = Modifier.height(24.dp))
             ProfileAvatarGroup("Puppy Bean", puppyAvatars, selectedId, onSelect)
             ProfileAvatarGroup("Daily Matcha Set", matchaAvatars, selectedId, onSelect)
             ProfileAvatarGroup("Heart Beans", heartAvatars, selectedId, onSelect)
@@ -219,6 +240,9 @@ fun ChangeProfilePictureContent(
 fun ChangeProfilePicturePreview() {
     val avatars = listOf(AvatarOption(1, Color.Yellow))
     ChangeProfilePictureContent(
+        avatarUrl = null,
+        localAvatarPath = null,
+        tempAvatarPath = null,
         onNavigateBack = {},
         selectedId = 1,
         onSelect = {},

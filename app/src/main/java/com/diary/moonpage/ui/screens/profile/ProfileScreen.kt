@@ -59,6 +59,8 @@ fun ProfileRoute(
             userId = uiState.user?.id?.take(8) ?: "",
             userName = uiState.user?.name ?: stringResource(R.string.user_fallback),
             avatarUrl = uiState.user?.avatarUrl,
+            localAvatarPath = uiState.localAvatarPath,
+            tempAvatarPath = uiState.tempAvatarPath,
             recordedDays = uiState.totalLogs.toString(),
             photoCount = uiState.totalPhotos.toString(),
             currentStreak = uiState.currentStreak.toString(),
@@ -88,6 +90,8 @@ fun ProfileScreen(
     userId: String,
     userName: String,
     avatarUrl: String?,
+    localAvatarPath: String? = null,
+    tempAvatarPath: String? = null,
     recordedDays: String,
     photoCount: String,
     currentStreak: String,
@@ -137,6 +141,8 @@ fun ProfileScreen(
                         userId = if (userId.isNotEmpty()) "#$userId" else "",
                         userName = userName,
                         avatarUrl = avatarUrl,
+                        localAvatarPath = localAvatarPath,
+                        tempAvatarPath = tempAvatarPath,
                         onClick = onAccountClick
                     )
                 }
@@ -222,3 +228,4 @@ fun ProfileScreenPreview() {
         )
     }
 }
+

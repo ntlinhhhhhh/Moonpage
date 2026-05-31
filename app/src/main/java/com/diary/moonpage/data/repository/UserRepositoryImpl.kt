@@ -112,7 +112,6 @@ class UserRepositoryImpl @Inject constructor(
     private suspend fun resolveOwnedTheme(themeId: String): Theme {
         val normalizedThemeId = ThemeConstants.normalizeThemeId(themeId)
         ThemeConstants.findTheme(normalizedThemeId)?.let { return it.toOwnedTheme() }
-        if (normalizedThemeId.startsWith("custom_")) return normalizedThemeId.toFallbackOwnedTheme()
 
         return try {
             val response = themeApi.getThemeDetail(normalizedThemeId)
