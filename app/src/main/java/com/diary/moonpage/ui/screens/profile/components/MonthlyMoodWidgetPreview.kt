@@ -54,26 +54,17 @@ private data class PreviewMonthDay(
 @Composable
 fun MonthlyMoodWidgetPreview(
     showStreak: Boolean,
-    showGrid: Boolean,
     modifier: Modifier = Modifier
 ) {
     val today = LocalDate.now()
     val monthLabel = today.format(DateTimeFormatter.ofPattern("MMM yyyy", Locale.ENGLISH))
     val monthDays = buildPreviewMonthDays(today)
-    val compactDays = monthDays
-        .filterNot { it.isEmpty }
-        .take(today.dayOfMonth)
-        .takeLast(7)
-        .let { days ->
-            List((7 - days.size).coerceAtLeast(0)) {
-                PreviewMonthDay(0, null, Color.Transparent, false, true)
-            } + days
-        }
+    val dayLabels = listOf("Su", "Mo", "Tu", "We", "Th", "Fr", "Sa")
 
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .height(if (showGrid) 176.dp else 148.dp),
+            .height(176.dp),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = ThemeDefaultPreviewSurface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -100,157 +91,86 @@ fun MonthlyMoodWidgetPreview(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                if (showGrid) {
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat").forEach { label ->
-                            Text(
-                                text = label,
-                                modifier = Modifier.weight(1f),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = ThemeDefaultPreviewSubText,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = TextAlign.Center
-                            )
-                        }
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    dayLabels.forEach { label ->
+                        Text(
+                            text = label,
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = ThemeDefaultPreviewSubText,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
                     }
+                }
 
-                    Spacer(modifier = Modifier.height(3.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
-                    monthDays.chunked(7).forEach { week ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            val paddedWeek = week + List(7 - week.size) {
-                                PreviewMonthDay(0, null, Color.Transparent, false, true)
-                            }
-                            paddedWeek.forEach { day ->
-                                Box(
-                                    modifier = Modifier.weight(1f),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    when {
-                                        day.isEmpty -> Spacer(modifier = Modifier.size(18.dp))
-                                        day.iconRes != null -> {
-                                            Surface(
-                                                shape = androidx.compose.foundation.shape.RoundedCornerShape(9.dp),
-                                                color = day.circleColor,
-                                                modifier = Modifier.size(18.dp)
-                                            ) {
-                                                Box(contentAlignment = Alignment.Center) {
-                                                    Image(
-                                                        painter = painterResource(id = day.iconRes),
-                                                        contentDescription = null,
-                                                        modifier = Modifier.size(14.dp)
-                                                    )
-                                                }
-                                            }
-                                        }
-                                        day.isToday -> {
-                                            Surface(
-                                                shape = androidx.compose.foundation.shape.RoundedCornerShape(9.dp),
-                                                color = Color.Transparent,
-                                                border = BorderStroke(1.dp, ThemeDefaultPreviewSubText),
-                                                modifier = Modifier.size(18.dp)
-                                            ) {
-                                                Box(contentAlignment = Alignment.Center) {
-                                                    Text(
-                                                        text = day.dayNumber.toString(),
-                                                        style = MaterialTheme.typography.labelSmall,
-                                                        color = ThemeDefaultPreviewSubText
-                                                    )
-                                                }
-                                            }
-                                        }
-                                        day.dayNumber > today.dayOfMonth -> {
-                                            Text(
-                                                text = day.dayNumber.toString(),
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = ThemeDefaultPreviewSubText.copy(alpha = 0.7f)
-                                            )
-                                        }
-                                        else -> {
-                                            Surface(
-                                                shape = androidx.compose.foundation.shape.RoundedCornerShape(9.dp),
-                                                color = ThemeDefaultPreviewMuted,
-                                                modifier = Modifier.size(18.dp)
-                                            ) {}
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    Text(
-                        text = "Recent days",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = ThemeDefaultPreviewSubText,
-                        fontWeight = FontWeight.Medium
-                    )
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
+                monthDays.chunked(7).forEach { week ->
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        compactDays.forEach { day ->
+                        val paddedWeek = week + List(7 - week.size) {
+                            PreviewMonthDay(0, null, Color.Transparent, false, true)
+                        }
+                        paddedWeek.forEach { day ->
                             Box(
                                 modifier = Modifier.weight(1f),
                                 contentAlignment = Alignment.Center
                             ) {
                                 when {
-                                    day.isEmpty -> Spacer(modifier = Modifier.size(18.dp))
+                                    day.isEmpty -> Spacer(modifier = Modifier.size(28.dp))
                                     day.iconRes != null -> {
                                         Surface(
-                                            shape = androidx.compose.foundation.shape.RoundedCornerShape(9.dp),
+                                            shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
                                             color = day.circleColor,
-                                            modifier = Modifier.size(18.dp)
+                                            modifier = Modifier.size(28.dp)
                                         ) {
                                             Box(contentAlignment = Alignment.Center) {
                                                 Image(
                                                     painter = painterResource(id = day.iconRes),
                                                     contentDescription = null,
-                                                    modifier = Modifier.size(14.dp)
+                                                    modifier = Modifier.size(22.dp)
                                                 )
                                             }
                                         }
                                     }
                                     day.isToday -> {
                                         Surface(
-                                            shape = androidx.compose.foundation.shape.RoundedCornerShape(9.dp),
+                                            shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
                                             color = Color.Transparent,
                                             border = BorderStroke(1.dp, ThemeDefaultPreviewSubText),
-                                            modifier = Modifier.size(18.dp)
-                                        ) {}
+                                            modifier = Modifier.size(28.dp)
+                                        ) {
+                                            Box(contentAlignment = Alignment.Center) {
+                                                Text(
+                                                    text = day.dayNumber.toString(),
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = ThemeDefaultPreviewSubText,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        }
+                                    }
+                                    day.dayNumber > today.dayOfMonth -> {
+                                        Text(
+                                            text = day.dayNumber.toString(),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = ThemeDefaultPreviewSubText.copy(alpha = 0.5f)
+                                        )
                                     }
                                     else -> {
                                         Surface(
-                                            shape = androidx.compose.foundation.shape.RoundedCornerShape(9.dp),
+                                            shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
                                             color = ThemeDefaultPreviewMuted,
-                                            modifier = Modifier.size(18.dp)
+                                            modifier = Modifier.size(28.dp)
                                         ) {}
                                     }
                                 }
                             }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        compactDays.forEach { day ->
-                            Text(
-                                text = if (day.isEmpty) "" else day.dayNumber.toString(),
-                                modifier = Modifier.weight(1f),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = if (day.isToday) ThemeDefaultPreviewText else ThemeDefaultPreviewSubText,
-                                fontWeight = if (day.isToday) FontWeight.Bold else FontWeight.Medium,
-                                textAlign = TextAlign.Center
-                            )
                         }
                     }
                 }

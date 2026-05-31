@@ -28,7 +28,6 @@ import com.diary.moonpage.R
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.time.format.TextStyle
 import java.util.Locale
 
 private val ThemeDefaultPreviewSurface = Color(0xFFF4F6F1)
@@ -46,7 +45,6 @@ private val ThemeDefaultMoodCircles = listOf(
 @Composable
 fun WeeklyMoodWidgetPreview(
     showStreak: Boolean,
-    showDates: Boolean,
     modifier: Modifier = Modifier
 ) {
     val today = LocalDate.now()
@@ -65,6 +63,7 @@ fun WeeklyMoodWidgetPreview(
         val date = startOfWeek.plusDays(offset.toLong())
         Triple(date, sampleIcons[offset], date == today)
     }
+    val dayLabels = listOf("Su", "Mo", "Tu", "We", "Th", "Fr", "Sa")
 
     Card(
         modifier = modifier
@@ -77,7 +76,7 @@ fun WeeklyMoodWidgetPreview(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .padding(horizontal = 10.dp, vertical = 8.dp)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 Row(
@@ -97,18 +96,19 @@ fun WeeklyMoodWidgetPreview(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Row(modifier = Modifier.fillMaxWidth()) {
-                    days.forEach { (date, _, _) ->
+                    dayLabels.forEach { label ->
                         Text(
-                            text = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.ENGLISH),
+                            text = label,
                             modifier = Modifier.weight(1f),
                             style = MaterialTheme.typography.labelSmall,
                             color = ThemeDefaultPreviewSubText,
+                            fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -122,40 +122,25 @@ fun WeeklyMoodWidgetPreview(
                             when {
                                 iconRes != null -> {
                                     Surface(
-                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(if (showDates) 15.dp else 17.dp),
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
                                         color = ThemeDefaultMoodCircles[index],
-                                        modifier = Modifier.size(if (showDates) 30.dp else 34.dp)
+                                        modifier = Modifier.size(28.dp)
                                     ) {
                                         Box(contentAlignment = Alignment.Center) {
                                             Image(
                                                 painter = painterResource(id = iconRes),
                                                 contentDescription = null,
-                                                modifier = Modifier.size(if (showDates) 24.dp else 28.dp)
+                                                modifier = Modifier.size(22.dp)
                                             )
                                         }
                                     }
                                 }
-                                showDates && isToday -> {
-                                    Surface(
-                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(15.dp),
-                                        color = Color.Transparent,
-                                        border = BorderStroke(1.dp, ThemeDefaultPreviewSubText),
-                                        modifier = Modifier.size(30.dp)
-                                    ) {}
-                                }
-                                showDates -> {
-                                    Surface(
-                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(9.dp),
-                                        color = ThemeDefaultPreviewMuted,
-                                        modifier = Modifier.size(18.dp)
-                                    ) {}
-                                }
                                 isToday -> {
                                     Surface(
-                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(17.dp),
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
                                         color = Color.Transparent,
                                         border = BorderStroke(1.dp, ThemeDefaultPreviewSubText),
-                                        modifier = Modifier.size(34.dp)
+                                        modifier = Modifier.size(28.dp)
                                     ) {
                                         Box(contentAlignment = Alignment.Center) {
                                             Text(
@@ -167,29 +152,13 @@ fun WeeklyMoodWidgetPreview(
                                     }
                                 }
                                 else -> {
-                                    Text(
-                                        text = date.dayOfMonth.toString(),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = ThemeDefaultPreviewSubText.copy(alpha = 0.7f)
-                                    )
+                                    Surface(
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
+                                        color = ThemeDefaultPreviewMuted,
+                                        modifier = Modifier.size(28.dp)
+                                    ) {}
                                 }
                             }
-                        }
-                    }
-                }
-
-                if (showDates) {
-                    Spacer(modifier = Modifier.height(3.dp))
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        days.forEach { (date, _, isToday) ->
-                            Text(
-                                text = date.dayOfMonth.toString(),
-                                modifier = Modifier.weight(1f),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = if (isToday) ThemeDefaultPreviewText else ThemeDefaultPreviewSubText,
-                                fontWeight = if (isToday) FontWeight.Bold else FontWeight.Medium,
-                                textAlign = TextAlign.Center
-                            )
                         }
                     }
                 }

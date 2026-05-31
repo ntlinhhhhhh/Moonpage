@@ -20,7 +20,7 @@ import com.diary.moonpage.ui.screens.profile.components.WeeklyMoodWidgetPreview
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -30,12 +30,9 @@ class WeeklyMoodWidgetEditViewModel @Inject constructor(
     private val widgetPreferencesManager: WidgetPreferencesManager
 ) : ViewModel() {
 
-    val uiState: StateFlow<WeeklyMoodWidgetEditUiState> = combine(
-        widgetPreferencesManager.showWeeklyMoodStreak,
-        widgetPreferencesManager.showWeeklyMoodDates
-    ) { streak, dates ->
-        WeeklyMoodWidgetEditUiState(showStreak = streak, showDates = dates)
-    }.stateIn(
+    val uiState: StateFlow<WeeklyMoodWidgetEditUiState> = widgetPreferencesManager.showWeeklyMoodStreak
+        .map { streak -> WeeklyMoodWidgetEditUiState(showStreak = streak) }
+        .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = WeeklyMoodWidgetEditUiState()
@@ -46,17 +43,10 @@ class WeeklyMoodWidgetEditViewModel @Inject constructor(
             widgetPreferencesManager.setShowWeeklyMoodStreak(show)
         }
     }
-
-    fun setShowDates(show: Boolean) {
-        viewModelScope.launch {
-            widgetPreferencesManager.setShowWeeklyMoodDates(show)
-        }
-    }
 }
 
 data class WeeklyMoodWidgetEditUiState(
-    val showStreak: Boolean = true,
-    val showDates: Boolean = true
+    val showStreak: Boolean = true
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -99,7 +89,6 @@ fun WeeklyMoodWidgetEditScreen(
         ) {
             WeeklyMoodWidgetPreview(
                 showStreak = uiState.showStreak,
-                showDates = uiState.showDates,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
             Text(
@@ -116,16 +105,6 @@ fun WeeklyMoodWidgetEditScreen(
                 icon = Icons.Rounded.Whatshot,
                 checked = uiState.showStreak,
                 onCheckedChange = { viewModel.setShowStreak(it) }
-            )
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = colorScheme.outlineVariant)
-
-            EditToggleItem(
-                title = stringResource(R.string.pref_show_dates),
-                description = stringResource(R.string.pref_show_dates_desc),
-                icon = Icons.Rounded.DateRange,
-                checked = uiState.showDates,
-                onCheckedChange = { viewModel.setShowDates(it) }
             )
         }
     }
