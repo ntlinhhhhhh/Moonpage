@@ -1054,4 +1054,5 @@
     <string name="streak_badge">🔥 %1$d</string>
     <string name="loading_feelings">Đang tải cảm xúc của bạn...</string>
     <string name="ready_to_reflect">Sẵn sàng để nhìn lại</string>
+    <string name="streak_unbroken">Chuỗi hiện tại đang liền mạch và không dùng được.</string>
 </resources>

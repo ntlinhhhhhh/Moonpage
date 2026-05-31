@@ -230,13 +230,22 @@ class StoreViewModel @Inject constructor(
                 _uiEffect.emit(StoreUiEffect.RecoverSuccess)
             }.onFailure { error ->
                 _uiState.update { it.copy(isLoading = false) }
-                _uiEffect.emit(
-                    StoreUiEffect.ShowSnackBar(
-                        error.message?.let(UiText::DynamicString)
-                            ?: UiText.StringResource(R.string.recovery_failed),
-                        SnackbarType.ERROR
+                if (error.message == "NO_BROKEN_STREAK") {
+                    _uiEffect.emit(
+                        StoreUiEffect.ShowSnackBar(
+                            UiText.StringResource(R.string.streak_unbroken),
+                            SnackbarType.INFO
+                        )
                     )
-                )
+                } else {
+                    _uiEffect.emit(
+                        StoreUiEffect.ShowSnackBar(
+                            error.message?.let(UiText::DynamicString)
+                                ?: UiText.StringResource(R.string.recovery_failed),
+                            SnackbarType.ERROR
+                        )
+                    )
+                }
             }
         }
     }

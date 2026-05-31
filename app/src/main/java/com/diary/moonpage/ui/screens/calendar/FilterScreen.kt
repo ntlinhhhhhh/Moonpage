@@ -46,14 +46,16 @@ fun FilterRoute(
     onSeeResults: (List<FilterItem>) -> Unit,
     currentFilters: List<FilterItem> = emptyList(),
     dynamicActivities: List<com.diary.moonpage.domain.model.Activity> = emptyList(),
-    themeType: com.diary.moonpage.core.theme.MoonThemeType = com.diary.moonpage.core.theme.MoonThemeType.DEFAULT
+    themeType: com.diary.moonpage.core.theme.MoonThemeType = com.diary.moonpage.core.theme.MoonThemeType.DEFAULT,
+    customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null
 ) {
     FilterScreen(
         onDismiss = onDismiss,
         onSeeResults = onSeeResults,
         currentFilters = currentFilters,
         dynamicActivities = dynamicActivities,
-        themeType = themeType
+        themeType = themeType,
+        customMoods = customMoods
     )
 }
 
@@ -66,7 +68,8 @@ fun FilterScreen(
     onSeeResults: (List<FilterItem>) -> Unit,
     currentFilters: List<FilterItem> = emptyList(),
     dynamicActivities: List<com.diary.moonpage.domain.model.Activity> = emptyList(),
-    themeType: com.diary.moonpage.core.theme.MoonThemeType = com.diary.moonpage.core.theme.MoonThemeType.DEFAULT
+    themeType: com.diary.moonpage.core.theme.MoonThemeType = com.diary.moonpage.core.theme.MoonThemeType.DEFAULT,
+    customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null
 ) {
     var selectedItems by remember { mutableStateOf(currentFilters.toSet()) }
     val groupedActivities = remember(dynamicActivities) { dynamicActivities.groupBy { it.category } }
@@ -155,7 +158,7 @@ fun FilterScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         items(selectedItems.toList()) { item ->
-                            SelectedItemDisplay(item, themeType)
+                            SelectedItemDisplay(item, themeType, customMoods)
                         }
                     }
                     
@@ -193,7 +196,7 @@ fun FilterScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     (5 downTo 1).forEach { moodId ->
-                        val visual = MoonIcons.Moods.getMoodVisual(moodId, themeType)
+                        val visual = MoonIcons.Moods.getMoodVisual(moodId, themeType, customMoods)
                         val isSelected = selectedItems.any { (it as? FilterItem.Mood)?.id == moodId }
                         MoodFilterItem(
                             visual = visual,
@@ -326,13 +329,13 @@ fun FilterScreen(
 }
 
 @Composable
-fun SelectedItemDisplay(item: FilterItem, themeType: com.diary.moonpage.core.theme.MoonThemeType) {
+fun SelectedItemDisplay(item: FilterItem, themeType: com.diary.moonpage.core.theme.MoonThemeType, customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null) {
     val colorScheme = MaterialTheme.colorScheme
     val isActuallyDark = colorScheme.surface.let { (it.red * 0.299 + it.green * 0.587 + it.blue * 0.114) < 0.5 }
 
     when (item) {
         is FilterItem.Mood -> {
-            val visual = MoonIcons.Moods.getMoodVisual(item.id, themeType)
+            val visual = MoonIcons.Moods.getMoodVisual(item.id, themeType, customMoods)
             val moodColor = if (isActuallyDark) {
                 MoonIcons.brightenMoodColorForDarkMode(visual.color, amount = 0.32f)
             } else {

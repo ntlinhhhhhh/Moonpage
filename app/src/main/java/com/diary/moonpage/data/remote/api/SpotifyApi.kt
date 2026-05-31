@@ -56,19 +56,20 @@ interface SpotifyApi {
 
     companion object {
         const val CLIENT_ID = "108e0ac9178f446ab4341f040bb9cea6"
-        const val REDIRECT_URI = "moonpage://spotify-callback/"
+        const val REDIRECT_URI = "moonpage://spotify-callback"
         const val AUTH_URL = "https://accounts.spotify.com/authorize"
         
         fun getAuthUrl(codeChallenge: String, state: String): String {
-            val encodedRedirectUri = android.net.Uri.encode(REDIRECT_URI)
-            return "$AUTH_URL?client_id=$CLIENT_ID" +
-                    "&response_type=code" +
-                    "&redirect_uri=$encodedRedirectUri" +
-                    "&scope=user-read-private%20user-read-email%20user-read-recently-played%20user-top-read" +
-                    "&show_dialog=true" +
-                    "&state=$state" +
-                    "&code_challenge_method=S256" +
-                    "&code_challenge=$codeChallenge"
+            return android.net.Uri.parse(AUTH_URL).buildUpon()
+                .appendQueryParameter("client_id", CLIENT_ID)
+                .appendQueryParameter("response_type", "code")
+                .appendQueryParameter("redirect_uri", REDIRECT_URI)
+                .appendQueryParameter("scope", "user-read-private user-read-email user-read-recently-played user-top-read")
+                .appendQueryParameter("show_dialog", "true")
+                .appendQueryParameter("state", state)
+                .appendQueryParameter("code_challenge_method", "S256")
+                .appendQueryParameter("code_challenge", codeChallenge)
+                .build().toString()
         }
     }
 }

@@ -248,7 +248,11 @@ class UserRepositoryImpl @Inject constructor(
                 getCurrentUser()
                 Result.success(Unit)
             } else {
-                Result.failure(Exception("Recovery failed: ${response.code()}"))
+                if (response.code() == 400) {
+                    Result.failure(Exception("NO_BROKEN_STREAK"))
+                } else {
+                    Result.failure(Exception("Recovery failed: ${response.code()}"))
+                }
             }
         } catch (e: Exception) {
             Result.failure(e)
