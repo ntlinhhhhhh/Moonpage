@@ -513,7 +513,7 @@ private fun DailyLogTopBar(
                     ) { onDateClick() }
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
-                val formatter = DateTimeFormatter.ofPattern("EEEE, MMM d", Locale.getDefault())
+                val formatter = DateTimeFormatter.ofPattern("EEEE, MMM d", LocalLocale.current.platformLocale)
                 Text(
                     text = date.format(formatter),
                     style = MaterialTheme.typography.titleMedium,
@@ -1387,7 +1387,7 @@ fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean) -> Uni
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (!isMenstruation) MoonTheme.customColors.logItemIconSelected else MoonTheme.customColors.logItemBg,
-                        contentColor = if (!isMenstruation) Color.White else MoonTheme.customColors.logCardOnBg
+                        contentColor = if (!isMenstruation) MaterialTheme.colorScheme.onPrimary else MoonTheme.customColors.logCardOnBg
                     )
                 ) {
                     Text(stringResource(R.string.action_no))
@@ -1398,7 +1398,7 @@ fun DailyMenstruationSection(isMenstruation: Boolean, onToggle: (Boolean) -> Uni
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isMenstruation) MoonTheme.customColors.logItemIconSelected else MoonTheme.customColors.logItemBg,
-                        contentColor = if (isMenstruation) Color.White else MoonTheme.customColors.logCardOnBg
+                        contentColor = if (isMenstruation) MaterialTheme.colorScheme.onPrimary else MoonTheme.customColors.logCardOnBg
                     )
                 ) {
                     Text(stringResource(R.string.action_yes))

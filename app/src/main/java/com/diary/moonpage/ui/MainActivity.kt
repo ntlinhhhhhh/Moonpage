@@ -40,6 +40,7 @@ class MainActivity : AppCompatActivity() {
         
         widgetTargetRoute = intent.widgetTargetRoute()
         mainViewModel.handleSpotifyIntent(intent.data)
+        intent.setData(null)
 
         setContent {
             MoonPageApp(
@@ -55,6 +56,7 @@ class MainActivity : AppCompatActivity() {
         setIntent(intent)
         widgetTargetRoute = intent.widgetTargetRoute()
         mainViewModel.handleSpotifyIntent(intent.data)
+        this.intent.setData(null)
     }
 
     private fun getSavedLanguage(context: Context): String {
