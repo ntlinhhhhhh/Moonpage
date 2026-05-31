@@ -1051,6 +1051,7 @@
     <string name="stats_correlation_banner_based">Dựa trên % số ngày mỗi hoạt động xuất hiện cùng tâm trạng tốt nhất/tệ nhất.</string>
     <string name="clear_cache">Xóa bộ nhớ đệm chủ đề</string>
     <string name="clear_cache_success">Đã xóa bộ nhớ đệm và đồng bộ thành công</string>
+    <string name="streak_badge">🔥 %1$d</string>
     <string name="loading_feelings">Đang tải cảm xúc của bạn...</string>
     <string name="ready_to_reflect">Sẵn sàng để nhìn lại</string>
 </resources>

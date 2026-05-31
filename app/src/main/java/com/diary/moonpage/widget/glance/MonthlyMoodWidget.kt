@@ -58,8 +58,16 @@ class MonthlyMoodWidget : GlanceAppWidget() {
         }
         val mutedCircleColor = if (isNight) MutedCircleColorDark else MutedCircleColor
         val today = LocalDate.now()
-        val monthLabel = today.format(DateTimeFormatter.ofPattern("MMM yyyy", Locale.ENGLISH))
-        val dayHeaders = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+        val monthLabel = today.format(DateTimeFormatter.ofPattern("MMM yyyy", Locale.getDefault()))
+        val dayHeaders = listOf(
+            context.getString(R.string.sun_short),
+            context.getString(R.string.mon_short),
+            context.getString(R.string.tue_short),
+            context.getString(R.string.wed_short),
+            context.getString(R.string.thu_short),
+            context.getString(R.string.fri_short),
+            context.getString(R.string.sat_short)
+        )
         val weeks = monthDays.chunked(7)
         val compactDays = monthDays
             .filterNot { it.isEmpty }
@@ -79,6 +87,9 @@ class MonthlyMoodWidget : GlanceAppWidget() {
         // that gets cancelled every time widget.update() is called.
         val showStreak = preferences.showMonthlyMoodStreak.first()
         val showGrid = preferences.showMonthlyMoodGrid.first()
+        
+        val streakText = context.getString(R.string.streak_badge, snapshot.streakCount)
+        val recentDaysText = context.getString(R.string.recent_days)
 
         provideContent {
             Box(
@@ -202,7 +213,7 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                         }
                     } else {
                         Text(
-                            text = "Recent days",
+                            text = recentDaysText,
                             style = TextStyle(
                                 color = ColorProvider(subColor),
                                 fontSize = 8.sp,
@@ -294,7 +305,7 @@ class MonthlyMoodWidget : GlanceAppWidget() {
                         contentAlignment = Alignment.TopEnd
                     ) {
                         Text(
-                            text = "\uD83D\uDD25 ${snapshot.streakCount}",
+                            text = streakText,
                             modifier = GlanceModifier
                                 .cornerRadius(50.dp)
                                 .background(ColorProvider(Color(0xCC000000)))

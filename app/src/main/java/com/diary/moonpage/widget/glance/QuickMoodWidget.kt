@@ -52,13 +52,13 @@ class QuickMoodWidget : GlanceAppWidget() {
         } else {
             snapshot.palette.dayOnSurface.copy(alpha = 0.6f)
         }
-        val dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMMM d", Locale.ENGLISH))
+        val dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMMM d", Locale.getDefault()))
         val moodItems = listOf(
-            5 to "Great",
-            4 to "Good",
-            3 to "Okay",
-            2 to "Low",
-            1 to "Bad"
+            5 to context.getString(R.string.rad),
+            4 to context.getString(R.string.good),
+            3 to context.getString(R.string.okay),
+            2 to context.getString(R.string.bad),
+            1 to context.getString(R.string.awful)
         )
 
         val openAppAction = actionStartActivity(
@@ -69,6 +69,8 @@ class QuickMoodWidget : GlanceAppWidget() {
         // that gets cancelled every time widget.update() is called.
         val showStreak = preferences.showQuickMoodStreak.first()
         val showLabels = preferences.showQuickMoodLabels.first()
+        
+        val streakText = context.getString(R.string.streak_badge, snapshot.streakCount)
 
         provideContent {
             val moodCircleSize = if (showLabels) 32.dp else 36.dp
@@ -164,7 +166,7 @@ class QuickMoodWidget : GlanceAppWidget() {
                         contentAlignment = Alignment.TopEnd
                     ) {
                         Text(
-                            text = "\uD83D\uDD25 ${snapshot.streakCount}",
+                            text = streakText,
                             modifier = GlanceModifier
                                 .cornerRadius(50.dp)
                                 .background(ColorProvider(Color(0xCC000000)))

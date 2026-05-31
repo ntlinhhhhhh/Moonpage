@@ -50,6 +50,8 @@ class DailySummaryWidget : GlanceAppWidget() {
         val showStreak = preferences.showDailyStreak.first()
         val showNote = preferences.showDailyNote.first()
         val showStats = preferences.showDailyStats.first()
+        
+        val streakText = context.getString(R.string.streak_badge, snapshot.streakCount)
 
         val openAppAction = actionStartActivity(
             MoonpageWidgets.openAppIntent(context, MoonpageWidgets.todayLogRoute())
@@ -162,7 +164,7 @@ class DailySummaryWidget : GlanceAppWidget() {
                         contentAlignment = Alignment.TopEnd
                     ) {
                         Text(
-                            text = "🔥 ${snapshot.streakCount}",
+                            text = streakText,
                             modifier = GlanceModifier
                                 .cornerRadius(50.dp)
                                 .background(ColorProvider(if (isNight) palette.nightBadge else palette.dayBadge))

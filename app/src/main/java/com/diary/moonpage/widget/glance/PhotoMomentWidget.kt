@@ -74,6 +74,7 @@ class PhotoMomentWidget : GlanceAppWidget() {
         // that gets cancelled every time widget.update() is called.
         val showStreak = preferences.showPhotoStreak.first()
         val displayMode = preferences.photoDisplayMode.first()
+        val streakText = context.getString(R.string.streak_badge, snapshot.streakCount)
 
         provideContent {
             Box(
@@ -113,7 +114,7 @@ class PhotoMomentWidget : GlanceAppWidget() {
                         contentAlignment = Alignment.TopEnd
                     ) {
                         Text(
-                            text = "🔥 ${snapshot.streakCount}",
+                            text = streakText,
                             modifier = GlanceModifier
                                 .cornerRadius(50.dp)
                                 .background(ColorProvider(if (isNight) palette.nightBadge else palette.dayBadge))

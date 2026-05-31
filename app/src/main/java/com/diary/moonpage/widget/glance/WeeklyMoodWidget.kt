@@ -54,7 +54,7 @@ class WeeklyMoodWidget : GlanceAppWidget() {
             snapshot.palette.dayOnSurface.copy(alpha = 0.6f)
         }
         val placeholderColor = if (isNight) snapshot.palette.nightSurfaceVariant else snapshot.palette.daySurfaceVariant
-        val monthLabel = LocalDate.now().format(DateTimeFormatter.ofPattern("MMM yyyy", Locale.ENGLISH))
+        val monthLabel = LocalDate.now().format(DateTimeFormatter.ofPattern("MMM yyyy", Locale.getDefault()))
 
         val openAppAction = actionStartActivity(
             MoonpageWidgets.openAppIntent(context, MoonpageWidgets.ROUTE_CALENDAR)
@@ -64,6 +64,18 @@ class WeeklyMoodWidget : GlanceAppWidget() {
         // that gets cancelled every time widget.update() is called.
         val showStreak = preferences.showWeeklyMoodStreak.first()
         val showDates = preferences.showWeeklyMoodDates.first()
+        
+        val streakText = context.getString(R.string.streak_badge, snapshot.streakCount)
+        
+        val dayNames = listOf(
+            context.getString(R.string.sun_short),
+            context.getString(R.string.mon_short),
+            context.getString(R.string.tue_short),
+            context.getString(R.string.wed_short),
+            context.getString(R.string.thu_short),
+            context.getString(R.string.fri_short),
+            context.getString(R.string.sat_short)
+        )
 
         provideContent {
             val moodCircleSize = if (showDates) 30.dp else 34.dp
@@ -98,13 +110,13 @@ class WeeklyMoodWidget : GlanceAppWidget() {
                     Spacer(modifier = GlanceModifier.size(4.dp))
 
                     Row(modifier = GlanceModifier.fillMaxWidth()) {
-                        weekDays.forEach { day ->
+                        dayNames.forEach { label ->
                             Box(
                                 modifier = GlanceModifier.defaultWeight(),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = day.dayLabel.take(3),
+                                    text = label,
                                     style = TextStyle(
                                         color = ColorProvider(subColor),
                                         fontSize = 8.sp
@@ -220,7 +232,7 @@ class WeeklyMoodWidget : GlanceAppWidget() {
                         contentAlignment = Alignment.TopEnd
                     ) {
                         Text(
-                            text = "\uD83D\uDD25 ${snapshot.streakCount}",
+                            text = streakText,
                             modifier = GlanceModifier
                                 .cornerRadius(50.dp)
                                 .background(ColorProvider(Color(0xCC000000)))
