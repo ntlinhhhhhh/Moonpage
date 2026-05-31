@@ -144,6 +144,12 @@ fun ThemeSettingItem(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ThemeOption(
+                    text = stringResource(R.string.system),
+                    selected = currentSelection == null,
+                    onClick = { onSelectionChange(null) },
+                    modifier = Modifier.weight(1f)
+                )
+                ThemeOption(
                     text = stringResource(R.string.light),
                     selected = currentSelection == false,
                     onClick = { onSelectionChange(false) },
@@ -153,12 +159,6 @@ fun ThemeSettingItem(
                     text = stringResource(R.string.dark),
                     selected = currentSelection == true,
                     onClick = { onSelectionChange(true) },
-                    modifier = Modifier.weight(1f)
-                )
-                ThemeOption(
-                    text = stringResource(R.string.system),
-                    selected = currentSelection == null,
-                    onClick = { onSelectionChange(null) },
                     modifier = Modifier.weight(1f)
                 )
             }

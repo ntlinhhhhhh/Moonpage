@@ -100,7 +100,7 @@
     <string name="invite_referral_code_label">YOUR REFERRAL CODE</string>
     <string name="invite_referral_copied">Referral code copied to clipboard!</string>
     <string name="invite_share_subject">Join me on MoonPage!</string>
-    <string name="invite_share_text">Hey! I am using MoonPage to track my moods and write my diary. Join me and use my referral code: %1$s. Download now: https://moonpage.diary/invite</string>
+    <string name="invite_share_text">Hey! I am using MoonPage to track my moods and write my diary. Join me! Download now: https://firebasestorage.googleapis.com/v0/b/moodyfy-3f2dd.firebasestorage.app/o/diary_app%2Fapp%2Fapp-debug.apk?alt=media&amp;token=cd614199-7f5e-4f9d-bcd0-3e174ce52a6d</string>
     <string name="invite_share_chooser_title">Share Invitation</string>
     <string name="invite_share_invitation">Share Invitation</string>
     <string name="logout">Logout</string>

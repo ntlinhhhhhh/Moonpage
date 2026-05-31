@@ -154,11 +154,10 @@ private fun NotificationItem(
 ) {
     val context = LocalContext.current
     val isRead = notification.isRead ?: false
-    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val cardColor = if (isRead) {
-        if (isDark) Color(0xFF181818) else Color(0xFFD5D5D5)
+        if (MoonTheme.customColors.isDark) Color(0xFF181818) else Color(0xFFE0E0E0)
     } else {
-        if (isDark) Color(0xFF3A3A3A) else Color.White
+        if (MoonTheme.customColors.isDark) Color(0xFF3A3A3A) else Color.White
     }
     val icon = when (notification.type) {
         NotificationType.REMINDER -> Icons.Rounded.Alarm
