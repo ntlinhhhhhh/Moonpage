@@ -29,6 +29,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.diary.moonpage.R
 import com.diary.moonpage.core.theme.MoonTheme
+import com.diary.moonpage.core.util.*
 import com.diary.moonpage.data.remote.dto.notification.NotificationDto
 import com.diary.moonpage.data.remote.dto.notification.NotificationType
 import java.time.ZonedDateTime
@@ -192,13 +193,13 @@ private fun NotificationItem(
             
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = notification.title,
+                    text = getTranslatedNotificationTitle(notification.title),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = if (isRead) FontWeight.Medium else FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = notification.message,
+                    text = getTranslatedNotificationMessage(notification.message),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                     maxLines = 2,

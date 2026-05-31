@@ -52,13 +52,13 @@ class QuickMoodWidget : GlanceAppWidget() {
         } else {
             snapshot.palette.dayOnSurface.copy(alpha = 0.6f)
         }
-        val dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMMM d", Locale.ENGLISH))
+        val dateStr = LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMMM d", Locale.getDefault()))
         val moodItems = listOf(
-            5 to "Great",
-            4 to "Good",
-            3 to "Okay",
-            2 to "Low",
-            1 to "Bad"
+            5 to context.getString(R.string.rad),
+            4 to context.getString(R.string.good),
+            3 to context.getString(R.string.okay),
+            2 to context.getString(R.string.bad),
+            1 to context.getString(R.string.awful)
         )
 
         val openAppAction = actionStartActivity(
@@ -69,11 +69,13 @@ class QuickMoodWidget : GlanceAppWidget() {
         // that gets cancelled every time widget.update() is called.
         val showStreak = preferences.showQuickMoodStreak.first()
         val showLabels = preferences.showQuickMoodLabels.first()
+        
+        val streakText = context.getString(R.string.streak_badge, snapshot.streakCount)
 
         provideContent {
-            val moodCircleSize = if (showLabels) 32.dp else 36.dp
-            val moodCircleRadius = if (showLabels) 16.dp else 18.dp
-            val moodImageSize = if (showLabels) 26.dp else 30.dp
+            val moodCircleSize = if (showLabels) 36.dp else 40.dp
+            val moodCircleRadius = if (showLabels) 18.dp else 20.dp
+            val moodImageSize = if (showLabels) 30.dp else 34.dp
             Box(
                 modifier = GlanceModifier
                     .fillMaxSize()
@@ -94,13 +96,13 @@ class QuickMoodWidget : GlanceAppWidget() {
                             text = context.getString(R.string.widget_how_was_your_day),
                             style = TextStyle(
                                 color = ColorProvider(textColor),
-                                fontSize = 12.sp,
+                                fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         )
                     }
 
-                    Spacer(modifier = GlanceModifier.size(6.dp))
+                    Spacer(modifier = GlanceModifier.size(8.dp))
 
                     Row(
                         modifier = GlanceModifier.fillMaxWidth(),
@@ -131,12 +133,12 @@ class QuickMoodWidget : GlanceAppWidget() {
                                 }
 
                                 if (showLabels) {
-                                    Spacer(modifier = GlanceModifier.size(2.dp))
+                                    Spacer(modifier = GlanceModifier.size(4.dp))
                                     Text(
                                         text = label,
                                         style = TextStyle(
                                             color = ColorProvider(subColor),
-                                            fontSize = 7.sp,
+                                            fontSize = 9.sp,
                                             fontWeight = FontWeight.Medium
                                         ),
                                         maxLines = 1
@@ -147,12 +149,12 @@ class QuickMoodWidget : GlanceAppWidget() {
                     }
 
                     if (!showLabels) {
-                        Spacer(modifier = GlanceModifier.size(5.dp))
+                        Spacer(modifier = GlanceModifier.size(6.dp))
                         Text(
                             text = dateStr,
                             style = TextStyle(
                                 color = ColorProvider(subColor),
-                                fontSize = 9.sp
+                                fontSize = 11.sp
                             )
                         )
                     }
@@ -164,14 +166,14 @@ class QuickMoodWidget : GlanceAppWidget() {
                         contentAlignment = Alignment.TopEnd
                     ) {
                         Text(
-                            text = "\uD83D\uDD25 ${snapshot.streakCount}",
+                            text = streakText,
                             modifier = GlanceModifier
                                 .cornerRadius(50.dp)
                                 .background(ColorProvider(Color(0xCC000000)))
-                                .padding(horizontal = 7.dp, vertical = 3.dp),
+                                .padding(horizontal = 9.dp, vertical = 4.dp),
                             style = TextStyle(
                                 color = ColorProvider(Color.White),
-                                fontSize = 10.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         )

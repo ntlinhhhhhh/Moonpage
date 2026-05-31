@@ -111,7 +111,7 @@ fun LoadingScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = if (uiState.loadingProgress < 1f) "Loading your feelings..." else "Ready to reflect",
+                text = if (uiState.loadingProgress < 1f) stringResource(R.string.loading_feelings) else stringResource(R.string.ready_to_reflect),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
             )

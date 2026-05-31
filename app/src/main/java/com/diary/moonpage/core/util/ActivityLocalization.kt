@@ -121,3 +121,37 @@ fun getTranslatedActivityCategoryName(category: String): String {
         else -> category
     }
 }
+
+@Composable
+@ReadOnlyComposable
+fun getTranslatedNotificationTitle(title: String): String {
+    return when (title) {
+        "How was your day? 🌱" -> stringResource(R.string.noti_reminder_title)
+        "Sending you a big hug 🫂" -> stringResource(R.string.noti_empathy_title)
+        "The sun is shining bright 🌻" -> stringResource(R.string.noti_weather_sunny_title)
+        "It's raining, remember your umbrella ☔" -> stringResource(R.string.noti_weather_rainy_title)
+        "Great start! ✨" -> stringResource(R.string.noti_milestone_3d_title)
+        "Ta-da! 1 week together 🎉" -> stringResource(R.string.noti_milestone_7d_title)
+        "Small rest stop ⛺" -> stringResource(R.string.noti_milestone_broken_title)
+        "Last month's mailbox is here! 💌" -> stringResource(R.string.noti_report_monthly_title)
+        "Time machine starting 🕰️" -> stringResource(R.string.noti_memory_title)
+        else -> title
+    }
+}
+
+@Composable
+@ReadOnlyComposable
+fun getTranslatedNotificationMessage(message: String): String {
+    return when (message) {
+        "Take a minute to tell me. Happy or sad, there's always a place for you here." -> stringResource(R.string.noti_reminder_body)
+        "It seems like you've had a lot on your mind lately. Rest a bit, everything will be okay!" -> stringResource(R.string.noti_empathy_body)
+        "A fresh new day is waiting for you. Remember your sunscreen and bring a big smile!" -> stringResource(R.string.noti_weather_sunny_body)
+        "Even if it's wet outside, I hope your heart stays warm and peaceful today." -> stringResource(R.string.noti_weather_rainy_body)
+        "You've recorded your mood for 3 consecutive days. Small habits, big joy. Keep it up!" -> stringResource(R.string.noti_milestone_3d_body)
+        "You've spent a full 7 days loving yourself. A new badge has been unlocked, check it out!" -> stringResource(R.string.noti_milestone_7d_body)
+        "Were you too busy yesterday? It's okay, the streak can start again, the important thing is you're back!" -> stringResource(R.string.noti_milestone_broken_body)
+        "Your emotional movie from last month has been rolled up. Let's see which colors dominated!" -> stringResource(R.string.noti_report_monthly_body)
+        "Exactly 1 year ago, you saved a moment here. Want to go back in time a bit?" -> stringResource(R.string.noti_memory_body)
+        else -> message
+    }
+}

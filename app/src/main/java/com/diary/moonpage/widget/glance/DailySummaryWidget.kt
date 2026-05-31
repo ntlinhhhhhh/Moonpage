@@ -50,6 +50,8 @@ class DailySummaryWidget : GlanceAppWidget() {
         val showStreak = preferences.showDailyStreak.first()
         val showNote = preferences.showDailyNote.first()
         val showStats = preferences.showDailyStats.first()
+        
+        val streakText = context.getString(R.string.streak_badge, snapshot.streakCount)
 
         val openAppAction = actionStartActivity(
             MoonpageWidgets.openAppIntent(context, MoonpageWidgets.todayLogRoute())
@@ -80,15 +82,15 @@ class DailySummaryWidget : GlanceAppWidget() {
                 ) {
                     Box(
                         modifier = GlanceModifier
-                            .size(46.dp)
-                            .cornerRadius(23.dp)
+                            .size(52.dp)
+                            .cornerRadius(26.dp)
                             .background(ColorProvider(moodCircleColor)),
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
                             provider = ImageProvider(snapshot.moodResId ?: R.drawable.ic_widget_stat),
                             contentDescription = null,
-                            modifier = GlanceModifier.size(36.dp),
+                            modifier = GlanceModifier.size(40.dp),
                             colorFilter = if (snapshot.moodResId == null) {
                                 ColorFilter.tint(iconTint)
                             } else {
@@ -102,10 +104,10 @@ class DailySummaryWidget : GlanceAppWidget() {
                             text = note,
                             modifier = GlanceModifier
                                 .fillMaxWidth()
-                                .padding(top = 6.dp),
+                                .padding(top = 8.dp),
                             style = TextStyle(
                                 color = ColorProvider(textColor),
-                                fontSize = 11.sp,
+                                fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium
                             ),
                             maxLines = 2
@@ -119,7 +121,7 @@ class DailySummaryWidget : GlanceAppWidget() {
                             items = snapshot.activityItems,
                             iconTint = iconTint
                         )
-                        Spacer(modifier = GlanceModifier.size(4.dp))
+                        Spacer(modifier = GlanceModifier.size(8.dp))
                         Row(
                             modifier = GlanceModifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically
@@ -162,14 +164,14 @@ class DailySummaryWidget : GlanceAppWidget() {
                         contentAlignment = Alignment.TopEnd
                     ) {
                         Text(
-                            text = "🔥 ${snapshot.streakCount}",
+                            text = streakText,
                             modifier = GlanceModifier
                                 .cornerRadius(50.dp)
                                 .background(ColorProvider(if (isNight) palette.nightBadge else palette.dayBadge))
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                                .padding(horizontal = 10.dp, vertical = 5.dp),
                             style = TextStyle(
                                 color = ColorProvider(if (isNight) palette.nightBadgeText else palette.dayBadgeText),
-                                fontSize = 10.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         )
@@ -198,20 +200,20 @@ private fun ActivityIconRow(
                 if (item != null) {
                     Box(
                         modifier = GlanceModifier
-                            .size(24.dp)
-                            .cornerRadius(12.dp)
+                            .size(28.dp)
+                            .cornerRadius(14.dp)
                             .background(ColorProvider(ThemeDefaultIconColor.copy(alpha = 0.18f))),
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
                             provider = ImageProvider(item.iconResId),
                             contentDescription = null,
-                            modifier = GlanceModifier.size(15.dp),
+                            modifier = GlanceModifier.size(18.dp),
                             colorFilter = ColorFilter.tint(iconTint)
                         )
                     }
                 } else {
-                    Spacer(modifier = GlanceModifier.size(24.dp))
+                    Spacer(modifier = GlanceModifier.size(28.dp))
                 }
             }
         }
@@ -233,12 +235,12 @@ private fun DailyMetricItem(
         Image(
             provider = ImageProvider(iconRes),
             contentDescription = null,
-            modifier = GlanceModifier.size(17.dp),
+            modifier = GlanceModifier.size(20.dp),
             colorFilter = ColorFilter.tint(iconTint)
         )
         Text(
             text = value,
-            style = TextStyle(color = ColorProvider(textColor), fontSize = 8.sp, fontWeight = FontWeight.Bold),
+            style = TextStyle(color = ColorProvider(textColor), fontSize = 10.sp, fontWeight = FontWeight.Bold),
             maxLines = 1
         )
     }

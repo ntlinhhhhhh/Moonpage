@@ -1073,5 +1073,9 @@
     <string name="deselect_all">Deselect All</string>
     <string name="clear_cache">Clear Theme Cache</string>
     <string name="clear_cache_success">Theme cache cleared and synced successfully</string>
+    <string name="recent_days">Recent days</string>
+    <string name="streak_badge">🔥 %1$d</string>
+    <string name="loading_feelings">Loading your feelings...</string>
+    <string name="ready_to_reflect">Ready to reflect</string>
     <string name="streak_unbroken">Your current streak is unbroken and cannot be recovered.</string>
 </resources>
