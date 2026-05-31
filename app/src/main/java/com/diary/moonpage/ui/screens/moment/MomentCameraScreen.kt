@@ -22,7 +22,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -322,139 +321,137 @@ fun MomentCameraScreenContent(
         }
     }
 
-    Scaffold() { paddingValues ->
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)) {
-            if (capturedImageUri == null) {
-                VerticalPager(
-                    state = verticalPagerState,
-                    modifier = Modifier.fillMaxSize(),
-                    userScrollEnabled = true
-                ) { page ->
-                    if (page == 0) {
-                        CameraMainUI(
-                            onSelectFromGallery = { galleryLauncher.launch("image/*") },
-                            onNavigateToHistory = { scope.launch { verticalPagerState.animateScrollToPage(1) } },
-                            onImageCaptured = { uri, lensFacing ->
-                                capturedImageUri = uri
-                                capturedLensFacing = lensFacing
-                            },
-                            avatarUrl = avatarUrl,
-                            onAvatarClick = onNavigateToAccount
-                        )
-                    } else {
-                        MomentHistoryScreen(
-                            moments = uiState.moments,
-                            localPaths = uiState.localPaths,
-                            onNavigateToGallery = onNavigateToGallery,
-                            onBackToCamera = { scope.launch { verticalPagerState.animateScrollToPage(0) } },
-                            onNavigateToAccount = onNavigateToAccount,
-                            onNavigateToCalendar = onNavigateToCalendar,
-                            initialMomentId = initialMomentId,
-                            onShare = { moment -> onEvent(MomentUiEvent.ShareMoment(moment.imageUrl)) },
-                            onDownload = { moment -> onEvent(MomentUiEvent.DownloadMoment(moment.imageUrl)) },
-                            onDelete = { moment -> onEvent(MomentUiEvent.DeleteMoment(moment.id)) },
-                            avatarUrl = avatarUrl,
-                            localAvatarPath = localAvatarPath,
-                            isVerticalVisible = verticalPagerState.currentPage == 1
-                        )
-                    }
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (capturedImageUri == null) {
+            VerticalPager(
+                state = verticalPagerState,
+                modifier = Modifier.fillMaxSize(),
+                userScrollEnabled = true
+            ) { page ->
+                if (page == 0) {
+                    CameraMainUI(
+                        onSelectFromGallery = { galleryLauncher.launch("image/*") },
+                        onNavigateToHistory = { scope.launch { verticalPagerState.animateScrollToPage(1) } },
+                        onImageCaptured = { uri, lensFacing ->
+                            capturedImageUri = uri
+                            capturedLensFacing = lensFacing
+                        },
+                        avatarUrl = avatarUrl,
+                        onAvatarClick = onNavigateToAccount
+                    )
+                } else {
+                    MomentHistoryScreen(
+                        moments = uiState.moments,
+                        localPaths = uiState.localPaths,
+                        onNavigateToGallery = onNavigateToGallery,
+                        onBackToCamera = { scope.launch { verticalPagerState.animateScrollToPage(0) } },
+                        onNavigateToAccount = onNavigateToAccount,
+                        onNavigateToCalendar = onNavigateToCalendar,
+                        initialMomentId = initialMomentId,
+                        onShare = { moment -> onEvent(MomentUiEvent.ShareMoment(moment.imageUrl)) },
+                        onDownload = { moment -> onEvent(MomentUiEvent.DownloadMoment(moment.imageUrl)) },
+                        onDelete = { moment -> onEvent(MomentUiEvent.DeleteMoment(moment.id)) },
+                        avatarUrl = avatarUrl,
+                        localAvatarPath = localAvatarPath,
+                        isVerticalVisible = verticalPagerState.currentPage == 1
+                    )
                 }
-            } else {
-                MomentUploadScreen(
-                    capturedImageUri = capturedImageUri!!,
-                    capturedLensFacing = capturedLensFacing,
-                    pagerState = uploadPagerState,
-                    allTags = allTags,
-                    userMessage = userMessage,
-                    onUserMessageChange = { userMessage = it },
-                    userRating = userRating,
-                    onUserRatingChange = { userRating = it },
-                    userLocation = userLocation,
-                    onLocationClick = {
-                        if (!locationPermissionState.allPermissionsGranted) {
-                            pendingLocationRequest = true
-                            locationPermissionState.launchMultiplePermissionRequest()
-                        } else if (!isGpsEnabled(context)) {
-                            showGpsDialog = true
-                        } else {
-                            fetchLocationFast()
-                        }
-                    },
-                    userWeather = userWeather,
-                    onWeatherClick = {
-                        if (!locationPermissionState.allPermissionsGranted) {
-                            pendingLocationRequest = true
-                            locationPermissionState.launchMultiplePermissionRequest()
-                        } else if (!isGpsEnabled(context)) {
-                            showGpsDialog = true
-                        } else {
-                            onEvent(MomentUiEvent.RefreshWeather)
-                        }
-                    },
-                    isLoading = uiState.isUploading,
-                    isSuccess = isSuccess,
-                    onCancel = { capturedImageUri = null },
-                    onUpload = { file, caption ->
-                        val currentTag = allTags[uploadPagerState.currentPage]
-                        onEvent(MomentUiEvent.UploadMoment(
+            }
+        } else {
+            MomentUploadScreen(
+                capturedImageUri = capturedImageUri!!,
+                capturedLensFacing = capturedLensFacing,
+                pagerState = uploadPagerState,
+                allTags = allTags,
+                userMessage = userMessage,
+                onUserMessageChange = { userMessage = it },
+                userRating = userRating,
+                onUserRatingChange = { userRating = it },
+                userLocation = userLocation,
+                onLocationClick = {
+                    if (!locationPermissionState.allPermissionsGranted) {
+                        pendingLocationRequest = true
+                        locationPermissionState.launchMultiplePermissionRequest()
+                    } else if (!isGpsEnabled(context)) {
+                        showGpsDialog = true
+                    } else {
+                        fetchLocationFast()
+                    }
+                },
+                userWeather = userWeather,
+                onWeatherClick = {
+                    if (!locationPermissionState.allPermissionsGranted) {
+                        pendingLocationRequest = true
+                        locationPermissionState.launchMultiplePermissionRequest()
+                    } else if (!isGpsEnabled(context)) {
+                        showGpsDialog = true
+                    } else {
+                        onEvent(MomentUiEvent.RefreshWeather)
+                    }
+                },
+                isLoading = uiState.isUploading,
+                isSuccess = isSuccess,
+                onCancel = { capturedImageUri = null },
+                onUpload = { file, caption ->
+                    val currentTag = allTags[uploadPagerState.currentPage]
+                    onEvent(
+                        MomentUiEvent.UploadMoment(
                             imageFile = file,
                             caption = caption,
                             location = if (currentTag.id == "location") userLocation else null,
                             weather = if (currentTag.id == "weather") userWeather else null,
                             rating = if (currentTag.id == "review") userRating else null
-                        ))
-                    },
-                    onShowTagSheet = { showTagSheet = true }
-                )
+                        )
+                    )
+                },
+                onShowTagSheet = { showTagSheet = true }
+            )
 
-                if (isSuccess) {
-                    LaunchedEffect(Unit) {
-                        kotlinx.coroutines.delay(500)
-                        capturedImageUri = null
-                        onResetSuccess()
-                        userMessage = ""
-                        userRating = 0.0f
-                        userLocation = ""
-                    }
+            if (isSuccess) {
+                LaunchedEffect(Unit) {
+                    kotlinx.coroutines.delay(500)
+                    capturedImageUri = null
+                    onResetSuccess()
+                    userMessage = ""
+                    userRating = 0.0f
+                    userLocation = ""
                 }
             }
+        }
 
-            if (showTagSheet) {
-                ModalBottomSheet(onDismissRequest = { showTagSheet = false }) {
-                    androidx.compose.foundation.layout.FlowRow(
-                        modifier = Modifier.padding(24.dp),
-                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
-                        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
-                    ) {
-                        allTags.forEachIndexed { index, tag ->
-                            TagChip(tag) {
-                                scope.launch { uploadPagerState.animateScrollToPage(index) }
-                                showTagSheet = false
-                            }
+        if (showTagSheet) {
+            ModalBottomSheet(onDismissRequest = { showTagSheet = false }) {
+                androidx.compose.foundation.layout.FlowRow(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+                ) {
+                    allTags.forEachIndexed { index, tag ->
+                        TagChip(tag) {
+                            scope.launch { uploadPagerState.animateScrollToPage(index) }
+                            showTagSheet = false
                         }
                     }
                 }
             }
+        }
 
-            if (showGpsDialog) {
-                AlertDialog(
-                    onDismissRequest = { showGpsDialog = false },
-                    containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor,
-                    title = { Text(stringResource(R.string.location_services_off)) },
-                    text = { Text(stringResource(R.string.location_services_add_location_desc)) },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            showGpsDialog = false
-                            context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-                        }, colors = androidx.compose.material3.ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)) { Text(stringResource(R.string.open_settings)) }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showGpsDialog = false }, colors = androidx.compose.material3.ButtonDefaults.textButtonColors(contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor)) { Text(stringResource(R.string.cancel)) }
-                    }
-                )
-            }
+        if (showGpsDialog) {
+            AlertDialog(
+                onDismissRequest = { showGpsDialog = false },
+                containerColor = com.diary.moonpage.core.theme.MoonTheme.customColors.popupBgColor,
+                title = { Text(stringResource(R.string.location_services_off)) },
+                text = { Text(stringResource(R.string.location_services_add_location_desc)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showGpsDialog = false
+                        context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                    }, colors = androidx.compose.material3.ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)) { Text(stringResource(R.string.open_settings)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showGpsDialog = false }, colors = androidx.compose.material3.ButtonDefaults.textButtonColors(contentColor = com.diary.moonpage.core.theme.MoonTheme.customColors.cancelBtnTextColor)) { Text(stringResource(R.string.cancel)) }
+                }
+            )
         }
     }
 }

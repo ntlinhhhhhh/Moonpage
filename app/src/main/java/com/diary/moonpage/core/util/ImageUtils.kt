@@ -219,7 +219,10 @@ object ImageUtils {
             val avatarDir = File(context.filesDir, "avatars")
             if (!avatarDir.exists()) avatarDir.mkdirs()
             
-            val localFile = File(avatarDir, "current_avatar.webp")
+            // Delete old avatars to avoid accumulating files
+            avatarDir.listFiles()?.forEach { it.delete() }
+            
+            val localFile = File(avatarDir, "avatar_${System.currentTimeMillis()}.webp")
             sourceFile.copyTo(localFile, overwrite = true)
             localFile.absolutePath
         } catch (e: Exception) {

@@ -57,6 +57,7 @@ fun CameraMainUI(
     onNavigateToHistory: () -> Unit,
     onImageCaptured: (Uri, Int) -> Unit,
     avatarUrl: String? = null,
+    localAvatarPath: String? = null,
     onAvatarClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -131,7 +132,7 @@ fun CameraMainUI(
                     .clickable { onAvatarClick() }
             ) {
                 AsyncImage(
-                    model = avatarUrl,
+                    model = localAvatarPath ?: avatarUrl,
                     contentDescription = stringResource(R.string.content_desc_profile),
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
@@ -299,3 +300,4 @@ private fun takePhoto(
         }
     })
 }
+
