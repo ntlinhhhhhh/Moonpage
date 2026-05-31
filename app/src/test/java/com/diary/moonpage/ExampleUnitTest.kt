@@ -107,4 +107,42 @@ class ExampleUnitTest {
         val brush = theme.previewBackgroundBrush(isDark = false)
         assertNull(brush)
     }
+
+    @Test
+    fun testFallbackWhenLocalFileDoesNotExist() {
+        // Temporarily disable testing mode so file existence is actually checked
+        com.diary.moonpage.core.theme.isThemeTestingMode = false
+        try {
+            val json = """{"light":{"backgroundFillMode":"Image","backgroundUri":"/data/user/0/non_existent_path/bg.webp"},"dark":{"backgroundFillMode":"Solid","solidBackgroundColor":"#FF1C1C1C"}}"""
+            val theme = Theme(
+                id = "custom_123",
+                name = "Test Fallback",
+                collection = "Custom Theme",
+                price = 0,
+                thumbnailUrl = "https://example.com/thumbnail.png",
+                backgroundUrl = "https://example.com/background.png",
+                description = json
+            )
+
+            // When backgroundUrl is remote, it should return that remote backgroundUrl
+            val path = theme.previewBackgroundImagePath(isDark = false)
+            assertEquals("https://example.com/background.png", path)
+
+            // When backgroundUrl is also local (and thus doesn't exist on disk), it should fall back to remote thumbnailUrl
+            val themeWithBothLocal = Theme(
+                id = "custom_124",
+                name = "Test Local Both",
+                collection = "Custom Theme",
+                price = 0,
+                thumbnailUrl = "https://example.com/thumbnail.png",
+                backgroundUrl = "/data/user/0/non_existent_path/bg_url.webp",
+                description = json
+            )
+
+            val fallbackPath = themeWithBothLocal.previewBackgroundImagePath(isDark = false)
+            assertEquals("https://example.com/thumbnail.png", fallbackPath)
+        } finally {
+            com.diary.moonpage.core.theme.isThemeTestingMode = true
+        }
+    }
 }

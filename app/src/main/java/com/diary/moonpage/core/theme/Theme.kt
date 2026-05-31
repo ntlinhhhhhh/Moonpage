@@ -727,6 +727,15 @@ fun Theme.previewBackgroundImagePath(isDark: Boolean): String? {
                     }
                 }
                 if (networkFallback != null) return networkFallback
+                
+                // Fallback to remote thumbnailUrl
+                val remoteThumb = thumbnailUrl?.takeIf {
+                    it.isNotBlank() &&
+                    !it.isLocalFilePath() &&
+                    it.lowercase() != "null" &&
+                    it.lowercase() != "pending"
+                }
+                if (remoteThumb != null) return remoteThumb
             } else if (fillMode.equals("Solid", ignoreCase = true) || fillMode.equals("Gradient", ignoreCase = true)) {
                 return null
             }
@@ -763,7 +772,15 @@ fun Theme.previewBackgroundImagePath(isDark: Boolean): String? {
         }
     }
 
-    return networkFallback
+    if (networkFallback != null) return networkFallback
+
+    val remoteThumb = thumbnailUrl?.takeIf {
+        it.isNotBlank() &&
+        !it.isLocalFilePath() &&
+        it.lowercase() != "null" &&
+        it.lowercase() != "pending"
+    }
+    return remoteThumb
 }
 
 fun Theme.previewBackgroundBrush(isDark: Boolean): Brush? {

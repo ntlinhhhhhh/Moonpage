@@ -1027,9 +1027,11 @@
     <string name="content_desc_undo">Hoàn tác</string>
     <string name="content_desc_clear_all">Xóa tất cả</string>
     <string name="content_desc_rotate_90">Xoay 90°</string>
+    <string name="content_desc_rotate_counterclockwise">Xoay -90°</string>
     <string name="content_desc_flip_horizontal">Lật ngang</string>
     <string name="content_desc_flip_vertical">Lật dọc</string>
     <string name="content_desc_reset">Khôi phục gốc</string>
+    <string name="content_desc_clear_transform">Xóa chỉnh sửa</string>
     <string name="content_desc_sort">Sắp xếp</string>
     <string name="stats_rank_format">#%1$d</string>
     <string name="stats_rank_format_dot">%1$d.</string>

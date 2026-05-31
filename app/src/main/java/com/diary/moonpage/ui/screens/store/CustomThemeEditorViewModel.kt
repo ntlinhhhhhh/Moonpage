@@ -86,6 +86,8 @@ data class ThemeAppearanceState(
     val backgroundRotation: Float = 0f,
     val backgroundOffsetX: Float = 0f,
     val backgroundOffsetY: Float = 0f,
+    val backgroundFlipH: Boolean = false,
+    val backgroundFlipV: Boolean = false,
     val backgroundFillMode: BackgroundFillMode = BackgroundFillMode.Solid,
     val solidBackgroundColor: Long = 0xFFFFF7EC,
     val gradientStartColor: Long = 0xFFFFF7EC,
@@ -137,6 +139,10 @@ data class CustomThemeEditorUiState(
         get() = activeAppearance.backgroundOffsetX
     val backgroundOffsetY: Float
         get() = activeAppearance.backgroundOffsetY
+    val backgroundFlipH: Boolean
+        get() = activeAppearance.backgroundFlipH
+    val backgroundFlipV: Boolean
+        get() = activeAppearance.backgroundFlipV
     val backgroundFillMode: BackgroundFillMode
         get() = activeAppearance.backgroundFillMode
     val solidBackgroundColor: Long
@@ -186,7 +192,7 @@ class CustomThemeEditorViewModel @Inject constructor(
         _uiState.update { it.copy(pendingBackgroundUri = uri) }
     }
 
-    fun applyPendingBackground(scale: Float, rotation: Float, offsetX: Float, offsetY: Float) {
+    fun applyPendingBackground(scale: Float, rotation: Float, offsetX: Float, offsetY: Float, flipH: Boolean, flipV: Boolean) {
         val backgroundUri = _uiState.value.pendingBackgroundUri
         _uiState.update { state ->
             state.copy(
@@ -196,6 +202,8 @@ class CustomThemeEditorViewModel @Inject constructor(
                     backgroundRotation = rotation,
                     backgroundOffsetX = offsetX,
                     backgroundOffsetY = offsetY,
+                    backgroundFlipH = flipH,
+                    backgroundFlipV = flipV,
                     backgroundFillMode = BackgroundFillMode.Image
                 ),
                 darkAppearance = state.darkAppearance.copy(
@@ -204,6 +212,8 @@ class CustomThemeEditorViewModel @Inject constructor(
                     backgroundRotation = rotation,
                     backgroundOffsetX = offsetX,
                     backgroundOffsetY = offsetY,
+                    backgroundFlipH = flipH,
+                    backgroundFlipV = flipV,
                     backgroundFillMode = BackgroundFillMode.Image
                 ),
                 pendingBackgroundUri = null,
@@ -555,6 +565,8 @@ class CustomThemeEditorViewModel @Inject constructor(
             .put("backgroundRotation", backgroundRotation)
             .put("backgroundOffsetX", backgroundOffsetX)
             .put("backgroundOffsetY", backgroundOffsetY)
+            .put("backgroundFlipH", backgroundFlipH)
+            .put("backgroundFlipV", backgroundFlipV)
             .put("backgroundFillMode", finalFillMode)
             .put("solidBackgroundColor", solidBackgroundColor.toColorHex())
             .put("gradientStartColor", gradientStartColor.toColorHex())
@@ -628,7 +640,10 @@ class CustomThemeEditorViewModel @Inject constructor(
         val targetScale = baseScale * backgroundScale * rotationCoverMultiplier(backgroundRotation)
         return Matrix().apply {
             postTranslate(-sourceWidth / 2f, -sourceHeight / 2f)
-            postScale(targetScale, targetScale)
+            postScale(
+                targetScale * (if (backgroundFlipH) -1f else 1f),
+                targetScale * (if (backgroundFlipV) -1f else 1f)
+            )
             postRotate(backgroundRotation)
             postTranslate(
                 targetWidth / 2f + backgroundOffsetX * (targetWidth / PREVIEW_BASE_WIDTH),

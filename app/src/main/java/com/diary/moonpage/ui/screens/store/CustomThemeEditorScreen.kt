@@ -165,7 +165,7 @@ fun CustomThemeEditorRoot(
     uiState: CustomThemeEditorUiState,
     onNameChange: (String) -> Unit,
     onImagePicked: (String?) -> Unit,
-    onApplyEditedImage: (Float, Float, Float, Float) -> Unit,
+    onApplyEditedImage: (Float, Float, Float, Float, Boolean, Boolean) -> Unit,
     onCancelEditedImage: () -> Unit,
     onSolidBackgroundSelected: (Long) -> Unit,
     onGradientStartSelected: (Long) -> Unit,
@@ -223,15 +223,7 @@ fun CustomThemeEditorRoot(
         }
     }
 
-    val transformState = rememberTransformableState { zoomChange, panChange, _ ->
-        if (!isFinalPreview && uiState.currentScreen == EditorScreenState.Home) {
-            editorZoom = (editorZoom * zoomChange).coerceIn(1f, 2.8f)
-            editorPan = if (editorZoom <= 1.02f) Offset.Zero else Offset(
-                x = (editorPan.x + panChange.x).coerceIn(-220f, 220f),
-                y = (editorPan.y + panChange.y).coerceIn(-260f, 260f)
-            )
-        }
-    }
+
 
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         onImagePicked(uri?.toString())
@@ -249,6 +241,10 @@ fun CustomThemeEditorRoot(
 
     LaunchedEffect(uiState.currentScreen, uiState.activeEditMode) {
         isPickingColor = false
+        if (uiState.currentScreen != EditorScreenState.EditComponents || uiState.activeEditMode != EditMode.Draw) {
+            editorZoom = 1f
+            editorPan = Offset.Zero
+        }
     }
 
     val startColorPicking: () -> Unit = {
@@ -290,7 +286,23 @@ fun CustomThemeEditorRoot(
                     translationX = editorPan.x
                     translationY = editorPan.y
                 }
-                .transformable(transformState)
+                .pointerInput(isFinalPreview, uiState.currentScreen, uiState.activeEditMode) {
+                    detectTransformGestures { centroid, pan, zoom, _ ->
+                        if (!isFinalPreview && uiState.currentScreen == EditorScreenState.EditComponents && uiState.activeEditMode == EditMode.Draw) {
+                            val oldZoom = editorZoom
+                            editorZoom = (editorZoom * zoom).coerceIn(1f, 2.8f)
+                            editorPan = if (editorZoom <= 1.02f) Offset.Zero else {
+                                val scaleFactor = editorZoom / oldZoom
+                                val zoomCenterTranslation = centroid - (centroid - editorPan) * scaleFactor
+                                val nextPan = zoomCenterTranslation + pan
+                                Offset(
+                                    x = nextPan.x.coerceIn(-500f, 500f),
+                                    y = nextPan.y.coerceIn(-600f, 600f)
+                                )
+                            }
+                        }
+                    }
+                }
         ) {
             ThemePreviewCapture(
                 uiState = uiState,
@@ -425,14 +437,17 @@ fun CustomThemeEditorRoot(
             title = { Text(stringResource(R.string.custom_theme_discard_title)) },
             text = { Text(stringResource(R.string.custom_theme_discard_desc)) },
             confirmButton = {
-                TextButton(onClick = onDiscardConfirm) {
-                    Text(stringResource(R.string.discard))
+                TextButton(
+                    onClick = onDiscardConfirm,
+                    colors = ButtonDefaults.textButtonColors(contentColor = Color.Red)
+                ) {
+                    Text(stringResource(R.string.discard), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(
                     onClick = onDiscardDismiss,
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
                 ) {
                     Text(stringResource(R.string.cancel))
                 }
@@ -1053,13 +1068,23 @@ private fun EditComponentsBottomBar(
                 )
             },
             confirmButton = {
-                TextButton(onClick = {
-                    onNameChange(tempName)
-                    showRenameDialog = false
-                }) { Text(stringResource(R.string.apply), fontWeight = FontWeight.Bold) }
+                TextButton(
+                    onClick = {
+                        onNameChange(tempName)
+                        showRenameDialog = false
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF4CAF50))
+                ) {
+                    Text(stringResource(R.string.apply), fontWeight = FontWeight.Bold)
+                }
             },
             dismissButton = {
-                TextButton(onClick = { showRenameDialog = false }) { Text(stringResource(R.string.cancel)) }
+                TextButton(
+                    onClick = { showRenameDialog = false },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Color.Red)
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
             }
         )
     }
@@ -1205,26 +1230,30 @@ fun BoxScope.TopEditorBar(
             )
         }
 
-        // Toggle light/dark mode icon
-        if (isDarkMode != null && onToggleAppearance != null) {
+        // Nhóm bên phải: Toggle light/dark mode + ✓ Áp dụng
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (isDarkMode != null && onToggleAppearance != null) {
+                IconButton(
+                    onClick = onToggleAppearance,
+                    modifier = Modifier.background(Color.Black.copy(alpha = 0.35f), CircleShape)
+                ) {
+                    Icon(
+                        imageVector = if (isDarkMode) Icons.Rounded.LightMode else Icons.Rounded.DarkMode,
+                        contentDescription = "Toggle Appearance Mode",
+                        tint = Color.White
+                    )
+                }
+            }
+
             IconButton(
-                onClick = onToggleAppearance,
+                onClick = onApply,
                 modifier = Modifier.background(Color.Black.copy(alpha = 0.35f), CircleShape)
             ) {
-                Icon(
-                    imageVector = if (isDarkMode) Icons.Rounded.LightMode else Icons.Rounded.DarkMode,
-                    contentDescription = "Toggle Appearance Mode",
-                    tint = Color.White
-                )
+                Icon(Icons.Rounded.Check, contentDescription = stringResource(R.string.content_desc_apply), tint = Color.White)
             }
-        }
-
-        // ✓ Áp dụng và sang màn tiếp
-        IconButton(
-            onClick = onApply,
-            modifier = Modifier.background(Color.Black.copy(alpha = 0.35f), CircleShape)
-        ) {
-            Icon(Icons.Rounded.Check, contentDescription = stringResource(R.string.content_desc_apply), tint = Color.White)
         }
     }
 }
@@ -1552,15 +1581,15 @@ fun DrawToolbar(
         Box(
             modifier = Modifier
                 .size(42.dp)
-                .background(Color.White, CircleShape)
-                .border(2.dp, Color.White, CircleShape)
+                .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                .border(2.dp, Color.White.copy(alpha = 0.8f), CircleShape)
                 .clickable(onClick = onDone),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 Icons.Rounded.Check,
                 contentDescription = stringResource(R.string.content_desc_done),
-                tint = Color.Black,
+                tint = Color.White,
                 modifier = Modifier.size(24.dp)
             )
         }
@@ -1795,8 +1824,8 @@ private fun ThemePreviewCapture(
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer {
-                        scaleX = safeBackgroundScale
-                        scaleY = safeBackgroundScale
+                        scaleX = safeBackgroundScale * (if (uiState.backgroundFlipH) -1f else 1f)
+                        scaleY = safeBackgroundScale * (if (uiState.backgroundFlipV) -1f else 1f)
                         rotationZ = uiState.backgroundRotation
                         translationX = uiState.backgroundOffsetX
                         translationY = uiState.backgroundOffsetY
@@ -1847,7 +1876,7 @@ private fun ThemePreviewCapture(
             )
         } else {
 
-            // Preview mock UI elements: show on EditComponents mode (Palette or None, hide on Draw so it doesn't obstruct drawing)
+            // Preview mock UI elements: show on EditComponents mode (Palette or None, hide on Draw so it doesn't obstruct drawing - Mission 2, Request 1)
             if (uiState.currentScreen == EditorScreenState.EditComponents && uiState.activeEditMode != EditMode.Draw) {
                 PreviewMoodIconRow(
                     colors = uiState.iconColors,
@@ -1863,6 +1892,7 @@ private fun ThemePreviewCapture(
                     backgroundColor = bottomBarColor,
                     centerCutoutColor = bottomBarCutoutColor,
                     emphasizeIcons = uiState.colorFocusTarget == ColorFocusTarget.Primary,
+                    isScaleEnabled = uiState.activeEditMode == EditMode.Palette, // Scale on Color Picker, not on edit screen (Mission 4)
                     modifier = Modifier.align(Alignment.BottomCenter),
                     onPrimarySelected = onPrimaryFocus
                 )
@@ -2129,9 +2159,11 @@ private fun MockAppBottomNavBar(
     backgroundColor: Color,
     centerCutoutColor: Color,
     emphasizeIcons: Boolean = false,
+    isScaleEnabled: Boolean = false, // Support scale control (Mission 4)
     modifier: Modifier = Modifier,
     onPrimarySelected: (() -> Unit)? = null
 ) {
+    val finalEmphasize = isScaleEnabled && emphasizeIcons
     Surface(
         modifier = modifier
             .fillMaxWidth()
@@ -2148,10 +2180,10 @@ private fun MockAppBottomNavBar(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            MockNavIcon(Icons.Rounded.CalendarMonth, tint = primary, emphasized = emphasizeIcons)
-            MockNavIcon(Icons.Rounded.BarChart, tint = primary, emphasized = emphasizeIcons)
+            MockNavIcon(Icons.Rounded.CalendarMonth, tint = primary, emphasized = finalEmphasize)
+            MockNavIcon(Icons.Rounded.BarChart, tint = primary, emphasized = finalEmphasize)
             // Icon Camera thay cho dấu +
-            val camSize by animateDpAsState(targetValue = if (emphasizeIcons) 26.dp else 24.dp, label = "camSize")
+            val camSize by animateDpAsState(targetValue = if (finalEmphasize) 25.dp else 24.dp, label = "camSize")
             Box(
                 modifier = Modifier
                     .size(52.dp)
@@ -2166,8 +2198,8 @@ private fun MockAppBottomNavBar(
                     modifier = Modifier.size(camSize)
                 )
             }
-            MockNavIcon(Icons.Rounded.Storefront, tint = primary, emphasized = emphasizeIcons)
-            MockNavIcon(Icons.Rounded.Person, tint = primary, emphasized = emphasizeIcons)
+            MockNavIcon(Icons.Rounded.Storefront, tint = primary, emphasized = finalEmphasize)
+            MockNavIcon(Icons.Rounded.Person, tint = primary, emphasized = finalEmphasize)
         }
     }
 }
@@ -2179,7 +2211,7 @@ private fun MockNavIcon(
     emphasized: Boolean = false
 ) {
     val size by animateDpAsState(
-        targetValue = if (emphasized) 32.dp else 26.dp, 
+        targetValue = if (emphasized) 28.dp else 26.dp,
         label = "iconSize"
     )
     Icon(
@@ -2214,6 +2246,7 @@ private fun DrawToolIconButton(
 
     Box(
         modifier = modifier
+            .graphicsLayer { alpha = if (selected) 1f else 0.4f } // Control opacity of tool icons (Mission 3, Request 2)
             .offset(y = offsetY)
             .size(42.dp)
             .clip(CircleShape)
@@ -2348,8 +2381,8 @@ private fun ColorPickerBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        dragHandle = { BottomSheetDefaults.DragHandle() },
-        containerColor = MaterialTheme.colorScheme.surface
+        dragHandle = { BottomSheetDefaults.DragHandle(color = Color.White.copy(alpha = 0.4f)) },
+        containerColor = Color(0xFF1C1C1C) // Sleek dark surface
     ) {
         Column(
             modifier = Modifier
@@ -2359,16 +2392,20 @@ private fun ColorPickerBottomSheet(
             verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
             if (allowGradient) {
-                TabRow(selectedTabIndex = if (mode == BackgroundFillMode.Solid) 0 else 1) {
+                TabRow(
+                    selectedTabIndex = if (mode == BackgroundFillMode.Solid) 0 else 1,
+                    containerColor = Color.Transparent,
+                    contentColor = Color.White
+                ) {
                     Tab(
                         selected = mode == BackgroundFillMode.Solid,
                         onClick = { onModeChange(BackgroundFillMode.Solid) },
-                        text = { Text(stringResource(R.string.custom_theme_solid_color)) }
+                        text = { Text(stringResource(R.string.custom_theme_solid_color), color = Color.White) }
                     )
                     Tab(
                         selected = mode == BackgroundFillMode.Gradient,
                         onClick = { onModeChange(BackgroundFillMode.Gradient) },
-                        text = { Text(stringResource(R.string.custom_theme_gradient_color)) }
+                        text = { Text(stringResource(R.string.custom_theme_gradient_color), color = Color.White) }
                     )
                 }
             }
@@ -2410,7 +2447,7 @@ private fun ColorPickerBottomSheet(
             // Hex input row
             Surface(
                 shape = RoundedCornerShape(22.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
+                color = Color.White.copy(alpha = 0.12f)
             ) {
                 Row(
                     modifier = Modifier
@@ -2445,13 +2482,15 @@ private fun ColorPickerBottomSheet(
                         },
                         modifier = Modifier.weight(1f),
                         singleLine = true,
-                        placeholder = { Text(stringResource(R.string.custom_theme_hex_code)) },
+                        placeholder = { Text(stringResource(R.string.custom_theme_hex_code), color = Color.White.copy(alpha = 0.5f)) },
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent,
                             disabledContainerColor = Color.Transparent,
                             focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
+                            unfocusedIndicatorColor = Color.Transparent,
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
                         ),
                         keyboardOptions = KeyboardOptions(
                             capitalization = KeyboardCapitalization.Characters,
@@ -2462,7 +2501,7 @@ private fun ColorPickerBottomSheet(
                         Icon(
                             imageVector = Icons.Rounded.Colorize,
                             contentDescription = stringResource(R.string.custom_theme_eyedropper_placeholder),
-                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f)
+                            tint = Color.White.copy(alpha = 0.45f)
                         )
                     }
                 }
@@ -2473,7 +2512,8 @@ private fun ColorPickerBottomSheet(
                 Text(
                     text = stringResource(R.string.custom_theme_picker_suggestions),
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White
                 )
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(CustomThemeColorPalette) { colorValue ->
@@ -2493,7 +2533,11 @@ private fun ColorPickerBottomSheet(
                     onDismiss()
                 },
                 modifier = Modifier.fillMaxWidth().height(48.dp),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF4CAF50), // Green container
+                    contentColor = Color.White
+                )
             ) {
                 Text(stringResource(R.string.apply), fontWeight = FontWeight.Bold)
             }
@@ -2696,7 +2740,7 @@ private fun PaletteSwatch(
 @Composable
 private fun BackgroundTransformDialog(
     imageUri: String,
-    onApply: (Float, Float, Float, Float) -> Unit,
+    onApply: (Float, Float, Float, Float, Boolean, Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
     var scale by remember { mutableFloatStateOf(1f) }
@@ -2712,7 +2756,7 @@ private fun BackgroundTransformDialog(
     ) {
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background.copy(alpha = 1f) // Đục hoàn toàn
+            color = Color(0xFF121212) // Sleek dark theme background
         ) {
             Column(
                 modifier = Modifier
@@ -2727,55 +2771,124 @@ private fun BackgroundTransformDialog(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    TextButton(onClick = onDismiss) {
+                    TextButton(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFFE53935)) // Cancel in Red
+                    ) {
                         Text(stringResource(R.string.cancel))
                     }
                     Text(
                         text = stringResource(R.string.custom_theme_edit_background),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground,
+                        color = Color.White, // Normal text in White
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    TextButton(onClick = { onApply(scale, rotation, offsetX, offsetY) }) {
+                    TextButton(
+                        onClick = { onApply(scale, rotation, offsetX, offsetY, flipH, flipV) },
+                        colors = ButtonDefaults.textButtonColors(contentColor = Color.White) // Apply in White (Mission 1, Request 1)
+                    ) {
                         Text(stringResource(R.string.apply), fontWeight = FontWeight.Bold)
                     }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Hàng icon điều khiển: Rotate, FlipH, FlipV, Reset
+                // Highlight state for the background edit controls (Mission 1, Request 4)
+                var selectedControlIndex by remember { mutableIntStateOf(-1) }
+
+                // Controls row wrapped in semi-transparent rounded container (Mission 1, Request 2)
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White.copy(alpha = 0.3f), RoundedCornerShape(24.dp))
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Rotate 90°
-                    FilledTonalIconButton(onClick = { rotation = (rotation + 90f) % 360f }) {
+                    // Rotate 90° (Mission 1, Request 4)
+                    val isRotateSelected = selectedControlIndex == 0
+                    FilledTonalIconButton(
+                        onClick = {
+                            rotation = (rotation + 90f) % 360f
+                            selectedControlIndex = 0
+                        },
+                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                            containerColor = if (isRotateSelected) Color.White else Color.Transparent,
+                            contentColor = if (isRotateSelected) MaterialTheme.colorScheme.primary else Color.White
+                        )
+                    ) {
                         Icon(Icons.Rounded.RotateRight, contentDescription = stringResource(R.string.content_desc_rotate_90))
                     }
-                    Spacer(Modifier.width(8.dp))
-                    // Flip ngang
-                    FilledTonalIconButton(onClick = { flipH = !flipH }) {
+
+                    // Flip ngang (Mission 1, Request 4)
+                    val isFlipHSelected = selectedControlIndex == 1
+                    FilledTonalIconButton(
+                        onClick = {
+                            flipH = !flipH
+                            selectedControlIndex = 1
+                        },
+                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                            containerColor = if (isFlipHSelected) Color.White else Color.Transparent,
+                            contentColor = if (isFlipHSelected) MaterialTheme.colorScheme.primary else Color.White
+                        )
+                    ) {
                         Icon(Icons.Rounded.Flip, contentDescription = stringResource(R.string.content_desc_flip_horizontal))
                     }
-                    Spacer(Modifier.width(8.dp))
-                    // Flip dọc (icon flip xoay 90°)
-                    FilledTonalIconButton(onClick = { flipV = !flipV }) {
+
+                    // Flip dọc (Mission 1, Request 4)
+                    val isFlipVSelected = selectedControlIndex == 2
+                    FilledTonalIconButton(
+                        onClick = {
+                            flipV = !flipV
+                            selectedControlIndex = 2
+                        },
+                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                            containerColor = if (isFlipVSelected) Color.White else Color.Transparent,
+                            contentColor = if (isFlipVSelected) MaterialTheme.colorScheme.primary else Color.White
+                        )
+                    ) {
                         Icon(
                             Icons.Rounded.Flip,
                             contentDescription = stringResource(R.string.content_desc_flip_vertical),
                             modifier = Modifier.graphicsLayer { rotationZ = 90f }
                         )
                     }
-                    Spacer(Modifier.width(8.dp))
-                    // Reset tất cả
-                    OutlinedIconButton(onClick = {
-                        scale = 1f; rotation = 0f; offsetX = 0f; offsetY = 0f
-                        flipH = false; flipV = false
-                    }) {
-                        Icon(Icons.Rounded.RestartAlt, contentDescription = stringResource(R.string.content_desc_reset))
+
+                    // Rotate -90°
+                    val isRotateLeftSelected = selectedControlIndex == 3
+                    FilledTonalIconButton(
+                        onClick = {
+                            rotation = (rotation - 90f).let { if (it < 0f) it + 360f else it }
+                            selectedControlIndex = 3
+                        },
+                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                            containerColor = if (isRotateLeftSelected) Color.White else Color.Transparent,
+                            contentColor = if (isRotateLeftSelected) MaterialTheme.colorScheme.primary else Color.White
+                        )
+                    ) {
+                        Icon(Icons.Rounded.RotateLeft, contentDescription = stringResource(R.string.content_desc_rotate_counterclockwise))
+                    }
+
+                    // Clear all image transforms
+                    val isClearSelected = selectedControlIndex == 4
+                    FilledTonalIconButton(
+                        onClick = {
+                            scale = 1f
+                            rotation = 0f
+                            offsetX = 0f
+                            offsetY = 0f
+                            flipH = false
+                            flipV = false
+                            selectedControlIndex = 4
+                        },
+                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                            containerColor = if (isClearSelected) Color.White else Color.Transparent,
+                            contentColor = if (isClearSelected) MaterialTheme.colorScheme.primary else Color.White
+                        )
+                    ) {
+                        Icon(Icons.Rounded.Clear, contentDescription = stringResource(R.string.content_desc_clear_transform))
                     }
                 }
 
@@ -2821,7 +2934,7 @@ private fun BackgroundTransformDialog(
                 Text(
                     text = stringResource(R.string.custom_theme_transform_guide),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
+                    color = Color.White.copy(alpha = 0.65f),
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()

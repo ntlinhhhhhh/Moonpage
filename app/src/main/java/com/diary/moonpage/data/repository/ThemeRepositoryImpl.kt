@@ -921,10 +921,11 @@ private fun String?.takeIfThemeColor(): String? {
 
 private fun String?.takeIfLocalThemeAsset(): String? {
     if (isNullOrBlank()) return null
+    val rawPath = this.removePrefix("file://")
+    val file = File(rawPath)
     return takeIf {
-        File(it).isFile ||
+        (file.exists() && file.isFile) ||
             it.startsWith("content://", ignoreCase = true) ||
-            it.startsWith("file://", ignoreCase = true) ||
             it.startsWith("android.resource://", ignoreCase = true)
     }
 }

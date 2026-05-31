@@ -16,6 +16,8 @@ data class ThemeModeConfig(
     @SerializedName("backgroundRotation") val backgroundRotation: Float? = null,
     @SerializedName("backgroundOffsetX") val backgroundOffsetX: Float? = null,
     @SerializedName("backgroundOffsetY") val backgroundOffsetY: Float? = null,
+    @SerializedName("backgroundFlipH") val backgroundFlipH: Boolean? = null,
+    @SerializedName("backgroundFlipV") val backgroundFlipV: Boolean? = null,
     @SerializedName("backgroundFillMode") val backgroundFillMode: String? = null, // "Gradient" or "Solid"
     @SerializedName("solidBackgroundColor") val solidBackgroundColor: String? = null,
     @SerializedName("gradientStartColor") val gradientStartColor: String? = null,
