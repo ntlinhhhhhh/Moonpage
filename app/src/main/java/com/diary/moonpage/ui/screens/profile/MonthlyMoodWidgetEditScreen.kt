@@ -20,7 +20,7 @@ import com.diary.moonpage.ui.screens.profile.components.MonthlyMoodWidgetPreview
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -30,12 +30,9 @@ class MonthlyMoodWidgetEditViewModel @Inject constructor(
     private val widgetPreferencesManager: WidgetPreferencesManager
 ) : ViewModel() {
 
-    val uiState: StateFlow<MonthlyMoodWidgetEditUiState> = combine(
-        widgetPreferencesManager.showMonthlyMoodStreak,
-        widgetPreferencesManager.showMonthlyMoodGrid
-    ) { streak, grid ->
-        MonthlyMoodWidgetEditUiState(showStreak = streak, showGrid = grid)
-    }.stateIn(
+    val uiState: StateFlow<MonthlyMoodWidgetEditUiState> = widgetPreferencesManager.showMonthlyMoodStreak
+        .map { streak -> MonthlyMoodWidgetEditUiState(showStreak = streak) }
+        .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = MonthlyMoodWidgetEditUiState()
@@ -46,17 +43,10 @@ class MonthlyMoodWidgetEditViewModel @Inject constructor(
             widgetPreferencesManager.setShowMonthlyMoodStreak(show)
         }
     }
-
-    fun setShowGrid(show: Boolean) {
-        viewModelScope.launch {
-            widgetPreferencesManager.setShowMonthlyMoodGrid(show)
-        }
-    }
 }
 
 data class MonthlyMoodWidgetEditUiState(
-    val showStreak: Boolean = true,
-    val showGrid: Boolean = true
+    val showStreak: Boolean = true
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -99,7 +89,6 @@ fun MonthlyMoodWidgetEditScreen(
         ) {
             MonthlyMoodWidgetPreview(
                 showStreak = uiState.showStreak,
-                showGrid = uiState.showGrid,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
             Text(
@@ -116,16 +105,6 @@ fun MonthlyMoodWidgetEditScreen(
                 icon = Icons.Rounded.Whatshot,
                 checked = uiState.showStreak,
                 onCheckedChange = { viewModel.setShowStreak(it) }
-            )
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = colorScheme.outlineVariant)
-
-            EditToggleItem(
-                title = stringResource(R.string.pref_show_grid),
-                description = stringResource(R.string.pref_show_grid_desc),
-                icon = Icons.Rounded.CalendarMonth,
-                checked = uiState.showGrid,
-                onCheckedChange = { viewModel.setShowGrid(it) }
             )
         }
     }

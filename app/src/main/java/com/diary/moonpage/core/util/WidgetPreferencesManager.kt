@@ -25,7 +25,6 @@ class WidgetPreferencesManager(
 
         // Monthly Mood Keys
         private val SHOW_MONTHLY_MOOD_STREAK_KEY = booleanPreferencesKey("show_monthly_mood_streak")
-        private val SHOW_MONTHLY_MOOD_GRID_KEY = booleanPreferencesKey("show_monthly_mood_grid")
 
         // Quick Mood Keys
         private val SHOW_QUICK_MOOD_STREAK_KEY = booleanPreferencesKey("show_quick_mood_streak")
@@ -33,7 +32,6 @@ class WidgetPreferencesManager(
 
         // Weekly Mood Keys
         private val SHOW_WEEKLY_MOOD_STREAK_KEY = booleanPreferencesKey("show_weekly_mood_streak")
-        private val SHOW_WEEKLY_MOOD_DATES_KEY = booleanPreferencesKey("show_weekly_mood_dates")
 
         private val LAST_UPDATE_TRIGGER_KEY = longPreferencesKey("last_update_trigger")
     }
@@ -49,7 +47,6 @@ class WidgetPreferencesManager(
 
     // Monthly Mood Flows
     val showMonthlyMoodStreak: Flow<Boolean> = context.widgetSettingsDataStore.data.map { it[SHOW_MONTHLY_MOOD_STREAK_KEY] ?: true }
-    val showMonthlyMoodGrid: Flow<Boolean> = context.widgetSettingsDataStore.data.map { it[SHOW_MONTHLY_MOOD_GRID_KEY] ?: true }
 
     // Quick Mood Flows
     val showQuickMoodStreak: Flow<Boolean> = context.widgetSettingsDataStore.data.map { it[SHOW_QUICK_MOOD_STREAK_KEY] ?: true }
@@ -57,7 +54,6 @@ class WidgetPreferencesManager(
 
     // Weekly Mood Flows
     val showWeeklyMoodStreak: Flow<Boolean> = context.widgetSettingsDataStore.data.map { it[SHOW_WEEKLY_MOOD_STREAK_KEY] ?: true }
-    val showWeeklyMoodDates: Flow<Boolean> = context.widgetSettingsDataStore.data.map { it[SHOW_WEEKLY_MOOD_DATES_KEY] ?: true }
 
     val lastUpdateTrigger: Flow<Long> = context.widgetSettingsDataStore.data.map { it[LAST_UPDATE_TRIGGER_KEY] ?: 0L }
 
@@ -69,11 +65,9 @@ class WidgetPreferencesManager(
     suspend fun setPhotoDisplayMode(mode: String) = updatePreference { it[PHOTO_DISPLAY_MODE_KEY] = mode }
 
     suspend fun setShowMonthlyMoodStreak(show: Boolean) = updatePreference { it[SHOW_MONTHLY_MOOD_STREAK_KEY] = show }
-    suspend fun setShowMonthlyMoodGrid(show: Boolean) = updatePreference { it[SHOW_MONTHLY_MOOD_GRID_KEY] = show }
     suspend fun setShowQuickMoodStreak(show: Boolean) = updatePreference { it[SHOW_QUICK_MOOD_STREAK_KEY] = show }
     suspend fun setShowQuickMoodLabels(show: Boolean) = updatePreference { it[SHOW_QUICK_MOOD_LABELS_KEY] = show }
     suspend fun setShowWeeklyMoodStreak(show: Boolean) = updatePreference { it[SHOW_WEEKLY_MOOD_STREAK_KEY] = show }
-    suspend fun setShowWeeklyMoodDates(show: Boolean) = updatePreference { it[SHOW_WEEKLY_MOOD_DATES_KEY] = show }
 
     private suspend fun updatePreference(update: (MutablePreferences) -> Unit) {
         context.widgetSettingsDataStore.edit { prefs ->

@@ -63,36 +63,21 @@ class WeeklyMoodWidget : GlanceAppWidget() {
         // Read preferences once — avoids collectAsState keeping a live Flow session
         // that gets cancelled every time widget.update() is called.
         val showStreak = preferences.showWeeklyMoodStreak.first()
-        val showDates = preferences.showWeeklyMoodDates.first()
         
         val streakText = context.getString(R.string.streak_badge, snapshot.streakCount)
-        
-        val dayNames = listOf(
-            context.getString(R.string.sun_short),
-            context.getString(R.string.mon_short),
-            context.getString(R.string.tue_short),
-            context.getString(R.string.wed_short),
-            context.getString(R.string.thu_short),
-            context.getString(R.string.fri_short),
-            context.getString(R.string.sat_short)
-        )
+
+        val dayNames = listOf("Su", "Mo", "Tu", "We", "Th", "Fr", "Sa")
 
         provideContent {
-            val moodCircleSize = if (showDates) 36.dp else 40.dp
-            val moodCircleRadius = if (showDates) 18.dp else 20.dp
-            val moodImageSize = if (showDates) 30.dp else 34.dp
             Box(
                 modifier = GlanceModifier
                     .fillMaxSize()
                     .cornerRadius(16.dp)
                     .background(ColorProvider(bg))
                     .clickable(openAppAction)
-                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                    .padding(horizontal = 10.dp, vertical = 8.dp)
             ) {
-                Column(
-                    modifier = GlanceModifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.Horizontal.CenterHorizontally
-                ) {
+                Column(modifier = GlanceModifier.fillMaxSize()) {
                     Box(
                         modifier = GlanceModifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
@@ -107,7 +92,7 @@ class WeeklyMoodWidget : GlanceAppWidget() {
                         )
                     }
 
-                    Spacer(modifier = GlanceModifier.size(6.dp))
+                    Spacer(modifier = GlanceModifier.size(4.dp))
 
                     Row(modifier = GlanceModifier.fillMaxWidth()) {
                         dayNames.forEach { label ->
@@ -119,7 +104,8 @@ class WeeklyMoodWidget : GlanceAppWidget() {
                                     text = label,
                                     style = TextStyle(
                                         color = ColorProvider(subColor),
-                                        fontSize = 10.sp
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
                                     )
                                 )
                             }
@@ -141,38 +127,41 @@ class WeeklyMoodWidget : GlanceAppWidget() {
                                     day.moodResId != null -> {
                                         Box(
                                             modifier = GlanceModifier
-                                                .size(moodCircleSize)
-                                                .cornerRadius(moodCircleRadius)
+                                                .size(28.dp)
+                                                .cornerRadius(14.dp)
                                                 .background(ColorProvider(day.moodColor)),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Image(
                                                 provider = ImageProvider(day.moodResId),
                                                 contentDescription = null,
-                                                modifier = GlanceModifier.size(moodImageSize)
+                                                modifier = GlanceModifier.size(22.dp)
                                             )
                                         }
-                                    }
-                                    showDates && day.isToday -> {
-                                        Box(
-                                            modifier = GlanceModifier
-                                                .size(moodCircleSize)
-                                                .background(ImageProvider(R.drawable.widget_day_today_border))
-                                        ) {}
-                                    }
-                                    showDates -> {
-                                        Box(
-                                            modifier = GlanceModifier
-                                                .size(20.dp)
-                                                .cornerRadius(10.dp)
-                                                .background(ColorProvider(placeholderColor))
-                                        ) {}
                                     }
                                     day.isToday -> {
                                         Box(
                                             modifier = GlanceModifier
-                                                .size(moodCircleSize)
+                                                .size(28.dp)
                                                 .background(ImageProvider(R.drawable.widget_day_today_border)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = "${day.dayNumber}",
+                                                style = TextStyle(
+                                                    color = ColorProvider(textColor),
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            )
+                                        }
+                                    }
+                                    else -> {
+                                        Box(
+                                            modifier = GlanceModifier
+                                                .size(28.dp)
+                                                .cornerRadius(14.dp)
+                                                .background(ColorProvider(placeholderColor)),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Text(
@@ -185,41 +174,6 @@ class WeeklyMoodWidget : GlanceAppWidget() {
                                             )
                                         }
                                     }
-                                    else -> {
-                                        Box(
-                                            modifier = GlanceModifier.size(moodCircleSize),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                text = "${day.dayNumber}",
-                                                style = TextStyle(
-                                                    color = ColorProvider(subColor.copy(alpha = 0.5f)),
-                                                    fontSize = 12.sp
-                                                )
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (showDates) {
-                        Spacer(modifier = GlanceModifier.size(4.dp))
-                        Row(modifier = GlanceModifier.fillMaxWidth()) {
-                            weekDays.forEach { day ->
-                                Box(
-                                    modifier = GlanceModifier.defaultWeight(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "${day.dayNumber}",
-                                        style = TextStyle(
-                                            color = ColorProvider(if (day.isToday) textColor else subColor),
-                                            fontSize = 10.sp,
-                                            fontWeight = if (day.isToday) FontWeight.Bold else FontWeight.Medium
-                                        )
-                                    )
                                 }
                             }
                         }
@@ -228,7 +182,9 @@ class WeeklyMoodWidget : GlanceAppWidget() {
 
                 if (showStreak) {
                     Box(
-                        modifier = GlanceModifier.fillMaxSize(),
+                        modifier = GlanceModifier
+                            .fillMaxSize()
+                            .padding(end = 4.dp),
                         contentAlignment = Alignment.TopEnd
                     ) {
                         Text(
@@ -236,10 +192,10 @@ class WeeklyMoodWidget : GlanceAppWidget() {
                             modifier = GlanceModifier
                                 .cornerRadius(50.dp)
                                 .background(ColorProvider(Color(0xCC000000)))
-                                .padding(horizontal = 9.dp, vertical = 4.dp),
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
                             style = TextStyle(
                                 color = ColorProvider(Color.White),
-                                fontSize = 12.sp,
+                                fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         )
