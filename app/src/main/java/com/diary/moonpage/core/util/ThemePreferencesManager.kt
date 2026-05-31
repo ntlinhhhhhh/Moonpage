@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.diary.moonpage.core.theme.MoonThemeType
+import com.diary.moonpage.widget.glance.MoonpageWidgetRefreshManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -53,6 +54,7 @@ class ThemePreferencesManager @Inject constructor(
         context.themeDataStore.edit { prefs ->
             prefs[THEME_TYPE_KEY] = themeType.name
         }
+        requestWidgetRefresh()
     }
 
     suspend fun setDarkMode(isDark: Boolean?) {
@@ -63,6 +65,7 @@ class ThemePreferencesManager @Inject constructor(
                 prefs[DARK_MODE_KEY] = isDark
             }
         }
+        requestWidgetRefresh()
     }
 
     val activeThemeJson: Flow<String?> = context.themeDataStore.data.map { prefs ->
@@ -77,11 +80,20 @@ class ThemePreferencesManager @Inject constructor(
                 prefs[ACTIVE_THEME_JSON_KEY] = json
             }
         }
+        requestWidgetRefresh()
     }
 
     suspend fun clearAll() {
         context.themeDataStore.edit { prefs ->
             prefs.clear()
         }
+        requestWidgetRefresh()
+    }
+
+    private fun requestWidgetRefresh() {
+        MoonpageWidgetRefreshManager.requestRefresh(
+            context = context.applicationContext,
+            reason = MoonpageWidgetRefreshManager.Reason.THEME_CHANGED
+        )
     }
 }
