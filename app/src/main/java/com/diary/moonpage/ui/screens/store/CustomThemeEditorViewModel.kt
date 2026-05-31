@@ -432,7 +432,7 @@ class CustomThemeEditorViewModel @Inject constructor(
 
                         val backgroundDeferred = async {
                             if (shouldSaveBackground) {
-                                val baseAppearance = backgroundAppearance ?: state.lightAppearance
+                                val baseAppearance = backgroundAppearance ?: if (state.editingMode == EditorAppearanceMode.Dark) state.darkAppearance else state.lightAppearance
                                 context.saveBitmapToInternalStorage(
                                     state.createBackgroundBitmap(baseAppearance, sharedBackgroundBitmap),
                                     backgroundFileName,
@@ -654,13 +654,18 @@ class CustomThemeEditorViewModel @Inject constructor(
 
     private fun Canvas.drawEditorStrokes(strokes: List<DrawStroke>, width: Int, height: Int) {
         if (strokes.isEmpty()) return
-        val scaleX = width / PREVIEW_BASE_WIDTH
-        val scaleY = height / PREVIEW_BASE_HEIGHT
+        
+        // Use PREVIEW_BASE_WIDTH purely for scaling the stroke width to maintain
+        // relative thickness between the UI preview and the final rendered bitmap.
+        val strokeScaleX = width / PREVIEW_BASE_WIDTH
+        val strokeScaleY = height / PREVIEW_BASE_HEIGHT
+        
         strokes.filterNot { it.isEraser }.forEach { stroke ->
             val path = Path()
             stroke.points.forEachIndexed { index, point ->
-                val x = point.x * scaleX
-                val y = point.y * scaleY
+                // Points are normalized (0f..1f), so we multiply by canvas dimensions directly
+                val x = point.x * width
+                val y = point.y * height
                 if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
             }
             val widthMultiplier = when (stroke.brushType) {
@@ -673,7 +678,7 @@ class CustomThemeEditorViewModel @Inject constructor(
                 color = stroke.color.toArgbInt()
                 alpha = if (stroke.brushType == BrushType.Pencil) 174 else 255
                 style = Paint.Style.STROKE
-                strokeWidth = stroke.strokeWidth * widthMultiplier * ((scaleX + scaleY) / 2f)
+                strokeWidth = stroke.strokeWidth * widthMultiplier * ((strokeScaleX + strokeScaleY) / 2f)
                 strokeCap = Paint.Cap.ROUND
                 strokeJoin = Paint.Join.ROUND
             }

@@ -1767,13 +1767,21 @@ private fun ThemePreviewCapture(
             .then(
                 if (uiState.activeEditMode == EditMode.Draw) {
                     Modifier.pointerInput(uiState.brushColor, uiState.brushSize, uiState.brushType, uiState.isEraser) {
+                        val canvasWidth = size.width.toFloat()
+                        val canvasHeight = size.height.toFloat()
+                        
                         awaitEachGesture {
                             val strokePoints = mutableListOf<Offset>()
                             var cancelledForTransform = false
 
                             val firstDown = awaitFirstDown(requireUnconsumed = false)
                             var activePointerId = firstDown.id
-                            strokePoints += firstDown.position
+                            
+                            val normalizedPosition = Offset(
+                                x = firstDown.position.x / canvasWidth,
+                                y = firstDown.position.y / canvasHeight
+                            )
+                            strokePoints += normalizedPosition
                             activePoints = strokePoints.toList()
 
                             while (true) {
@@ -1793,7 +1801,11 @@ private fun ThemePreviewCapture(
                                 activePointerId = change.id
 
                                 if (change.position != change.previousPosition) {
-                                    strokePoints += change.position
+                                    val normPos = Offset(
+                                        x = change.position.x / canvasWidth,
+                                        y = change.position.y / canvasHeight
+                                    )
+                                    strokePoints += normPos
                                     activePoints = strokePoints.toList()
                                     change.consume()
                                 }
@@ -2130,9 +2142,14 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawStroke(
     stroke: DrawStroke,
     background: Color
 ) {
+    val canvasWidth = size.width
+    val canvasHeight = size.height
+    
     val path = Path()
     stroke.points.forEachIndexed { index, point ->
-        if (index == 0) path.moveTo(point.x, point.y) else path.lineTo(point.x, point.y)
+        val px = point.x * canvasWidth
+        val py = point.y * canvasHeight
+        if (index == 0) path.moveTo(px, py) else path.lineTo(px, py)
     }
     val width = when (stroke.brushType) {
         BrushType.Fine -> stroke.strokeWidth
