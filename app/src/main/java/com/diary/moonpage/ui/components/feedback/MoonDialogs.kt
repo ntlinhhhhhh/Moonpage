@@ -12,16 +12,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.res.stringResource
+import com.diary.moonpage.R
 import com.diary.moonpage.core.theme.MoonTheme
 
 @Composable
 fun MoonDeleteConfirmDialog(
-    title: String = "Delete Confirmation",
-    message: String = "Are you sure you want to delete this? This action cannot be undone.",
-    confirmText: String = "Delete",
-    dismissText: String = "Cancel",
+    title: String,
+    message: String,
     onConfirm: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    confirmText: String = stringResource(R.string.delete),
+    dismissText: String = stringResource(R.string.cancel)
 ) {
     val colorScheme = MaterialTheme.colorScheme
 

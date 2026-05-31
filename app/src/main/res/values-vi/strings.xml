@@ -125,7 +125,7 @@
     <string name="best_worst">Tốt nhất &amp; Tệ nhất</string>
     <string name="icon_deep_dive">Phân tích chuyên sâu</string>
     <string name="top_music">Nhạc hàng đầu</string>
-    <string name="year_in_beans">Year in Moonpage</string>
+    <string name="year_in_beans">Năm cùng Moonpage</string>
     <string name="view_details">View Details</string>
     <string name="monthly_average">Trung bình hàng tháng</string>
     <string name="yearly_top_activities">Hoạt động hàng đầu năm</string>
@@ -211,7 +211,7 @@
     <string name="avg_cycle">Chu kỳ trung bình: %1$d ngày</string>
     <string name="avg_period">Kinh nguyệt trung bình: %1$d ngày</string>
     <string name="on_day_x">Ngày thứ %1$d</string>
-    <string name="avg_sleep">Ngủ trung bình: %1$.1fh</string>
+    <string name="avg_sleep">Ngủ trung bình: %1$.1f tiếng</string>
     <string name="sleep_quality">Chất lượng giấc ngủ: %1$s</string>
     <string name="fair">Bình thường</string>
     <string name="poor">Kém</string>
@@ -1051,4 +1051,6 @@
     <string name="stats_correlation_banner_based">Dựa trên % số ngày mỗi hoạt động xuất hiện cùng tâm trạng tốt nhất/tệ nhất.</string>
     <string name="clear_cache">Xóa bộ nhớ đệm chủ đề</string>
     <string name="clear_cache_success">Đã xóa bộ nhớ đệm và đồng bộ thành công</string>
+    <string name="loading_feelings">Đang tải cảm xúc của bạn...</string>
+    <string name="ready_to_reflect">Sẵn sàng để nhìn lại</string>
 </resources>

@@ -1073,4 +1073,6 @@
     <string name="deselect_all">Deselect All</string>
     <string name="clear_cache">Clear Theme Cache</string>
     <string name="clear_cache_success">Theme cache cleared and synced successfully</string>
+    <string name="loading_feelings">Loading your feelings...</string>
+    <string name="ready_to_reflect">Ready to reflect</string>
 </resources>

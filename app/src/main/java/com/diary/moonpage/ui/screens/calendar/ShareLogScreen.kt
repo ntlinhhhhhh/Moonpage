@@ -208,11 +208,8 @@ fun ShareLogCard(
     val isDark = MoonTheme.customColors.isDark
 
     // Formatting date: Monday, May 4
-    val dayOfWeek = date.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, Locale.ENGLISH)
-    val monthName = date.month.getDisplayName(java.time.format.TextStyle.FULL, Locale.ENGLISH)
-    val dayOfMonth = date.dayOfMonth
-    val dateText = "$dayOfWeek, $monthName $dayOfMonth"
-
+    val dateText = date.format(DateTimeFormatter.ofPattern("EEEE, MMMM d", Locale.getDefault()))
+    
     val moodVisual = MoonIcons.Moods.getMoodVisual(uiState.selectedMood ?: 3, themeType, uiState.customMoods)
     val themeColor = moodVisual.color
     
@@ -522,7 +519,7 @@ fun ShareLogCard(
         ) {
             Column {
                 Text(
-                    stringResource(R.string.app_name) + " Daily Log",
+                    stringResource(R.string.my_daily_log),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     fontStyle = FontStyle.Normal,
