@@ -9,6 +9,9 @@ import org.junit.Test
 import org.junit.Assert.*
 
 class ExampleUnitTest {
+    init {
+        com.diary.moonpage.core.theme.isThemeTestingMode = true
+    }
     @Test
     fun testJsonParsing() {
         val json = """{"light":{"backgroundScale":1,"backgroundRotation":0,"backgroundOffsetX":0,"backgroundOffsetY":0,"backgroundFillMode":"Gradient","solidBackgroundColor":"#FFFFF7EC","gradientStartColor":"#FFA8C7E0","gradientEndColor":"#FFE8F5E9","primaryColor":"#FFE57373","iconColor":"#FFE05454","iconColors":["#FFF6C0C0","#FFF2A8A8","#FFF68585","#FFEB7070","#FFE05454"]},"dark":{"backgroundScale":1,"backgroundRotation":0,"backgroundOffsetX":0,"backgroundOffsetY":0,"backgroundFillMode":"Solid","solidBackgroundColor":"#FF1C1C1C","gradientStartColor":"#FF232323","gradientEndColor":"#FF393939","primaryColor":"#FFFFF9EF","iconColor":"#FFDB5353","iconColors":["#FFEEB6B6","#FFECA1A1","#FFEE8686","#FFEF6D6D","#FFDB5353"]}}"""

@@ -37,6 +37,7 @@ import androidx.compose.material3.LocalRippleConfiguration
 import com.diary.moonpage.domain.model.Theme
 import com.diary.moonpage.domain.model.toBackgroundBrush
 import org.json.JSONObject
+import java.io.File
 
 private object NoIndication : IndicationNodeFactory {
     override fun create(interactionSource: InteractionSource): DelegatableNode {
@@ -667,10 +668,30 @@ fun MoonPageTheme(
     )
 }
 
+var isThemeTestingMode = false
+
+private fun String?.isLocalFilePath(): Boolean {
+    if (this == null) return false
+    val trimmed = this.trim()
+    return trimmed.startsWith("/data/") || 
+           trimmed.startsWith("/storage/") || 
+           trimmed.startsWith("/sdcard/") || 
+           trimmed.startsWith("file://")
+}
+
 fun Theme.previewBackgroundImagePath(isDark: Boolean): String? {
     if (isOfficial) return null
 
     val config = parsedConfig
+    val networkFallback = backgroundUrl?.takeIf { 
+        it.isNotBlank() && 
+        it.lowercase() != "null" && 
+        it.lowercase() != "pending" && 
+        !it.isLocalFilePath() && 
+        !it.contains(",") && 
+        it.toThemeColorOrNull() == null
+    }
+
     if (config != null) {
         val modeConfig = if (isDark) config.dark ?: config.light else config.light ?: config.dark
         if (modeConfig != null) {
@@ -687,12 +708,25 @@ fun Theme.previewBackgroundImagePath(isDark: Boolean): String? {
                     !bgUrl.contains(",") && 
                     bgUrl.toThemeColorOrNull() == null
                 ) {
-                    return bgUrl
+                    if (bgUrl.isLocalFilePath()) {
+                        if (isThemeTestingMode) return bgUrl
+                        val file = File(bgUrl.removePrefix("file://"))
+                        if (file.exists()) return bgUrl
+                    } else {
+                        return bgUrl
+                    }
                 }
                 val path = modeConfig.backgroundUri
                 if (path != null && path.isThemeAssetPath()) {
-                    return path
+                    if (path.isLocalFilePath()) {
+                        if (isThemeTestingMode) return path
+                        val file = File(path.removePrefix("file://"))
+                        if (file.exists()) return path
+                    } else {
+                        return path
+                    }
                 }
+                if (networkFallback != null) return networkFallback
             } else if (fillMode.equals("Solid", ignoreCase = true) || fillMode.equals("Gradient", ignoreCase = true)) {
                 return null
             }
@@ -701,18 +735,35 @@ fun Theme.previewBackgroundImagePath(isDark: Boolean): String? {
 
     if (backgroundUrl.equals("pending", ignoreCase = true)) return null
 
-    if (!backgroundUrl.isNullOrBlank() && 
-        backgroundUrl.lowercase() != "null" && 
-        !backgroundUrl.contains(",") && 
-        backgroundUrl.toThemeColorOrNull() == null
+    val bgUrl = backgroundUrl
+    if (!bgUrl.isNullOrBlank() && 
+        bgUrl.lowercase() != "null" && 
+        !bgUrl.contains(",") && 
+        bgUrl.toThemeColorOrNull() == null
     ) {
-        return backgroundUrl
+        if (bgUrl.isLocalFilePath()) {
+            if (isThemeTestingMode) return bgUrl
+            val file = File(bgUrl.removePrefix("file://"))
+            if (file.exists()) return bgUrl
+        } else {
+            return bgUrl
+        }
     }
 
     val modeConfig = if (isDark) config?.dark ?: config?.light else config?.light ?: config?.dark
     val path = modeConfig?.backgroundUri
 
-    return path?.takeIf { it.isThemeAssetPath() }
+    if (path != null && path.isThemeAssetPath()) {
+        if (path.isLocalFilePath()) {
+            if (isThemeTestingMode) return path
+            val file = File(path.removePrefix("file://"))
+            if (file.exists()) return path
+        } else {
+            return path
+        }
+    }
+
+    return networkFallback
 }
 
 fun Theme.previewBackgroundBrush(isDark: Boolean): Brush? {
