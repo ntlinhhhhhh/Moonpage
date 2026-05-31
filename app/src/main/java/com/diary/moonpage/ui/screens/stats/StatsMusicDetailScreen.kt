@@ -74,7 +74,7 @@ fun StatsMusicDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.top_music), fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+                title = { Text(stringResource(R.string.monthly_top_music), fontWeight = FontWeight.Bold, fontSize = 18.sp) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = backText)
@@ -144,7 +144,7 @@ fun StatsMusicDetailScreen(
                         }
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(stringResource(R.string.stats_most_listened), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f))
+                            Text(stringResource(if (sortDescending) R.string.stats_most_listened else R.string.stats_least_listened), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f))
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(topSong.songTitle, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, maxLines = 2)
                             Text(topSong.artistName, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)

@@ -131,7 +131,7 @@ fun OnboardingBirthdayScreen(
                 Text(
                     text = stringResource(R.string.onboarding_happy_birthday_line1),
                     style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.ExtraBold,
+                    fontWeight = FontWeight.Bold,
                     color = colorScheme.onBackground,
                     textAlign = TextAlign.Center
                 )

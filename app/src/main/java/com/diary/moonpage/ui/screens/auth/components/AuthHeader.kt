@@ -18,7 +18,7 @@ fun AuthHeader(title: String, subtitle: String) {
     Text(
         text = title,
         textAlign = TextAlign.Center,
-        style = MaterialTheme.typography.displayLarge.copy(
+        style = MaterialTheme.typography.headlineLarge.copy(
             color = textColor,
             fontWeight = FontWeight.Bold,
             fontSize = 32.sp

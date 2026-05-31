@@ -175,15 +175,23 @@ object ActivityInsightsEngine {
         }
 
         // --- Metric 1: Mood Distribution ---
-        val moodCounts = relevantLogs.groupBy { it.baseMoodId }.mapValues { it.value.size }
-        val total = relevantLogs.size
-        val moodDistribution = (1..5).map { moodId ->
-            val count = moodCounts[moodId] ?: 0
+        val moodDistribution = targetDto.moodDistribution?.map { dist ->
             MoodDistributionEntry(
-                moodId = moodId,
-                count = count,
-                percentage = if (total > 0) (count.toFloat() / total) * 100f else 0f
+                moodId = dist.baseMoodId ?: 3,
+                count = dist.count,
+                percentage = dist.percentage.toFloat()
             )
+        }?.sortedBy { it.moodId } ?: run {
+            val moodCounts = relevantLogs.groupBy { it.baseMoodId }.mapValues { it.value.size }
+            val total = relevantLogs.size
+            (1..5).map { moodId ->
+                val count = moodCounts[moodId] ?: 0
+                MoodDistributionEntry(
+                    moodId = moodId,
+                    count = count,
+                    percentage = if (total > 0) (count.toFloat() / total) * 100f else 0f
+                )
+            }
         }
 
         // --- Metric 2: Average Mood Score ---
@@ -235,8 +243,8 @@ object ActivityInsightsEngine {
         return IconDeepDiveResult(
             activityId = targetId,
             activityName = targetDto.activityName,
-            totalOccurrence = relevantLogs.size,
-            averageMoodScore = avgMoodScore,
+            totalOccurrence = targetDto.occurrence, // Use real data from API
+            averageMoodScore = targetDto.averageMoodScore, // Use real data from API
             moodDistribution = moodDistribution,
             longestStreak = longestStreak,
             weeklyFrequency = weeklyFreq,

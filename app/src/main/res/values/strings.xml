@@ -162,6 +162,8 @@
     <string name="stats_no_music_data">No music data yet</string>
     <string name="stats_music_log_hint">Log music when writing your diary to see it here.</string>
     <string name="stats_most_listened">Most listened</string>
+    <string name="stats_least_listened">Least listened</string>
+    <string name="monthly_top_music">Monthly Top Music</string>
     <string name="stats_music_times">%1$d times</string>
     <string name="stats_all_songs_count">All songs (%1$d)</string>
 

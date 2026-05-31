@@ -88,6 +88,7 @@ fun StatsInsightsDetailScreen(
                         allActivities = deepDiveActivities,
                         selectedIconId = uiState.selectedIconId,
                         themeType = uiState.themeType,
+                        customMoods = uiState.customMoods,
                         onIconClick = onIconClick
                     )
                 }
