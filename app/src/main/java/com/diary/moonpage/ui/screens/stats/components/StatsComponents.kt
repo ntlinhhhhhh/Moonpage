@@ -1165,6 +1165,7 @@ fun IconDeepDiveView(
     allActivities: List<BestActivityDto>,
     selectedIconId: String?,
     themeType: MoonThemeType = MoonThemeType.DEFAULT,
+    customMoods: Map<Int, com.diary.moonpage.core.util.MoonIcon>? = null,
     onIconClick: (String?) -> Unit = {}
 ) {
     val shades = getThemeShades(themeType)
@@ -1280,7 +1281,7 @@ fun IconDeepDiveView(
         ) {
             deepDive.moodDistribution.forEachIndexed { i, entry ->
                 if (entry.percentage > 0f) {
-                    val segColor = shades.getOrElse(4 - i) { androidx.compose.ui.graphics.Color.Gray }
+                    val segColor = MoonIcons.Moods.getMoodColor(entry.moodId, themeType, customMoods)
                     Box(modifier = Modifier.weight(entry.percentage / 100f).fillMaxHeight().background(segColor))
                 }
             }
@@ -1291,7 +1292,7 @@ fun IconDeepDiveView(
             deepDive.moodDistribution.forEachIndexed { i, entry ->
                 if (entry.count > 0) {
                     val moodLabel = when (entry.moodId) { 5 -> stringResource(R.string.rad); 4 -> stringResource(R.string.good); 3 -> stringResource(R.string.okay); 2 -> stringResource(R.string.bad); else -> stringResource(R.string.awful) }
-                    val segColor = shades.getOrElse(4 - i) { androidx.compose.ui.graphics.Color.Gray }
+                    val segColor = MoonIcons.Moods.getMoodColor(entry.moodId, themeType, customMoods)
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                         Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(segColor))
                         Text("$moodLabel ${entry.percentage.toInt()}%", fontSize = 10.sp, color = onSurfaceVariant.copy(alpha = 0.7f))

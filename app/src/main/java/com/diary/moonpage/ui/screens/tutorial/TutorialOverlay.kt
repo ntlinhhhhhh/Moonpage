@@ -39,28 +39,28 @@ fun TutorialOverlay(
     modifier: Modifier = Modifier
 ) {
     val message = when (step) {
-        TutorialStep.HighlightCurrentDay -> "Start logging your day today!"
-        TutorialStep.HighlightMoodSelection -> "How are you feeling today? Select a mood."
-        TutorialStep.HighlightActivityCategory -> "Select an activity category to open the list."
-        TutorialStep.HighlightActivitySelection -> "What did you do today? Select an activity."
-        TutorialStep.HighlightSleepSelection -> "How long did you sleep? Select your sleep hours."
-        TutorialStep.HighlightDoneButton -> "Once finished, tap here to save your log."
-        TutorialStep.HighlightStreak -> "Wonderful! You've completed your first log entry."
-        TutorialStep.HighlightStatsTab -> "View detailed statistics of your mood and habits."
-        TutorialStep.HighlightYearlyReport -> "Explore your monthly mood trends. Tap here to view details."
-        TutorialStep.HighlightMoodDetailChart -> "This is your detailed monthly mood analysis chart."
-        TutorialStep.HighlightMoodDetailBackButton -> "Tap here to return to the statistics page."
-        TutorialStep.HighlightMomentTab -> "Review all the photos you have captured."
-        TutorialStep.HighlightCameraCapture -> "Capture a new moment or upload your image."
-        TutorialStep.HighlightMomentHistoryButton -> if (targetBounds == null) "This is your moment history feed. Swipe or tap to view your captured photos." else "Tap here to view your captured photos and history feed."
-        TutorialStep.HighlightStoreTab -> "Explore beautiful new themes and icons here."
-        TutorialStep.HighlightStoreThemes -> "Discover gorgeous diary themes. Tap a theme to view details."
-        TutorialStep.HighlightThemeDetailApply -> "Preview and apply this theme to your diary."
-        TutorialStep.HighlightThemeDetailBackButton -> "Tap here to return to the store."
-        TutorialStep.HighlightProfileTab -> "Manage your account and settings."
-        TutorialStep.HighlightProfileSettings -> "Manage your account info. Tap here to open account settings."
-        TutorialStep.HighlightAccountInfo -> "Here is where you can change your avatar and username."
-        TutorialStep.HighlightAccountBackButton -> "Tap here to complete the tutorial."
+        TutorialStep.HighlightCurrentDay -> stringResource(R.string.tutorial_start_log)
+        TutorialStep.HighlightMoodSelection -> stringResource(R.string.tutorial_select_mood)
+        TutorialStep.HighlightActivityCategory -> stringResource(R.string.tutorial_activity_category)
+        TutorialStep.HighlightActivitySelection -> stringResource(R.string.tutorial_activity_selection)
+        TutorialStep.HighlightSleepSelection -> stringResource(R.string.tutorial_sleep_selection)
+        TutorialStep.HighlightDoneButton -> stringResource(R.string.tutorial_done_button)
+        TutorialStep.HighlightStreak -> stringResource(R.string.tutorial_streak)
+        TutorialStep.HighlightStatsTab -> stringResource(R.string.tutorial_stats_tab)
+        TutorialStep.HighlightYearlyReport -> stringResource(R.string.tutorial_yearly_report)
+        TutorialStep.HighlightMoodDetailChart -> stringResource(R.string.tutorial_mood_detail_chart)
+        TutorialStep.HighlightMoodDetailBackButton -> stringResource(R.string.tutorial_mood_detail_back)
+        TutorialStep.HighlightMomentTab -> stringResource(R.string.tutorial_moment_tab)
+        TutorialStep.HighlightCameraCapture -> stringResource(R.string.tutorial_camera_capture)
+        TutorialStep.HighlightMomentHistoryButton -> if (targetBounds == null) stringResource(R.string.tutorial_history_feed) else stringResource(R.string.tutorial_history_button)
+        TutorialStep.HighlightStoreTab -> stringResource(R.string.tutorial_store_tab)
+        TutorialStep.HighlightStoreThemes -> stringResource(R.string.tutorial_store_themes)
+        TutorialStep.HighlightThemeDetailApply -> stringResource(R.string.tutorial_theme_apply)
+        TutorialStep.HighlightThemeDetailBackButton -> stringResource(R.string.tutorial_theme_back)
+        TutorialStep.HighlightProfileTab -> stringResource(R.string.tutorial_profile_tab)
+        TutorialStep.HighlightProfileSettings -> stringResource(R.string.tutorial_profile_settings)
+        TutorialStep.HighlightAccountInfo -> stringResource(R.string.tutorial_account_info)
+        TutorialStep.HighlightAccountBackButton -> stringResource(R.string.tutorial_account_back)
     }
 
     val density = LocalDensity.current

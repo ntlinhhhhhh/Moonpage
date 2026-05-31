@@ -34,8 +34,8 @@ val Typography = Typography(
 
     // headlineLarge: title
     headlineLarge = TextStyle(
-        fontFamily = snigletFontFamily,
-        fontWeight = FontWeight.Normal,
+        fontFamily = nunitoFontFamily,
+        fontWeight = FontWeight.SemiBold,
         fontSize = 32.sp,
         lineHeight = 40.sp,
         letterSpacing = 0.sp

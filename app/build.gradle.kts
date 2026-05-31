@@ -102,6 +102,7 @@ dependencies {
     implementation(libs.androidx.exifinterface)
     implementation(libs.androidx.health.connect.client)
     implementation(libs.play.services.location)
+    implementation(libs.play.services.base)
     implementation(libs.kotlinx.coroutines.play.services)
 
     implementation(libs.androidx.room.runtime)

@@ -151,6 +151,8 @@
     <string name="stats_no_music_data">Chưa có dữ liệu âm nhạc</string>
     <string name="stats_music_log_hint">Ghi lại bài nhạc bạn nghe khi viết nhật ký để xem tại đây.</string>
     <string name="stats_most_listened">Nghe nhiều nhất</string>
+    <string name="stats_least_listened">Nghe ít nhất</string>
+    <string name="monthly_top_music">Top nhạc tháng</string>
     <string name="stats_music_times">%1$d lần</string>
     <string name="stats_all_songs_count">Tất cả bài hát (%1$d)</string>
 
@@ -323,7 +325,7 @@
     <string name="noti_memory_body">Đúng ngày này 1 năm trước, bạn đã lưu lại một khoảnh khắc ở đây. Có muốn quay về quá khứ một chút không?</string>
 
     <!-- Auth Screens -->
-    <string name="sign_in">Đăng nhập</string>
+    <string name="sign_in"> Đăng nhập</string>
     <string name="sign_up">Đăng ký</string>
     <string name="login">Đăng nhập</string>
     <string name="login_with_google">Đăng nhập bằng Google</string>
@@ -815,8 +817,8 @@
     <string name="onboarding_galaxy_theme">Giao diện ngân hà</string>
     <string name="onboarding_matcha_theme">Giao diện matcha</string>
     <string name="my_special_day">Ngày đặc biệt của tôi</string>
-    <string name="terms_short">Điều khoản</string>
-    <string name="privacy_short">Bảo mật</string>
+    <string name="terms_short">Điều khoản </string>
+    <string name="privacy_short"> Bảo mật</string>
     <string name="terms_privacy_separator"> và </string>
     <string name="secure_sanctuary">KHÔNG GIAN BẢO MẬT</string>
     <string name="activity_category_social">Xã hội</string>

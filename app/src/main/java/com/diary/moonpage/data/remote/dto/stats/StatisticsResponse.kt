@@ -59,5 +59,6 @@ data class BestActivityDto(
     @SerializedName("activityName") val activityName: String,
     @SerializedName("iconUrl") val iconUrl: String,
     @SerializedName("averageMoodScore") val averageMoodScore: Double,
-    @SerializedName("occurrence") val occurrence: Int
+    @SerializedName("occurrence") val occurrence: Int,
+    @SerializedName(value = "moodDistribution", alternate = ["mood_distribution"]) val moodDistribution: List<MoodDistributionDto>? = null
 )

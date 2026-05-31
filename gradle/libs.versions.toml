@@ -22,6 +22,7 @@ accompanist = "0.36.0"
 exifinterface = "1.3.7"
 room = "2.7.0-alpha11"
 playServicesLocation = "21.3.0"
+playServicesBase = "18.5.0"
 places = "4.0.0"
 biometric = "1.1.0"
 foundationLayout = "1.11.0"
@@ -90,6 +91,7 @@ accompanist-permissions = { group = "com.google.accompanist", name = "accompanis
 
 # Location
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+play-services-base = { group = "com.google.android.gms", name = "play-services-base", version.ref = "playServicesBase" }
 places = { group = "com.google.android.libraries.places", name = "places", version.ref = "places" }
 androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
 androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
