@@ -2,7 +2,6 @@ package com.diary.moonpage.widget.glance
 
 import android.content.Context
 import android.content.Intent
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,12 +31,9 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.diary.moonpage.R
-import androidx.glance.appwidget.updateAll
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.flow.first
 import java.util.Locale
 
 class WeeklyMoodWidget : GlanceAppWidget() {
@@ -64,9 +60,12 @@ class WeeklyMoodWidget : GlanceAppWidget() {
             MoonpageWidgets.openAppIntent(context, MoonpageWidgets.ROUTE_CALENDAR)
         )
 
+        // Read preferences once — avoids collectAsState keeping a live Flow session
+        // that gets cancelled every time widget.update() is called.
+        val showStreak = preferences.showWeeklyMoodStreak.first()
+        val showDates = preferences.showWeeklyMoodDates.first()
+
         provideContent {
-            val showStreak = preferences.showWeeklyMoodStreak.collectAsState(initial = true).value
-            val showDates = preferences.showWeeklyMoodDates.collectAsState(initial = true).value
             val moodCircleSize = if (showDates) 30.dp else 34.dp
             val moodCircleRadius = if (showDates) 15.dp else 17.dp
             val moodImageSize = if (showDates) 24.dp else 28.dp
@@ -241,11 +240,4 @@ class WeeklyMoodWidget : GlanceAppWidget() {
 
 class WeeklyMoodWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = WeeklyMoodWidget()
-
-    override fun onReceive(context: Context, intent: Intent) {
-        super.onReceive(context, intent)
-        CoroutineScope(Dispatchers.Main).launch {
-            WeeklyMoodWidget().updateAll(context)
-        }
-    }
 }

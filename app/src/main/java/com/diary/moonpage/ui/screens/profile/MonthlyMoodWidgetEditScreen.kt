@@ -8,7 +8,6 @@ import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -18,7 +17,6 @@ import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.R
 import com.diary.moonpage.core.util.WidgetPreferencesManager
 import com.diary.moonpage.ui.screens.profile.components.MonthlyMoodWidgetPreview
-import com.diary.moonpage.widget.glance.MoonpageWidgets
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -68,12 +66,7 @@ fun MonthlyMoodWidgetEditScreen(
     viewModel: MonthlyMoodWidgetEditViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
     val colorScheme = MaterialTheme.colorScheme
-
-    LaunchedEffect(uiState) {
-        MoonpageWidgets.refreshAll(context)
-    }
 
     Scaffold(
         containerColor = colorScheme.background,

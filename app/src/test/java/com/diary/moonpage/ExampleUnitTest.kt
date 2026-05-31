@@ -145,4 +145,110 @@ class ExampleUnitTest {
             com.diary.moonpage.core.theme.isThemeTestingMode = true
         }
     }
+
+    @Test
+    fun testBackgroundModeUsesRemoteBackgroundWhenLocalCacheIsGone() {
+        com.diary.moonpage.core.theme.isThemeTestingMode = false
+        try {
+            val remoteBackground = "https://example.com/custom_background.webp"
+            val json = """{"light":{"backgroundFillMode":"background","backgroundUri":"/data/user/0/com.diary.moonpage/files/custom_themes/missing.webp","solidBackgroundColor":"#FFFFF7EC"},"dark":{"backgroundFillMode":"background","backgroundUri":"/data/user/0/com.diary.moonpage/files/custom_themes/missing.webp","solidBackgroundColor":"#FF1C1C1C"}}"""
+            val theme = Theme(
+                id = "custom_background_cache_clear",
+                name = "Background Cache Clear",
+                collection = "Custom Theme",
+                price = 0,
+                thumbnailUrl = "https://example.com/thumbnail.webp",
+                backgroundUrl = remoteBackground,
+                description = json,
+                isOfficial = false
+            )
+
+            assertEquals(remoteBackground, theme.previewBackgroundImagePath(isDark = false))
+            assertNull(theme.previewBackgroundBrush(isDark = false))
+        } finally {
+            com.diary.moonpage.core.theme.isThemeTestingMode = true
+        }
+    }
+
+    @Test
+    fun testCustomThemeApiPreviewUsesRemoteBackgroundAfterCacheClear() {
+        val remoteBackground = "https://firebasestorage.googleapis.com/v0/b/moodyfy-3f2dd.firebasestorage.app/o/diary_app%2Fthemes%2Fcustom_theme_bg.webp?alt=media"
+        val description = """
+            {
+              "light": {
+                "backgroundUri": "/data/user/0/com.diary.moonpage/files/custom_themes/custom_theme_bg_1780213468797.webp",
+                "backgroundFillMode": "background",
+                "solidBackgroundColor": "#FFFFF7EC",
+                "primaryColor": "#FF8D6E63",
+                "iconColors": ["#FFFFCA28", "#FF81C784", "#FF64B5F6", "#FFBA68C8", "#FF8D6E63"]
+              },
+              "dark": {
+                "backgroundUri": "/data/user/0/com.diary.moonpage/files/custom_themes/custom_theme_bg_1780213468797.webp",
+                "backgroundFillMode": "background",
+                "solidBackgroundColor": "#FF1C1C1C",
+                "primaryColor": "#FFFFF9EF",
+                "iconColors": ["#FFFFCA28", "#FF81C784", "#FF64B5F6", "#FFBA68C8", "#FF8D6E63"]
+              }
+            }
+        """.trimIndent()
+        val theme = Theme(
+            id = "custom_4425d578-173c-4f6f-b515-534811867976_1780213468797",
+            name = "My Custom Theme",
+            collection = "Custom Theme",
+            price = 250,
+            thumbnailUrl = "https://example.com/theme_thumb.webp",
+            backgroundUrl = remoteBackground,
+            primaryLightColor = "#FF8D6E63",
+            primaryDarkColor = "#FFFFF9EF",
+            backgroundDarkColor = "0xFFF4F6F1",
+            backgroundLightColor = "0xFF1C1C1C",
+            description = description,
+            isOfficial = false,
+            category = "LIGHT",
+            isActive = false
+        )
+
+        assertEquals(remoteBackground, theme.previewBackgroundImagePath(isDark = false))
+        assertNull(theme.previewBackgroundBrush(isDark = false))
+    }
+
+    @Test
+    fun testRemoteBackgroundUrlDoesNotOverrideSolidAppearanceForCustomPreview() {
+        val remoteBackground = "https://example.com/custom_background.webp"
+        val theme = Theme(
+            id = "custom_123",
+            name = "Remote Image",
+            collection = "Custom Theme",
+            price = 0,
+            thumbnailUrl = null,
+            backgroundUrl = remoteBackground,
+            backgroundLightColor = "0xFF1C1C1C",
+            description = """{"light":{"backgroundFillMode":"Solid","solidBackgroundColor":"#FF1C1C1C"}}""",
+            isOfficial = false
+        )
+
+        assertNull(theme.previewBackgroundImagePath(isDark = false))
+        assertTrue(theme.previewBackgroundBrush(isDark = false) is SolidColor)
+    }
+
+    @Test
+    fun testRemoteBackgroundUrlDoesNotOverrideGradientAppearanceForCustomPreview() {
+        val remoteBackground = "https://example.com/custom_background.webp"
+        val theme = Theme(
+            id = "custom_124",
+            name = "Remote Image With Gradient",
+            collection = "Custom Theme",
+            price = 0,
+            thumbnailUrl = null,
+            backgroundUrl = remoteBackground,
+            backgroundLightColor = "#FFA8C7E0,#FFE8F5E9",
+            description = """{"light":{"backgroundFillMode":"Gradient","gradientStartColor":"#FFA8C7E0","gradientEndColor":"#FFE8F5E9"}}""",
+            isOfficial = false
+        )
+
+        assertNull(theme.previewBackgroundImagePath(isDark = false))
+        val brush = theme.previewBackgroundBrush(isDark = false)
+        assertNotNull(brush)
+        assertFalse(brush is SolidColor)
+    }
 }

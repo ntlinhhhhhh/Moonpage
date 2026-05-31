@@ -2,7 +2,6 @@ package com.diary.moonpage.widget.glance
 
 import android.content.Context
 import android.content.Intent
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,12 +31,9 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.diary.moonpage.R
-import androidx.glance.appwidget.updateAll
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.flow.first
 import java.util.Locale
 
 class QuickMoodWidget : GlanceAppWidget() {
@@ -69,9 +65,12 @@ class QuickMoodWidget : GlanceAppWidget() {
             MoonpageWidgets.openAppIntent(context, MoonpageWidgets.todayLogRoute())
         )
 
+        // Read preferences once — avoids collectAsState keeping a live Flow session
+        // that gets cancelled every time widget.update() is called.
+        val showStreak = preferences.showQuickMoodStreak.first()
+        val showLabels = preferences.showQuickMoodLabels.first()
+
         provideContent {
-            val showStreak = preferences.showQuickMoodStreak.collectAsState(initial = true).value
-            val showLabels = preferences.showQuickMoodLabels.collectAsState(initial = true).value
             val moodCircleSize = if (showLabels) 32.dp else 36.dp
             val moodCircleRadius = if (showLabels) 16.dp else 18.dp
             val moodImageSize = if (showLabels) 26.dp else 30.dp
@@ -185,11 +184,4 @@ class QuickMoodWidget : GlanceAppWidget() {
 
 class QuickMoodWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = QuickMoodWidget()
-
-    override fun onReceive(context: Context, intent: Intent) {
-        super.onReceive(context, intent)
-        CoroutineScope(Dispatchers.Main).launch {
-            QuickMoodWidget().updateAll(context)
-        }
-    }
 }

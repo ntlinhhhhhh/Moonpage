@@ -50,14 +50,16 @@ class ThemeRepositoryImpl @Inject constructor(
         themePreferencesManager.activeThemeJson,
         dao.observeActiveTheme()
     ) { json, entity ->
+        val entityTheme = entity?.toDomain()
         if (json != null) {
             try {
                 Gson().fromJson(json, Theme::class.java)
+                    .withFreshRemoteBackgroundFrom(entityTheme)
             } catch (e: Exception) {
-                entity?.toDomain()
+                entityTheme
             }
         } else {
-            entity?.toDomain()
+            entityTheme
         }
     }
 
@@ -97,7 +99,7 @@ class ThemeRepositoryImpl @Inject constructor(
                 val ownedIds = response.body()!!
                     .map { ThemeConstants.normalizeThemeId(it) }
                     .toMutableList()
-                
+
                 // Ensure default theme is always in owned list
                 if (!ownedIds.contains(ThemeConstants.DEFAULT_THEME_ID)) {
                     ownedIds.add(0, ThemeConstants.DEFAULT_THEME_ID)
@@ -106,7 +108,7 @@ class ThemeRepositoryImpl @Inject constructor(
                 seedPredefinedThemes(ownedIds.toSet())
                 val allCached = dao.getAllThemes().first()
                 val toUpdate = mutableListOf<ThemeEntity>()
-                
+
                 ownedIds.forEach { themeId ->
                     val entity = allCached.find { it.id == themeId }
                     if (entity == null) {
@@ -118,7 +120,7 @@ class ThemeRepositoryImpl @Inject constructor(
                     }
                 }
                 if (toUpdate.isNotEmpty()) dao.insertThemes(toUpdate)
-                
+
                 val finalOwned = dao.getOwnedThemes().first().map { it.toDomain() }
                 Result.success(finalOwned)
             } else {
@@ -141,7 +143,7 @@ class ThemeRepositoryImpl @Inject constructor(
                         entity.activatedAt?.let { System.currentTimeMillis() - it < ACTIVE_THEME_SYNC_GRACE_MS } == true
                     }
                     ?.id
-                
+
                 val myThemes = coroutineScope {
                     val deferredThemes = response.body()!!.map { dto ->
                         async {
@@ -173,22 +175,27 @@ class ThemeRepositoryImpl @Inject constructor(
                             val moodIconColors = backendIconColors
                                 .takeIf { it.size >= DEFAULT_MOOD_IDS.size }
                                 ?: cachedIconColors.takeIf { it.size >= DEFAULT_MOOD_IDS.size }
-                            val description = moodIconColors
-                                ?.let { (cachedTheme?.description ?: networkTheme.description).withMoodIconColors(it) }
-                                ?: cachedTheme?.description
-                                ?: networkTheme.description
                             val moodPrimary = if (cachedPrimary == null && networkPrimary == null) {
                                 moodIconColors?.firstOrNull() ?: loadThemeMoodPrimaryColor(networkTheme.id)
                             } else {
                                 null
                             }
-                            val hasNetworkImage = networkTheme.backgroundUrl?.let {
-                                it.isNotBlank() && it.lowercase() != "null" && it.lowercase() != "pending" && !it.isThemeColor() && !it.contains(",")
-                            } == true || run {
-                                val fillMode = runCatching { JSONObject(networkTheme.description).optJSONObject("light")?.optString("backgroundFillMode") }.getOrNull()
-                                    ?: runCatching { JSONObject(networkTheme.description).optJSONObject("dark")?.optString("backgroundFillMode") }.getOrNull()
-                                fillMode?.equals("Image", ignoreCase = true) == true
+                            val networkFillModes = networkTheme.description.backgroundFillModes()
+                            val hasExplicitImageBackground = networkFillModes.any { it.isImageFillMode() }
+                            val hasExplicitColorBackground = networkFillModes.any { it.isSolidOrGradientFillMode() } &&
+                                !hasExplicitImageBackground
+                            val baseDescription = if (networkFillModes.isNotEmpty()) {
+                                networkTheme.description
+                            } else {
+                                cachedTheme?.description ?: networkTheme.description
                             }
+                            val description = moodIconColors
+                                ?.let { baseDescription.withMoodIconColors(it) }
+                                ?: baseDescription
+                            val hasRemoteBackgroundAsset = networkTheme.backgroundUrl?.let {
+                                it.isNotBlank() && it.lowercase() != "null" && it.lowercase() != "pending" && !it.isThemeColor() && !it.contains(",")
+                            } == true
+                            val hasNetworkImage = hasExplicitImageBackground || (!hasExplicitColorBackground && hasRemoteBackgroundAsset)
                             val resolvedBackgroundUrl = if (hasNetworkImage) {
                                 cachedTheme?.backgroundUrl.takeIfLocalThemeAsset()
                                     ?: networkTheme.backgroundUrl
@@ -202,7 +209,7 @@ class ThemeRepositoryImpl @Inject constructor(
                                     ?: cachedTheme?.thumbnailUrl,
                                 backgroundUrl = resolvedBackgroundUrl,
                                 primaryColor = cachedPrimary ?: networkPrimary ?: moodPrimary,
-                                description = description,
+                                description = description.withRemoteBackgroundImage(resolvedBackgroundUrl),
                                 activatedAt = cachedTheme?.activatedAt
                             )
                         }
@@ -502,7 +509,7 @@ class ThemeRepositoryImpl @Inject constructor(
                     isActive = existing?.isActive ?: false
                 )
                 dao.insertThemes(listOf(updated))
-                
+
                 // Fetch moods — prefer moods already included in detail response
                 val moodsFromDetail = dto.moods
                 if (!moodsFromDetail.isNullOrEmpty()) {
@@ -554,8 +561,8 @@ class ThemeRepositoryImpl @Inject constructor(
             predefined.toThemeEntity(
                 existing = existing,
                 isOwned = existing?.isOwned == true ||
-                    predefined.id == ThemeConstants.DEFAULT_THEME_ID ||
-                    predefined.id in normalizedOwnedIds,
+                        predefined.id == ThemeConstants.DEFAULT_THEME_ID ||
+                        predefined.id in normalizedOwnedIds,
                 isActive = existing?.isActive ?: (predefined.id == ThemeConstants.DEFAULT_THEME_ID && !hasActiveTheme)
             )
         }
@@ -567,7 +574,7 @@ class ThemeRepositoryImpl @Inject constructor(
         return try {
             val cachedTheme = dao.getThemeById(themeId)
             val requestPrice = price ?: cachedTheme?.price ?: 0
-            
+
             val response = api.buyTheme(BuyThemeRequest(themeId, requestPrice))
             if (response.isSuccessful) {
                 cachedTheme?.let { dao.insertThemes(listOf(it.copy(price = requestPrice, isFree = requestPrice == 0, isOwned = true))) }
@@ -587,24 +594,19 @@ class ThemeRepositoryImpl @Inject constructor(
             ensureThemeCached(localThemeId)
             val timestamp = System.currentTimeMillis()
             val cachedTheme = dao.getThemeById(localThemeId)
+            val activeDomainTheme = myThemesState.value
+                .firstOrNull { ThemeConstants.normalizeThemeId(it.id) == localThemeId }
+                ?.copy(isOwned = true, isActive = true, activatedAt = timestamp)
+                ?: cachedTheme?.toDomain()?.copy(isOwned = true, isActive = true, activatedAt = timestamp)
             dao.clearActiveTheme()
-            if (cachedTheme != null) {
-                dao.insertThemes(
-                    listOf(
-                        cachedTheme.copy(
-                            isOwned = true,
-                            isActive = true,
-                            activatedAt = timestamp
-                        )
-                    )
-                )
+            if (activeDomainTheme != null) {
+                dao.insertThemes(listOf(ThemeEntity.fromDomain(activeDomainTheme)))
             } else {
                 dao.setActiveTheme(localThemeId, timestamp)
             }
 
             // Also sync the themeType DataStore for real-time presets reactivity
-            val domainTheme = cachedTheme?.toDomain()
-            themePreferencesManager.setActiveThemeJson(if (domainTheme != null) Gson().toJson(domainTheme) else null)
+            themePreferencesManager.setActiveThemeJson(if (activeDomainTheme != null) Gson().toJson(activeDomainTheme) else null)
 
             val themeType = localThemeId.toMoonThemeTypeOrNull()
                 ?: cachedTheme?.decoration?.toMoonThemeTypeOrNull()
@@ -759,6 +761,32 @@ class ThemeRepositoryImpl @Inject constructor(
     }
 }
 
+private fun Theme.withFreshRemoteBackgroundFrom(entityTheme: Theme?): Theme {
+    if (entityTheme == null) return this
+    if (ThemeConstants.normalizeThemeId(entityTheme.id) != ThemeConstants.normalizeThemeId(id)) return this
+    if (!hasMissingLocalImageBackground()) return this
+    if (!entityTheme.hasRemoteImageBackground()) return this
+    return entityTheme.copy(
+        isActive = isActive || entityTheme.isActive,
+        activatedAt = activatedAt ?: entityTheme.activatedAt
+    )
+}
+
+private fun Theme.hasMissingLocalImageBackground(): Boolean {
+    val fillModes = description.backgroundFillModes()
+    val imageMode = fillModes.any { it.isImageFillMode() } ||
+        description.backgroundUris().any { it.isThemeAssetReference() } ||
+        backgroundUrl.isThemeAssetReference()
+    if (!imageMode || hasRemoteImageBackground()) return false
+    return backgroundUrl.isMissingLocalThemeAsset() ||
+        description.backgroundUris().any { it.isMissingLocalThemeAsset() }
+}
+
+private fun Theme.hasRemoteImageBackground(): Boolean {
+    return backgroundUrl.takeIfRemoteThemeAsset() != null ||
+        description.backgroundUris().any { it.takeIfRemoteThemeAsset() != null }
+}
+
 private fun PredefinedTheme.toThemeEntity(
     existing: ThemeEntity?,
     isOwned: Boolean,
@@ -817,8 +845,8 @@ private fun ThemeEntity.matchesCustomTheme(theme: Theme): Boolean {
 
 private fun ThemeEntity.isCustomThemeEntity(): Boolean {
     return id.isCustomThemeId() ||
-        decoration.equals("CUSTOM", ignoreCase = true) ||
-        collection.equals("Custom Theme", ignoreCase = true)
+            decoration.equals("CUSTOM", ignoreCase = true) ||
+            collection.equals("Custom Theme", ignoreCase = true)
 }
 
 private fun ThemeEntity.customMoodEntitiesFromDescription(): List<ThemeMoodEntity> {
@@ -925,9 +953,93 @@ private fun String?.takeIfLocalThemeAsset(): String? {
     val file = File(rawPath)
     return takeIf {
         (file.exists() && file.isFile) ||
-            it.startsWith("content://", ignoreCase = true) ||
-            it.startsWith("android.resource://", ignoreCase = true)
+                it.startsWith("content://", ignoreCase = true) ||
+                it.startsWith("android.resource://", ignoreCase = true)
     }
+}
+
+private fun String?.withRemoteBackgroundImage(backgroundUrl: String?): String? {
+    val remoteBackground = backgroundUrl.takeIfRemoteThemeAsset() ?: return this
+    val root = takeIf { !it.isNullOrBlank() }
+        ?.let { raw -> runCatching { JSONObject(raw) }.getOrNull() }
+        ?: return this
+    var changed = false
+
+    listOf("light", "dark").forEach { mode ->
+        val appearance = root.optJSONObject(mode) ?: return@forEach
+        val currentUri = appearance.optString("backgroundUri")
+        val fillMode = appearance.optString("backgroundFillMode")
+        val imageMode = fillMode.isImageFillMode() ||
+                (fillMode.isBlank() && currentUri.isThemeAssetReference())
+        if (!imageMode) return@forEach
+
+        if (appearance.optString("backgroundFillMode").isBlank()) {
+            appearance.put("backgroundFillMode", "background")
+            changed = true
+        }
+        if (currentUri.isBlank() || currentUri.isLocalThemeFilePath()) {
+            appearance.put("backgroundUri", remoteBackground)
+            changed = true
+        }
+    }
+
+    return if (changed) root.toString() else this
+}
+
+private fun String?.backgroundFillModes(): List<String> {
+    val root = takeIf { !it.isNullOrBlank() }
+        ?.let { raw -> runCatching { JSONObject(raw) }.getOrNull() }
+        ?: return emptyList()
+    return listOfNotNull(
+        root.optJSONObject("light")?.optString("backgroundFillMode"),
+        root.optJSONObject("dark")?.optString("backgroundFillMode")
+    ).filter { it.isNotBlank() }
+}
+
+private fun String?.backgroundUris(): List<String> {
+    val root = takeIf { !it.isNullOrBlank() }
+        ?.let { raw -> runCatching { JSONObject(raw) }.getOrNull() }
+        ?: return emptyList()
+    return listOfNotNull(
+        root.optJSONObject("light")?.optString("backgroundUri"),
+        root.optJSONObject("dark")?.optString("backgroundUri")
+    ).filter { it.isNotBlank() }
+}
+
+private fun String?.takeIfRemoteThemeAsset(): String? {
+    val value = this?.trim()?.takeIf { it.isThemeAssetReference() } ?: return null
+    return value.takeIf {
+        it.startsWith("http://", ignoreCase = true) ||
+                it.startsWith("https://", ignoreCase = true)
+    }
+}
+
+private fun String?.isImageFillMode(): Boolean {
+    return equals("Image", ignoreCase = true) || equals("background", ignoreCase = true)
+}
+
+private fun String?.isSolidOrGradientFillMode(): Boolean {
+    return equals("Solid", ignoreCase = true) || equals("Gradient", ignoreCase = true)
+}
+
+private fun String?.isLocalThemeFilePath(): Boolean {
+    val value = this?.trim() ?: return false
+    return value.startsWith("/data/") ||
+        value.startsWith("/storage/") ||
+        value.startsWith("/sdcard/") ||
+        value.startsWith("file://", ignoreCase = true)
+}
+
+private fun String?.isMissingLocalThemeAsset(): Boolean {
+    return isLocalThemeFilePath() && takeIfLocalThemeAsset() == null
+}
+
+private fun String?.isThemeAssetReference(): Boolean {
+    val value = this?.trim() ?: return false
+    if (value.isBlank() || value.equals("null", ignoreCase = true) || value.equals("pending", ignoreCase = true)) {
+        return false
+    }
+    return !value.contains(",") && !value.isThemeColor()
 }
 
 private fun String?.isThemeColor(): Boolean {

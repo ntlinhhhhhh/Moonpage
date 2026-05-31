@@ -16,6 +16,7 @@ import com.diary.moonpage.core.theme.MoonTextDark
 import com.diary.moonpage.core.theme.MoonTextDarkNew
 import com.diary.moonpage.core.theme.MoonThemeType
 import com.diary.moonpage.core.theme.getThemeShades
+import com.diary.moonpage.data.local.dao.DailyLogDao
 import com.diary.moonpage.domain.model.Activity
 import com.diary.moonpage.domain.model.DailyLog
 import dagger.hilt.android.EntryPointAccessors
@@ -96,6 +97,8 @@ class MoonpageWidgetDataSource(private val context: Context) {
         )
     }
 
+    private val dailyLogDao: DailyLogDao by lazy { entryPoint.dailyLogDao() }
+
     suspend fun loadTodaySnapshot(): WidgetDaySnapshot = withContext(Dispatchers.IO) {
         val today = LocalDate.now().toString()
         val log = loadLogByDate(today)
@@ -134,9 +137,15 @@ class MoonpageWidgetDataSource(private val context: Context) {
         val daysFromSunday = if (dayOfWeek == DayOfWeek.SUNDAY) 0 else dayOfWeek.value
         val weekStart = today.minusDays(daysFromSunday.toLong())
 
-        (0..6).map { offset ->
-            val day = weekStart.plusDays(offset.toLong())
-            val log = loadLogByDate(day.toString())
+        val days = (0..6).map { offset -> weekStart.plusDays(offset.toLong()) }
+        val logsByDate = days
+            .map { YearMonth.from(it).toString() }
+            .distinct()
+            .flatMap { yearMonth -> loadLogsByMonth(yearMonth) }
+            .associateBy { it.date }
+
+        days.map { day ->
+            val log = logsByDate[day.toString()]
             val moodLevel = log?.baseMoodId ?: 0
             WeekDayMood(
                 dayLabel = day.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.ENGLISH),
@@ -168,9 +177,10 @@ class MoonpageWidgetDataSource(private val context: Context) {
             result.add(MonthDayMood(0, null, Color.Transparent, false, true))
         }
         // Actual days
+        val logsByDate = loadLogsByMonth(yearMonth.toString()).associateBy { it.date }
         for (dayNum in 1..yearMonth.lengthOfMonth()) {
             val date = yearMonth.atDay(dayNum)
-            val log = loadLogByDate(date.toString())
+            val log = logsByDate[date.toString()]
             val moodLevel = log?.baseMoodId ?: 0
             result.add(
                 MonthDayMood(
@@ -197,7 +207,7 @@ class MoonpageWidgetDataSource(private val context: Context) {
         val request = ImageRequest.Builder(context)
             .data(model)
             .allowHardware(false)
-            .size(1024, 1024)
+            .size(512, 512)
             .build()
         val result = context.imageLoader.execute(request).drawable ?: return@withContext null
         if (result is BitmapDrawable) return@withContext result.bitmap
@@ -211,8 +221,11 @@ class MoonpageWidgetDataSource(private val context: Context) {
     }
 
     private suspend fun loadLogByDate(date: String): DailyLog? {
-        return entryPoint.dailyLogRepository().getDailyLogByDate(date).getOrNull()
-            ?: entryPoint.dailyLogRepository().getDailyLogByDateFlow(date).firstOrNull()
+        return dailyLogDao.getLogByDate(date)?.toDomain()
+    }
+
+    private suspend fun loadLogsByMonth(yearMonth: String): List<DailyLog> {
+        return dailyLogDao.getLogsByMonth(yearMonth).map { it.toDomain() }
     }
 
     private fun buildFooterItems(log: DailyLog?, activities: List<Activity>): List<WidgetFooterItem> {

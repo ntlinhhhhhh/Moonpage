@@ -2,7 +2,6 @@ package com.diary.moonpage.widget.glance
 
 import android.content.Context
 import android.content.Intent
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,12 +31,9 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.diary.moonpage.R
-import androidx.glance.appwidget.updateAll
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.flow.first
 import java.util.Locale
 
 private val MutedCircleColor = Color(0xFFE0DDD8)
@@ -79,9 +75,12 @@ class MonthlyMoodWidget : GlanceAppWidget() {
             MoonpageWidgets.openAppIntent(context, MoonpageWidgets.ROUTE_CALENDAR)
         )
 
+        // Read preferences once — avoids collectAsState keeping a live Flow session
+        // that gets cancelled every time widget.update() is called.
+        val showStreak = preferences.showMonthlyMoodStreak.first()
+        val showGrid = preferences.showMonthlyMoodGrid.first()
+
         provideContent {
-            val showStreak = preferences.showMonthlyMoodStreak.collectAsState(initial = true).value
-            val showGrid = preferences.showMonthlyMoodGrid.collectAsState(initial = true).value
             Box(
                 modifier = GlanceModifier
                     .fillMaxSize()
@@ -315,11 +314,4 @@ class MonthlyMoodWidget : GlanceAppWidget() {
 
 class MonthlyMoodWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = MonthlyMoodWidget()
-
-    override fun onReceive(context: Context, intent: Intent) {
-        super.onReceive(context, intent)
-        CoroutineScope(Dispatchers.Main).launch {
-            MonthlyMoodWidget().updateAll(context)
-        }
-    }
 }

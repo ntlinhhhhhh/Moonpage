@@ -9,7 +9,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -19,7 +18,6 @@ import androidx.lifecycle.viewModelScope
 import com.diary.moonpage.R
 import com.diary.moonpage.core.util.WidgetPreferencesManager
 import com.diary.moonpage.ui.screens.profile.components.DailySummaryWidgetPreview
-import com.diary.moonpage.widget.glance.MoonpageWidgets
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -81,13 +79,7 @@ fun DailySummaryWidgetEditScreen(
     viewModel: DailySummaryWidgetEditViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
     val colorScheme = MaterialTheme.colorScheme
-
-    // Aggressively refresh widgets when UI state changes
-    LaunchedEffect(uiState) {
-        MoonpageWidgets.refreshAll(context)
-    }
 
     Scaffold(
         containerColor = colorScheme.background,

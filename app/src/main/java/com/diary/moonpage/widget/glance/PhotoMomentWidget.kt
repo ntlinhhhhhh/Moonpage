@@ -2,11 +2,11 @@ package com.diary.moonpage.widget.glance
 
 import android.app.AlarmManager
 import android.app.PendingIntent
+import android.appwidget.AppWidgetManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.Build
-import androidx.compose.runtime.collectAsState
+import android.os.SystemClock
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
@@ -15,12 +15,12 @@ import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
-import androidx.glance.appwidget.updateAll
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
@@ -36,9 +36,11 @@ import androidx.glance.unit.ColorProvider
 import com.diary.moonpage.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-private const val PHOTO_ROTATE_INTERVAL_MS = 30_000L
+private const val PHOTO_ROTATE_INTERVAL_MS = 5 * 60_000L
+private const val PHOTO_ROTATE_WINDOW_MS = 60_000L
 private const val PHOTO_ROTATE_ACTION = "com.diary.moonpage.widget.PHOTO_MOMENT_ROTATE"
 private const val PHOTO_ROTATE_REQUEST_CODE = 5102
 
@@ -68,9 +70,12 @@ class PhotoMomentWidget : GlanceAppWidget() {
             MoonpageWidgets.openAppIntent(context, MoonpageWidgets.ROUTE_CAMERA)
         )
 
+        // Read preferences once — avoids collectAsState keeping a live Flow session
+        // that gets cancelled every time widget.update() is called.
+        val showStreak = preferences.showPhotoStreak.first()
+        val displayMode = preferences.photoDisplayMode.first()
+
         provideContent {
-            val showStreak = preferences.showPhotoStreak.collectAsState(initial = true).value
-            val displayMode = preferences.photoDisplayMode.collectAsState(initial = "CROP").value
             Box(
                 modifier = GlanceModifier
                     .fillMaxSize()
@@ -130,19 +135,14 @@ private object PhotoMomentRotationScheduler {
     fun schedule(context: Context) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
         val pendingIntent = pendingIntent(context)
-        val triggerAt = System.currentTimeMillis() + PHOTO_ROTATE_INTERVAL_MS
+        val triggerAt = SystemClock.elapsedRealtime() + PHOTO_ROTATE_INTERVAL_MS
 
-        when {
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms() -> {
-                alarmManager.set(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
-            }
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M -> {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
-            }
-            else -> {
-                alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
-            }
-        }
+        alarmManager.setWindow(
+            AlarmManager.ELAPSED_REALTIME,
+            triggerAt,
+            PHOTO_ROTATE_WINDOW_MS,
+            pendingIntent
+        )
     }
 
     fun cancel(context: Context) {
@@ -171,7 +171,14 @@ class PhotoMomentAutoRotateReceiver : BroadcastReceiver() {
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.Default).launch {
             try {
-                PhotoMomentWidget().updateAll(context)
+                val glanceManager = GlanceAppWidgetManager(context)
+                val widget = PhotoMomentWidget()
+                val glanceIds = glanceManager.getGlanceIds(PhotoMomentWidget::class.java)
+                glanceIds.forEach { id ->
+                    widget.update(context, id)
+                }
+            } catch (e: Exception) {
+                // Ignore update errors during rotation
             } finally {
                 pendingResult.finish()
             }
@@ -194,6 +201,9 @@ class PhotoMomentWidgetReceiver : GlanceAppWidgetReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
-        PhotoMomentRotationScheduler.schedule(context)
+        if (intent.action == Intent.ACTION_BOOT_COMPLETED || 
+            intent.action == AppWidgetManager.ACTION_APPWIDGET_UPDATE) {
+            PhotoMomentRotationScheduler.schedule(context)
+        }
     }
 }

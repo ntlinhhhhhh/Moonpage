@@ -270,7 +270,7 @@ fun MoonPageTheme(
     val appearanceTheme = activeTheme?.takeIf { it.hasThemeAppearance() } ?: customTheme
     val customThemePrimary = appearanceTheme?.customPrimaryColor(darkTheme)
     val customThemeBackground = appearanceTheme?.customBackgroundColor(darkTheme)
-    val hasCustomBackgroundImage = activeTheme.hasCustomBackgroundImage()
+    val hasCustomBackgroundImage = activeTheme.hasCustomBackgroundImage(darkTheme)
     val hasCustomGradientBackground = activeTheme.hasCustomGradientBackground(darkTheme)
     val hasCustomVisualBackground = hasCustomBackgroundImage || hasCustomGradientBackground
     val visualProtection = visualBackgroundProtection(darkTheme).takeIf { hasCustomVisualBackground }
@@ -593,11 +593,9 @@ private fun Theme.customBackgroundColor(darkTheme: Boolean): Color? {
     return description.appearanceBackgroundColor(mode) ?: backgroundUrl.toThemeColorOrNull()
 }
 
-private fun Theme?.hasCustomBackgroundImage(): Boolean {
+private fun Theme?.hasCustomBackgroundImage(darkTheme: Boolean): Boolean {
     val theme = this ?: return false
-    return theme.backgroundUrl.isThemeAssetPath() ||
-        theme.description.appearanceObject("light")?.optString("backgroundUri").isThemeAssetPath() ||
-        theme.description.appearanceObject("dark")?.optString("backgroundUri").isThemeAssetPath()
+    return theme.previewBackgroundImagePath(darkTheme) != null
 }
 
 private fun Theme?.hasCustomGradientBackground(darkTheme: Boolean): Boolean {
@@ -683,6 +681,10 @@ fun Theme.previewBackgroundImagePath(isDark: Boolean): String? {
     if (isOfficial) return null
 
     val config = parsedConfig
+    val modeConfig = if (isDark) config?.dark ?: config?.light else config?.light ?: config?.dark
+    val fillMode = modeConfig?.backgroundFillMode.orEmpty()
+    if (fillMode.isSolidOrGradientFillMode()) return null
+
     val networkFallback = backgroundUrl?.takeIf { 
         it.isNotBlank() && 
         it.lowercase() != "null" && 
@@ -692,13 +694,9 @@ fun Theme.previewBackgroundImagePath(isDark: Boolean): String? {
         it.toThemeColorOrNull() == null
     }
 
-    if (config != null) {
-        val modeConfig = if (isDark) config.dark ?: config.light else config.light ?: config.dark
-        if (modeConfig != null) {
-            val fillMode = modeConfig.backgroundFillMode ?: ""
+    if (modeConfig != null) {
             val hasBgUri = !modeConfig.backgroundUri.isNullOrBlank()
-            val isImageMode = fillMode.equals("Image", ignoreCase = true) 
-                || fillMode.equals("background", ignoreCase = true)
+            val isImageMode = fillMode.isImageFillMode()
                 || (fillMode.isBlank() && hasBgUri)
             
             if (isImageMode) {
@@ -736,10 +734,7 @@ fun Theme.previewBackgroundImagePath(isDark: Boolean): String? {
                     it.lowercase() != "pending"
                 }
                 if (remoteThumb != null) return remoteThumb
-            } else if (fillMode.equals("Solid", ignoreCase = true) || fillMode.equals("Gradient", ignoreCase = true)) {
-                return null
             }
-        }
     }
 
     if (backgroundUrl.equals("pending", ignoreCase = true)) return null
@@ -759,7 +754,6 @@ fun Theme.previewBackgroundImagePath(isDark: Boolean): String? {
         }
     }
 
-    val modeConfig = if (isDark) config?.dark ?: config?.light else config?.light ?: config?.dark
     val path = modeConfig?.backgroundUri
 
     if (path != null && path.isThemeAssetPath()) {
@@ -784,16 +778,13 @@ fun Theme.previewBackgroundImagePath(isDark: Boolean): String? {
 }
 
 fun Theme.previewBackgroundBrush(isDark: Boolean): Brush? {
-    if (previewBackgroundImagePath(isDark) != null) return null
-
     val config = parsedConfig
     if (config != null) {
         val modeConfig = if (isDark) config.dark ?: config.light else config.light ?: config.dark
         if (modeConfig != null) {
             val fillMode = modeConfig.backgroundFillMode ?: ""
             val hasBgUri = !modeConfig.backgroundUri.isNullOrBlank()
-            val isImageMode = fillMode.equals("Image", ignoreCase = true) 
-                || fillMode.equals("background", ignoreCase = true)
+            val isImageMode = fillMode.isImageFillMode()
                 || (fillMode.isBlank() && hasBgUri)
             
             if (isImageMode) {
@@ -836,6 +827,14 @@ fun Theme.previewBackgroundBrush(isDark: Boolean): Brush? {
     }
 
     return null
+}
+
+private fun String?.isImageFillMode(): Boolean {
+    return equals("Image", ignoreCase = true) || equals("background", ignoreCase = true)
+}
+
+private fun String?.isSolidOrGradientFillMode(): Boolean {
+    return equals("Solid", ignoreCase = true) || equals("Gradient", ignoreCase = true)
 }
 
 fun parseThemeBrush(colorStr: String?): Brush? {

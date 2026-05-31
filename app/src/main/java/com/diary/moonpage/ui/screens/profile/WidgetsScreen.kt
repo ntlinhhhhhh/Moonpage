@@ -11,11 +11,9 @@ import androidx.compose.material.icons.rounded.Widgets
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -31,8 +29,8 @@ fun WidgetsScreen(
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val backText = stringResource(R.string.back)
-    val isDark = colorScheme.background.luminance() < 0.5f
-    val textColor = if (isDark) Color.White else Color.Black
+    
+    val textColor = colorScheme.onBackground
 
     Scaffold(
         containerColor = colorScheme.background,
@@ -43,7 +41,8 @@ fun WidgetsScreen(
                     Text(
                         stringResource(R.string.widgets),
                         fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.titleLarge
+                        style = MaterialTheme.typography.titleLarge,
+                        color = textColor
                     )
                 },
                 navigationIcon = {
@@ -79,7 +78,8 @@ fun WidgetsScreen(
             Text(
                 stringResource(R.string.widgets_moonpage_title),
                 style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = textColor
             )
             
             Text(
@@ -94,22 +94,26 @@ fun WidgetsScreen(
             
             WidgetInstructionStep(
                 stepNumber = 1,
-                instruction = stringResource(R.string.widgets_instruction_1)
+                instruction = stringResource(R.string.widgets_instruction_1),
+                textColor = textColor
             )
             
             WidgetInstructionStep(
                 stepNumber = 2,
-                instruction = stringResource(R.string.widgets_instruction_2)
+                instruction = stringResource(R.string.widgets_instruction_2),
+                textColor = textColor
             )
             
             WidgetInstructionStep(
                 stepNumber = 3,
-                instruction = stringResource(R.string.widgets_instruction_3)
+                instruction = stringResource(R.string.widgets_instruction_3),
+                textColor = textColor
             )
             
             WidgetInstructionStep(
                 stepNumber = 4,
-                instruction = stringResource(R.string.widgets_instruction_4)
+                instruction = stringResource(R.string.widgets_instruction_4),
+                textColor = textColor
             )
             
             Spacer(modifier = Modifier.height(48.dp))
@@ -130,7 +134,8 @@ fun WidgetsScreen(
 @Composable
 fun WidgetInstructionStep(
     stepNumber: Int,
-    instruction: String
+    instruction: String,
+    textColor: Color
 ) {
     Row(
         modifier = Modifier
@@ -148,7 +153,7 @@ fun WidgetInstructionStep(
             Text(
                 stepNumber.toString(),
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = MaterialTheme.colorScheme.onPrimary
             )
         }
         
@@ -156,7 +161,8 @@ fun WidgetInstructionStep(
         
         Text(
             instruction,
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.bodyLarge,
+            color = textColor
         )
     }
 }

@@ -2,7 +2,6 @@ package com.diary.moonpage.widget.glance
 
 import android.content.Context
 import android.content.Intent
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,10 +32,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.diary.moonpage.R
-import androidx.glance.appwidget.updateAll
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 import java.util.Locale
 
 private val ThemeDefaultIconColor = Color(0xFFDB9D1F)
@@ -51,21 +47,17 @@ class DailySummaryWidget : GlanceAppWidget() {
         val palette = snapshot.palette
         val preferences = dataSource.getWidgetPreferences()
 
+        val showStreak = preferences.showDailyStreak.first()
+        val showNote = preferences.showDailyNote.first()
+        val showStats = preferences.showDailyStats.first()
+
         val openAppAction = actionStartActivity(
             MoonpageWidgets.openAppIntent(context, MoonpageWidgets.todayLogRoute())
         )
 
         provideContent {
-            val showStreak = preferences.showDailyStreak.collectAsState(initial = true).value
-            val showNote = preferences.showDailyNote.collectAsState(initial = true).value
-            val showStats = preferences.showDailyStats.collectAsState(initial = true).value
             val bg = if (isNight) palette.nightSurface else palette.daySurface
             val textColor = if (isNight) palette.nightOnSurface else palette.dayOnSurface
-            val subColor = if (isNight) {
-                palette.nightOnSurface.copy(alpha = 0.62f)
-            } else {
-                palette.dayOnSurface.copy(alpha = 0.62f)
-            }
             val iconTint = ColorProvider(ThemeDefaultIconColor)
             val note = snapshot.note.ifBlank { "-" }
             val moodCircleColor = if (snapshot.moodLevel > 0) {
@@ -254,11 +246,4 @@ private fun DailyMetricItem(
 
 class DailySummaryWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = DailySummaryWidget()
-
-    override fun onReceive(context: Context, intent: Intent) {
-        super.onReceive(context, intent)
-        CoroutineScope(Dispatchers.Main).launch {
-            DailySummaryWidget().updateAll(context)
-        }
-    }
 }

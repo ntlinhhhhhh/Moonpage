@@ -13,23 +13,29 @@ class AuthInterceptor @Inject constructor(
     private val tokenManager: TokenManager
 ) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
+        val request = chain.request()
+        val host = request.url.host
+        val isBackendHost = host.equals("hieu-wikipedia.io.vn", ignoreCase = true) ||
+            host.endsWith(".hieu-wikipedia.io.vn", ignoreCase = true)
+
+        if (!isBackendHost) {
+            return chain.proceed(request)
+        }
+
         val token = runBlocking {
             tokenManager.getToken().first()
         }
 
         android.util.Log.d("AuthInterceptor", "Token present: ${token != null}")
 
-        val request = chain.request()
         val requestBuilder = request.newBuilder()
-        val host = request.url.host
-        val isBackendHost = host.contains("hieu-wikipedia.io.vn")
 
-        if (token != null && isBackendHost) {
+        if (token != null) {
             if (request.header("Authorization") == null) {
                 android.util.Log.d("AuthInterceptor", "Adding Auth header to: ${request.url}")
                 requestBuilder.addHeader("Authorization", "Bearer $token")
             }
-        } else if (token == null) {
+        } else {
             android.util.Log.w("AuthInterceptor", "No token for request: ${request.url}")
         }
 

@@ -44,7 +44,8 @@ data class ThemeResponseDTO(
                     if (it.isJsonPrimitive) it.asString else it.toString()
                 },
                 backgroundLightColor = backgroundLightColor,
-                backgroundDarkColor = backgroundDarkColor
+                backgroundDarkColor = backgroundDarkColor,
+                backgroundUrl = backgroundUrl
             ),
             type = ThemeType.THEME,
             moods = moods?.map { it.toDomain() } ?: emptyList(),
@@ -75,7 +76,8 @@ data class ThemeMoodResponseDTO(
 private fun buildAppearanceDescription(
     description: String?,
     backgroundLightColor: String?,
-    backgroundDarkColor: String?
+    backgroundDarkColor: String?,
+    backgroundUrl: String?
 ): String? {
     val root = description
         ?.takeIf { it.isNotBlank() }
@@ -85,18 +87,33 @@ private fun buildAppearanceDescription(
 
     backgroundLightColor?.takeIf { it.isNotBlank() }?.let { color ->
         val light = root.optJSONObject("light") ?: JSONObject()
-        light.backgroundColorAppearance(color)
+        light.applyBackgroundColorAppearance(color, backgroundUrl)
         root.put("light", light)
         hasAppearance = true
     }
     backgroundDarkColor?.takeIf { it.isNotBlank() }?.let { color ->
         val dark = root.optJSONObject("dark") ?: JSONObject()
-        dark.backgroundColorAppearance(color)
+        dark.applyBackgroundColorAppearance(color, backgroundUrl)
         root.put("dark", dark)
         hasAppearance = true
     }
 
     return if (hasAppearance) root.toString() else null
+}
+
+private fun JSONObject.applyBackgroundColorAppearance(color: String, backgroundUrl: String?): JSONObject {
+    if (isImageBackgroundAppearance()) {
+        backgroundUrl.takeIfRemoteThemeAsset()?.let { remoteUrl ->
+            val existingUri = optString("backgroundUri")
+            if (existingUri.isBlank() || existingUri.isLocalThemeFilePath()) {
+                put("backgroundUri", remoteUrl)
+            }
+        }
+        val fallbackColor = color.toBackgroundColorStops().firstOrNull() ?: color.trim()
+        if (!has("solidBackgroundColor")) put("solidBackgroundColor", fallbackColor)
+        return this
+    }
+    return backgroundColorAppearance(color)
 }
 
 private fun JSONObject.backgroundColorAppearance(color: String): JSONObject {
@@ -110,6 +127,51 @@ private fun JSONObject.backgroundColorAppearance(color: String): JSONObject {
         put("backgroundFillMode", "Solid")
             .put("solidBackgroundColor", colors.firstOrNull() ?: color.trim())
     }
+}
+
+private fun JSONObject.isImageBackgroundAppearance(): Boolean {
+    val fillMode = optString("backgroundFillMode")
+    if (fillMode.equals("Solid", ignoreCase = true) || fillMode.equals("Gradient", ignoreCase = true)) {
+        return false
+    }
+    val uri = optString("backgroundUri")
+    return fillMode.equals("Image", ignoreCase = true) ||
+        fillMode.equals("background", ignoreCase = true) ||
+        (fillMode.isBlank() && uri.isThemeAssetReference())
+}
+
+private fun String?.takeIfRemoteThemeAsset(): String? {
+    val value = this?.trim()?.takeIf { it.isThemeAssetReference() } ?: return null
+    return value.takeIf {
+        it.startsWith("http://", ignoreCase = true) ||
+            it.startsWith("https://", ignoreCase = true)
+    }
+}
+
+private fun String?.isLocalThemeFilePath(): Boolean {
+    val value = this?.trim() ?: return false
+    return value.startsWith("/data/") ||
+        value.startsWith("/storage/") ||
+        value.startsWith("/sdcard/") ||
+        value.startsWith("file://", ignoreCase = true)
+}
+
+private fun String?.isThemeAssetReference(): Boolean {
+    val value = this?.trim() ?: return false
+    if (value.isBlank() || value.equals("null", ignoreCase = true) || value.equals("pending", ignoreCase = true)) {
+        return false
+    }
+    return !value.contains(",") && !value.isThemeColor()
+}
+
+private fun String.isThemeColor(): Boolean {
+    val value = when {
+        startsWith("#") -> drop(1)
+        startsWith("0x", ignoreCase = true) -> drop(2)
+        else -> this
+    }
+    return (value.length == 6 || value.length == 8) &&
+        value.all { it in '0'..'9' || it in 'a'..'f' || it in 'A'..'F' }
 }
 
 private fun String.toBackgroundColorStops(): List<String> {
