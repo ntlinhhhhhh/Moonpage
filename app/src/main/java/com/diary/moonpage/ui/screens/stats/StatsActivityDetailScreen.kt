@@ -49,7 +49,17 @@ fun StatsActivityDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.stats_activities_habits), fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+                title = {
+                    Text(
+                        if (uiState.isMonthly) {
+                            stringResource(R.string.stats_monthly_activities)
+                        } else {
+                            stringResource(R.string.stats_activities_habits)
+                        },
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Rounded.ArrowBackIosNew, contentDescription = backText)

@@ -1366,17 +1366,6 @@ fun ActivityListItem(rank: Int, activity: BestActivityDto, modifier: Modifier = 
             modifier = Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
         ) {
-            // Rank number in top-left
-            Text(
-                text = "$rank",
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(top = 4.dp, start = 8.dp)
-            )
-
             MoonActivityIcon(icon = icon, size = 24.dp)
         }
         Spacer(modifier = Modifier.width(16.dp))
@@ -2418,9 +2407,8 @@ fun ActivityHabitsCard(frequentlyRecorded: List<BestActivityDto>, onClick: () ->
                 Text(stringResource(R.string.no_activity_data_available), fontSize = 14.sp, color = onSurfaceVariant.copy(alpha = 0.5f))
             } else {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    top3.forEachIndexed { index, activity ->
+                    top3.forEach { activity ->
                         FrequentlyRecordedMiniCard(
-                            rank = index + 1,
                             activity = activity,
                             modifier = Modifier.weight(1f)
                         )
@@ -2450,7 +2438,7 @@ fun ActivityHabitsCard(frequentlyRecorded: List<BestActivityDto>, onClick: () ->
 }
 
 @Composable
-private fun FrequentlyRecordedMiniCard(rank: Int, activity: BestActivityDto, modifier: Modifier = Modifier) {
+private fun FrequentlyRecordedMiniCard(activity: BestActivityDto, modifier: Modifier = Modifier) {
     val icon = MoonIcons.getIconForActivity(activity.activityName)
     val onSurface = MaterialTheme.colorScheme.onSurface
     val onSurfaceVariant = MaterialTheme.colorScheme.onSurfaceVariant
@@ -2460,7 +2448,6 @@ private fun FrequentlyRecordedMiniCard(rank: Int, activity: BestActivityDto, mod
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Icon container with rank inside
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -2469,17 +2456,6 @@ private fun FrequentlyRecordedMiniCard(rank: Int, activity: BestActivityDto, mod
                 .background(MoonTheme.customColors.logItemBg.copy(alpha = 0.6f)),
             contentAlignment = Alignment.Center
         ) {
-            // Rank badge at top left
-            Text(
-                text = "$rank",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = onSurfaceVariant.copy(alpha = 0.45f),
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(8.dp)
-            )
-
             MoonActivityIcon(icon = icon, size = 36.dp)
         }
         // Activity name and Occurrence count in one line
