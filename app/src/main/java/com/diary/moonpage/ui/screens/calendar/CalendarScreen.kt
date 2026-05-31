@@ -351,6 +351,7 @@ fun CalendarScreen(
                 currentFilters = uiState.selectedFilters,
                 dynamicActivities = uiState.dynamicActivities,
                 themeType = uiState.themeType,
+                customMoods = uiState.customMoods,
                 onDismiss = { onEvent(CalendarUiEvent.OnFilterDismiss) },
                 onSeeResults = { filters ->
                     onEvent(CalendarUiEvent.ApplyFilter(filters))
