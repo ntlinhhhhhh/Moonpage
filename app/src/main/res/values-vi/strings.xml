@@ -82,7 +82,7 @@
     <string name="invite_referral_code_label">MÃ GIỚI THIỆU CỦA BẠN</string>
     <string name="invite_referral_copied">Đã sao chép mã giới thiệu!</string>
     <string name="invite_share_subject">Tham gia MoonPage cùng tôi nhé!</string>
-    <string name="invite_share_text">Mình đang dùng MoonPage để theo dõi tâm trạng và viết nhật ký. Tham gia cùng mình nhé. Tải tại: https://firebasestorage.googleapis.com/v0/b/moodyfy-3f2dd.firebasestorage.app/o/diary_app%2Fapp%2Fapp-debug.apk?alt=media&amp;token=cd614199-7f5e-4f9d-bcd0-3e174ce52a6d</string>
+    <string name="invite_share_text">Mình đang dùng MoonPage để theo dõi tâm trạng và viết nhật ký. Tham gia cùng mình nhé. Tải tại:\nhttps://firebasestorage.googleapis.com/v0/b/moodyfy-3f2dd.firebasestorage.app/o/diary_app%2Fapp%2Fapp-debug.apk?alt=media&amp;token=cd614199-7f5e-4f9d-bcd0-3e174ce52a6d</string>
     <string name="invite_share_chooser_title">Chia sẻ lời mời</string>
     <string name="invite_share_invitation">Chia sẻ lời mời</string>
     <string name="logout">Đăng xuất</string>
