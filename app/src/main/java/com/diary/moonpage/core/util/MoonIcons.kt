@@ -270,8 +270,30 @@ object MoonIcons {
     fun getAllIcons(): List<MoonIcon> = allIconsList
 
     fun getIconForActivity(activityName: String): MoonIcon {
-        val searchKey = activityName.replace(" ", "").lowercase()
-        return iconMapByName[searchKey] ?: Other.Coffee
+        // Normalize name for lookup
+        val normalizedName = activityName.lowercase().replace(" ", "")
+        
+        // 1. Try direct lookup
+        val icon = iconMapByName[normalizedName]
+        if (icon != null) return icon
+        
+        // 2. Handle known translations that don't match the English keys in the map
+        val translatedToEnglish = mapOf(
+            "đi" to "walk",
+            "càphê" to "coffee",
+            "đọcsách" to "reading",
+            "tậpthểdục" to "exercise",
+            "làmviệc" to "work"
+            // Add more as necessary based on common translations
+        )
+        
+        val englishName = translatedToEnglish[normalizedName]
+        if (englishName != null) {
+            return iconMapByName[englishName] ?: Other.Coffee
+        }
+        
+        // Default fallback
+        return Other.Coffee
     }
 
     fun getWeatherIconVector(weatherText: String): ImageVector? {

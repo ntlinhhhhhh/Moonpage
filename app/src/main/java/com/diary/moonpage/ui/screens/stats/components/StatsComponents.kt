@@ -1201,7 +1201,7 @@ fun IconDeepDiveView(
                         Box(modifier = Modifier.size(18.dp), contentAlignment = Alignment.Center) {
                             MoonActivityIcon(icon = MoonIcons.getIconForActivity(act.activityName), size = 18.dp)
                         }
-                        Text(act.activityName, fontSize = 12.sp, fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                        Text(getTranslatedActivityName(act.activityName), fontSize = 12.sp, fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                             color = if (isSelected) primaryColor else onSurfaceVariant, maxLines = 1)
                     }
                 }
@@ -1227,7 +1227,7 @@ fun IconDeepDiveView(
         }
         Spacer(modifier = Modifier.width(16.dp))
         Column {
-            Text(deepDive.activityName, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = onSurface)
+            Text(getTranslatedActivityName(deepDive.activityName), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = onSurface)
             Text(stringResource(R.string.recordings_this_period, deepDive.totalOccurrence), color = onSurfaceVariant, fontSize = 13.sp)
         }
     }
@@ -1242,9 +1242,9 @@ fun IconDeepDiveView(
         else -> primaryColor
     }
     val scoreLabel = when {
-        avgScore >= 4.0 -> "Positive influence ✨"
-        avgScore >= 3.0 -> "Neutral influence 😌"
-        else -> "Negative influence 💙"
+        avgScore >= 4.0 -> stringResource(R.string.stats_mood_pos)
+        avgScore >= 3.0 -> stringResource(R.string.stats_mood_neutral)
+        else -> stringResource(R.string.stats_mood_neg)
     }
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(String.format(Locale.ENGLISH, "%.1f", avgScore), fontSize = 42.sp, fontWeight = FontWeight.Black, color = scoreColor, lineHeight = 42.sp)
@@ -1290,7 +1290,7 @@ fun IconDeepDiveView(
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             deepDive.moodDistribution.forEachIndexed { i, entry ->
                 if (entry.count > 0) {
-                    val moodLabel = when (entry.moodId) { 5 -> "Rad"; 4 -> "Good"; 3 -> "Okay"; 2 -> "Bad"; else -> "Awful" }
+                    val moodLabel = when (entry.moodId) { 5 -> stringResource(R.string.rad); 4 -> stringResource(R.string.good); 3 -> stringResource(R.string.okay); 2 -> stringResource(R.string.bad); else -> stringResource(R.string.awful) }
                     val segColor = shades.getOrElse(4 - i) { androidx.compose.ui.graphics.Color.Gray }
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                         Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(segColor))
@@ -1381,7 +1381,7 @@ fun ActivityListItem(rank: Int, activity: BestActivityDto, modifier: Modifier = 
         }
         Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(activity.activityName, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+            Text(getTranslatedActivityName(activity.activityName), fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
             Text(stringResource(R.string.activity_records, activity.occurrence), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
@@ -1436,7 +1436,10 @@ fun ActivityFilterModal(
                             checked = selectedFilter.contains(category),
                             onCheckedChange = { onFilterChange(category, it) }
                         )
-                        Text(category.ifBlank { "Uncategorized" })
+                        Text(
+                            if (category.isBlank()) stringResource(R.string.uncategorized) 
+                            else com.diary.moonpage.core.util.getTranslatedActivityCategoryName(category)
+                        )
                     }
                 }
             }
@@ -1583,9 +1586,9 @@ fun BestAndWorstView(
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = if (hasCorrData)
-                        "Based on % of days each activity appeared with best/worst moods."
+                        stringResource(R.string.stats_correlation_banner_based)
                     else
-                        "Correlation analysis shows which habits spark joy or weigh you down.",
+                        stringResource(R.string.stats_correlation_banner_analysis),
                     fontSize = 13.sp, color = onSurfaceVariant, lineHeight = 18.sp
                 )
             }
@@ -1611,7 +1614,7 @@ fun BestAndWorstView(
             } else if (bestLegacy.isNotEmpty()) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     bestLegacy.take(3).forEachIndexed { idx, act ->
-                        ActivityScoreCard(rank = idx + 1, name = act.activityName, score = act.averageMoodScore, color = successColor, modifier = Modifier.weight(1f))
+                        ActivityScoreCard(rank = idx + 1, englishName = act.activityName, translatedName = getTranslatedActivityName(act.activityName), score = act.averageMoodScore, color = successColor, modifier = Modifier.weight(1f))
                     }
                     repeat(3 - bestLegacy.size.coerceAtMost(3)) { Spacer(modifier = Modifier.weight(1f)) }
                 }
@@ -1644,7 +1647,7 @@ fun BestAndWorstView(
             } else if (worstLegacy.isNotEmpty()) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     worstLegacy.take(3).forEachIndexed { idx, act ->
-                        ActivityScoreCard(rank = idx + 1, name = act.activityName, score = act.averageMoodScore, color = errorColor, modifier = Modifier.weight(1f))
+                        ActivityScoreCard(rank = idx + 1, englishName = act.activityName, translatedName = getTranslatedActivityName(act.activityName), score = act.averageMoodScore, color = errorColor, modifier = Modifier.weight(1f))
                     }
                     repeat(3 - worstLegacy.size.coerceAtMost(3)) { Spacer(modifier = Modifier.weight(1f)) }
                 }
@@ -1679,7 +1682,7 @@ private fun CorrelationActivityRow(rank: Int, correlation: ActivityCorrelation, 
             ) { MoonActivityIcon(icon = icon, size = 24.dp) }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(correlation.activityName, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = onSurface, maxLines = 1)
+                Text(getTranslatedActivityName(correlation.activityName), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = onSurface, maxLines = 1)
                 Text(stringResource(R.string.times_recorded, correlation.occurrence), fontSize = 11.sp, color = onSurfaceVariant.copy(alpha = 0.55f))
                 Spacer(modifier = Modifier.height(6.dp))
                 // Percentage bar
@@ -1694,8 +1697,8 @@ private fun CorrelationActivityRow(rank: Int, correlation: ActivityCorrelation, 
 }
 
 @Composable
-fun ActivityScoreCard(rank: Int, name: String, score: Double, color: Color, modifier: Modifier = Modifier) {
-    val icon = MoonIcons.getIconForActivity(name)
+fun ActivityScoreCard(rank: Int, englishName: String, translatedName: String, score: Double, color: Color, modifier: Modifier = Modifier) {
+    val icon = MoonIcons.getIconForActivity(englishName)
     
     Surface(
         modifier = modifier.height(150.dp),
@@ -1727,7 +1730,7 @@ fun ActivityScoreCard(rank: Int, name: String, score: Double, color: Color, modi
             }
             
             Text(
-                text = name, 
+                text = translatedName, 
                 fontWeight = FontWeight.SemiBold, 
                 fontSize = 13.sp, 
                 maxLines = 1, 
@@ -2486,7 +2489,7 @@ private fun FrequentlyRecordedMiniCard(rank: Int, activity: BestActivityDto, mod
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = activity.activityName,
+                text = getTranslatedActivityName(activity.activityName),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 color = onSurface,
