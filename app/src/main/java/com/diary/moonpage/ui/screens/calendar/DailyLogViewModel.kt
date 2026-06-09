@@ -2,8 +2,14 @@ package com.diary.moonpage.ui.screens.calendar
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.Data
+import androidx.work.ExistingWorkPolicy
+import androidx.work.WorkManager
 import com.diary.moonpage.R
 import com.diary.moonpage.core.util.ActivityPreferencesManager
+import com.diary.moonpage.core.util.DailyLogPhotoManager
+import com.diary.moonpage.core.util.ImageUtils
+import com.diary.moonpage.core.util.LOCAL_DAILY_LOG_PHOTO_PREFIX
 import com.diary.moonpage.core.util.normalizeAppImageUrl
 import com.diary.moonpage.core.util.resolveLogDate
 import com.diary.moonpage.domain.model.DailyLog
@@ -14,6 +20,7 @@ import com.diary.moonpage.core.util.LocationTracker
 import com.diary.moonpage.domain.repository.WeatherRepository
 import com.diary.moonpage.widget.glance.MoonpageWidgets
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
@@ -47,6 +54,10 @@ import com.diary.moonpage.core.util.UiText
 import com.diary.moonpage.data.remote.api.SpotifyApi
 
 import com.diary.moonpage.core.util.LanguagePreferencesManager
+import com.diary.moonpage.service.DailyLogUploadWorker
+import java.io.File
+import java.util.Collections
+import java.util.concurrent.ConcurrentHashMap
 
 @HiltViewModel
 class DailyLogViewModel @Inject constructor(
@@ -62,6 +73,7 @@ class DailyLogViewModel @Inject constructor(
     private val spotifyApi: SpotifyApi,
     private val momentRepository: MomentRepository,
     private val checkAndTriggerNotificationsUseCase: CheckAndTriggerNotificationsUseCase,
+    private val dailyLogPhotoManager: DailyLogPhotoManager,
     @ApplicationScope private val applicationScope: CoroutineScope,
     val healthConnectManager: HealthConnectManager,
     @ApplicationContext private val context: Context,
@@ -78,6 +90,7 @@ class DailyLogViewModel @Inject constructor(
 
     private val currentDate = MutableStateFlow<LocalDate?>(null)
     private var listeningJob: Job? = null
+    private val cachingPhotoKeys = Collections.newSetFromMap(ConcurrentHashMap<String, Boolean>())
 
     init {
         viewModelScope.launch {
@@ -131,6 +144,14 @@ class DailyLogViewModel @Inject constructor(
                 _uiState.update { it.copy(isMenstruationSectionEnabled = isEnabled) }
             }
         }
+        viewModelScope.launch {
+            dailyLogPhotoManager.getLocalPaths().collect { paths ->
+                _uiState.update { it.copy(dailyPhotoLocalPaths = paths) }
+            }
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            dailyLogPhotoManager.cleanupOrphans()
+        }
         observeData()
     }
 
@@ -147,6 +168,8 @@ class DailyLogViewModel @Inject constructor(
                     Triple(log, momentPhotos, allLogs)
                 }
             }.collect { (log, momentPhotos, allLogs) ->
+                val normalizedLogPhotos = log?.dailyPhotos.orEmpty().mapNotNull(::normalizeAppImageUrl)
+                cacheDailyPhotos(normalizedLogPhotos)
                 _uiState.update { currentState ->
                     val menstruationDay = calculateMenstruationDay(log, allLogs)
                     val updatedState = if (log != null) {
@@ -155,7 +178,7 @@ class DailyLogViewModel @Inject constructor(
                         val wakeTime = log.wakeupTime?.let { try { LocalTime.parse(it, formatter) } catch(e: Exception) { bedTime.plusMinutes(((log.sleepHours ?: 8.0) * 60).toLong()) } } 
                             ?: bedTime.plusMinutes(((log.sleepHours ?: 8.0) * 60).toLong())
                         val calculatedHours = log.sleepHours?.toFloat() ?: 0f
-                        val logPhotos = log.dailyPhotos.orEmpty().mapNotNull(::normalizeAppImageUrl)
+                        val logPhotos = normalizedLogPhotos
 
                         if (!currentState.isInitialized || currentState.date != log.date.let { LocalDate.parse(it) }) {
                             currentState.copy(
@@ -182,10 +205,16 @@ class DailyLogViewModel @Inject constructor(
                                 isLoading = false
                             )
                         } else {
-                            // Only update metadata and photos, keep user's current edits
+                            val nextDailyPhotos = if (currentState.hasUnsavedPhotoChanges()) {
+                                currentState.dailyPhotos
+                            } else {
+                                logPhotos
+                            }
+
+                            // Only update remote-backed metadata; keep in-progress user edits.
                             currentState.copy(
                                 existingLog = log,
-                                dailyPhotos = logPhotos,
+                                dailyPhotos = nextDailyPhotos,
                                 momentPhotos = momentPhotos,
                                 menstruationDay = menstruationDay,
                                 isLoading = false
@@ -214,6 +243,13 @@ class DailyLogViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    private fun DailyLogUiState.hasUnsavedPhotoChanges(): Boolean {
+        val existingPhotos = existingLog?.dailyPhotos
+            .orEmpty()
+            .mapNotNull(::normalizeAppImageUrl)
+        return dailyPhotos != existingPhotos
     }
 
     private fun calculateMenstruationDay(currentLog: DailyLog?, allLogs: List<DailyLog>): Int? {
@@ -441,12 +477,21 @@ class DailyLogViewModel @Inject constructor(
             is DailyLogUiEvent.OnPhotosChanged -> {
                 val current = _uiState.value.dailyPhotos
                 val combined = (current + event.photos).distinct().take(10)
+                val added = combined.filter { it in event.photos && it !in current }
                 _uiState.update { it.copy(dailyPhotos = combined) }
+                cacheDailyPhotos(added)
             }
             is DailyLogUiEvent.OnPhotoRemoved -> {
                 _uiState.update { it.copy(
-                    dailyPhotos = it.dailyPhotos.filter { uri -> uri != event.photoUri }
+                    dailyPhotos = it.dailyPhotos.filter { uri -> uri != event.photoUri },
+                    zoomImageUrl = it.zoomImageUrl.takeUnless { zoom -> zoom == event.photoUri }
                 ) }
+                viewModelScope.launch(Dispatchers.IO) {
+                    dailyLogPhotoManager.removePath(
+                        event.photoUri,
+                        deleteFile = !isRemotePhoto(event.photoUri)
+                    )
+                }
             }
             is DailyLogUiEvent.OnPhotoZoom -> {
                 _uiState.update { it.copy(zoomImageUrl = event.imageUrl) }
@@ -832,7 +877,8 @@ class DailyLogViewModel @Inject constructor(
 
     private fun saveDailyLog() {
         val state = _uiState.value
-        if (state.selectedMood == null || state.selectedMood == 0) {
+        val selectedMood = state.selectedMood
+        if (selectedMood == null || selectedMood == 0) {
             viewModelScope.launch {
                 _uiEffect.emit(
                     DailyLogUiEffect.ShowSnackBar(
@@ -846,87 +892,38 @@ class DailyLogViewModel @Inject constructor(
 
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { it.copy(isLoading = true) }
-            
-            // 1. Process local photos
-            val photoFiles = state.dailyPhotos.filter { !it.startsWith("http") }.mapNotNull { uriString ->
-                try {
-                    val uri = android.net.Uri.parse(uriString)
-                    com.diary.moonpage.core.util.ImageUtils.compressAndCropSquare(context, uri)
-                } catch (e: Exception) {
-                    null
-                }
-            }
 
-            // 2. Download existing HTTP photos to include them in the upload,
-            // so the backend doesn't overwrite them.
-            val existingPhotoUrls = state.dailyPhotos.filter { it.startsWith("http") }
-            val existingPhotoFiles = mutableListOf<java.io.File>()
-            if (existingPhotoUrls.isNotEmpty()) {
-                val client = okhttp3.OkHttpClient()
-                for (url in existingPhotoUrls) {
-                    try {
-                        val request = okhttp3.Request.Builder().url(url).build()
-                        val response = client.newCall(request).execute()
-                        if (response.isSuccessful && response.body != null) {
-                            val tempFile = java.io.File(context.cacheDir, "retained_photo_${UUID.randomUUID()}.jpg")
-                            val sink = tempFile.sink().buffer()
-                            sink.writeAll(response.body!!.source())
-                            sink.close()
-                            existingPhotoFiles.add(tempFile)
-                        }
-                    } catch (e: Exception) {
-                        android.util.Log.e("DailyLogVM", "Failed to download retained photo: $url", e)
-                    }
-                }
-            }
+            try {
+                val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+                val (uploadState, photoPathByKey) = prepareDailyLogPhotosForSave(state)
+                val optimisticLog = uploadState.toOptimisticDailyLog(selectedMood, timeFormatter)
+                repository.cacheDailyLog(optimisticLog)
+                enqueueDailyLogUpload(uploadState, selectedMood, photoPathByKey, timeFormatter)
 
-            val allPhotoFiles = existingPhotoFiles + photoFiles
-            val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
-            
-            repository.createDailyLog(
-                baseMoodId = state.selectedMood,
-                date = state.date.toString(),
-                note = state.noteText.takeIf { it.isNotBlank() },
-                sleepHours = state.sleepHours.toDouble(),
-                sleepStartTime = state.sleepBedTime.format(timeFormatter),
-                isMenstruation = state.isMenstruation,
-                menstruationPhase = state.menstruationPhase,
-                activityIds = state.selectedActivities,
-                dailyPhotos = allPhotoFiles.takeIf { it.isNotEmpty() },
-                steps = state.steps,
-                musicTitle = state.musicTitle,
-                artistName = state.artistName,
-                albumArtUrl = state.albumArtUrl,
-                calories = state.calories,
-                distance = state.distance,
-                wakeupTime = state.sleepWakeTime.format(timeFormatter),
-                weather = state.suggestedWeather?.condition,
-                temperature = state.suggestedWeather?.temp
-            ).onSuccess {
+                statisticsRepository.triggerRefresh()
+                MoonpageWidgets.refreshAll(context)
+
+                _uiState.update {
+                    it.copy(
+                        existingLog = optimisticLog,
+                        dailyPhotos = uploadState.dailyPhotos,
+                        dailyPhotoLocalPaths = it.dailyPhotoLocalPaths + photoPathByKey,
+                        isInitialized = true,
+                        isLoading = false
+                    )
+                }
+
                 val messageResId = if (state.existingLog != null) {
                     R.string.record_updated_success
                 } else {
                     R.string.record_created_success
                 }
-                statisticsRepository.triggerRefresh()
-                MoonpageWidgets.refreshAll(context)
-
-                // Cleanup temporary retained files
-                existingPhotoFiles.forEach { it.delete() }
-
-                // Trigger notification evaluation using ApplicationScope to survive VM clearing
-                applicationScope.launch {
-                    try {
-                        checkAndTriggerNotificationsUseCase()
-                    } catch (e: Exception) {
-                        android.util.Log.e("DailyLogVM", "Notification check failed", e)
-                    }
-                }
-
                 _uiEffect.emit(DailyLogUiEffect.SaveSuccess(state.date.toString(), messageResId))
-            }.onFailure { error ->
+            } catch (error: CancellationException) {
                 _uiState.update { it.copy(isLoading = false) }
-                existingPhotoFiles.forEach { it.delete() }
+                throw error
+            } catch (error: Exception) {
+                _uiState.update { it.copy(isLoading = false) }
                 _uiEffect.emit(
                     DailyLogUiEffect.ShowSnackBar(
                         error.message?.let(UiText::DynamicString)
@@ -936,5 +933,196 @@ class DailyLogViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    private suspend fun prepareDailyLogPhotosForSave(
+        state: DailyLogUiState
+    ): Pair<DailyLogUiState, Map<String, String>> {
+        val preparedPhotos = mutableListOf<String>()
+        val photoPathByKey = mutableMapOf<String, String>()
+
+        state.dailyPhotos.take(10).forEach { photo ->
+            if (isRemotePhoto(photo)) {
+                preparedPhotos += photo
+                dailyLogPhotoManager.getLocalPath(photo)?.let { path ->
+                    photoPathByKey[photo] = path
+                }
+                return@forEach
+            }
+
+            val localFile = resolveDailyLogPhotoFile(photo)
+                ?: throw IllegalStateException(context.getString(R.string.failed_to_process_image))
+            val stableKey = if (isLocalDailyPhotoKey(photo)) photo else createLocalDailyPhotoKey()
+
+            if (stableKey != photo) {
+                dailyLogPhotoManager.migratePath(photo, stableKey)
+            }
+
+            val localPath = dailyLogPhotoManager.getLocalPath(stableKey)
+                ?: dailyLogPhotoManager.saveLocalPhoto(stableKey, localFile).absolutePath
+
+            preparedPhotos += stableKey
+            photoPathByKey[stableKey] = localPath
+        }
+
+        return state.copy(dailyPhotos = preparedPhotos.distinct()) to photoPathByKey
+    }
+
+    private fun DailyLogUiState.toOptimisticDailyLog(
+        selectedMood: Int,
+        timeFormatter: DateTimeFormatter
+    ): DailyLog {
+        return DailyLog(
+            id = existingLog?.id ?: "local_${date}",
+            baseMoodId = selectedMood,
+            date = date.toString(),
+            note = noteText.takeIf { it.isNotBlank() },
+            sleepHours = sleepHours.toDouble(),
+            sleepStartTime = sleepBedTime.format(timeFormatter),
+            isMenstruation = isMenstruation,
+            menstruationPhase = menstruationPhase,
+            steps = steps,
+            musicRecord = musicTitle,
+            musicTitle = musicTitle,
+            artistName = artistName,
+            albumArtUrl = albumArtUrl,
+            dailyPhotos = dailyPhotos,
+            activityIds = selectedActivities,
+            createdAt = existingLog?.createdAt,
+            calories = calories,
+            distance = distance,
+            wakeupTime = sleepWakeTime.format(timeFormatter),
+            weather = suggestedWeather?.condition,
+            temperature = suggestedWeather?.temp
+        )
+    }
+
+    private fun enqueueDailyLogUpload(
+        state: DailyLogUiState,
+        selectedMood: Int,
+        photoPathByKey: Map<String, String>,
+        timeFormatter: DateTimeFormatter
+    ) {
+        val data = Data.Builder()
+            .putString(DailyLogUploadWorker.KEY_DATE, state.date.toString())
+            .putInt(DailyLogUploadWorker.KEY_BASE_MOOD_ID, selectedMood)
+            .putDouble(DailyLogUploadWorker.KEY_SLEEP_HOURS, state.sleepHours.toDouble())
+            .putString(DailyLogUploadWorker.KEY_SLEEP_START_TIME, state.sleepBedTime.format(timeFormatter))
+            .putBoolean(DailyLogUploadWorker.KEY_IS_MENSTRUATION, state.isMenstruation)
+            .putStringArray(DailyLogUploadWorker.KEY_ACTIVITY_IDS, state.selectedActivities.toTypedArray())
+            .putStringArray(DailyLogUploadWorker.KEY_PHOTO_KEYS, state.dailyPhotos.toTypedArray())
+            .putStringArray(DailyLogUploadWorker.KEY_PHOTO_PATHS, state.dailyPhotos.map { photoPathByKey[it].orEmpty() }.toTypedArray())
+            .putInt(DailyLogUploadWorker.KEY_STEPS, state.steps)
+            .putInt(DailyLogUploadWorker.KEY_CALORIES, state.calories)
+            .putDouble(DailyLogUploadWorker.KEY_DISTANCE, state.distance)
+            .putString(DailyLogUploadWorker.KEY_WAKEUP_TIME, state.sleepWakeTime.format(timeFormatter))
+            .apply {
+                state.noteText.takeIf { it.isNotBlank() }?.let { putString(DailyLogUploadWorker.KEY_NOTE, it) }
+                state.menstruationPhase?.let { putString(DailyLogUploadWorker.KEY_MENSTRUATION_PHASE, it) }
+                state.musicTitle?.takeIf { it.isNotBlank() }?.let { putString(DailyLogUploadWorker.KEY_MUSIC_TITLE, it) }
+                state.artistName?.takeIf { it.isNotBlank() }?.let { putString(DailyLogUploadWorker.KEY_ARTIST_NAME, it) }
+                state.albumArtUrl?.takeIf { it.isNotBlank() }?.let { putString(DailyLogUploadWorker.KEY_ALBUM_ART_URL, it) }
+                state.suggestedWeather?.condition?.takeIf { it.isNotBlank() }?.let { putString(DailyLogUploadWorker.KEY_WEATHER, it) }
+                state.suggestedWeather?.temp?.let { putDouble(DailyLogUploadWorker.KEY_TEMPERATURE, it) }
+            }
+            .build()
+
+        val request = DailyLogUploadWorker.buildRequest(data)
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            DailyLogUploadWorker.UNIQUE_WORK_PREFIX + state.date,
+            ExistingWorkPolicy.REPLACE,
+            request
+        )
+    }
+
+    private fun cacheDailyPhotos(photoKeys: List<String>) {
+        val keysToCache = photoKeys
+            .distinct()
+            .filter { key ->
+                val cachedPath = _uiState.value.dailyPhotoLocalPaths[key]
+                val isAlreadyCached = cachedPath != null && File(cachedPath).exists()
+                !isAlreadyCached && cachingPhotoKeys.add(key)
+            }
+        if (keysToCache.isEmpty()) return
+
+        applicationScope.launch(Dispatchers.IO) {
+            try {
+                keysToCache.forEach { key ->
+                    try {
+                        resolveDailyLogPhotoFile(key)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        android.util.Log.w("DailyLogVM", "Skipped daily log photo cache: $key", e)
+                    }
+                }
+            } finally {
+                keysToCache.forEach(cachingPhotoKeys::remove)
+            }
+        }
+    }
+
+    private suspend fun resolveDailyLogPhotoFile(photoKey: String): File? {
+        dailyLogPhotoManager.getLocalPath(photoKey)?.let { path ->
+            val file = File(path)
+            if (file.exists()) return file
+        }
+
+        return if (isRemotePhoto(photoKey)) {
+            downloadAndCacheRemotePhoto(photoKey)
+        } else {
+            cacheLocalDailyPhoto(photoKey)
+        }
+    }
+
+    private suspend fun cacheLocalDailyPhoto(photoKey: String): File? {
+        if (isLocalDailyPhotoKey(photoKey)) return null
+
+        val compressedFile = ImageUtils.compressAndCropSquare(
+            context = context,
+            uri = android.net.Uri.parse(photoKey)
+        ) ?: return null
+
+        val cachedFile = dailyLogPhotoManager.saveLocalPhoto(photoKey, compressedFile)
+        if (compressedFile.absolutePath != cachedFile.absolutePath) {
+            compressedFile.delete()
+        }
+        return cachedFile
+    }
+
+    private suspend fun downloadAndCacheRemotePhoto(url: String): File? {
+        val client = okhttp3.OkHttpClient()
+        val request = okhttp3.Request.Builder().url(url).build()
+        return try {
+            client.newCall(request).execute().use { response ->
+                val body = response.body
+                if (!response.isSuccessful || body == null) return@use null
+
+                val tempFile = File(context.cacheDir, "retained_photo_${UUID.randomUUID()}.jpg")
+                tempFile.sink().buffer().use { sink ->
+                    sink.writeAll(body.source())
+                }
+                val cachedFile = dailyLogPhotoManager.savePhoto(url, tempFile)
+                tempFile.delete()
+                cachedFile
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            android.util.Log.w("DailyLogVM", "Failed to cache retained photo: $url", e)
+            null
+        }
+    }
+
+    private fun isRemotePhoto(photo: String): Boolean {
+        return photo.startsWith("http", ignoreCase = true)
+    }
+
+    private fun isLocalDailyPhotoKey(photo: String): Boolean {
+        return photo.startsWith(LOCAL_DAILY_LOG_PHOTO_PREFIX)
+    }
+
+    private fun createLocalDailyPhotoKey(): String {
+        return "$LOCAL_DAILY_LOG_PHOTO_PREFIX${UUID.randomUUID()}"
     }
 }

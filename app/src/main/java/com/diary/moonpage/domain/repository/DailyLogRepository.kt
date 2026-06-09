@@ -29,6 +29,8 @@ interface DailyLogRepository {
     ): Result<Unit>
 
     suspend fun getDailyLogByDate(date: String): Result<DailyLog>
+
+    suspend fun cacheDailyLog(log: DailyLog)
     
     fun getDailyLogByDateFlow(date: String): Flow<DailyLog?>
     

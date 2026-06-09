@@ -90,8 +90,7 @@ data class DailyLogEntity(
     }
 
     companion object {
-        fun fromResponse(response: DailyLogResponseDto): DailyLogEntity {
-            val domain = response.toDomain()
+        fun fromDomain(domain: com.diary.moonpage.domain.model.DailyLog): DailyLogEntity {
             return DailyLogEntity(
                 id = domain.id,
                 baseMoodId = domain.baseMoodId,
@@ -115,6 +114,11 @@ data class DailyLogEntity(
                 weather = domain.weather,
                 temperature = domain.temperature
             )
+        }
+
+        fun fromResponse(response: DailyLogResponseDto): DailyLogEntity {
+            val domain = response.toDomain()
+            return fromDomain(domain)
         }
     }
 }

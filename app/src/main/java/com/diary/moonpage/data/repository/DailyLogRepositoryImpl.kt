@@ -83,8 +83,15 @@ class DailyLogRepositoryImpl @Inject constructor(
             )
             
             if (response.isSuccessful) {
-                // Background fetch to ensure local cache is exactly same as server
-                getDailyLogByDate(date)
+                try {
+                    val updatedLog = api.getDailyLogByDate(date)
+                    if (updatedLog.isSuccessful && updatedLog.body() != null) {
+                        dao.deleteLogByDate(date)
+                        dao.insertLog(DailyLogEntity.fromResponse(updatedLog.body()!!))
+                    }
+                } catch (_: Exception) {
+                    // The write succeeded; a later flow sync can refresh the cache.
+                }
                 Result.success(Unit)
             } else {
                 Result.failure(Exception("Failed to create DailyLog: ${response.code()}"))
@@ -104,6 +111,7 @@ class DailyLogRepositoryImpl @Inject constructor(
                     val response = api.getDailyLogByDate(date)
                     if (response.isSuccessful && response.body() != null) {
                         val logDto = response.body()!!
+                        dao.deleteLogByDate(date)
                         dao.insertLog(DailyLogEntity.fromResponse(logDto))
                     }
                 } catch (e: Exception) {
@@ -117,6 +125,7 @@ class DailyLogRepositoryImpl @Inject constructor(
                 val response = api.getDailyLogByDate(date)
                 if (response.isSuccessful && response.body() != null) {
                     val logDto = response.body()!!
+                    dao.deleteLogByDate(date)
                     dao.insertLog(DailyLogEntity.fromResponse(logDto))
                     Result.success(logDto.toDomain())
                 } else {
@@ -128,12 +137,18 @@ class DailyLogRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun cacheDailyLog(log: DailyLog) = kotlinx.coroutines.withContext(Dispatchers.IO) {
+        dao.deleteLogByDate(log.date)
+        dao.insertLog(DailyLogEntity.fromDomain(log))
+    }
+
     override fun getDailyLogByDateFlow(date: String): Flow<DailyLog?> {
         // trigger background sync for this specific date
         kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
             try {
                 val response = api.getDailyLogByDate(date)
                 if (response.isSuccessful && response.body() != null) {
+                    dao.deleteLogByDate(date)
                     dao.insertLog(DailyLogEntity.fromResponse(response.body()!!))
                 }
             } catch (e: Exception) {}
@@ -162,6 +177,7 @@ class DailyLogRepositoryImpl @Inject constructor(
                 val response = api.getDailyLogsByMonth(yearMonth)
                 if (response.isSuccessful && response.body() != null) {
                     val networkLogs = response.body()!!
+                    dao.deleteLogsByMonth(yearMonth)
                     dao.insertLogs(networkLogs.map { DailyLogEntity.fromResponse(it) })
                 }
             } catch (e: Exception) {}

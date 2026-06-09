@@ -118,7 +118,13 @@ fun MomentUploadScreen(
             },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp).height(56.dp)) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 16.dp)
+                .height(56.dp)
+        ) {
             Text(
                 text = stringResource(R.string.moment_upload_title),
                 color = onBgColor,

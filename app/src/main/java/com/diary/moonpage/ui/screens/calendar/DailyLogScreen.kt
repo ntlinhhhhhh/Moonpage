@@ -76,6 +76,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
+import java.io.File
 import java.util.*
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalLocale
@@ -247,7 +248,7 @@ fun DailyLogRoute(
     if (uiState.zoomImageUrl != null) {
         PhotoFullscreenPreview(
             imageUrl = uiState.zoomImageUrl!!,
-            localPath = null,
+            localPath = uiState.dailyPhotoLocalPaths[uiState.zoomImageUrl],
             onDismiss = { viewModel.onEvent(DailyLogUiEvent.OnPhotoZoom(null)) }
         )
     }
@@ -703,6 +704,7 @@ private fun DailyLogMainContent(
             DailyPhotoSection(
                 logPhotos = uiState.dailyPhotos,
                 momentPhotos = uiState.momentPhotos,
+                localPhotoPaths = uiState.dailyPhotoLocalPaths,
                 onPhotoClick = onNavigateToDailyPhoto,
                 onPhotoRemove = onPhotoDeleteRequest,
                 onPhotoZoom = onPhotoZoomRequest
@@ -1534,6 +1536,7 @@ private fun DailyNoteSection(
 private fun DailyPhotoSection(
     logPhotos: List<String>,
     momentPhotos: List<String>,
+    localPhotoPaths: Map<String, String>,
     onPhotoClick: () -> Unit,
     onPhotoRemove: (String) -> Unit,
     onPhotoZoom: (String) -> Unit
@@ -1566,6 +1569,10 @@ private fun DailyPhotoSection(
                 ) {
                     items(allPhotos.take(10)) { photoUri ->
                         val isMoment = momentPhotos.contains(photoUri)
+                        val localPath = localPhotoPaths[photoUri]
+                        val imageModel = remember(localPath, photoUri) {
+                            if (localPath != null && File(localPath).exists()) File(localPath) else photoUri
+                        }
                         Box(
                             modifier = Modifier
                                 .size(100.dp)
@@ -1580,7 +1587,7 @@ private fun DailyPhotoSection(
                                     ) { onPhotoZoom(photoUri) }
                             ) {
                                 coil.compose.AsyncImage(
-                                    model = photoUri,
+                                    model = imageModel,
                                     contentDescription = null,
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = androidx.compose.ui.layout.ContentScale.Crop

@@ -2,6 +2,7 @@ package com.diary.moonpage.ui.screens.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.diary.moonpage.core.util.DailyLogPhotoManager
 import com.diary.moonpage.core.util.normalizeAppImageUrl
 import com.diary.moonpage.domain.repository.DailyLogRepository
 import com.diary.moonpage.domain.repository.MomentRepository
@@ -36,7 +37,8 @@ data class GalleryUiState(
 @HiltViewModel
 class GalleryViewModel @Inject constructor(
     private val momentRepository: MomentRepository,
-    private val dailyLogRepository: DailyLogRepository
+    private val dailyLogRepository: DailyLogRepository,
+    private val dailyLogPhotoManager: DailyLogPhotoManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(GalleryUiState())
@@ -48,8 +50,9 @@ class GalleryViewModel @Inject constructor(
             combine(
                 momentRepository.moments,
                 momentRepository.localPaths,
-                dailyLogRepository.getAllDailyLogsFlow()
-            ) { moments, localPaths, dailyLogs ->
+                dailyLogRepository.getAllDailyLogsFlow(),
+                dailyLogPhotoManager.getLocalPaths()
+            ) { moments, localPaths, dailyLogs, dailyLogLocalPaths ->
                 val momentItems = moments.mapNotNull { moment ->
                     val imageUrl = normalizeAppImageUrl(moment.imageUrl) ?: return@mapNotNull null
                     val sortInstant = runCatching { Instant.parse(moment.capturedAt) }.getOrElse { Instant.EPOCH }
@@ -75,6 +78,7 @@ class GalleryViewModel @Inject constructor(
                         GalleryPhotoItem(
                             id = "dailylog_${log.id}_$index",
                             imageUrl = normalizedUrl,
+                            localPath = dailyLogLocalPaths[photoUrl] ?: dailyLogLocalPaths[normalizedUrl],
                             sortInstant = sortInstant,
                             date = logDate,
                             dailyLogDate = log.date

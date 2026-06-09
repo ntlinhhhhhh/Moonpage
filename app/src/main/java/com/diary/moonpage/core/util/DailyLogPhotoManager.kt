@@ -38,7 +38,7 @@ class DailyLogPhotoManager @Inject constructor(
     /** Returns a Flow of remote URL → local absolute file path. */
     fun getLocalPaths(): Flow<Map<String, String>> {
         return context.dailyLogPhotoDataStore.data.map { prefs ->
-            parsePaths(prefs[LOCAL_PATHS_KEY])
+            addLegacyLocalKeyAliases(parsePaths(prefs[LOCAL_PATHS_KEY]))
         }
     }
 
@@ -48,7 +48,7 @@ class DailyLogPhotoManager @Inject constructor(
      */
     suspend fun getLocalPath(remoteUrl: String): String? {
         val paths = context.dailyLogPhotoDataStore.data.map { prefs ->
-            parsePaths(prefs[LOCAL_PATHS_KEY])
+            addLegacyLocalKeyAliases(parsePaths(prefs[LOCAL_PATHS_KEY]))
         }
         return paths.first().let { map ->
             val path = map[remoteUrl] ?: return@let null
@@ -97,7 +97,9 @@ class DailyLogPhotoManager @Inject constructor(
     suspend fun migratePath(oldKey: String, newKey: String) {
         context.dailyLogPhotoDataStore.edit { prefs ->
             val map = parsePaths(prefs[LOCAL_PATHS_KEY])
-            val path = map.remove(oldKey) ?: return@edit
+            val path = map.remove(oldKey)
+                ?: legacyLocalPhotoKey(oldKey)?.let(map::remove)
+                ?: return@edit
             map[newKey] = path
             prefs[LOCAL_PATHS_KEY] = gson.toJson(map)
         }
@@ -136,5 +138,24 @@ class DailyLogPhotoManager @Inject constructor(
         if (json.isNullOrEmpty()) return mutableMapOf()
         val type = object : TypeToken<Map<String, String>>() {}.type
         return (gson.fromJson<Map<String, String>>(json, type) ?: emptyMap()).toMutableMap()
+    }
+
+    private fun addLegacyLocalKeyAliases(paths: MutableMap<String, String>): MutableMap<String, String> {
+        paths.toList().forEach { (key, path) ->
+            if (key.startsWith(LEGACY_LOCAL_DAILY_LOG_PHOTO_URL_PREFIX)) {
+                val localKey = LOCAL_DAILY_LOG_PHOTO_PREFIX +
+                    key.removePrefix(LEGACY_LOCAL_DAILY_LOG_PHOTO_URL_PREFIX)
+                paths.putIfAbsent(localKey, path)
+            }
+        }
+        return paths
+    }
+
+    private fun legacyLocalPhotoKey(key: String): String? {
+        return if (key.startsWith(LOCAL_DAILY_LOG_PHOTO_PREFIX)) {
+            LEGACY_LOCAL_DAILY_LOG_PHOTO_URL_PREFIX + key.removePrefix(LOCAL_DAILY_LOG_PHOTO_PREFIX)
+        } else {
+            null
+        }
     }
 }

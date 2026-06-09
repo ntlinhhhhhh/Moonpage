@@ -196,7 +196,6 @@ fun OnboardingSpecialBlocksScreen(
                                 text = stringResource(R.string.what_am_i_choosing),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = colorScheme.primary,
-                                textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
                             )
                         }
 

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import android.content.Context
 import com.diary.moonpage.R
+import com.diary.moonpage.core.util.DailyLogPhotoManager
 import com.diary.moonpage.core.util.UiText
 import com.diary.moonpage.ui.components.feedback.SnackbarType
 import com.diary.moonpage.core.util.normalizeAppImageUrl
@@ -20,6 +21,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
+import java.io.File
 import java.time.LocalDate
 import java.time.YearMonth
 import javax.inject.Inject
@@ -38,6 +40,7 @@ class CalendarViewModel @Inject constructor(
     private val userRepository: com.diary.moonpage.domain.repository.UserRepository,
     private val locationTracker: com.diary.moonpage.core.util.LocationTracker,
     private val weatherRepository: com.diary.moonpage.domain.repository.WeatherRepository,
+    private val dailyLogPhotoManager: DailyLogPhotoManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -162,8 +165,9 @@ class CalendarViewModel @Inject constructor(
                     }
                 },
                 momentRepository.moments,
-                currentMonth
-            ) { logs, moments, month ->
+                currentMonth,
+                dailyLogPhotoManager.getLocalPaths()
+            ) { logs, moments, month, dailyLogLocalPaths ->
                 val logsMap = logs.associateBy { LocalDate.parse(it.date) }.toMutableMap()
                 
                 moments.forEach { moment ->
@@ -174,7 +178,8 @@ class CalendarViewModel @Inject constructor(
                             val momentPhotoUrl = normalizeAppImageUrl(moment.imageUrl) ?: return@forEach
                             
                             if (existingLog != null) {
-                                val logPhotos = existingLog.dailyPhotos.orEmpty().mapNotNull(::normalizeAppImageUrl)
+                                val logPhotos = existingLog.dailyPhotos.orEmpty()
+                                    .mapNotNull { resolveDailyLogDisplayPhoto(it, dailyLogLocalPaths) }
                                 val combinedPhotos = (logPhotos + momentPhotoUrl).distinct()
                                 logsMap[momentDate] = existingLog.copy(dailyPhotos = combinedPhotos)
                             } else {
@@ -195,7 +200,10 @@ class CalendarViewModel @Inject constructor(
                 }
 
                 val finalMap = logsMap.mapValues { (_, log) ->
-                    log.copy(dailyPhotos = log.dailyPhotos?.mapNotNull(::normalizeAppImageUrl))
+                    log.copy(
+                        dailyPhotos = log.dailyPhotos
+                            ?.mapNotNull { resolveDailyLogDisplayPhoto(it, dailyLogLocalPaths) }
+                    )
                 }
 
                 val periodDates = finalMap.values.filter { it.isMenstruation }.mapNotNull { runCatching { LocalDate.parse(it.date) }.getOrNull() }.toSet()
@@ -214,6 +222,18 @@ class CalendarViewModel @Inject constructor(
                 _uiState.update { it.copy(dailyLogs = finalMap, menstruationDays = menstruationDays, currentYearMonth = month, isLoading = false) }
             }.collect {}
         }
+    }
+
+    private fun resolveDailyLogDisplayPhoto(
+        photo: String,
+        localPaths: Map<String, String>
+    ): String? {
+        val normalized = normalizeAppImageUrl(photo) ?: return null
+        val localPath = localPaths[photo] ?: localPaths[normalized]
+        return localPath
+            ?.takeIf { File(it).exists() }
+            ?.let { "file://$it" }
+            ?: normalized
     }
 
     fun onEvent(event: CalendarUiEvent) {
