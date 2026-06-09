@@ -918,6 +918,21 @@ class DailyLogViewModel @Inject constructor(
                 } else {
                     R.string.record_created_success
                 }
+                statisticsRepository.triggerRefresh()
+                MoonpageWidgets.refreshAll(context)
+
+                // Cleanup temporary retained files
+                existingPhotoFiles.forEach { it.delete() }
+
+                // Trigger notification evaluation using ApplicationScope to survive VM clearing
+                applicationScope.launch {
+                    try {
+                        checkAndTriggerNotificationsUseCase()
+                    } catch (e: Exception) {
+                        android.util.Log.e("DailyLogVM", "Notification check failed", e)
+                    }
+                }
+
                 _uiEffect.emit(DailyLogUiEffect.SaveSuccess(state.date.toString(), messageResId))
             } catch (error: CancellationException) {
                 _uiState.update { it.copy(isLoading = false) }

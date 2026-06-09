@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import com.diary.moonpage.widget.glance.MoonpageWidgetRefreshManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -96,7 +97,11 @@ class SettingsPreferencesManager @Inject constructor(
         context.getSharedPreferences("settings_prefs", Context.MODE_PRIVATE)
             .edit()
             .putString("language", language)
-            .apply()
+            .commit()
+        MoonpageWidgetRefreshManager.requestRefresh(
+            context = context.applicationContext,
+            reason = MoonpageWidgetRefreshManager.Reason.LANGUAGE_CHANGED
+        )
     }
 
     suspend fun setPasscode(passcode: String?) {
@@ -142,5 +147,9 @@ class SettingsPreferencesManager @Inject constructor(
         context.settingsDataStore.edit { preferences ->
             preferences.clear()
         }
+        MoonpageWidgetRefreshManager.requestRefresh(
+            context = context.applicationContext,
+            reason = MoonpageWidgetRefreshManager.Reason.SYSTEM
+        )
     }
 }

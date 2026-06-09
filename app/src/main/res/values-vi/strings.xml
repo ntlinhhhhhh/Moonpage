@@ -107,6 +107,13 @@
     <string name="thu_short">T5</string>
     <string name="fri_short">T6</string>
     <string name="sat_short">T7</string>
+    <string name="widget_sun_short">CN</string>
+    <string name="widget_mon_short">T2</string>
+    <string name="widget_tue_short">T3</string>
+    <string name="widget_wed_short">T4</string>
+    <string name="widget_thu_short">T5</string>
+    <string name="widget_fri_short">T6</string>
+    <string name="widget_sat_short">T7</string>
 
     <!-- Profile -->
     <string name="account">Tài khoản</string>
