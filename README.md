@@ -85,22 +85,34 @@ Moon Page is a modern Android diary app for recording daily mood, activities, ph
 
 ## Architecture
 
-Moon Page follows Clean Architecture with MVVM and state-hoisted Jetpack Compose screens.
+Moon Page is a single-module Android app that follows Clean Architecture with MVVM and state-hoisted Jetpack Compose screens. The high-level flow is:
 
-### Layers
+```text
+Android App
+  -> Presentation
+  -> Domain
+  -> Data
+  -> Local Data / Remote Data
+```
+![architecture-overview.png](architecture-overview.png)
 
-1. `core`: Dependency injection, theme system, utilities, network setup, preferences, notifications, and shared helpers.
-2. `domain`: Business models, repository interfaces, and use cases.
-3. `data`: Retrofit APIs, Room entities/DAOs, repository implementations, local cache, and remote DTO mapping.
-4. `ui`: Compose screens, ViewModels, UI state/effects, navigation, components, and feature flows.
-5. `widget`: Glance app widgets and widget data source.
+### Architecture Overview
+
+- `Android App`: application/runtime entry points, app lifecycle, splash screen, locale handling, deep links, and the Compose root.
+- `Presentation`: Jetpack Compose screens, Navigation Compose, ViewModels, UI state, UI events, and reusable UI components.
+- `Domain`: core business models, use cases, and repository contracts that keep business rules independent from Android, Room, and Retrofit.
+- `Data`: repository implementations, DTO/entity mapping, cache orchestration, Retrofit API clients, Room access, and DataStore/file managers.
+- `Local Data`: Room database, DataStore preferences, and internal file/image cache used for offline-friendly reads and fast UI/widget rendering.
+- `Remote Data`: Moon Page backend APIs plus Firebase, Spotify, weather, Google services, and Health Connect integrations.
+- `Core / Security / DI`: Hilt modules, network setup, `AuthInterceptor`, theme/locale helpers, security preferences, and shared utilities.
+- `Background Services`: WorkManager workers, Firebase Messaging service, alarm/boot receivers, and Glance widgets that read or sync data outside the main UI flow.
 
 ---
 
 ## Tech Stack
 
 - **Language:** Kotlin 2.1.0
-- **Build:** Gradle, Android Gradle Plugin 8.13.2, KSP
+- **Build:** Gradle, Android Gradle Plugin 8.7.2, KSP
 - **Android:** minSdk 26, targetSdk 34, compileSdk 35, Java 17
 - **UI:** Jetpack Compose, Compose BOM 2024.10.00, Material 3, Material Icons Extended
 - **Navigation:** Jetpack Navigation Compose
@@ -171,7 +183,14 @@ On Windows:
 ## Documentation
 
 - [Architecture Guide](ARCHITECTURE.md)
+<p>
+  <a href="./app/src/main/res/asset/architecture-overview.png">
+    <img src="./app/src/main/res/asset/architecture-overview.png" alt="Architecture Overview Diagram" width="500" />
+  </a>
+</p>
 - [API Specification](api.md)
+- [Software Requirements Specification](srs.md)
+- [Test Report](test_result.md)
 
 ---
 
