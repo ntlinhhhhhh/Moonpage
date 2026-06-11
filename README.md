@@ -183,11 +183,6 @@ On Windows:
 ## Documentation
 
 - [Architecture Guide](ARCHITECTURE.md)
-<p>
-  <a href="./app/src/main/res/asset/architecture-overview.png">
-    <img src="./app/src/main/res/asset/architecture-overview.png" alt="Architecture Overview Diagram" width="500" />
-  </a>
-</p>
 - [API Specification](api.md)
 - [Software Requirements Specification](srs.md)
 - [Test Report](test_result.md)
